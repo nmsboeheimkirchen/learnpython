@@ -11,101 +11,7 @@
     <!-- CodeMirror für den Editor -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #f0f2f5; }
-        .container { display: flex; gap: 20px; max-width: 1200px; margin: 0 auto; }
-        .panel { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex: 1; }
-        .guide-panel { flex: 0.8; }
-        .editor-panel { flex: 1.2; display: flex; flex-direction: column; }
-        
-        h1, h2 { color: #2c3e50; margin-top: 0; }
-        .block-hint { background: #e8f4f8; padding: 15px; border-radius: 6px; border-left: 4px solid #3498db; margin: 15px 0; }
-        .tooltip { position: relative; display: inline-block; cursor: help; border-bottom: 1px dotted #3498db; color: #2980b9; font-weight: bold; }
-        .tooltip .tooltiptext { visibility: hidden; width: 200px; background-color: #333; color: #fff; text-align: center; border-radius: 6px; padding: 5px; position: absolute; z-index: 1; bottom: 125%; left: 50%; margin-left: -100px; opacity: 0; transition: opacity 0.3s; font-weight: normal; font-size: 0.9em; }
-        .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
-        
-        .CodeMirror { height: 300px; border-radius: 4px; font-size: 16px; margin-bottom: 15px; }
-        button { background: #2ecc71; color: white; border: none; padding: 10px 20px; font-size: 16px; border-radius: 4px; cursor: pointer; transition: background 0.3s; font-weight: bold; width: 100%;}
-        button:hover { background: #27ae60; }
-        button:disabled { background: #95a5a6; cursor: not-allowed; }
-        
-        #console-output { background: #1e1e1e; color: #00ff00; padding: 15px; border-radius: 4px; font-family: monospace; height: 150px; overflow-y: auto; white-space: pre-wrap; margin-top: 15px; }
-        
-        /* CSS MakeCode Block Design */
-        .makecode-block {
-            background-color: #0078D7; /* MakeCode Grundlagen (blau) */
-            color: white;
-            font-family: "Segoe UI", sans-serif;
-            font-size: 14px;
-            padding: 8px 12px;
-            border-radius: 4px;
-            display: inline-flex;
-            align-items: center;
-            box-shadow: inset 0px -2px 0px rgba(0,0,0,0.2);
-            margin: 10px 0;
-            border: 1px solid #005a9e;
-        }
-        /* Fortgeschrittene MakeCode Block Farben für Variablen */
-        .makecode-block-var {
-            background-color: #E3008C; /* MakeCode Variablen (pink) */
-            color: white;
-            font-family: "Segoe UI", sans-serif;
-            font-size: 14px;
-            padding: 8px 12px;
-            border-radius: 4px;
-            display: inline-flex;
-            align-items: center;
-            box-shadow: inset 0px -2px 0px rgba(0,0,0,0.2);
-            margin: 10px 0;
-            border: 1px solid #b5006f;
-        }
-        .makecode-var-pill {
-            background-color: #E3008C;
-            border: 1px solid white;
-            border-radius: 12px;
-            padding: 2px 8px;
-            margin: 0 4px;
-            display: inline-block;
-        }
-        .progress-container {
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        .progress-bar-bg {
-            flex-grow: 1;
-            background-color: #e0e0e0;
-            border-radius: 10px;
-            height: 20px;
-            overflow: hidden;
-        }
-        .progress-bar-fill {
-            background-color: #f1c40f;
-            width: 10%; /* Start-Fortschritt */
-            height: 100%;
-            transition: width 0.5s ease-in-out;
-            border-radius: 10px;
-        }
-        .level-badge {
-            background: #2c3e50;
-            color: white;
-            padding: 5px 15px;
-            border-radius: 15px;
-            font-weight: bold;
-            font-size: 0.9em;
-        }
-        .next-level-btn {
-            background: #e67e22;
-            display: none; /* Erst versteckt, bis Level geschafft */
-        }
-        .next-level-btn:hover { background: #d35400; }
-
-    </style>
+    <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
     <div style="max-width: 1200px; margin: 0 auto;">
@@ -276,3 +182,4 @@ agent_name = input("Gib deinen Namen ein: ")
     </script>
 </body>
 </html>
+
