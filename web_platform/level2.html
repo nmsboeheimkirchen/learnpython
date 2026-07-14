@@ -21,44 +21,44 @@
             <div class="progress-bar-bg">
                 <div class="progress-bar-fill" id="progress-fill" style="width: 10%;"></div>
             </div>
-            <span id="status-text">🌟 Mission 2: Identifikation</span>
-            <button id="next-level-btn" class="next-level-btn" onclick="window.location.href='level3.html'">➡️ Zu Level 3</button>
+            <span id="status-text">Warte auf Eingabe...</span>
+            <button id="next-level-btn" class="next-level-btn" onclick="window.location.href='level3.html'">Nächstes Level</button>
         </div>
     </div>
 
     <div class="container">
         <!-- Linke Seite: Anleitung -->
         <div class="panel guide-panel">
-            <h1>Level 2: Identifikation anfordern</h1>
-            <p>Gut gemacht! Wir haben den Server angepingt. Jetzt muss das System nach einem Namen fragen.</p>
+            <h1>Level 2: Eingabe & Variablen</h1>
+            <p>Das System braucht nun deinen Namen.</p>
             
-            <h2>Eingabe und Variablen</h2>
-            <p>Um eine Frage an den Benutzer zu stellen, nutzen wir <span class="tooltip">input()<span class="tooltiptext">Wartet darauf, dass der Benutzer Text eingibt.</span></span>. Damit sich der Computer die Antwort merkt, stecken wir sie in eine <span class="tooltip">Variable<span class="tooltiptext">Wie eine Schublade mit Namen, in der wir Daten aufbewahren.</span></span>.</p>
+            <h2>Benutzereingabe</h2>
+            <p>Nutze <span class="tooltip">input()<span class="tooltiptext">Wartet auf Texteingabe.</span></span> um zu fragen. Speichere die Antwort in einer <span class="tooltip">Variable<span class="tooltiptext">Eine Schublade für Daten.</span></span>.</p>
             
             <div class="block-hint">
-                <p><strong>Erinnerst du dich an den Micro:bit?</strong></p>
                 <div class="makecode-block-var">
                     setze <span class="makecode-var-pill">name</span> auf <span class="makecode-var-pill" style="border: 1px dotted #ccc; box-shadow:none; margin-left: 8px;">frage nach Text</span>
                 </div>
-                <p>In Python sieht das so aus:</p>
+                <p>In Python:</p>
                 <code>name = input("Wie heißt du?")</code>
             </div>
 
-            <h2>📝 Deine Mission:</h2>
-            <p>1. Lass den Code `print("Verbindung wird hergestellt...")` aus Level 1 stehen!<br>2. Erstelle darunter eine Variable namens <strong>agent_name</strong>.<br>3. Nutze den <strong>input()</strong> Befehl, um den Nutzer auf dem Bildschirm zu fragen: <strong>"Gib deinen Namen ein: "</strong>.<br>4. Führe den Code aus und tippe eine Antwort in das Dialogfenster ein!</p>
+            <h2>Aufgabe</h2>
+            <p>1. Erstelle die Variable <strong>agent_name</strong>.<br>2. Nutze <strong>input()</strong>, um zu fragen: <strong>"Gib deinen Namen ein: "</strong>.<br>3. Klicke "Code Ausführen".</p>
         </div>
 
         <!-- Rechte Seite: Editor und Konsole -->
         <div class="panel editor-panel">
             <h2>Python Terminal</h2>
-            <textarea id="python-editor"># Code aus Level 1 (nicht löschen!)
-print("Verbindung wird hergestellt...")
+            <textarea id="python-editor">print("Verbindung wird hergestellt...")
 
-# Deine neue Zeile!
-# Erstelle die Variable agent_name und benutze input()
+# Erstelle agent_name und frage mit input()
 
 </textarea>
-            <button id="run-btn" disabled>⌛ Lade Python...</button>
+            <div style="display: flex; gap: 10px;">
+                <button id="run-btn" style="flex-grow: 1;" disabled>⌛ Lade Python...</button>
+                <button class="test-btn" onclick="document.getElementById('python-editor').nextSibling.CodeMirror.setValue('print(\'Verbindung wird hergestellt...\')\nagent_name = input(\'Gib deinen Namen ein: \')')">Cheat (Für Lehrer)</button>
+            </div>
             <div id="console-output">Python wird im Hintergrund geladen. Bitte einen kurzen Moment warten...</div>
         </div>
     </div>

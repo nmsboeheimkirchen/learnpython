@@ -21,8 +21,8 @@
             <div class="progress-bar-bg">
                 <div class="progress-bar-fill" id="progress-fill"></div>
             </div>
-            <span id="status-text">🌟 Mission 1: Sende einen Ping</span>
-            <button id="next-level-btn" class="next-level-btn" onclick="window.location.href='level2.html'">➡️ Zu Level 2</button>
+            <span id="status-text">Warte auf Eingabe...</span>
+            <button id="next-level-btn" class="next-level-btn" onclick="window.location.href='level2.html'">Nächstes Level</button>
         </div>
     </div>
 
@@ -30,23 +30,19 @@
         <!-- Linke Seite: Anleitung -->
         <div class="panel guide-panel">
             <h1>Level 1: Ping an das System</h1>
-            <p>Willkommen am Terminal, Agent! Dein Code hat in der Vergangenheit aus vielen bunten Blöcken bestanden. Aber als echter Hacker tippen wir unsere Befehle nun direkt in den Computer.</p>
+            <p>Willkommen! Statt mit Blöcken tippen wir Befehle nun direkt ein.</p>
             
-            <h2>So geht's: Texte senden</h2>
-            <p>Um dem Terminal zu sagen, dass es einen Text anzeigen soll, nutzen wir den Befehl <span class="tooltip">print()<span class="tooltiptext">Druckt Text in die Konsole. Der Text muss in Anführungszeichen stehen!</span></span>.</p>
+            <h2>Texte senden</h2>
+            <p>Nutze <span class="tooltip">print()<span class="tooltiptext">Druckt Text. Text muss in " " stehen!</span></span>, um Text anzuzeigen.</p>
             
             <div class="block-hint">
-                <p><strong>Erinnerst du dich an die Blöcke im micro:bit?</strong></p>
-                <!-- CSS generierter Block anstelle eines Bildes -->
-                <div class="makecode-block">
-                    zeige Text <span class="makecode-input">"Verbindung wird hergestellt..."</span>
-                </div>
-                <p>In Python ist das ganz ähnlich:</p>
+                <div class="makecode-block">zeige Text <span class="makecode-input">"Verbindung wird hergestellt..."</span></div>
+                <p>In Python:</p>
                 <code>print("Verbindung wird hergestellt...")</code>
             </div>
 
-            <h2>📝 Deine Mission:</h2>
-            <p>1. Lösche den vorbereiteten Code im Editor.<br>2. Schreibe einen Befehl, der <strong>"Verbindung wird hergestellt..."</strong> auf dem Bildschirm ausgibt.<br>3. Klicke auf "Code Ausführen".</p>
+            <h2>Aufgabe</h2>
+            <p>1. Lösche den Code im Editor.<br>2. Schreibe: <strong>print("Verbindung wird hergestellt...")</strong><br>3. Klicke "Code Ausführen".</p>
         </div>
 
         <!-- Rechte Seite: Editor und Konsole -->
@@ -55,7 +51,10 @@
             <textarea id="python-editor"># Tippe deinen Code hier rein!
 print("Irgendein Text")
 </textarea>
-            <button id="run-btn" disabled>⌛ Lade Python...</button>
+            <div style="display: flex; gap: 10px;">
+                <button id="run-btn" style="flex-grow: 1;" disabled>⌛ Lade Python...</button>
+                <button class="test-btn" onclick="document.getElementById('python-editor').nextSibling.CodeMirror.setValue('print(\'Verbindung wird hergestellt...\')')">Cheat (Für Lehrer)</button>
+            </div>
             <div id="console-output">Python wird im Hintergrund geladen. Bitte einen kurzen Moment warten...</div>
         </div>
     </div>

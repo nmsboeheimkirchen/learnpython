@@ -21,45 +21,43 @@
             <div class="progress-bar-bg">
                 <div class="progress-bar-fill" id="progress-fill" style="width: 20%;"></div>
             </div>
-            <span id="status-text">🌟 Mission 3: Der Hack</span>
-            <button id="next-level-btn" class="next-level-btn" onclick="alert('Gut gemacht! Den Rest des Lernpfads gibt es bald auf GitHub Classroom!')">➡️ Mission Abschließen</button>
+            <span id="status-text">Warte auf Eingabe...</span>
+            <button id="next-level-btn" class="next-level-btn" onclick="alert('Gut gemacht! Den Rest des Lernpfads gibt es bald auf GitHub Classroom!')">Abschließen</button>
         </div>
     </div>
 
     <div class="container">
         <!-- Linke Seite: Anleitung -->
         <div class="panel guide-panel">
-            <h1>Level 3: Identifikation bestätigen</h1>
-            <p>Hervorragend! Der Computer kennt nun deinen Namen und hat ihn in der Schublade aufbewahrt.</p>
+            <h1>Level 3: Variablen ausgeben</h1>
+            <p>Der Computer hat deinen Namen gespeichert.</p>
             
-            <h2>Variablen ausgeben</h2>
-            <p>Jetzt wollen wir nur den Inhalt der Variable auf dem Bildschirm anzeigen lassen. Wenn du eine Variable ausgibst, darfst du <strong>keine Anführungszeichen</strong> verwenden, sonst druckt der Computer das Wort statt des Inhalts.</p>
+            <h2>Keine Anführungszeichen!</h2>
+            <p>Wenn du eine Variable ausgibst, verwende <strong>keine Anführungszeichen</strong>, sonst druckt der Computer den Namen der Variable als normalen Text.</p>
             
             <div class="block-hint">
-                <p><strong>Erinnerst du dich an den Micro:bit?</strong></p>
-                <div class="makecode-block">
-                    zeige Text <span class="makecode-var-pill" style="margin-left: 8px;">name</span>
-                </div>
-                <p>In Python machst du das ganz einfach so:</p>
+                <div class="makecode-block">zeige Text <span class="makecode-var-pill" style="margin-left: 8px;">name</span></div>
+                <p>In Python:</p>
                 <code>print(agent_name)</code>
             </div>
 
-            <h2>📝 Deine Mission:</h2>
-            <p>1. Lass den bisherigen Code stehen.<br>2. Füge ganz unten einen **dritten Befehl** hinzu.<br>3. Nutze `print()`, um <strong>nur deine Variable</strong> (agent_name) auszugeben!<br>4. Führe den Code aus. Schaffst du das Feuerwerk?</p>
+            <h2>Aufgabe</h2>
+            <p>1. Füge am Ende einen dritten Befehl hinzu.<br>2. Nutze <code>print()</code>, um <strong>nur die Variable</strong> (agent_name) auszugeben!<br>3. Klicke "Code Ausführen".</p>
         </div>
 
         <!-- Rechte Seite: Editor und Konsole -->
         <div class="panel editor-panel">
             <h2>Python Terminal</h2>
-            <textarea id="python-editor"># Code aus Level 1 & 2 (nicht löschen!)
-print("Verbindung wird hergestellt...")
+            <textarea id="python-editor">print("Verbindung wird hergestellt...")
 agent_name = input("Gib deinen Namen ein: ")
 
-# TODO: Deine neue Zeile!
-# Nutze print, um agent_name auf dem Bildschirm anzuzeigen.
+# Gib agent_name aus:
 
 </textarea>
-            <button id="run-btn" disabled>⌛ Lade Python...</button>
+            <div style="display: flex; gap: 10px;">
+                <button id="run-btn" style="flex-grow: 1;" disabled>⌛ Lade Python...</button>
+                <button class="test-btn" onclick="document.getElementById('python-editor').nextSibling.CodeMirror.setValue('print(\'Verbindung wird hergestellt...\')\nagent_name = input(\'Gib deinen Namen ein: \')\nprint(agent_name)')">Cheat (Für Lehrer)</button>
+            </div>
             <div id="console-output">Python wird im Hintergrund geladen. Bitte einen kurzen Moment warten...</div>
         </div>
     </div>
