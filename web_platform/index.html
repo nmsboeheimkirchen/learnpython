@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Agenten-Training</title>
+    <!-- Keine externen CSS/JS importieren, stattdessen Pyodide für Python im Browser -->
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+    <!-- CodeMirror für den Editor -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #f0f2f5; }
+        .container { display: flex; gap: 20px; max-width: 1200px; margin: 0 auto; }
+        .panel { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex: 1; }
+        .guide-panel { flex: 0.8; }
+        .editor-panel { flex: 1.2; display: flex; flex-direction: column; }
+        
+        h1, h2 { color: #2c3e50; margin-top: 0; }
+        .block-hint { background: #e8f4f8; padding: 15px; border-radius: 6px; border-left: 4px solid #3498db; margin: 15px 0; }
+        .tooltip { position: relative; display: inline-block; cursor: help; border-bottom: 1px dotted #3498db; color: #2980b9; font-weight: bold; }
+        .tooltip .tooltiptext { visibility: hidden; width: 200px; background-color: #333; color: #fff; text-align: center; border-radius: 6px; padding: 5px; position: absolute; z-index: 1; bottom: 125%; left: 50%; margin-left: -100px; opacity: 0; transition: opacity 0.3s; font-weight: normal; font-size: 0.9em; }
+        .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
+        
+        .CodeMirror { height: 300px; border-radius: 4px; font-size: 16px; margin-bottom: 15px; }
+        button { background: #2ecc71; color: white; border: none; padding: 10px 20px; font-size: 16px; border-radius: 4px; cursor: pointer; transition: background 0.3s; font-weight: bold; width: 100%;}
+        button:hover { background: #27ae60; }
+        button:disabled { background: #95a5a6; cursor: not-allowed; }
+        
+        #console-output { background: #1e1e1e; color: #00ff00; padding: 15px; border-radius: 4px; font-family: monospace; height: 150px; overflow-y: auto; white-space: pre-wrap; margin-top: 15px; }
+        
+        /* CSS MakeCode Block Design */
+        .makecode-block {
+            background-color: #0078D7; /* MakeCode Grundlagen (blau) */
+            color: white;
+            font-family: "Segoe UI", sans-serif;
+            font-size: 14px;
+            padding: 8px 12px;
+            border-radius: 4px;
+            display: inline-flex;
+            align-items: center;
+            box-shadow: inset 0px -2px 0px rgba(0,0,0,0.2);
+            margin: 10px 0;
+            border: 1px solid #005a9e;
+        }
+        .makecode-input {
+            background-color: white;
+            color: #d12a2a; /* Rote Schrift für Strings in MakeCode */
+            border-radius: 12px;
+            padding: 2px 8px;
+            margin-left: 8px;
+            font-family: monospace;
+            box-shadow: inset 0px 2px 0px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Linke Seite: Anleitung -->
+        <div class="panel guide-panel">
+            <h1>Level 1: System Access</h1>
+            <p>Hallo Agent! Wir lernen heute, dem Computer Text-Befehle zu geben.</p>
+            
+            <h2>So geht's: Ausgabe</h2>
+            <p>Um Text auf dem Bildschirm anzuzeigen, nutzen wir den Befehl <span class="tooltip">print()<span class="tooltiptext">Druckt Text in die Konsole. Der Text muss in Anführungszeichen stehen!</span></span>.</p>
+            
+            <div class="block-hint">
+                <p><strong>Erinnerst du dich an die Blöcke im micro:bit?</strong></p>
+                <!-- CSS generierter Block anstelle eines Bildes -->
+                <div class="makecode-block">
+                    zeige Text <span class="makecode-input">"Hello!"</span>
+                </div>
+                <p>In Python ist das ganz ähnlich:</p>
+                <code>print("Hello!")</code>
+            </div>
+
+            <h2>Deine Mission:</h2>
+            <p>1. Lösche den Code im Editor.<br>2. Schreibe einen Befehl, der <strong>"System gehackt!"</strong> ausgibt.<br>3. Klicke auf "Code Ausführen".</p>
+        </div>
+
+        <!-- Rechte Seite: Editor und Konsole -->
+        <div class="panel editor-panel">
+            <h2>Python Terminal</h2>
+            <textarea id="python-editor"># Tippe deinen Code hier rein!
+print("Hallo Welt!")
+</textarea>
+            <button id="run-btn" disabled>⌛ Lade Python...</button>
+            <div id="console-output">Python wird im Hintergrund geladen. Bitte einen kurzen Moment warten...</div>
+        </div>
+    </div>
+
+    <!-- Pyodide Setup und Ausführung -->
+    <script>
+        let pyodideReady = false;
+        let pyodide;
+
+        async function main() {
+            pyodide = await loadPyodide();
+            pyodideReady = true;
+            document.getElementById("run-btn").disabled = false;
+            document.getElementById("run-btn").innerText = "▶ Code Ausführen";
+            document.getElementById("console-output").innerText = "Bereit für deine Befehle, Agent!";
+        }
+        main();
+
+        document.getElementById("run-btn").addEventListener("click", async () => {
+            if (!pyodideReady) return;
+            
+            const code = window.editor.getValue();
+            const outputDiv = document.getElementById("console-output");
+            outputDiv.innerText = "Führe aus...\n";
+            
+            // Leite stdout um in unser div
+            pyodide.setStdout({ batched: (msg) => { outputDiv.innerText += msg + "\n"; } });
+            pyodide.setStderr({ batched: (msg) => { outputDiv.innerText += "FEHLER: " + msg + "\n"; } });
+            
+            try {
+                outputDiv.innerText = ""; // Clear
+                await pyodide.runPythonAsync(code);
+            } catch (err) {
+                outputDiv.innerText += "\nFEHLER:\n" + err.message;
+            }
+        });
+    </script>
+
+    <!-- CodeMirror Setup für Syntax Highlighting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+    <script>
+        window.editor = CodeMirror.fromTextArea(document.getElementById("python-editor"), {
+            mode: "python",
+            theme: "monokai",
+            lineNumbers: true,
+            indentUnit: 4
+        });
+    </script>
+</body>
+</html>
