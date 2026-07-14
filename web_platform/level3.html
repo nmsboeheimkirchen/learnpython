@@ -29,24 +29,23 @@
     <div class="container">
         <!-- Linke Seite: Anleitung -->
         <div class="panel guide-panel">
-            <h1>Level 3: Der Hack</h1>
+            <h1>Level 3: Identifikation bestätigen</h1>
             <p>Hervorragend! Der Computer kennt nun deinen Namen und hat ihn in der Schublade aufbewahrt.</p>
             
-            <h2>Variablen ausgeben (Strings verbinden)</h2>
-            <p>Jetzt wollen wir den Text aus Level 1 mit der Variablen aus Level 2 mischen! Du kannst dem <span class="tooltip">print()<span class="tooltiptext">Druckt Text in die Konsole.</span></span> Befehl mehrere Dinge geben, wenn du sie mit einem <strong>Komma</strong> trennst.</p>
+            <h2>Variablen ausgeben</h2>
+            <p>Jetzt wollen wir nur den Inhalt der Variable auf dem Bildschirm anzeigen lassen. Wenn du eine Variable ausgibst, darfst du <strong>keine Anführungszeichen</strong> verwenden, sonst druckt der Computer das Wort statt des Inhalts.</p>
             
             <div class="block-hint">
                 <p><strong>Erinnerst du dich an den Micro:bit?</strong></p>
-                <!-- Man reiht in MakeCode Strings per "Verbinde" Block aneinander, wir zeigen es konzeptionell ähnlich -->
                 <div class="makecode-block">
-                    zeige Text <span class="makecode-input" style="border: 1px dashed red;">verbinde <span>"Hallo "</span> und <span class="makecode-var-pill" style="margin: 0;">name</span></span>
+                    zeige Text <span class="makecode-var-pill" style="margin-left: 8px;">name</span>
                 </div>
-                <p>In Python machst du das ganz einfach mit einem Komma:</p>
-                <code>print("Hallo", agent_name)</code>
+                <p>In Python machst du das ganz einfach so:</p>
+                <code>print(agent_name)</code>
             </div>
 
             <h2>📝 Deine Mission:</h2>
-            <p>1. Lass den bisherigen Code stehen.<br>2. Füge ganz unten einen **dritten Befehl** hinzu.<br>3. Mische festen Text und deine Variable, um auszugeben: <strong>"System gehackt. Willkommen,"</strong> gefolgt von deinem Namen!<br>4. Führe den Code aus. Schaffst du das Feuerwerk?</p>
+            <p>1. Lass den bisherigen Code stehen.<br>2. Füge ganz unten einen **dritten Befehl** hinzu.<br>3. Nutze `print()`, um <strong>nur deine Variable</strong> (agent_name) auszugeben!<br>4. Führe den Code aus. Schaffst du das Feuerwerk?</p>
         </div>
 
         <!-- Rechte Seite: Editor und Konsole -->
@@ -57,7 +56,7 @@ print("Verbindung wird hergestellt...")
 agent_name = input("Gib deinen Namen ein: ")
 
 # TODO: Deine neue Zeile!
-# Nutze print, um "System gehackt. Willkommen," und agent_name auszugeben.
+# Nutze print, um agent_name auf dem Bildschirm anzuzeigen.
 
 </textarea>
             <button id="run-btn" disabled>⌛ Lade Python...</button>
@@ -106,8 +105,9 @@ agent_name = input("Gib deinen Namen ein: ")
                 await pyodide.runPythonAsync(code);
 
                 // --- ERFOLGS-ÜBERPRÜFUNG ---
-                // Überprüfe ob der Output "System gehackt. Willkommen," (case-insensitive) und Variablen-Nutzung enthält
-                if (currentOutput.toLowerCase().includes("system gehackt") && code.includes("agent_name") && code.includes(",")) {
+                // Überprüfe ob der Code print(agent_name) (oder sehr ähnlich) enthält
+                let cleanedCode = code.replace(/\s/g, ''); // Entferne Leerzeichen für einfaches Matching
+                if (cleanedCode.includes("print(agent_name)")) {
                     triggerSuccess();
                 }
 
