@@ -6,6 +6,8 @@
     <title>Python Agenten-Training</title>
     <!-- Keine externen CSS/JS importieren, stattdessen Pyodide für Python im Browser -->
     <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+    <!-- Confetti Bibliothek für Belohnungen -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
     <!-- CodeMirror für den Editor -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
@@ -52,9 +54,61 @@
             font-family: monospace;
             box-shadow: inset 0px 2px 0px rgba(0,0,0,0.1);
         }
+
+        /* Fortschritts-Anzeige */
+        .progress-container {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .progress-bar-bg {
+            flex-grow: 1;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            height: 20px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            background-color: #f1c40f;
+            width: 10%; /* Start-Fortschritt */
+            height: 100%;
+            transition: width 0.5s ease-in-out;
+            border-radius: 10px;
+        }
+        .level-badge {
+            background: #2c3e50;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        .next-level-btn {
+            background: #e67e22;
+            display: none; /* Erst versteckt, bis Level geschafft */
+        }
+        .next-level-btn:hover { background: #d35400; }
+
     </style>
 </head>
 <body>
+    <div style="max-width: 1200px; margin: 0 auto;">
+        <!-- Fortschritts-Tracker UI -->
+        <div class="progress-container">
+            <span class="level-badge">Level 1 von 10</span>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="progress-fill"></div>
+            </div>
+            <span id="status-text">🌟 Mission: System hacken</span>
+            <button id="next-level-btn" class="next-level-btn">➡️ Nächstes Level</button>
+        </div>
+    </div>
+
     <div class="container">
         <!-- Linke Seite: Anleitung -->
         <div class="panel guide-panel">
@@ -110,17 +164,81 @@ print("Hallo Welt!")
             const outputDiv = document.getElementById("console-output");
             outputDiv.innerText = "Führe aus...\n";
             
-            // Leite stdout um in unser div
-            pyodide.setStdout({ batched: (msg) => { outputDiv.innerText += msg + "\n"; } });
+            let currentOutput = "";
+
+            // Leite stdout um in unser div und speichere für überprüfung
+            pyodide.setStdout({ batched: (msg) => { 
+                outputDiv.innerText += msg + "\n"; 
+                currentOutput += msg + "\n";
+            } });
             pyodide.setStderr({ batched: (msg) => { outputDiv.innerText += "FEHLER: " + msg + "\n"; } });
             
             try {
                 outputDiv.innerText = ""; // Clear
                 await pyodide.runPythonAsync(code);
+
+                // --- ERFOLGS-ÜBERPRÜFUNG ---
+                // Überprüfe ob der Output "System gehackt!" (oder ähnlich) enthält
+                if (currentOutput.toLowerCase().includes("system gehackt")) {
+                    triggerSuccess();
+                }
+
             } catch (err) {
                 outputDiv.innerText += "\nFEHLER:\n" + err.message;
             }
         });
+
+        function triggerSuccess() {
+            // Zeige Nächstes Level Button
+            document.getElementById("next-level-btn").style.display = "block";
+            document.getElementById("status-text").innerHTML = "✅ <b>MISSION ERFÜLLT!</b>";
+            document.getElementById("status-text").style.color = "#27ae60";
+            
+            // Fülle die Fortschrittsleiste
+            document.getElementById("progress-fill").style.width = "20%";
+
+            // 🌟 KONFETTI BELOHNUNGEN 🌟
+            // 1. Normales Konfetti
+            confetti({
+                particleCount: 150,
+                spread: 70,
+                origin: { y: 0.6 }
+            });
+
+            // 2. Ein paar Sterne (Custom Shapes via canvas-confetti)
+            var defaults = { spread: 360, ticks: 50, gravity: 0, decay: 0.94, startVelocity: 30, colors: ['FFE400', 'FFBD00', 'E89400', 'FFCA6C', 'FDFFB8'] };
+            function shootStars() {
+                confetti({ ...defaults, particleCount: 40, scalar: 1.2, shapes: ['star'] });
+                confetti({ ...defaults, particleCount: 10, scalar: 0.75, shapes: ['circle'] });
+            }
+            setTimeout(shootStars, 250);
+            setTimeout(shootStars, 400);
+
+            // Schul-Feuerwerk wie in MS Teams!
+            var duration = 3 * 1000;
+            var animationEnd = Date.now() + duration;
+            var randomInRange = (min, max) => Math.random() * (max - min) + min;
+
+            var interval = setInterval(function() {
+                var timeLeft = animationEnd - Date.now();
+                if (timeLeft <= 0) { return clearInterval(interval); }
+                var particleCount = 50 * (timeLeft / duration);
+                confetti({
+                    particleCount: particleCount,
+                    startVelocity: 30,
+                    spread: 360,
+                    ticks: 60,
+                    origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+                });
+                confetti({
+                    particleCount: particleCount,
+                    startVelocity: 30,
+                    spread: 360,
+                    ticks: 60,
+                    origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+                });
+            }, 250);
+        }
     </script>
 
     <!-- CodeMirror Setup für Syntax Highlighting -->
