@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Agenten-Training</title>
+    <!-- Keine externen CSS/JS importieren, stattdessen Pyodide für Python im Browser -->
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+    <!-- Confetti Bibliothek für Belohnungen -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    <!-- CodeMirror für den Editor -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #f0f2f5; }
+        .container { display: flex; gap: 20px; max-width: 1200px; margin: 0 auto; }
+        .panel { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex: 1; }
+        .guide-panel { flex: 0.8; }
+        .editor-panel { flex: 1.2; display: flex; flex-direction: column; }
+        
+        h1, h2 { color: #2c3e50; margin-top: 0; }
+        .block-hint { background: #e8f4f8; padding: 15px; border-radius: 6px; border-left: 4px solid #3498db; margin: 15px 0; }
+        .tooltip { position: relative; display: inline-block; cursor: help; border-bottom: 1px dotted #3498db; color: #2980b9; font-weight: bold; }
+        .tooltip .tooltiptext { visibility: hidden; width: 200px; background-color: #333; color: #fff; text-align: center; border-radius: 6px; padding: 5px; position: absolute; z-index: 1; bottom: 125%; left: 50%; margin-left: -100px; opacity: 0; transition: opacity 0.3s; font-weight: normal; font-size: 0.9em; }
+        .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
+        
+        .CodeMirror { height: 300px; border-radius: 4px; font-size: 16px; margin-bottom: 15px; }
+        button { background: #2ecc71; color: white; border: none; padding: 10px 20px; font-size: 16px; border-radius: 4px; cursor: pointer; transition: background 0.3s; font-weight: bold; width: 100%;}
+        button:hover { background: #27ae60; }
+        button:disabled { background: #95a5a6; cursor: not-allowed; }
+        
+        #console-output { background: #1e1e1e; color: #00ff00; padding: 15px; border-radius: 4px; font-family: monospace; height: 150px; overflow-y: auto; white-space: pre-wrap; margin-top: 15px; }
+        
+        /* CSS MakeCode Block Design */
+        .makecode-block {
+            background-color: #0078D7; /* MakeCode Grundlagen (blau) */
+            color: white;
+            font-family: "Segoe UI", sans-serif;
+            font-size: 14px;
+            padding: 8px 12px;
+            border-radius: 4px;
+            display: inline-flex;
+            align-items: center;
+            box-shadow: inset 0px -2px 0px rgba(0,0,0,0.2);
+            margin: 10px 0;
+            border: 1px solid #005a9e;
+        }
+        /* Fortgeschrittene MakeCode Block Farben für Variablen */
+        .makecode-block-var {
+            background-color: #E3008C; /* MakeCode Variablen (pink) */
+            color: white;
+            font-family: "Segoe UI", sans-serif;
+            font-size: 14px;
+            padding: 8px 12px;
+            border-radius: 4px;
+            display: inline-flex;
+            align-items: center;
+            box-shadow: inset 0px -2px 0px rgba(0,0,0,0.2);
+            margin: 10px 0;
+            border: 1px solid #b5006f;
+        }
+        .makecode-var-pill {
+            background-color: #E3008C;
+            border: 1px solid white;
+            border-radius: 12px;
+            padding: 2px 8px;
+            margin: 0 4px;
+            display: inline-block;
+        }
+        .progress-container {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .progress-bar-bg {
+            flex-grow: 1;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            height: 20px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            background-color: #f1c40f;
+            width: 10%; /* Start-Fortschritt */
+            height: 100%;
+            transition: width 0.5s ease-in-out;
+            border-radius: 10px;
+        }
+        .level-badge {
+            background: #2c3e50;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        .next-level-btn {
+            background: #e67e22;
+            display: none; /* Erst versteckt, bis Level geschafft */
+        }
+        .next-level-btn:hover { background: #d35400; }
+
+    </style>
+</head>
+<body>
+    <div style="max-width: 1200px; margin: 0 auto;">
+        <!-- Fortschritts-Tracker UI -->
+        <div class="progress-container">
+            <span class="level-badge">Level 3 von 10</span>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="progress-fill" style="width: 20%;"></div>
+            </div>
+            <span id="status-text">🌟 Mission 3: Der Hack</span>
+            <button id="next-level-btn" class="next-level-btn" onclick="alert('Gut gemacht! Den Rest des Lernpfads gibt es bald auf GitHub Classroom!')">➡️ Mission Abschließen</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Linke Seite: Anleitung -->
+        <div class="panel guide-panel">
+            <h1>Level 3: Der Hack</h1>
+            <p>Hervorragend! Der Computer kennt nun deinen Namen und hat ihn in der Schublade aufbewahrt.</p>
+            
+            <h2>Variablen ausgeben (Strings verbinden)</h2>
+            <p>Jetzt wollen wir den Text aus Level 1 mit der Variablen aus Level 2 mischen! Du kannst dem <span class="tooltip">print()<span class="tooltiptext">Druckt Text in die Konsole.</span></span> Befehl mehrere Dinge geben, wenn du sie mit einem <strong>Komma</strong> trennst.</p>
+            
+            <div class="block-hint">
+                <p><strong>Erinnerst du dich an den Micro:bit?</strong></p>
+                <!-- Man reiht in MakeCode Strings per "Verbinde" Block aneinander, wir zeigen es konzeptionell ähnlich -->
+                <div class="makecode-block">
+                    zeige Text <span class="makecode-input" style="border: 1px dashed red;">verbinde <span>"Hallo "</span> und <span class="makecode-var-pill" style="margin: 0;">name</span></span>
+                </div>
+                <p>In Python machst du das ganz einfach mit einem Komma:</p>
+                <code>print("Hallo", agent_name)</code>
+            </div>
+
+            <h2>📝 Deine Mission:</h2>
+            <p>1. Lass den bisherigen Code stehen.<br>2. Füge ganz unten einen **dritten Befehl** hinzu.<br>3. Mische festen Text und deine Variable, um auszugeben: <strong>"System gehackt. Willkommen,"</strong> gefolgt von deinem Namen!<br>4. Führe den Code aus. Schaffst du das Feuerwerk?</p>
+        </div>
+
+        <!-- Rechte Seite: Editor und Konsole -->
+        <div class="panel editor-panel">
+            <h2>Python Terminal</h2>
+            <textarea id="python-editor"># Code aus Level 1 & 2 (nicht löschen!)
+print("Verbindung wird hergestellt...")
+agent_name = input("Gib deinen Namen ein: ")
+
+# TODO: Deine neue Zeile!
+# Nutze print, um "System gehackt. Willkommen," und agent_name auszugeben.
+
+</textarea>
+            <button id="run-btn" disabled>⌛ Lade Python...</button>
+            <div id="console-output">Python wird im Hintergrund geladen. Bitte einen kurzen Moment warten...</div>
+        </div>
+    </div>
+
+    <!-- Pyodide Setup und Ausführung -->
+    <script>
+        let pyodideReady = false;
+        let pyodide;
+
+        async function main() {
+            pyodide = await loadPyodide();
+            pyodideReady = true;
+            document.getElementById("run-btn").disabled = false;
+            document.getElementById("run-btn").innerText = "▶ Code Ausführen";
+            document.getElementById("console-output").innerText = "Bereit für deine Befehle, Agent!";
+        }
+        main();
+
+        document.getElementById("run-btn").addEventListener("click", async () => {
+            if (!pyodideReady) return;
+            
+            const code = window.editor.getValue();
+            const outputDiv = document.getElementById("console-output");
+            outputDiv.innerText = "Führe aus...\n";
+            
+            // Pyodide stdin überschreiben (für input())
+            pyodide.setStdin({
+                stdin: () => {
+                    return prompt("Das Python Programm fragt nach einer Eingabe:");
+                }
+            });
+
+            let currentOutput = "";
+
+            pyodide.setStdout({ batched: (msg) => { 
+                outputDiv.innerText += msg + "\n"; 
+                currentOutput += msg + "\n";
+            } });
+            pyodide.setStderr({ batched: (msg) => { outputDiv.innerText += "FEHLER: " + msg + "\n"; } });
+            
+            try {
+                outputDiv.innerText = "";
+                await pyodide.runPythonAsync(code);
+
+                // --- ERFOLGS-ÜBERPRÜFUNG ---
+                // Überprüfe ob der Output "System gehackt. Willkommen," (case-insensitive) und Variablen-Nutzung enthält
+                if (currentOutput.toLowerCase().includes("system gehackt") && code.includes("agent_name") && code.includes(",")) {
+                    triggerSuccess();
+                }
+
+            } catch (err) {
+                outputDiv.innerText += "\nFEHLER:\n" + err.message;
+            }
+        });
+
+        function triggerSuccess() {
+            // Zeige Nächstes Level Button
+            document.getElementById("next-level-btn").style.display = "block";
+            document.getElementById("status-text").innerHTML = "✅ <b>MISSION ERFÜLLT!</b>";
+            document.getElementById("status-text").style.color = "#27ae60";
+            
+            // Fülle die Fortschrittsleiste
+            document.getElementById("progress-fill").style.width = "20%";
+
+            // 🌟 KONFETTI BELOHNUNGEN 🌟
+            // 1. Normales Konfetti
+            confetti({
+                particleCount: 150,
+                spread: 70,
+                origin: { y: 0.6 }
+            });
+
+            // 2. Ein paar Sterne (Custom Shapes via canvas-confetti)
+            var defaults = { spread: 360, ticks: 50, gravity: 0, decay: 0.94, startVelocity: 30, colors: ['FFE400', 'FFBD00', 'E89400', 'FFCA6C', 'FDFFB8'] };
+            function shootStars() {
+                confetti({ ...defaults, particleCount: 40, scalar: 1.2, shapes: ['star'] });
+                confetti({ ...defaults, particleCount: 10, scalar: 0.75, shapes: ['circle'] });
+            }
+            setTimeout(shootStars, 250);
+            setTimeout(shootStars, 400);
+
+            // Schul-Feuerwerk wie in MS Teams!
+            var duration = 3 * 1000;
+            var animationEnd = Date.now() + duration;
+            var randomInRange = (min, max) => Math.random() * (max - min) + min;
+
+            var interval = setInterval(function() {
+                var timeLeft = animationEnd - Date.now();
+                if (timeLeft <= 0) { return clearInterval(interval); }
+                var particleCount = 50 * (timeLeft / duration);
+                confetti({
+                    particleCount: particleCount,
+                    startVelocity: 30,
+                    spread: 360,
+                    ticks: 60,
+                    origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+                });
+                confetti({
+                    particleCount: particleCount,
+                    startVelocity: 30,
+                    spread: 360,
+                    ticks: 60,
+                    origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+                });
+            }, 250);
+        }
+    </script>
+
+    <!-- CodeMirror Setup für Syntax Highlighting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+    <script>
+        window.editor = CodeMirror.fromTextArea(document.getElementById("python-editor"), {
+            mode: "python",
+            theme: "monokai",
+            lineNumbers: true,
+            indentUnit: 4
+        });
+    </script>
+</body>
+</html>
