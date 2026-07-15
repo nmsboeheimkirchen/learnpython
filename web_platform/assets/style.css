@@ -336,3 +336,12 @@ button:disabled { background: #e8eaed; color: #9aa0a6; cursor: not-allowed; box-
     display: none; 
 }
 .next-level-btn:hover { background: #1e8e3e; }
+
+.block-tooltip {
+    position: relative;
+    cursor: help;
+}
+.block-tooltip .tooltiptext {
+    visibility: hidden; width: 220px; background-color: #202124; color: #fff; text-align: center; border-radius: 4px; padding: 8px; position: absolute; z-index: 2000; top: -45px; left: 50%; margin-left: -110px; opacity: 0; transition: opacity 0.2s; font-weight: 400; font-size: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); font-family: monospace; white-space: pre-wrap;
+}
+.block-tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }

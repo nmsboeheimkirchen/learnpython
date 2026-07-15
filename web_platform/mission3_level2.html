@@ -61,31 +61,56 @@
         </div>
 
     <div class="container">
-                <!-- Linke Seite: Anleitung -->
+                        <!-- Linke Seite: Anleitung -->
         <div class="panel guide-panel">
             <h1>Safe-Knacker - 2:</h1><h2>Zu hoch, zu niedrig</h2>
-            <p>Der Tresor soll uns helfen. Dazu muss er wissen, ob unsere Zahl größer oder kleiner als der Code ist.</p>
+            <p>Für diesen Schritt starten wir mit einem sauberen Editor! Der Tresor muss wissen, ob unsere Zahl größer oder kleiner als sein Code ist.</p>
             
             <h2>Zahlen aus Text machen</h2>
-            <p>In Python ist "5" (Text) nicht das gleiche wie 5 (Zahl). Um Text in Zahlen umzuwandeln, setzen wir ein <span class="tooltip">int()<span class="tooltiptext">Integer, auf Deutsch: Ganzzahl.</span></span> darum.</p>
+            <p>In Python ist "5" (Text) nicht das gleiche wie 5 (Zahl). Um Text in echte Zahlen umzuwandeln, setzen wir ein <span class="tooltip">int()<span class="tooltiptext">Integer, auf Deutsch: Ganzzahl.</span></span> darum.</p>
             
-            <div class="block-hint">
-                <div class="makecode-block">mache Zahl aus <span class="makecode-input">input()</span></div>
-                <p>In Python:</p>
-                <code>tipp = int(input("Tipp: "))<br><br>if tipp < 50:<br>&nbsp;&nbsp;&nbsp;&nbsp;print("Zu niedrig!")</code>
+            <h2>Dein Programm-Plan</h2>
+            <p>Fahre mit der Maus über die Blöcke, um den <span style="color: #1a73e8; font-weight: bold;">Python-Code</span> zu sehen!</p>
+            
+            <div class="block-hint" style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px;">
+                <!-- Block 1 -->
+                <div class="makecode-block block-tooltip">mach <span class="makecode-var-pill" style="background:#005a9e;">tipp</span> zur Zahl aus <span class="makecode-input">input("Tipp: ")</span>
+                    <span class="tooltiptext">tipp = int(input("Tipp: "))</span>
+                </div>
+                
+                <!-- Block 2 -->
+                <div class="makecode-block-var block-tooltip">wenn <span class="makecode-input">tipp < 50</span> dann
+                    <span class="tooltiptext">if tipp &lt; 50:</span>
+                </div>
+                
+                <!-- Block 3 -->
+                <div class="makecode-block block-tooltip" style="margin-left: 20px;">zeige Text <span class="makecode-input">"Zu niedrig!"</span>
+                    <span class="tooltiptext">print("Zu niedrig!")</span>
+                </div>
+                
+                <!-- Block 4 -->
+                <div class="makecode-block-var block-tooltip">ansonsten wenn <span class="makecode-input">tipp > 50</span> dann
+                    <span class="tooltiptext">elif tipp &gt; 50:</span>
+                </div>
+
+                <!-- Block 5 -->
+                <div class="makecode-block block-tooltip" style="margin-left: 20px;">zeige Text <span class="makecode-input">"Zu hoch!"</span>
+                    <span class="tooltiptext">print("Zu hoch!")</span>
+                </div>
             </div>
 
             <h2>Aufgabe</h2>
-            <p>1. Umschließe das input() aus dem vorigen Level mit <strong>int()</strong>, um eine Zahl zu bekommen.<br>2. Vergleiche den 	ipp mit dem Code (z.B. 50). <br>3. Nutze <strong>&lt;</strong> und <strong>&gt;</strong>, um "Zu niedrig" und "Zu hoch" in der Schleife per <strong>if/elif</strong> auszugeben!</p>
+            <p>Baue das Programm aus den Blöcken exakt im Editor nach. Pass auf die Einrückungen (Leerzeichen) auf!</p>
         </div>
 
         <!-- Rechte Seite: Editor und Konsole -->
         <div class="panel editor-panel">
             <h2>Python Terminal</h2>
             <textarea id="python-editor">
-tipp = ""
-while tipp != "123":
-    tipp = input("Code eingeben: ")
+# Wir fangen neu an!
+# Fahre mit der Maus ueber die bloecke links
+# und schreibe den Python-Code hierhin:
+
 </textarea>
             <div style="display: flex; gap: 10px;">
                 <button id="run-btn" style="flex-grow: 1;">▶ Code Ausführen</button>
@@ -121,6 +146,8 @@ while tipp != "123":
     </script>
 </body>
 </html>
+
+
 
 
 
