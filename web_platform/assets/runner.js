@@ -42,14 +42,17 @@ function applyUnlocks() {
         allLinks.forEach(link => {
             link.classList.remove('locked');
             link.innerHTML = link.innerHTML.replace(' 🔒', '');
-            // Update the hrefs for the placeholders to actually point somewhere
-            if(link.id === 'link-level2') link.href = 'level2.html';
-            if(link.id === 'link-level3') link.href = 'level3.html';
-            if(link.id === 'link-level4') link.href = 'level4.html';
-            if(link.id === 'link-m2-title') link.href = 'mission2_level1.html';
+            if(link.id === 'link-level2') link.href = 'mission1_level2.html';
+            if(link.id === 'link-level3') link.href = 'mission1_level3.html';
+            if(link.id === 'link-level4') link.href = 'mission1_level4.html';
+            if(link.id === 'link-m2-title') link.href = 'mission2_start.html';
             if(link.id === 'link-m2-l1') link.href = 'mission2_level1.html';
             if(link.id === 'link-m2-l2') link.href = 'mission2_level2.html';
             if(link.id === 'link-m2-l3') link.href = 'mission2_level3.html';
+            if(link.id === 'link-m3-title') link.href = 'mission3_start.html';
+            if(link.id === 'link-m3-l1') link.href = 'mission3_level1.html';
+            if(link.id === 'link-m3-l2') link.href = 'mission3_level2.html';
+            if(link.id === 'link-m3-l3') link.href = 'mission3_level3.html';
         });
         return;
     }
@@ -60,14 +63,17 @@ function applyUnlocks() {
             link.classList.remove('locked');
             link.innerHTML = link.innerHTML.replace(' 🔒', '');
             
-            // Assign actual href once unlocked
-            if(id === 'link-level2') link.href = 'level2.html';
-            if(id === 'link-level3') link.href = 'level3.html';
-            if(id === 'link-level4') link.href = 'level4.html';
-            if(id === 'link-m2-title') link.href = 'mission2_level1.html';
+            if(id === 'link-level2') link.href = 'mission1_level2.html';
+            if(id === 'link-level3') link.href = 'mission1_level3.html';
+            if(id === 'link-level4') link.href = 'mission1_level4.html';
+            if(id === 'link-m2-title') link.href = 'mission2_start.html';
             if(id === 'link-m2-l1') link.href = 'mission2_level1.html';
             if(id === 'link-m2-l2') link.href = 'mission2_level2.html';
             if(id === 'link-m2-l3') link.href = 'mission2_level3.html';
+            if(id === 'link-m3-title') link.href = 'mission3_start.html';
+            if(id === 'link-m3-l1') link.href = 'mission3_level1.html';
+            if(id === 'link-m3-l2') link.href = 'mission3_level2.html';
+            if(id === 'link-m3-l3') link.href = 'mission3_level3.html';
         }
     });
 
@@ -89,6 +95,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if(window.location.hash === '#l') {
         document.querySelectorAll('.next-level-btn').forEach(btn => btn.style.display = 'block');
     }
+    
+    // Auto-highlight active link based on current page
+    let currentPage = window.location.pathname.split("/").pop();
+    if(currentPage === 'index.html' || currentPage === '') currentPage = 'mission1_level1.html';
+    document.querySelectorAll('.sidebar a').forEach(link => {
+        if(link.getAttribute('href') === currentPage && !link.id.includes('title')) {
+            link.classList.add('active-link');
+        } else {
+            link.classList.remove('active-link');
+        }
+    });
 });
 
 

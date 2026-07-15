@@ -1,0 +1,134 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Agenten-Training</title>
+    <!-- Skulpt für Python im Browser -->
+    <!-- ACHTUNG: Skulpt DOM-Elemente müssen geladen sein, Code läuft nach DOMContentLoaded -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script> 
+    <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js"></script> 
+    <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js"></script> 
+    <!-- Confetti Bibliothek für Belohnungen -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    <script src="assets/runner.js"></script>
+    <!-- CodeMirror für den Editor -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
+    <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+        <!-- Sidebar Navigation -->
+    <div id="mySidebar" class="sidebar active">
+        <div class="sidebar-header">Agenten Trainings-Pfad</div>
+        
+        <div class="mission-title"><a href="mission1_start.html" id="link-m1-title" style="padding:0; margin:0; display:inline; color:inherit; border:none; background:transparent;">Mission 1: System Access</a></div>
+        <div class="mission-desc">Hacke dich in den Mainframe, indem du die grundlegenden Python-Befehle meisterst.</div>
+        <a href="mission1_level1.html" id="link-level1">Level 1: Ping senden</a>
+        <a href="#" id="link-level2" class="locked">Level 2: Pause simulieren 🔒</a>
+        <a href="#" id="link-level3" class="locked">Level 3: Identifikation 🔒</a>
+        <a href="#" id="link-level4" class="locked">Level 4: Der Hack (Finale) 🔒</a>
+
+        <div class="mission-title"><a href="#" id="link-m2-title" class="locked" style="padding:0; margin:0; display:inline; color:inherit; border:none; background:transparent;">Mission 2: Bombe entschärfen 🔒</a></div>
+        <div class="mission-desc">Willkommen, Agent! Welches Kabel (Rot, Blau oder Grün) musst du durchschneiden?</div>
+        <a href="#" id="link-m2-l1" class="locked">Level 1: Die If-Weiche 🔒</a>
+        <a href="#" id="link-m2-l2" class="locked">Level 2: Falsches Kabel 🔒</a>
+        <a href="#" id="link-m2-l3" class="locked">Level 3: Rotes Kabel 🔒</a>
+
+        <div class="mission-title"><a href="#" id="link-m3-title" class="locked" style="padding:0; margin:0; display:inline; color:inherit; border:none; background:transparent;">Mission 3: Safe-Knacker 🔒</a></div>
+        <div class="mission-desc">Knacke den Code des Haupttresors mit Schleifen und Zufallszahlen!</div>
+        <a href="#" id="link-m3-l1" class="locked">Level 1: Dauerschleife 🔒</a>
+        <a href="#" id="link-m3-l2" class="locked">Level 2: Zu hoch, zu niedrig 🔒</a>
+        <a href="#" id="link-m3-l3" class="locked">Level 3: Safe knacken 🔒</a>
+    </div>
+
+    <!-- Toggle Button -->
+    <button id="menu-btn" class="menu-btn inside-sidebar" onclick="toggleNav()">✕</button>
+
+    <!-- Main Content -->
+    <div id="main-content" style="padding-left: 280px;">
+        <div style="max-width: 1200px; margin: 0 auto;">
+            <!-- Fortschritts-Tracker UI -->
+            <div class="progress-container">
+                <span class="level-badge">Level 3 von 3</span>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" id="progress-fill" style="width: 100%;"></div>
+                </div>
+                <span id="status-text">Warte auf Eingabe...</span>
+                <button id="next-level-btn" class="next-level-btn" onclick="window.location.href='#'">Nächste Mission!</button>
+            </div>
+        </div>
+
+    <div class="container">
+                <!-- Linke Seite: Anleitung -->
+        <div class="panel guide-panel">
+            <h1>Mission 3 - Level 3: Safe knacken</h1>
+            <p>Der fertige Tresor! Der Codewechsel muss unvorhersehbar sein, sonst bringt der Tresor nichts.</p>
+            
+            <h2>Zufall generieren</h2>
+            <p>Wir erweitern Python durch das Einbinden des <span class="tooltip">Moduls<span class="tooltiptext">Ein Werkzeugkasten voller fertiger Code-Stücke!</span></span> <code>random</code>.</p>
+            
+            <div class="block-hint">
+                <div class="makecode-block">wähle zufällige Zahl von 1 bis 100</div>
+                <p>In Python:</p>
+                <code>import random<br>geheim_code = random.randint(1, 100)</code>
+            </div>
+
+            <h2>Aufgabe</h2>
+            <p>1. Importiere ganz oben <strong>random</strong>.<br>2. Erstelle so den <strong>geheim_code</strong>. <br>3. Ändere deine if/while Logik ab, dass sie nun gegen diesen <code>geheim_code</code> prüft.<br>4. Starte unser Minispiel und knacke den Code in der Konsole!</p>
+        </div>
+
+        <!-- Rechte Seite: Editor und Konsole -->
+        <div class="panel editor-panel">
+            <h2>Python Terminal</h2>
+            <textarea id="python-editor">
+tipp = int(input("Code eingeben: "))
+if tipp < 50:
+    print("Zu niedrig!")
+elif tipp > 50:
+    print("Zu hoch!")
+</textarea>
+            <div style="display: flex; gap: 10px;">
+                <button id="run-btn" style="flex-grow: 1;">▶ Code Ausführen</button>
+                <button class="test-btn" onclick="window.editor.setValue('import random\ngeheim = random.randint(1, 100)\ntipp = 0\nwhile tipp != geheim:\n    tipp = int(input(\\'Code eingeben: \\'))\n    if tipp < geheim:\n        print(\\'Zu niedrig!\\')\n    elif tipp > geheim:\n        print(\\'Zu hoch!\\')\nprint(\\'Knack!\\')')">Cheat (Für Lehrer)</button>
+            </div>
+            <div id="console-output">Bereit für deine Befehle, Agent.</div>
+        </div>
+    </div>
+
+    <!-- Ausführung -->
+    <script>
+        document.getElementById("run-btn").addEventListener("click", () => {
+            runit((code, output) => {
+                                let checkCode = code.replace(/#.*$/gm, ''); 
+                if (checkCode.includes("import random") && checkCode.includes("randint")) {
+                    triggerSuccess(true);
+                }
+            });
+        });
+    </script>
+
+    <!-- CodeMirror Setup für Syntax Highlighting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+    <script>
+        window.editor = CodeMirror.fromTextArea(document.getElementById("python-editor"), {
+            mode: "python",
+            theme: "monokai",
+            lineNumbers: true,
+            indentUnit: 4
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+

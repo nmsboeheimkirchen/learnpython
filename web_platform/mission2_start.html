@@ -1,0 +1,90 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Agenten-Training</title>
+    <!-- Skulpt für Python im Browser -->
+    <!-- ACHTUNG: Skulpt DOM-Elemente müssen geladen sein, Code läuft nach DOMContentLoaded -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script> 
+    <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js"></script> 
+    <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js"></script> 
+    <!-- Confetti Bibliothek für Belohnungen -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    <script src="assets/runner.js"></script>
+    <!-- CodeMirror für den Editor -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
+    <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+        <!-- Sidebar Navigation -->
+    <div id="mySidebar" class="sidebar active">
+        <div class="sidebar-header">Agenten Trainings-Pfad</div>
+        
+        <div class="mission-title"><a href="mission1_start.html" id="link-m1-title" style="padding:0; margin:0; display:inline; color:inherit; border:none; background:transparent;">Mission 1: System Access</a></div>
+        <div class="mission-desc">Hacke dich in den Mainframe, indem du die grundlegenden Python-Befehle meisterst.</div>
+        <a href="mission1_level1.html" id="link-level1">Level 1: Ping senden</a>
+        <a href="#" id="link-level2" class="locked">Level 2: Pause simulieren 🔒</a>
+        <a href="#" id="link-level3" class="locked">Level 3: Identifikation 🔒</a>
+        <a href="#" id="link-level4" class="locked">Level 4: Der Hack (Finale) 🔒</a>
+
+        <div class="mission-title"><a href="#" id="link-m2-title" class="locked" style="padding:0; margin:0; display:inline; color:inherit; border:none; background:transparent;">Mission 2: Bombe entschärfen 🔒</a></div>
+        <div class="mission-desc">Willkommen, Agent! Welches Kabel (Rot, Blau oder Grün) musst du durchschneiden?</div>
+        <a href="#" id="link-m2-l1" class="locked">Level 1: Die If-Weiche 🔒</a>
+        <a href="#" id="link-m2-l2" class="locked">Level 2: Falsches Kabel 🔒</a>
+        <a href="#" id="link-m2-l3" class="locked">Level 3: Rotes Kabel 🔒</a>
+
+        <div class="mission-title"><a href="#" id="link-m3-title" class="locked" style="padding:0; margin:0; display:inline; color:inherit; border:none; background:transparent;">Mission 3: Safe-Knacker 🔒</a></div>
+        <div class="mission-desc">Knacke den Code des Haupttresors mit Schleifen und Zufallszahlen!</div>
+        <a href="#" id="link-m3-l1" class="locked">Level 1: Dauerschleife 🔒</a>
+        <a href="#" id="link-m3-l2" class="locked">Level 2: Zu hoch, zu niedrig 🔒</a>
+        <a href="#" id="link-m3-l3" class="locked">Level 3: Safe knacken 🔒</a>
+    </div>
+
+    <!-- Toggle Button -->
+    <button id="menu-btn" class="menu-btn inside-sidebar" onclick="toggleNav()">✕</button>
+
+    <!-- Main Content -->
+    <div id="main-content" style="padding-left: 280px;">
+        <div style="max-width: 1200px; margin: 0 auto;">
+            <!-- Fortschritts-Tracker UI -->
+                <div class="container" style="justify-content: center; text-align: center; margin-top: 10vh;">
+        <div class="panel guide-panel" style="width: 100%; max-width: 600px; padding: 50px;">
+            <h1 style="font-size: 32px;">Mission 2: Bombe entschärfen</h1>
+            <p style="font-size: 18px; font-style: italic; color: #5f6368; margin-bottom: 30px;">Willkommen, Agent! Welches Kabel (Rot, Blau oder Grün) musst du durchschneiden?</p>
+            <p style="font-size: 16px; margin-bottom: 40px;">Eine Codekarte allein reicht nicht – ab jetzt muss dein Programm eigene Entscheidungen treffen können. Nutze dein Wissen weise. Ein Fehler und... KABUMM!</p>
+            <button class="next-level-btn" style="display: inline-block; font-size: 20px; padding: 15px 40px;" onclick="window.location.href='mission2_start.html'">Mission Starten ▶</button>
+        </div>
+    </div>
+    <!-- Ausführung -->
+    <script>
+        document.getElementById("run-btn").addEventListener("click", () => {
+            runit((code, output) => {
+                let checkCode = code.replace(/#.*$/gm, ''); // ignoriere Kommentare
+                if (output.toLowerCase().includes("verbindung wird hergestellt") || checkCode.includes("print(\"Verbindung")) {
+                    unlockLevel('link-level2');
+                    triggerSuccess();
+                }
+            });
+        });
+    </script>
+
+    <!-- CodeMirror Setup für Syntax Highlighting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+    <script>
+        window.editor = CodeMirror.fromTextArea(document.getElementById("python-editor"), {
+            mode: "python",
+            theme: "monokai",
+            lineNumbers: true,
+            indentUnit: 4
+        });
+    </script>
+</body>
+</html>
+
+
+
+
