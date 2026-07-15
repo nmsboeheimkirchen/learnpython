@@ -116,3 +116,23 @@ function triggerSuccess() {
         confetti({ particleCount: particleCount, startVelocity: 30, spread: 360, ticks: 60, origin: { x: Math.random() * 0.2 + 0.7, y: Math.random() - 0.2 } });
     }, 250);
 }
+
+// Fügt Lehrer-Cheat-Buttons ein, wenn ein #l am Ende der URL steht
+document.addEventListener("DOMContentLoaded", function() {
+    if (window.location.hash.toLowerCase() === "#l") {
+        document.querySelectorAll(".test-btn").forEach(btn => {
+            btn.style.display = "block";
+        });
+        
+        // Fügt zu allen Level-Links automatisch das #l hinzu, damit man im Lehrer-Modus bleibt
+        document.querySelectorAll(".next-level-btn").forEach(btn => {
+            const currentOnclick = btn.getAttribute("onclick");
+            if (currentOnclick && currentOnclick.includes("window.location.href=")) {
+                const newOnclick = currentOnclick.replace("'", "#l'"); // e.g. 'level2.html' -> 'level2.html#l'
+                // Fallback falls doppelte anführungszeichen verwendet wurden
+                const finalOnclick = newOnclick.replace('"', '#l"');
+                btn.setAttribute("onclick", currentOnclick.replace(/href='([^']+)'/, "href='$1#l'").replace(/href="([^"]+)"/, 'href="$1#l"'));
+            }
+        });
+    }
+});

@@ -65,7 +65,9 @@ button {
 button:hover { background: #174ea6; box-shadow: 0 1px 3px 1px rgba(60,64,67,0.15); }
 button:disabled { background: #e8eaed; color: #9aa0a6; cursor: not-allowed; box-shadow: none;}
 
+/* Ausgeblendeter Lehrer Cheat Button standardmäßig */
 .test-btn {
+    display: none;
     background: #e8eaed;
     color: #5f6368;
     margin-top: 10px;

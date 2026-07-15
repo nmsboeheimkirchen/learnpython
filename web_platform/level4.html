@@ -20,48 +20,48 @@
     <div style="max-width: 1200px; margin: 0 auto;">
         <!-- Fortschritts-Tracker UI -->
         <div class="progress-container">
-            <span class="level-badge">Level 2 von 10</span>
+            <span class="level-badge">Level 4 von 10</span>
             <div class="progress-bar-bg">
-                <div class="progress-bar-fill" id="progress-fill" style="width: 10%;"></div>
+                <div class="progress-bar-fill" id="progress-fill" style="width: 30%;"></div>
             </div>
             <span id="status-text">Warte auf Eingabe...</span>
-            <button id="next-level-btn" class="next-level-btn" onclick="window.location.href='level3.html'">Nächstes Level</button>
+            <button id="next-level-btn" class="next-level-btn" onclick="alert('Perfekt! Der erste Web-Trainingsblock ist hiermit komplett.')">Abschließen</button>
         </div>
     </div>
 
     <div class="container">
         <!-- Linke Seite: Anleitung -->
         <div class="panel guide-panel">
-            <h1>Level 2: Einen Hack simulieren</h1>
-            <p>Echte Hacker warten... wir simulieren jetzt eine kurze Wartepause, bevor das System antwortet.</p>
+            <h1>Level 4: Der finale Hack</h1>
+            <p>Jetzt wo das System deinen Namen in der Schublade hat, wollen wir alles zusammenfügen.</p>
             
-            <h2>Pausiere das Skript</h2>
-            <p>Damit Python Pausen einlegen kann, musst du ganz am Anfang das Modul <code>time</code> laden. 
-            Mit <span class="tooltip">time.sleep(1)<span class="tooltiptext">Pausiert den Code für 1 Sekunde.</span></span> wartet der Computer dann genau eine Sekunde.</p>
+            <h2>Variablen & Text mischen</h2>
+            <p>Du kannst <code>print()</code> nutzen, um festen Text in Anführungszeichen mit Variablen ohne Anführungszeichen zu mischen. Trenne sie einfach mit einem <strong>Komma</strong>!</p>
             
             <div class="block-hint">
-                <div class="makecode-block">pausiere (ms) <span class="makecode-input">1000</span></div>
-                <p>In Python (1000ms = 1 Sekunde):</p>
-                <code>time.sleep(1)</code>
+                <div class="makecode-block">zeige Text <span class="makecode-input" style="border: 1px dashed red;">verbinde <span>"Hallo "</span> und <span class="makecode-var-pill" style="margin: 0;">name</span></span></div>
+                <p>In Python (mit Komma):</p>
+                <code>print("Hallo", agent_name)</code>
             </div>
 
             <h2>Aufgabe</h2>
-            <p>1. Lade ganz oben das Modul: <strong>import time</strong><br>2. Mache einen <strong>print()</strong> mit "Verbindung wird hergestellt...".<br>3. Mache eine Pause mit: <strong>time.sleep(1)</strong><br>4. Klicke "Code Ausführen".</p>
+            <p>1. Füge als letzte Zeile unseren neuen <code>print()</code> Hack hinzu.<br>2. Gib aus: <strong>"Willkommen im System,"</strong> und direkt danach deine Variable <strong>agent_name</strong>.<br>3. Mische festen Text und die Variable mit einem Komma.<br>4. Klicke "Code Ausführen".</p>
         </div>
 
         <!-- Rechte Seite: Editor und Konsole -->
         <div class="panel editor-panel">
             <h2>Python Terminal</h2>
-            <textarea id="python-editor"># Ganz oben time laden:
-import time
-
+            <textarea id="python-editor">import time
 print("Verbindung wird hergestellt...")
-# Mache hier eine Pause (1 Sekunde):
+time.sleep(1)
+agent_name = input("Gib deinen Namen ein: ")
+
+# TODO: Gib "Willkommen im System," und agent_name aus:
 
 </textarea>
             <div style="display: flex; gap: 10px;">
                 <button id="run-btn" style="flex-grow: 1;">▶ Code Ausführen</button>
-                <button class="test-btn" onclick="window.editor.setValue('import time\nprint(\'Verbindung wird hergestellt...\')\ntime.sleep(1)')">Cheat (Für Lehrer)</button>
+                <button class="test-btn" onclick="window.editor.setValue('import time\nprint(\'Verbindung wird hergestellt...\')\ntime.sleep(1)\nagent_name = input(\'Gib deinen Namen ein: \')\nprint(\'Willkommen im System,\', agent_name)')">Cheat (Für Lehrer)</button>
             </div>
             <div id="console-output">Bereit für deine Befehle, Agent.</div>
         </div>
@@ -71,12 +71,13 @@ print("Verbindung wird hergestellt...")
     <script>
         document.getElementById("run-btn").addEventListener("click", () => {
              runit((code, output) => {
-                if (code.includes("sleep")) {
+                let cleanedCode = code.replace(/\s/g, ''); 
+                if (cleanedCode.includes("print(\"Willkommen") || cleanedCode.includes("print('Willkommen") || (cleanedCode.includes("Willkommen") && cleanedCode.includes("agent_name") && cleanedCode.includes(","))) {
                     triggerSuccess();
                 }
             });
         });
-    </script>>
+    </script>
 
     <!-- CodeMirror Setup für Syntax Highlighting -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>

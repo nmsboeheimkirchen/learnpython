@@ -25,27 +25,29 @@
                 <div class="progress-bar-fill" id="progress-fill" style="width: 20%;"></div>
             </div>
             <span id="status-text">Warte auf Eingabe...</span>
-            <button id="next-level-btn" class="next-level-btn" onclick="alert('Gut gemacht! Den Rest des Lernpfads gibt es bald auf GitHub Classroom!')">Abschließen</button>
+            <button id="next-level-btn" class="next-level-btn" onclick="window.location.href='level4.html'">Nächstes Level</button>
         </div>
     </div>
 
     <div class="container">
         <!-- Linke Seite: Anleitung -->
         <div class="panel guide-panel">
-            <h1>Level 3: Variablen ausgeben</h1>
-            <p>Der Computer hat deinen Namen gespeichert.</p>
+            <h1>Level 3: Identifikation anfordern</h1>
+            <p>Die 1-sekündige Pause klappt! Jetzt fordern wir die Eingabe an.</p>
             
-            <h2>Keine Anführungszeichen!</h2>
-            <p>Wenn du eine Variable ausgibst, verwende <strong>keine Anführungszeichen</strong>, sonst druckt der Computer den Namen der Variable als normalen Text.</p>
+            <h2>Eingabe & Variablen</h2>
+            <p>Nutze <span class="tooltip">input()<span class="tooltiptext">Wartet auf Texteingabe, die mit [Enter] bestätigt werden muss.</span></span> um zu fragen. Speichere die Antwort in einer <span class="tooltip">Variable<span class="tooltiptext">Eine Schublade für Daten.</span></span>.</p>
             
             <div class="block-hint">
-                <div class="makecode-block">zeige Text <span class="makecode-var-pill" style="margin-left: 8px;">name</span></div>
+                <div class="makecode-block-var">
+                    setze <span class="makecode-var-pill">name</span> auf <span class="makecode-var-pill" style="border: 1px dotted #ccc; box-shadow:none; margin-left: 8px;">frage nach Text</span>
+                </div>
                 <p>In Python:</p>
-                <code>print(agent_name)</code>
+                <code>agent_name = input("Wie heißt du? ")</code>
             </div>
 
             <h2>Aufgabe</h2>
-            <p>1. Füge am Ende einen dritten Befehl hinzu.<br>2. Nutze <code>print()</code>, um <strong>nur die Variable</strong> (agent_name) auszugeben!<br>3. Klicke "Code Ausführen".</p>
+            <p>1. Erstelle ganz unten die Variable <strong>agent_name</strong>.<br>2. Nutze <strong>input()</strong>, um zu fragen: <strong>"Gib deinen Namen ein: "</strong>.<br>3. Klicke "Code Ausführen" und bestätige im schwarzen Fenster mit der [Enter]-Taste.</p>
         </div>
 
         <!-- Rechte Seite: Editor und Konsole -->
@@ -54,14 +56,13 @@
             <textarea id="python-editor">import time
 print("Verbindung wird hergestellt...")
 time.sleep(1)
-agent_name = input("Gib deinen Namen ein: ")
 
-# Gib agent_name aus:
+# Erstelle unten agent_name und frage mit input():
 
 </textarea>
             <div style="display: flex; gap: 10px;">
                 <button id="run-btn" style="flex-grow: 1;">▶ Code Ausführen</button>
-                <button class="test-btn" onclick="window.editor.setValue('import time\nprint(\'Verbindung wird hergestellt...\')\ntime.sleep(1)\nagent_name = input(\'Gib deinen Namen ein: \')\nprint(agent_name)')">Cheat (Für Lehrer)</button>
+                <button class="test-btn" onclick="window.editor.setValue('import time\nprint(\'Verbindung wird hergestellt...\')\ntime.sleep(1)\nagent_name = input(\'Gib deinen Namen ein: \')')">Cheat (Für Lehrer)</button>
             </div>
             <div id="console-output">Bereit für deine Befehle, Agent.</div>
         </div>
@@ -71,8 +72,7 @@ agent_name = input("Gib deinen Namen ein: ")
     <script>
         document.getElementById("run-btn").addEventListener("click", () => {
              runit((code, output) => {
-                let cleanedCode = code.replace(/\s/g, ''); 
-                if (cleanedCode.includes("print(agent_name)")) {
+                if (code.includes("agent_name") && code.includes("input(")) {
                     triggerSuccess();
                 }
             });
