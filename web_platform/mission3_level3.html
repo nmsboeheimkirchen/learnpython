@@ -61,33 +61,62 @@
         </div>
 
     <div class="container">
-                <!-- Linke Seite: Anleitung -->
+                        <!-- Linke Seite: Anleitung -->
         <div class="panel guide-panel">
             <h1>Safe-Knacker - 3:</h1><h2>Safe knacken</h2>
-            <p>Der fertige Tresor! Der Codewechsel muss unvorhersehbar sein, sonst bringt der Tresor nichts.</p>
+            <p>Der fertige Tresor! Ein guter Tresor ändert seinen Code, deshalb nutzen wir Zufall.</p>
             
             <h2>Zufall generieren</h2>
             <p>Wir erweitern Python durch das Einbinden des <span class="tooltip">Moduls<span class="tooltiptext">Ein Werkzeugkasten voller fertiger Code-Stücke!</span></span> <code>random</code>.</p>
             
-            <div class="block-hint">
-                <div class="makecode-block">wähle zufällige Zahl von 1 bis 100</div>
-                <p>In Python:</p>
-                <code>import random<br>geheim_code = random.randint(1, 100)</code>
+            <h2>Dein Programm-Plan</h2>
+            <p>Fahre mit der Maus über die Blöcke, um den <span style="color: #1a73e8; font-weight: bold;">Python-Code</span> zu sehen!</p>
+            
+            <div class="block-hint" style="display: flex; flex-direction: column; align-items: flex-start; gap: 0;">
+                <div class="makecode-block block-tooltip">lade Werkzeugkiste <span class="makecode-input">random</span>
+                    <span class="tooltiptext">import random</span>
+                </div>
+                <div class="makecode-block block-tooltip">mach <span class="makecode-var-pill" style="background:#005a9e;">geheim</span> zur Zufallszahl <span class="makecode-input">1 bis 100</span>
+                    <span class="tooltiptext">geheim = random.randint(1, 100)</span>
+                </div>
+                <div class="makecode-block block-tooltip">mach <span class="makecode-var-pill" style="background:#005a9e;">tipp</span> zu <span class="makecode-input">0</span>
+                    <span class="tooltiptext">tipp = 0</span>
+                </div>
+                <div class="makecode-block-var block-tooltip" style="margin-top: 5px;">solange <span class="makecode-input">tipp != geheim</span> mache
+                    <span class="tooltiptext">while tipp != geheim:</span>
+                </div>
+                <div class="makecode-block block-tooltip" style="margin-left: 20px;">mach <span class="makecode-var-pill" style="background:#005a9e;">tipp</span> zur Zahl aus <span class="makecode-input">input("Zahl: ")</span>
+                    <span class="tooltiptext">    tipp = int(input("Zahl: "))</span>
+                </div>
+                <div class="makecode-block-var block-tooltip" style="margin-left: 20px;">wenn <span class="makecode-input">tipp < geheim</span> dann
+                    <span class="tooltiptext">    if tipp &lt; geheim:</span>
+                </div>
+                <div class="makecode-block block-tooltip" style="margin-left: 40px;">zeige Text <span class="makecode-input">"Zu niedrig!"</span>
+                    <span class="tooltiptext">        print("Zu niedrig!")</span>
+                </div>
+                <div class="makecode-block-var block-tooltip" style="margin-left: 20px;">ansonsten wenn <span class="makecode-input">tipp > geheim</span> dann
+                    <span class="tooltiptext">    elif tipp &gt; geheim:</span>
+                </div>
+                <div class="makecode-block block-tooltip" style="margin-left: 40px;">zeige Text <span class="makecode-input">"Zu hoch!"</span>
+                    <span class="tooltiptext">        print("Zu hoch!")</span>
+                </div>
+                <div class="makecode-block block-tooltip" style="margin-top: 5px;">zeige Text <span class="makecode-input">"Knack!"</span>
+                    <span class="tooltiptext">print("Knack!")</span>
+                </div>
             </div>
 
             <h2>Aufgabe</h2>
-            <p>1. Importiere ganz oben <strong>random</strong>.<br>2. Erstelle so den <strong>geheim_code</strong>. <br>3. Ändere deine if/while Logik ab, dass sie nun gegen diesen <code>geheim_code</code> prüft.<br>4. Starte unser Minispiel und knacke den Code in der Konsole!</p>
+            <p>Baue das Tresor-Spiel aus den Blöcken exakt im Editor nach. Pass auf! Achte auf die *doppelten* &nbsp;&nbsp;&nbsp;&nbsp;Einrückungen bei den if-Abfragen, da sie IN der Schleife liegen!</p>
         </div>
 
         <!-- Rechte Seite: Editor und Konsole -->
         <div class="panel editor-panel">
             <h2>Python Terminal</h2>
             <textarea id="python-editor">
-tipp = int(input("Code eingeben: "))
-if tipp < 50:
-    print("Zu niedrig!")
-elif tipp > 50:
-    print("Zu hoch!")
+# Wir fangen neu an!
+# Fahre mit der Maus ueber die bloecke links
+# und baue das ganze Spiel hier nach:
+
 </textarea>
             <div style="display: flex; gap: 10px;">
                 <button id="run-btn" style="flex-grow: 1;">▶ Code Ausführen</button>
@@ -122,6 +151,7 @@ elif tipp > 50:
     </script>
 </body>
 </html>
+
 
 
 

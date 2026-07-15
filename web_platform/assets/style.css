@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+﻿@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
 
 body { 
     font-family: 'Roboto', sans-serif; 
@@ -261,7 +261,7 @@ button:disabled { background: #e8eaed; color: #9aa0a6; cursor: not-allowed; box-
     display: inline-flex;
     align-items: center;
     box-shadow: inset 0px -2px 0px rgba(0,0,0,0.2);
-    margin: 10px 0;
+    margin: 0; margin-bottom: -1px;
     border: 1px solid #005a9e;
 }
 .makecode-input {
@@ -285,7 +285,7 @@ button:disabled { background: #e8eaed; color: #9aa0a6; cursor: not-allowed; box-
     display: inline-flex;
     align-items: center;
     box-shadow: inset 0px -2px 0px rgba(0,0,0,0.2);
-    margin: 10px 0;
+    margin: 0; margin-bottom: -1px;
     border: 1px solid #b5006f;
 }
 .makecode-var-pill {
@@ -345,3 +345,4 @@ button:disabled { background: #e8eaed; color: #9aa0a6; cursor: not-allowed; box-
     visibility: hidden; width: 220px; background-color: #202124; color: #fff; text-align: center; border-radius: 4px; padding: 8px; position: absolute; z-index: 2000; top: -45px; left: 50%; margin-left: -110px; opacity: 0; transition: opacity 0.2s; font-weight: 400; font-size: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); font-family: monospace; white-space: pre-wrap;
 }
 .block-tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
+
