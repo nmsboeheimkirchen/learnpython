@@ -227,28 +227,34 @@ function triggerSuccess(isFinale = false) {
         let titleText = isFinale ? "MISSION ERFÜLLT" : "LEVEL GESCHAFFT";
         let subText = isFinale ? "Sehr starker Code, Agent!" : "Gut gemacht! Weiter geht's.";
 
-        overlay.innerHTML = `
+                overlay.innerHTML = `
             <div class="success-badge">
                 <div class="trophy">🏆</div>
                 <h1>${titleText}</h1>
                 <p>${subText}</p>
                 <div class="btn-container"></div>
+                <button class="close-overlay-btn" onclick="document.getElementById('success-overlay').style.display='none'" style="margin-top: 20px; background: transparent; color: #5f6368; border: none; cursor: pointer; text-decoration: underline; font-size: 14px;">Weiterspielen / Editor ansehen</button>
             </div>
         `;
         document.body.appendChild(overlay);
         
         // Wir clonen den nächsten-Level-Button von oben in unser Pop-up
-        const btnClone = document.getElementById("next-level-btn").cloneNode(true);
-        btnClone.style.display = "inline-block";
-        btnClone.className = "success-btn";
-        overlay.querySelector(".btn-container").appendChild(btnClone);
+        const nextBtnSource = document.getElementById("next-level-btn");
+        if (nextBtnSource) {
+            const btnClone = nextBtnSource.cloneNode(true);
+            btnClone.style.display = "inline-block";
+            btnClone.className = "success-btn";
+            overlay.querySelector(".btn-container").appendChild(btnClone);
+        }
     }
     
     // UI Updates
     document.getElementById("status-text").innerHTML = "✅ <b>MISSION ERFÜLLT!</b>";
     document.getElementById("status-text").style.color = "#34a853";
-    document.getElementById("progress-fill").style.width = (parseInt(document.getElementById("progress-fill").style.width) + 10) + "%";
-    document.getElementById("next-level-btn").style.display = "block"; // Auch den kleinen Button oben zeigen
+    const fill = document.getElementById("progress-fill");
+    if(fill) fill.style.width = "100%";
+    const nextBtnTop = document.getElementById("next-level-btn");
+    if(nextBtnTop) nextBtnTop.style.display = "block"; // Auch den kleinen Button oben zeigen
 
     // Zeige fettes Overlay
     overlay.style.display = "flex";
@@ -296,4 +302,5 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 });
+
 
