@@ -63,7 +63,7 @@
         <!-- Linke Seite: Anleitung -->
         <div class="panel guide-panel">
             <h1>Level 2: Einen Hack simulieren</h1>
-            <p>Echte Hacker warten... wir simulieren jetzt eine kurze Wartepause, bevor das System antwortet.</p>
+            <p>Wir simulieren jetzt eine kurze Wartepause, bevor das System antwortet.</p>
             
             <h2>Pausiere das Skript</h2>
             <p>Damit Python Pausen einlegen kann, musst du ganz am Anfang mit <span class="tooltip">import time<span class="tooltiptext">Lädt zusätzliche Fähigkeiten in dein Programm, hier die Zeit-Funktionen.</span></span> das Modul <code>time</code> laden. 
@@ -91,7 +91,7 @@ print("Verbindung wird hergestellt...")
 </textarea>
             <div style="display: flex; gap: 10px;">
                 <button id="run-btn" style="flex-grow: 1;">▶ Code Ausführen</button>
-                <button class="test-btn" onclick="window.editor.setValue('import time\nprint(\'Verbindung wird hergestellt...\')\ntime.sleep(1)')">Cheat (Für Lehrer)</button>
+                <button class="test-btn" onclick="window.editor.setValue(decodeURIComponent(escape(window.atob('aW1wb3J0IHRpbWUKcHJpbnQoIlZlcmJpbmR1bmcgd2lyZCBoZXJnZXN0ZWxsdC4uLiIpCnRpbWUuc2xlZXAoMSk='))))">Cheat (Für Lehrer)</button>
             </div>
             <div id="console-output">Bereit für deine Befehle, Agent.</div>
         </div>
@@ -123,6 +123,8 @@ print("Verbindung wird hergestellt...")
     </script>
 </body>
 </html>
+
+
 
 
 

@@ -63,7 +63,7 @@
     <div class="container">
                 <!-- Linke Seite: Anleitung -->
         <div class="panel guide-panel">
-            <h1>Mission 3 - Level 3: Safe knacken</h1>
+            <h1>Safe-Knacker - 3:</h1><h2>Safe knacken</h2>
             <p>Der fertige Tresor! Der Codewechsel muss unvorhersehbar sein, sonst bringt der Tresor nichts.</p>
             
             <h2>Zufall generieren</h2>
@@ -91,7 +91,7 @@ elif tipp > 50:
 </textarea>
             <div style="display: flex; gap: 10px;">
                 <button id="run-btn" style="flex-grow: 1;">▶ Code Ausführen</button>
-                <button class="test-btn" onclick="window.editor.setValue('import random\ngeheim = random.randint(1, 100)\ntipp = 0\nwhile tipp != geheim:\n    tipp = int(input(\\'Code eingeben: \\'))\n    if tipp < geheim:\n        print(\\'Zu niedrig!\\')\n    elif tipp > geheim:\n        print(\\'Zu hoch!\\')\nprint(\\'Knack!\\')')">Cheat (Für Lehrer)</button>
+                <button class="test-btn" onclick="window.editor.setValue(decodeURIComponent(escape(window.atob('aW1wb3J0IHJhbmRvbQpnZWhlaW0gPSByYW5kb20ucmFuZGludCgxLCAxMDApCnRpcHAgPSAwCndoaWxlIHRpcHAgIT0gZ2VoZWltOgogICAgdGlwcCA9IGludChpbnB1dCgiQ29kZSBlaW5nZWJlbjogIikpCiAgICBpZiB0aXBwIDwgZ2VoZWltOgogICAgICAgIHByaW50KCJadSBuaWVkcmlnISIpCiAgICBlbGlmIHRpcHAgPiBnZWhlaW06CiAgICAgICAgcHJpbnQoIlp1IGhvY2ghIikKcHJpbnQoIktuYWNrISIp'))))">Cheat (Für Lehrer)</button>
             </div>
             <div id="console-output">Bereit für deine Befehle, Agent.</div>
         </div>
@@ -122,6 +122,8 @@ elif tipp > 50:
     </script>
 </body>
 </html>
+
+
 
 
 

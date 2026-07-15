@@ -91,7 +91,7 @@ agent_name = input("Gib deinen Namen ein: ")
 </textarea>
             <div style="display: flex; gap: 10px;">
                 <button id="run-btn" style="flex-grow: 1;">▶ Code Ausführen</button>
-                <button class="test-btn" onclick="window.editor.setValue('import time\nprint(\'Verbindung wird hergestellt...\')\ntime.sleep(1)\nagent_name = input(\'Gib deinen Namen ein: \')\nprint(\'Willkommen im System,\', agent_name)')">Cheat (Für Lehrer)</button>
+                <button class="test-btn" onclick="window.editor.setValue(decodeURIComponent(escape(window.atob('aW1wb3J0IHRpbWUKcHJpbnQoIlZlcmJpbmR1bmcgd2lyZCBoZXJnZXN0ZWxsdC4uLiIpCnRpbWUuc2xlZXAoMSkKYWdlbnRfbmFtZSA9IGlucHV0KCJHaWIgZGVpbmVuIE5hbWVuIGVpbjogIikKcHJpbnQoIldpbGxrb21tZW4gaW0gU3lzdGVtLCIsIGFnZW50X25hbWUp'))))">Cheat (Für Lehrer)</button>
             </div>
             <div id="console-output">Bereit für deine Befehle, Agent.</div>
         </div>
@@ -129,6 +129,8 @@ agent_name = input("Gib deinen Namen ein: ")
     </script>
 </body>
 </html>
+
+
 
 
 

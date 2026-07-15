@@ -63,7 +63,7 @@
     <div class="container">
                 <!-- Linke Seite: Anleitung -->
         <div class="panel guide-panel">
-            <h1>Mission 3 - Level 1: Dauerschleife</h1>
+            <h1>Safe-Knacker - 1:</h1><h2>Dauerschleife</h2>
             <p>Ein Safe verlangt immer wieder nach dem Code, bis man ihn knackt. Dafür brauchen wir eine Schleife, die sich wiederholt.</p>
             
             <h2>Die While-Schleife</h2>
@@ -87,7 +87,7 @@ print("Irgendein Text")
 </textarea>
             <div style="display: flex; gap: 10px;">
                 <button id="run-btn" style="flex-grow: 1;">▶ Code Ausführen</button>
-                <button class="test-btn" onclick="window.editor.setValue('tipp = \\'\\'\nwhile tipp != \\'123\\':\n    tipp = input(\\'Code eingeben: \\')')">Cheat (Für Lehrer)</button>
+                <button class="test-btn" onclick="window.editor.setValue(decodeURIComponent(escape(window.atob('dGlwcCA9ICIiCndoaWxlIHRpcHAgIT0gIjEyMyI6CiAgICB0aXBwID0gaW5wdXQoIkNvZGUgZWluZ2ViZW46ICIp'))))">Cheat (Für Lehrer)</button>
             </div>
             <div id="console-output">Bereit für deine Befehle, Agent.</div>
         </div>
@@ -119,6 +119,8 @@ print("Irgendein Text")
     </script>
 </body>
 </html>
+
+
 
 
 

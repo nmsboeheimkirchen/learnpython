@@ -55,35 +55,14 @@
             <h1 style="font-size: 32px;">Mission 2: Bombe entschärfen</h1>
             <p style="font-size: 18px; font-style: italic; color: #5f6368; margin-bottom: 30px;">Willkommen, Agent! Welches Kabel (Rot, Blau oder Grün) musst du durchschneiden?</p>
             <p style="font-size: 16px; margin-bottom: 40px;">Eine Codekarte allein reicht nicht – ab jetzt muss dein Programm eigene Entscheidungen treffen können. Nutze dein Wissen weise. Ein Fehler und... KABUMM!</p>
-            <button class="next-level-btn" style="display: inline-block; font-size: 20px; padding: 15px 40px;" onclick="window.location.href='mission2_start.html'">Mission Starten ▶</button>
+            <button class="next-level-btn" style="display: inline-block; font-size: 20px; padding: 15px 40px;" onclick="window.location.href='mission2_level1.html'">Mission Starten ▶</button>
         </div>
     </div>
-    <!-- Ausführung -->
-    <script>
-        document.getElementById("run-btn").addEventListener("click", () => {
-            runit((code, output) => {
-                let checkCode = code.replace(/#.*$/gm, ''); // ignoriere Kommentare
-                if (output.toLowerCase().includes("verbindung wird hergestellt") || checkCode.includes("print(\"Verbindung")) {
-                    unlockLevel('link-level2');
-                    triggerSuccess();
-                }
-            });
-        });
-    </script>
-
-    <!-- CodeMirror Setup für Syntax Highlighting -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
-    <script>
-        window.editor = CodeMirror.fromTextArea(document.getElementById("python-editor"), {
-            mode: "python",
-            theme: "monokai",
-            lineNumbers: true,
-            indentUnit: 4
-        });
-    </script>
+    <!-- Keine Code-Ausführung auf Startseiten -->
 </body>
 </html>
+
+
 
 
 

@@ -63,7 +63,7 @@
     <div class="container">
                 <!-- Linke Seite: Anleitung -->
         <div class="panel guide-panel">
-            <h1>Mission 2 - Level 1: Die If-Weiche</h1>
+            <h1>Bombe entschärfen - 1:</h1><h2>Die If-Weiche</h2>
             <p>Die Bombe tickt! Bevor wir Drähte schneiden, müssen wir dem Computer beibringen, Entscheidungen zu treffen.</p>
             
             <h2>Variablen & Bedingungen</h2>
@@ -88,7 +88,7 @@ print("Irgendein Text")
 </textarea>
             <div style="display: flex; gap: 10px;">
                 <button id="run-btn" style="flex-grow: 1;">▶ Code Ausführen</button>
-                <button class="test-btn" onclick="window.editor.setValue('kabel = \\'rot\\'\nif kabel == \\'rot\\':\n    print(\\'Entschärft!\\')')">Cheat (Für Lehrer)</button>
+                <button class="test-btn" onclick="window.editor.setValue(decodeURIComponent(escape(window.atob('a2FiZWwgPSAicm90IgppZiBrYWJlbCA9PSAicm90IjoKICAgIHByaW50KCJFbnRzY2jDpHJmdCEiKQ=='))))">Cheat (Für Lehrer)</button>
             </div>
             <div id="console-output">Bereit für deine Befehle, Agent.</div>
         </div>
@@ -120,6 +120,8 @@ print("Irgendein Text")
     </script>
 </body>
 </html>
+
+
 
 
 

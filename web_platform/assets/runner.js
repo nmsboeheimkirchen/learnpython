@@ -1,6 +1,8 @@
-// --- SIDEBAR & PROGRESS LOGIC ---
+﻿// --- SIDEBAR & PROGRESS LOGIC ---
 
 function toggleNav() {
+    const sb = document.getElementById('mySidebar');
+    localStorage.setItem('sidebarState', sb.classList.contains('active') ? 'closed' : 'open');
     const sidebar = document.getElementById("mySidebar");
     const mainContent = document.getElementById("main-content");
     const menuBtn = document.getElementById("menu-btn");
@@ -37,7 +39,8 @@ function applyUnlocks() {
     let unlockedLevels = JSON.parse(localStorage.getItem('unlockedLevels_v2')) || ['link-level1'];
     
     // Cheat mode: Unlock all if hash #l is present
-    if (window.location.hash === '#l') {
+    if (window.location.hash === '#l') { localStorage.setItem('cheatMode', 'true'); }
+    if (localStorage.getItem('cheatMode') === 'true') {
         const allLinks = document.querySelectorAll('.sidebar a, .sidebar .mission-title a');
         allLinks.forEach(link => {
             link.classList.remove('locked');
@@ -91,6 +94,14 @@ function preventLockedClick(e) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    const savedState = localStorage.getItem('sidebarState');
+    if (savedState === 'closed') { 
+        document.getElementById('mySidebar').classList.remove('active'); 
+        document.getElementById('main-content').style.paddingLeft = '60px'; 
+        const btn = document.getElementById('menu-btn');
+        btn.innerHTML = '☰';
+        btn.classList.remove('inside-sidebar');
+    }
     applyUnlocks();
     if(window.location.hash === '#l') {
         document.querySelectorAll('.next-level-btn').forEach(btn => btn.style.display = 'block');
@@ -285,3 +296,4 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 });
+

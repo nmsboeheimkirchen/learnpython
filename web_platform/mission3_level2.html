@@ -63,7 +63,7 @@
     <div class="container">
                 <!-- Linke Seite: Anleitung -->
         <div class="panel guide-panel">
-            <h1>Mission 3 - Level 2: Zu hoch, zu niedrig</h1>
+            <h1>Safe-Knacker - 2:</h1><h2>Zu hoch, zu niedrig</h2>
             <p>Der Tresor soll uns helfen. Dazu muss er wissen, ob unsere Zahl größer oder kleiner als der Code ist.</p>
             
             <h2>Zahlen aus Text machen</h2>
@@ -89,7 +89,7 @@ while tipp != "123":
 </textarea>
             <div style="display: flex; gap: 10px;">
                 <button id="run-btn" style="flex-grow: 1;">▶ Code Ausführen</button>
-                <button class="test-btn" onclick="window.editor.setValue('tipp = int(input(\\'Code eingeben: \\'))\nif tipp < 50:\n    print(\\'Zu niedrig!\\')\nelif tipp > 50:\n    print(\\'Zu hoch!\\')')">Cheat (Für Lehrer)</button>
+                <button class="test-btn" onclick="window.editor.setValue(decodeURIComponent(escape(window.atob('dGlwcCA9IGludChpbnB1dCgiQ29kZSBlaW5nZWJlbjogIikpCmlmIHRpcHAgPCA1MDoKICAgIHByaW50KCJadSBuaWVkcmlnISIpCmVsaWYgdGlwcCA+IDUwOgogICAgcHJpbnQoIlp1IGhvY2ghIik='))))">Cheat (Für Lehrer)</button>
             </div>
             <div id="console-output">Bereit für deine Befehle, Agent.</div>
         </div>
@@ -121,6 +121,8 @@ while tipp != "123":
     </script>
 </body>
 </html>
+
+
 
 
 
