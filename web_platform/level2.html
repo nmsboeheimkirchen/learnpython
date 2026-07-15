@@ -17,17 +17,41 @@
     <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-    <div style="max-width: 1200px; margin: 0 auto;">
-        <!-- Fortschritts-Tracker UI -->
-        <div class="progress-container">
-            <span class="level-badge">Level 2 von 10</span>
-            <div class="progress-bar-bg">
-                <div class="progress-bar-fill" id="progress-fill" style="width: 10%;"></div>
-            </div>
-            <span id="status-text">Warte auf Eingabe...</span>
-            <button id="next-level-btn" class="next-level-btn" onclick="window.location.href='level3.html'">Nächstes Level</button>
-        </div>
+
+    <!-- Sidebar Navigation -->
+    <div id="mySidebar" class="sidebar active">
+        <div class="sidebar-header">Agenten Trainings-Pfad</div>
+        
+        <div class="mission-title">Mission 1: System Access</div>
+        <div class="mission-desc">Hacke dich in den Mainframe, indem du die grundlegenden Python-Befehle meisterst.</div>
+        <a href="index.html" id="link-level1">Level 1: Ping senden</a>
+        <a href="level2.html" id="link-level2" class="active-link">Level 2: Pause simulieren</a>
+        <a href="#" id="link-level3" class="locked">Level 3: Identifikation 🔒</a>
+        <a href="#" id="link-level4" class="locked">Level 4: Der Hack (Finale) 🔒</a>
+
+        <div class="mission-title"><a href="#" id="link-m2-title" class="locked" style="padding:0; margin:0; display:inline; color:inherit; border:none; background:transparent;">Mission 2: Bombe entschärfen 🔒</a></div>
+        <div class="mission-desc">Willkommen, Agent! Welches Kabel (Rot, Blau oder Grün) musst du durchschneiden, um die Bombe zu entschärfen?</div>
+        <a href="#" id="link-m2-l1" class="locked">Level 1: Die If-Weiche 🔒</a>
+        <a href="#" id="link-m2-l2" class="locked">Level 2: Falsches Kabel 🔒</a>
+        <a href="#" id="link-m2-l3" class="locked">Level 3: Rotes Kabel 🔒</a>
     </div>
+
+    <!-- Toggle Button -->
+    <button id="menu-btn" class="menu-btn inside-sidebar" onclick="toggleNav()">✕</button>
+
+    <!-- Main Content -->
+    <div id="main-content" style="padding-left: 280px;">
+        <div style="max-width: 1200px; margin: 0 auto;">
+            <!-- Fortschritts-Tracker UI -->
+            <div class="progress-container">
+                <span class="level-badge">Level 2 von 4</span>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" id="progress-fill" style="width: 50%;"></div>
+                </div>
+                <span id="status-text">Warte auf Eingabe...</span>
+                <button id="next-level-btn" class="next-level-btn" onclick="window.location.href='level3.html'">Nächstes Level</button>
+            </div>
+        </div>
 
     <div class="container">
         <!-- Linke Seite: Anleitung -->
@@ -73,11 +97,12 @@ print("Verbindung wird hergestellt...")
              runit((code, output) => {
                 let checkCode = code.replace(/#.*$/gm, ''); // Kommentare weg
                 if (checkCode.includes("import") && checkCode.includes("time") && checkCode.includes("sleep")) {
+                    unlockLevel('link-level3');
                     triggerSuccess();
                 }
             });
         });
-    </script>>
+    </script>
 
     <!-- CodeMirror Setup für Syntax Highlighting -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>

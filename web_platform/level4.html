@@ -17,17 +17,41 @@
     <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-    <div style="max-width: 1200px; margin: 0 auto;">
-        <!-- Fortschritts-Tracker UI -->
-        <div class="progress-container">
-            <span class="level-badge">Level 4 von 10</span>
-            <div class="progress-bar-bg">
-                <div class="progress-bar-fill" id="progress-fill" style="width: 30%;"></div>
-            </div>
-            <span id="status-text">Warte auf Eingabe...</span>
-            <button id="next-level-btn" class="next-level-btn" onclick="alert('Perfekt! Der erste Web-Trainingsblock ist hiermit komplett.')">Abschließen</button>
-        </div>
+
+    <!-- Sidebar Navigation -->
+    <div id="mySidebar" class="sidebar active">
+        <div class="sidebar-header">Agenten Trainings-Pfad</div>
+        
+        <div class="mission-title">Mission 1: System Access</div>
+        <div class="mission-desc">Hacke dich in den Mainframe, indem du die grundlegenden Python-Befehle meisterst.</div>
+        <a href="index.html" id="link-level1">Level 1: Ping senden</a>
+        <a href="level2.html" id="link-level2">Level 2: Pause simulieren</a>
+        <a href="level3.html" id="link-level3">Level 3: Identifikation</a>
+        <a href="level4.html" id="link-level4" class="active-link">Level 4: Der Hack (Finale)</a>
+
+        <div class="mission-title"><a href="#" id="link-m2-title" class="locked" style="padding:0; margin:0; display:inline; color:inherit; border:none; background:transparent;">Mission 2: Bombe entschärfen 🔒</a></div>
+        <div class="mission-desc">Willkommen, Agent! Welches Kabel (Rot, Blau oder Grün) musst du durchschneiden, um die Bombe zu entschärfen?</div>
+        <a href="#" id="link-m2-l1" class="locked">Level 1: Die If-Weiche 🔒</a>
+        <a href="#" id="link-m2-l2" class="locked">Level 2: Falsches Kabel 🔒</a>
+        <a href="#" id="link-m2-l3" class="locked">Level 3: Rotes Kabel 🔒</a>
     </div>
+
+    <!-- Toggle Button -->
+    <button id="menu-btn" class="menu-btn inside-sidebar" onclick="toggleNav()">✕</button>
+
+    <!-- Main Content -->
+    <div id="main-content" style="padding-left: 280px;">
+        <div style="max-width: 1200px; margin: 0 auto;">
+            <!-- Fortschritts-Tracker UI -->
+            <div class="progress-container">
+                <span class="level-badge">Level 4 von 4</span>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" id="progress-fill" style="width: 100%;"></div>
+                </div>
+                <span id="status-text">Warte auf Eingabe...</span>
+                <button id="next-level-btn" class="next-level-btn" onclick="window.location.href='mission2_level1.html'">Nächste Mission!</button>
+            </div>
+        </div>
 
     <div class="container">
         <!-- Linke Seite: Anleitung -->
@@ -78,6 +102,8 @@ agent_name = input("Gib deinen Namen ein: ")
                 if ((checkCode.includes("print(\"") || checkCode.includes("print('")) && 
                      checkCode.includes("agent_name)") && 
                      checkCode.includes(",")) {
+                    unlockLevel('link-m2-title');
+                    unlockLevel('link-m2-l1');
                     triggerSuccess(true); // Übergebe true für Finale (Konfetti!)
                 }
             });

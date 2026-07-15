@@ -1,3 +1,97 @@
+// --- SIDEBAR & PROGRESS LOGIC ---
+
+function toggleNav() {
+    const sidebar = document.getElementById("mySidebar");
+    const mainContent = document.getElementById("main-content");
+    const menuBtn = document.getElementById("menu-btn");
+    
+    if (sidebar.classList.contains("active")) {
+        sidebar.classList.remove("active");
+        mainContent.style.paddingLeft = "60px";
+        menuBtn.innerHTML = "☰";
+        menuBtn.classList.remove("inside-sidebar");
+    } else {
+        sidebar.classList.add("active");
+        mainContent.style.paddingLeft = "280px";
+        menuBtn.innerHTML = "✕";
+        menuBtn.classList.add("inside-sidebar");
+    }
+}
+
+function unlockLevel(levelId) {
+    let unlockedLevels = JSON.parse(localStorage.getItem('unlockedLevels_v2')) || ['link-level1'];
+    if (!unlockedLevels.includes(levelId)) {
+        unlockedLevels.push(levelId);
+        localStorage.setItem('unlockedLevels_v2', JSON.stringify(unlockedLevels));
+    }
+    applyUnlocks();
+}
+
+function applyUnlocks() {
+    // Reset mode: Clear progress if hash #reset is present
+    if (window.location.hash === '#reset') {
+        localStorage.removeItem('unlockedLevels_v2');
+        window.location.hash = ''; // Remove hash after reset
+    }
+
+    let unlockedLevels = JSON.parse(localStorage.getItem('unlockedLevels_v2')) || ['link-level1'];
+    
+    // Cheat mode: Unlock all if hash #l is present
+    if (window.location.hash === '#l') {
+        const allLinks = document.querySelectorAll('.sidebar a, .sidebar .mission-title a');
+        allLinks.forEach(link => {
+            link.classList.remove('locked');
+            link.innerHTML = link.innerHTML.replace(' 🔒', '');
+            // Update the hrefs for the placeholders to actually point somewhere
+            if(link.id === 'link-level2') link.href = 'level2.html';
+            if(link.id === 'link-level3') link.href = 'level3.html';
+            if(link.id === 'link-level4') link.href = 'level4.html';
+            if(link.id === 'link-m2-title') link.href = 'mission2_level1.html';
+            if(link.id === 'link-m2-l1') link.href = 'mission2_level1.html';
+            if(link.id === 'link-m2-l2') link.href = 'mission2_level2.html';
+            if(link.id === 'link-m2-l3') link.href = 'mission2_level3.html';
+        });
+        return;
+    }
+
+    unlockedLevels.forEach(id => {
+        let link = document.getElementById(id);
+        if (link && link.classList.contains('locked')) {
+            link.classList.remove('locked');
+            link.innerHTML = link.innerHTML.replace(' 🔒', '');
+            
+            // Assign actual href once unlocked
+            if(id === 'link-level2') link.href = 'level2.html';
+            if(id === 'link-level3') link.href = 'level3.html';
+            if(id === 'link-level4') link.href = 'level4.html';
+            if(id === 'link-m2-title') link.href = 'mission2_level1.html';
+            if(id === 'link-m2-l1') link.href = 'mission2_level1.html';
+            if(id === 'link-m2-l2') link.href = 'mission2_level2.html';
+            if(id === 'link-m2-l3') link.href = 'mission2_level3.html';
+        }
+    });
+
+    // Update listeners for newly unlocked links
+    document.querySelectorAll('.sidebar a').forEach(link => {
+        link.removeEventListener('click', preventLockedClick); // remove old listener
+        if (link.classList.contains('locked')) {
+            link.addEventListener('click', preventLockedClick);
+        }
+    });
+}
+
+function preventLockedClick(e) {
+    e.preventDefault();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    applyUnlocks();
+    if(window.location.hash === '#l') {
+        document.querySelectorAll('.next-level-btn').forEach(btn => btn.style.display = 'block');
+    }
+});
+
+
 // Globale Hilfsfunktionen für Skulpt und UI
 let currentOutput = "";
 

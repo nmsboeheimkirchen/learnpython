@@ -106,6 +106,106 @@ button:disabled { background: #e8eaed; color: #9aa0a6; cursor: not-allowed; box-
     flex-direction: column;
 }
 
+/* --- SEITENLEISTE (SIDEBAR) --- */
+.sidebar {
+    height: 100%;
+    width: 280px;
+    position: fixed;
+    z-index: 500;
+    top: 0;
+    left: -280px; /* Startet versteckt */
+    background-color: #e8f0fe; /* Material Light Blue (passend zum Hinweisblock) */
+    overflow-x: hidden;
+    transition: 0.3s;
+    padding-top: 25px; /* Reduziert von 60px für kompaktere Anzeige */
+    box-shadow: 2px 0 5px rgba(0,0,0,0.3);
+}
+.sidebar.active {
+    left: 0;
+}
+.sidebar-header {
+    color: #1967d2; /* Darker Blue für Kontrast */
+    padding: 5px 40px 20px 20px; /* Rechts mehr Platz für das X gelassen */
+    font-size: 18px;
+    border-bottom: 1px solid #cce0ff;
+    margin-bottom: 10px;
+}
+.mission-title {
+    color: #1a73e8; /* Standard Material Blue */
+    padding: 15px 20px 5px 20px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 700;
+}
+.mission-desc {
+    color: #5f6368;
+    padding: 0 20px 10px 20px;
+    font-size: 11px;
+    line-height: 1.4;
+    font-style: italic;
+}
+.sidebar a {
+    padding: 10px 20px;
+    text-decoration: none;
+    font-size: 14px;
+    color: #3c4043;
+    display: block;
+    transition: 0.2s;
+    border-left: 4px solid transparent;
+}
+.sidebar a:hover:not(.locked) {
+    background-color: #d2e3fc; /* Helleres hover blau */
+    border-left: 4px solid #1a73e8;
+}
+.sidebar a.locked {
+    color: #9aa0a6; /* Ausgegraut */
+    cursor: not-allowed;
+}
+.sidebar a.locked i {
+    float: right;
+}
+.sidebar a.active-link {
+    background-color: #cce0ff; /* Aktiver link leicht dunkleres hellblau */
+    color: #174ea6;
+    border-left: 4px solid #174ea6;
+    font-weight: 600;
+}
+
+/* Button um Sidebar zu öffnen */
+.menu-btn {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: #1a73e8;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    font-size: 18px;
+    border-radius: 4px;
+    cursor: pointer;
+    z-index: 600;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    transition: transform 0.3s, background-color 0.2s;
+}
+.menu-btn.inside-sidebar {
+    background: transparent;
+    color: #3c4043;
+    box-shadow: none;
+    transform: translateX(215px) translateY(-5px); /* Auf gleicher Höhe mit dem Text, platziert am rechten Rand */
+    padding: 10px; /* Kompakteres padding fürs X */
+}
+.menu-btn.inside-sidebar:hover {
+    background: rgba(0,0,0,0.05); /* Leichter hover effekt für das X */
+}
+.menu-btn:hover:not(.inside-sidebar) { background: #174ea6; }
+
+/* Hauptinhalt verschiebt sich mit Sidebar */
+#main-content {
+    transition: margin-left .3s;
+    padding-left: 60px; /* Platz für Menu-Button */
+}
+
 .success-badge {
     background: white;
     padding: 40px 60px;
