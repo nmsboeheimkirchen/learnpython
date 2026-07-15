@@ -71,9 +71,14 @@ agent_name = input("Gib deinen Namen ein: ")
     <script>
         document.getElementById("run-btn").addEventListener("click", () => {
              runit((code, output) => {
-                let cleanedCode = code.replace(/\s/g, ''); 
-                if (cleanedCode.includes("print(\"Willkommen") || cleanedCode.includes("print('Willkommen") || (cleanedCode.includes("Willkommen") && cleanedCode.includes("agent_name") && cleanedCode.includes(","))) {
-                    triggerSuccess();
+                let checkCode = code.replace(/#.*$/gm, '').replace(/\s/g, ''); // Ohne Kommentare und Leerzeichen
+                
+                // Prüfen ob print("...", agent_name) benutzt wird
+                // Erlaubt print("x",agent_name) oder print('x',agent_name)
+                if ((checkCode.includes("print(\"") || checkCode.includes("print('")) && 
+                     checkCode.includes("agent_name)") && 
+                     checkCode.includes(",")) {
+                    triggerSuccess(true); // Übergebe true für Finale (Konfetti!)
                 }
             });
         });

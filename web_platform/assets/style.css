@@ -91,6 +91,65 @@ button:disabled { background: #e8eaed; color: #9aa0a6; cursor: not-allowed; box-
     margin-top: 16px; 
 }
 
+/* Erfolgs-Overlay */
+.success-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.8);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.success-badge {
+    background: white;
+    padding: 40px 60px;
+    border-radius: 16px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.success-badge h1 {
+    color: #34a853;
+    font-size: 32px;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+.success-badge p {
+    color: #5f6368;
+    font-size: 18px;
+    margin-bottom: 30px;
+}
+
+.success-btn {
+    background: #1a73e8;
+    color: white;
+    font-size: 18px;
+    padding: 12px 32px;
+}
+
+.trophy {
+    font-size: 80px;
+    animation: bounce 1s infinite alternate;
+}
+
+@keyframes popIn {
+    0% { transform: scale(0.5); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes bounce {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-10px); }
+}
+
 /* CSS MakeCode Block Design (Grundlagen: Blau) */
 .makecode-block {
     background-color: #0078D7; 

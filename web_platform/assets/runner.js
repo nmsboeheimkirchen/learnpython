@@ -78,7 +78,10 @@ function runit(levelTestFunction) {
         myPromise.then(function(mod) {
             // Erfolg: Prüfe Level
             if(levelTestFunction) {
-                levelTestFunction(code, currentOutput);
+                // Warte kurz, damit die finale Print-Ausgabe erst noch gelesen werden kann
+                setTimeout(() => {
+                    levelTestFunction(code, currentOutput);
+                }, 1000); // 1 Sekunde Verzögerung
             }
         }, function(err) {
             outDiv.innerHTML += "<br><span style='color:#ea4335'>FEHLER: " + err.toString() + "</span>";
@@ -89,32 +92,67 @@ function runit(levelTestFunction) {
     }
 }
 
-function triggerSuccess() {
-    document.getElementById("next-level-btn").style.display = "block";
+function triggerSuccess(isFinale = false) {
+    // Falls das Success-Overlay nicht existiert, bauen wir es dynamisch ins Dokument ein
+    let overlay = document.getElementById("success-overlay");
+    if (!overlay) {
+        overlay = document.createElement("div");
+        overlay.id = "success-overlay";
+        overlay.className = "success-overlay";
+        
+        const nextBtnHtml = document.getElementById("next-level-btn").outerHTML;
+        
+        let titleText = isFinale ? "MISSION ERFÜLLT" : "LEVEL GESCHAFFT";
+        let subText = isFinale ? "Sehr starker Code, Agent!" : "Gut gemacht! Weiter geht's.";
+
+        overlay.innerHTML = `
+            <div class="success-badge">
+                <div class="trophy">🏆</div>
+                <h1>${titleText}</h1>
+                <p>${subText}</p>
+                <div class="btn-container"></div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        
+        // Wir clonen den nächsten-Level-Button von oben in unser Pop-up
+        const btnClone = document.getElementById("next-level-btn").cloneNode(true);
+        btnClone.style.display = "inline-block";
+        btnClone.className = "success-btn";
+        overlay.querySelector(".btn-container").appendChild(btnClone);
+    }
+    
+    // UI Updates
     document.getElementById("status-text").innerHTML = "✅ <b>MISSION ERFÜLLT!</b>";
     document.getElementById("status-text").style.color = "#34a853";
-    
     document.getElementById("progress-fill").style.width = (parseInt(document.getElementById("progress-fill").style.width) + 10) + "%";
+    document.getElementById("next-level-btn").style.display = "block"; // Auch den kleinen Button oben zeigen
 
-    confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+    // Zeige fettes Overlay
+    overlay.style.display = "flex";
 
-    var defaults = { spread: 360, ticks: 50, gravity: 0, decay: 0.94, startVelocity: 30, colors: ['FFE400', 'FFBD00', 'E89400', 'FFCA6C', 'FDFFB8'] };
-    function shootStars() {
-        confetti({ ...defaults, particleCount: 40, scalar: 1.2, shapes: ['star'] });
-        confetti({ ...defaults, particleCount: 10, scalar: 0.75, shapes: ['circle'] });
+    // --- CONFETTI (Nur beim Finale) ---
+    if (isFinale) {
+        confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, zIndex: 2000 });
+
+        var defaults = { spread: 360, ticks: 50, gravity: 0, decay: 0.94, startVelocity: 30, colors: ['FFE400', 'FFBD00', 'E89400', 'FFCA6C', 'FDFFB8'], zIndex: 2000 };
+        function shootStars() {
+            confetti({ ...defaults, particleCount: 40, scalar: 1.2, shapes: ['star'] });
+            confetti({ ...defaults, particleCount: 10, scalar: 0.75, shapes: ['circle'] });
+        }
+        setTimeout(shootStars, 250);
+        setTimeout(shootStars, 400);
+
+        var duration = 3 * 1000;
+        var animationEnd = Date.now() + duration;
+        var interval = setInterval(function() {
+            var timeLeft = animationEnd - Date.now();
+            if (timeLeft <= 0) { return clearInterval(interval); }
+            var particleCount = 50 * (timeLeft / duration);
+            confetti({ particleCount: particleCount, startVelocity: 30, spread: 360, ticks: 60, zIndex: 2000, origin: { x: Math.random() * 0.2 + 0.1, y: Math.random() - 0.2 } });
+            confetti({ particleCount: particleCount, startVelocity: 30, spread: 360, ticks: 60, zIndex: 2000, origin: { x: Math.random() * 0.2 + 0.7, y: Math.random() - 0.2 } });
+        }, 250);
     }
-    setTimeout(shootStars, 250);
-    setTimeout(shootStars, 400);
-
-    var duration = 3 * 1000;
-    var animationEnd = Date.now() + duration;
-    var interval = setInterval(function() {
-        var timeLeft = animationEnd - Date.now();
-        if (timeLeft <= 0) { return clearInterval(interval); }
-        var particleCount = 50 * (timeLeft / duration);
-        confetti({ particleCount: particleCount, startVelocity: 30, spread: 360, ticks: 60, origin: { x: Math.random() * 0.2 + 0.1, y: Math.random() - 0.2 } });
-        confetti({ particleCount: particleCount, startVelocity: 30, spread: 360, ticks: 60, origin: { x: Math.random() * 0.2 + 0.7, y: Math.random() - 0.2 } });
-    }, 250);
 }
 
 // Fügt Lehrer-Cheat-Buttons ein, wenn ein #l am Ende der URL steht

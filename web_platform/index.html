@@ -67,7 +67,8 @@ print("Irgendein Text")
     <script>
         document.getElementById("run-btn").addEventListener("click", () => {
             runit((code, output) => {
-                if (output.toLowerCase().includes("verbindung wird hergestellt")) {
+                let checkCode = code.replace(/#.*$/gm, ''); // ignoriere Kommentare
+                if (output.toLowerCase().includes("verbindung wird hergestellt") || checkCode.includes("print(\"Verbindung")) {
                     triggerSuccess();
                 }
             });

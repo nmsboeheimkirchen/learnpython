@@ -72,7 +72,9 @@ time.sleep(1)
     <script>
         document.getElementById("run-btn").addEventListener("click", () => {
              runit((code, output) => {
-                if (code.includes("agent_name") && code.includes("input(")) {
+                let checkCode = code.replace(/#.*$/gm, ''); // Kommentare ignorieren
+                // Muss input UND eine Zuweisung an agent_name enthalten
+                if (checkCode.includes("agent_name") && checkCode.includes("=") && checkCode.includes("input(")) {
                     triggerSuccess();
                 }
             });

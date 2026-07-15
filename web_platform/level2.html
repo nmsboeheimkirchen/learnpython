@@ -36,7 +36,7 @@
             <p>Echte Hacker warten... wir simulieren jetzt eine kurze Wartepause, bevor das System antwortet.</p>
             
             <h2>Pausiere das Skript</h2>
-            <p>Damit Python Pausen einlegen kann, musst du ganz am Anfang das Modul <code>time</code> laden. 
+            <p>Damit Python Pausen einlegen kann, musst du ganz am Anfang mit <span class="tooltip">import time<span class="tooltiptext">Lädt zusätzliche Fähigkeiten in dein Programm, hier die Zeit-Funktionen.</span></span> das Modul <code>time</code> laden. 
             Mit <span class="tooltip">time.sleep(1)<span class="tooltiptext">Pausiert den Code für 1 Sekunde.</span></span> wartet der Computer dann genau eine Sekunde.</p>
             
             <div class="block-hint">
@@ -53,7 +53,7 @@
         <div class="panel editor-panel">
             <h2>Python Terminal</h2>
             <textarea id="python-editor"># Ganz oben time laden:
-import time
+
 
 print("Verbindung wird hergestellt...")
 # Mache hier eine Pause (1 Sekunde):
@@ -71,7 +71,8 @@ print("Verbindung wird hergestellt...")
     <script>
         document.getElementById("run-btn").addEventListener("click", () => {
              runit((code, output) => {
-                if (code.includes("sleep")) {
+                let checkCode = code.replace(/#.*$/gm, ''); // Kommentare weg
+                if (checkCode.includes("import") && checkCode.includes("time") && checkCode.includes("sleep")) {
                     triggerSuccess();
                 }
             });
