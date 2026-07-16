@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { TextDecoder } from "node:util";
 import vm from "node:vm";
 
 class FakeElement {
@@ -183,4 +184,52 @@ test("nested loop requirements reject unindented input", () => {
 
     assert.equal(result.passed, false);
     assert.match(result.message, /eingerückt/);
+});
+
+const teacherSolutionExpectations = new Map([
+    ["mission1_level1", /Verbindung wird hergestellt/],
+    ["mission1_level2", /time\.sleep\(1\)/],
+    ["mission1_level3", /agent_name = input/],
+    ["mission1_level4", /Willkommen im System/],
+    ["mission2_level1", /kabel = "rot"/],
+    ["mission2_level2", /else:/],
+    ["mission2_level3", /elif kabel == "blau":/],
+    ["mission3_level1", /while tipp != "123":/],
+    ["mission3_level2", /elif tipp > 50:/],
+    ["mission3_level3", /random\.randint\(1, 100\)/]
+]);
+
+test("teacher solutions are centralized and available for every level", () => {
+    const editor = {
+        focused: false,
+        value: "",
+        focus() { this.focused = true; },
+        setValue(value) { this.value = value; }
+    };
+    const document = {
+        addEventListener() {},
+        querySelectorAll() { return []; }
+    };
+    const window = {
+        atob(encoded) { return Buffer.from(encoded, "base64").toString("binary"); },
+        editor,
+        location: { hash: "#l" }
+    };
+    const context = vm.createContext({ document, TextDecoder, Uint8Array, window });
+    const source = readFileSync(new URL("../assets/teacher-solutions.js", import.meta.url), "utf8");
+    vm.runInContext(source, context);
+
+    for (const [levelId, expectedCode] of teacherSolutionExpectations) {
+        editor.value = "";
+        editor.focused = false;
+
+        assert.equal(window.TeacherSolutions.load(levelId), true, `${levelId} fehlt`);
+        assert.match(editor.value, expectedCode);
+        assert.equal(editor.focused, true);
+
+        const html = readFileSync(new URL(`../${levelId}.html`, import.meta.url), "utf8");
+        assert.match(html, /assets\/teacher-solutions\.js/);
+        assert.match(html, new RegExp(`data-teacher-solution="${levelId}"`));
+        assert.doesNotMatch(html, /onclick="[^"]*(?:atob|editor\.setValue)/);
+    }
 });

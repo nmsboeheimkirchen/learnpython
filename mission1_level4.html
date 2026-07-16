@@ -11,6 +11,7 @@
     <!-- Confetti Bibliothek für Belohnungen -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
     <script src="assets/runner.js"></script>
+    <script src="assets/teacher-solutions.js"></script>
     <!-- CodeMirror für den Editor -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
@@ -91,7 +92,7 @@ agent_name = input("Gib deinen Namen ein: ")
 </textarea>
             <div style="display: flex; gap: 10px;">
                 <button id="run-btn" style="flex-grow: 1;">▶ Code Ausführen</button>
-                <button class="test-btn" onclick="window.editor.setValue(decodeURIComponent(escape(window.atob('aW1wb3J0IHRpbWUKcHJpbnQoIlZlcmJpbmR1bmcgd2lyZCBoZXJnZXN0ZWxsdC4uLiIpCnRpbWUuc2xlZXAoMSkKYWdlbnRfbmFtZSA9IGlucHV0KCJHaWIgZGVpbmVuIE5hbWVuIGVpbjogIikKcHJpbnQoIldpbGxrb21tZW4gaW0gU3lzdGVtLCIsIGFnZW50X25hbWUp'))))">Cheat (Für Lehrer)</button>
+                <button class="test-btn" data-teacher-solution="mission1_level4">Musterlösung (Für Lehrer)</button>
             </div>
             <div id="console-output">Bereit für deine Befehle, Agent.</div>
         </div>
