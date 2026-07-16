@@ -12,7 +12,7 @@ Eine browserbasierte Python-Lernplattform für Schüler:innen. In kurzen Agenten
 - Python-Ausführung mit Skulpt, ohne lokale Python-Installation
 - Konkrete Rückmeldungen zu noch fehlenden Lösungsschritten
 - Automatisch freigeschaltete Level und gespeicherter Lernfortschritt
-- Drei Missionen mit insgesamt zehn Leveln
+- Vier Missionen mit insgesamt dreizehn Leveln
 
 ## Lernpfad
 
@@ -21,8 +21,9 @@ Eine browserbasierte Python-Lernplattform für Schüler:innen. In kurzen Agenten
 | 1 – System Access | Erste Python-Befehle | `print()`, `import`, Pausen, Variablen und `input()` |
 | 2 – Bombe entschärfen | Entscheidungen | Vergleiche, `if`, `elif` und `else` |
 | 3 – Safe-Knacker | Wiederholungen und Zufall | `while`-Schleifen, Zahleneingaben und `random.randint()` |
+| 4 – Geheimdienst-Chat | Zeichen und Verschlüsselung | `for`-Schleifen über Strings, `ord()`, `chr()` und Caesar-Verschiebung |
 
-Die Aufgaben bauen aufeinander auf. Nach erfolgreicher Ausführung wird das nächste Level freigeschaltet. Der Fortschritt und der zuletzt erfolgreich ausgeführte Code jedes bestandenen Levels werden im jeweiligen Browser gespeichert. Beim erneuten Öffnen eines Levels erscheint dadurch wieder genau die bestandene Lösung. Über **Fortschritt zurücksetzen** am Ende der Navigation können Fortschritt und gespeicherter Code gelöscht werden.
+Die Aufgaben bauen aufeinander auf. Nach erfolgreicher Ausführung wird das nächste Level freigeschaltet. Der Fortschritt und der zuletzt erfolgreich ausgeführte Code jedes bestandenen Levels werden im jeweiligen Browser gespeichert. Beim erneuten Öffnen eines Levels erscheint dadurch wieder genau die bestandene Lösung. In Mission 4 wird der bestandene Code außerdem in das nächste Level übernommen und dort weiterentwickelt. Über **Fortschritt zurücksetzen** am Ende der Navigation können Fortschritt und gespeicherter Code gelöscht werden.
 
 ## Verwendung
 
@@ -64,6 +65,7 @@ Alternativ kann jeder andere statische Webserver verwendet werden.
 ├── mission1_*.html            # Mission 1 mit vier Leveln
 ├── mission2_*.html            # Mission 2 mit drei Leveln
 ├── mission3_*.html            # Mission 3 mit drei Leveln
+├── mission4_*.html            # Mission 4 mit drei aufeinander aufbauenden Leveln
 ├── assets/
 │   ├── vendor/                # Browserbibliotheken, Lizenzen und Prüfsummen
 │   ├── style.css              # Gemeinsames Layout und Design

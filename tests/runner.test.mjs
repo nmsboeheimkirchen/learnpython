@@ -202,6 +202,68 @@ test("a level stores code through the normal success path", () => {
     });
 });
 
+test("mission 4 carries successful code forward without discarding student lines", () => {
+    const level1Code = [
+        "# Mein eigener Kommentar",
+        'nachricht = "GEHEIM"',
+        "for buchstabe in nachricht:",
+        "    print(buchstabe)"
+    ].join("\n");
+    const level2Code = [
+        "# Mein eigener Kommentar",
+        'nachricht = "GEHEIM"',
+        "for buchstabe in nachricht:",
+        "    print(ord(buchstabe))"
+    ].join("\n");
+    const { context } = createRunnerContext({
+        completedLevelCode_v1: JSON.stringify({
+            mission4_level1: level1Code,
+            mission4_level2: level2Code
+        })
+    });
+
+    assert.equal(
+        vm.runInContext('buildInheritedLevelCode("mission4_level2")', context),
+        level1Code
+    );
+
+    const finaleStarter = vm.runInContext('buildInheritedLevelCode("mission4_level3")', context);
+    let previousPosition = -1;
+    for (const originalLine of level2Code.split("\n")) {
+        const position = finaleStarter.indexOf(originalLine, previousPosition + 1);
+        assert.notEqual(position, -1, `Übernommene Zeile fehlt: ${originalLine}`);
+        previousPosition = position;
+    }
+    assert.equal((finaleStarter.match(/geheimtext = ""  # Startbonus/g) ?? []).length, 1);
+    assert.equal((finaleStarter.match(/print\(geheimtext\)  # Startbonus/g) ?? []).length, 1);
+
+    context.finaleStarter = finaleStarter;
+    assert.equal(
+        vm.runInContext("addMission4FinaleBonuses(finaleStarter)", context),
+        finaleStarter,
+        "Startbonus darf bei erneutem Aufbau nicht doppelt erscheinen"
+    );
+});
+
+test("a completed current level takes priority over inherited code", () => {
+    const inheritedCode = 'nachricht = "GEHEIM"\nfor buchstabe in nachricht:\n    print(buchstabe)';
+    const completedCurrentCode = '# Meine bestandene Variante\nnachricht = "GEHEIM"\nfor buchstabe in nachricht:\n    print(ord(buchstabe))';
+    const { context } = createRunnerContext({
+        completedLevelCode_v1: JSON.stringify({
+            mission4_level1: inheritedCode,
+            mission4_level2: completedCurrentCode
+        })
+    });
+    const editor = {
+        value: "",
+        setValue(value) { this.value = value; }
+    };
+    context.window.editor = editor;
+
+    assert.equal(vm.runInContext('restoreLevelCode("mission4_level2")', context), true);
+    assert.equal(editor.value, completedCurrentCode);
+});
+
 test("assignment microcode consistently uses setze auf", () => {
     const mission3Level2 = readFileSync(new URL("../mission3_level2.html", import.meta.url), "utf8");
     const mission3Level3 = readFileSync(new URL("../mission3_level3.html", import.meta.url), "utf8");
@@ -266,6 +328,21 @@ const validSolutions = [
         level: "mission3_level3",
         code: 'import random\ngeheim = random.randint(1, 100)\ntipp = 0\nwhile tipp != geheim:\n    tipp = int(input("Code eingeben: "))\n    if tipp < geheim:\n        print("Zu niedrig!")\n    elif tipp > geheim:\n        print("Zu hoch!")\nprint("Knack!")',
         output: "Code eingeben: 42\nKnack!\n"
+    },
+    {
+        level: "mission4_level1",
+        code: 'nachricht = "GEHEIM"\nfor buchstabe in nachricht:\n    print(buchstabe)',
+        output: "G\nE\nH\nE\nI\nM\n"
+    },
+    {
+        level: "mission4_level2",
+        code: 'nachricht = "GEHEIM"\nfor buchstabe in nachricht:\n    print(ord(buchstabe))',
+        output: "71\n69\n72\n69\n73\n77\n"
+    },
+    {
+        level: "mission4_level3",
+        code: 'nachricht = "GEHEIM"\ngeheimtext = ""\nfor buchstabe in nachricht:\n    zahl = ord(buchstabe) + 3\n    geheimtext = geheimtext + chr(zahl)\nprint(geheimtext)',
+        output: "JHKHLP\n"
     }
 ];
 
@@ -311,6 +388,26 @@ test("nested loop requirements reject unindented input", () => {
     assert.match(result.message, /eingerückt/);
 });
 
+test("mission 4 rejects Caesar steps outside the for loop", () => {
+    const { context } = createRunnerContext();
+    context.levelId = "mission4_level3";
+    context.code = [
+        'nachricht = "GEHEIM"',
+        'geheimtext = ""',
+        "for buchstabe in nachricht:",
+        "    print(buchstabe)",
+        "zahl = ord(buchstabe) + 3",
+        "geheimtext = geheimtext + chr(zahl)",
+        "print(geheimtext)"
+    ].join("\n");
+    context.output = "JHKHLP\n";
+
+    const result = vm.runInContext("validateLevelSolution(levelId, code, output)", context);
+
+    assert.equal(result.passed, false);
+    assert.match(result.message, /eingerückt/);
+});
+
 const teacherSolutionExpectations = new Map([
     ["mission1_level1", /Verbindung wird hergestellt/],
     ["mission1_level2", /time\.sleep\(1\)/],
@@ -321,7 +418,10 @@ const teacherSolutionExpectations = new Map([
     ["mission2_level3", /elif kabel == "blau":/],
     ["mission3_level1", /while tipp != "123":/],
     ["mission3_level2", /elif tipp > 50:/],
-    ["mission3_level3", /random\.randint\(1, 100\)/]
+    ["mission3_level3", /random\.randint\(1, 100\)/],
+    ["mission4_level1", /for buchstabe in nachricht:/],
+    ["mission4_level2", /ord\(buchstabe\)/],
+    ["mission4_level3", /geheimtext = geheimtext \+ chr\(zahl\)/]
 ]);
 
 test("teacher solutions are centralized and available for every level", () => {
@@ -372,7 +472,11 @@ const missionPages = [
     "mission3_start.html",
     "mission3_level1.html",
     "mission3_level2.html",
-    "mission3_level3.html"
+    "mission3_level3.html",
+    "mission4_start.html",
+    "mission4_level1.html",
+    "mission4_level2.html",
+    "mission4_level3.html"
 ];
 
 test("browser dependencies are local and checksum-protected", () => {
@@ -452,11 +556,13 @@ test("mission navigation is rendered from one central definition", () => {
     }
     collectElements(renderedSidebar);
 
-    assert.equal(elementsById.size, 15);
+    assert.equal(elementsById.size, 19);
     assert.equal(elementsById.get("link-level1").className.includes("locked"), false);
     assert.equal(elementsById.get("link-level2").className.includes("locked"), true);
     assert.equal(elementsById.get("link-m2-title").textContent.endsWith("🔒"), true);
     assert.equal(elementsById.get("link-m3-l3").textContent, "Level 3: Safe knacken 🔒");
+    assert.equal(elementsById.get("link-m4-title").textContent.endsWith("🔒"), true);
+    assert.equal(elementsById.get("link-m4-l3").textContent, "Level 3: Caesar-Code 🔒");
     assert.equal(elementsById.get("reset-progress-btn").textContent, "Fortschritt zurücksetzen");
 
     for (const page of missionPages) {

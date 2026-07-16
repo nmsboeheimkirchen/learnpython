@@ -16,7 +16,11 @@ const LEVEL_ROUTES = Object.freeze({
     "link-m3-title": "mission3_start.html",
     "link-m3-l1": "mission3_level1.html",
     "link-m3-l2": "mission3_level2.html",
-    "link-m3-l3": "mission3_level3.html"
+    "link-m3-l3": "mission3_level3.html",
+    "link-m4-title": "mission4_start.html",
+    "link-m4-l1": "mission4_level1.html",
+    "link-m4-l2": "mission4_level2.html",
+    "link-m4-l3": "mission4_level3.html"
 });
 
 function safeStorageGetItem(key) {
@@ -144,6 +148,60 @@ function restoreCompletedLevelCode(levelId) {
     }
 
     window.editor.setValue(savedCode);
+    return true;
+}
+
+function addMission4FinaleBonuses(source) {
+    const lines = source.replace(/\r\n/g, "\n").split("\n");
+
+    if (!lines.some(line => /^\s*geheimtext\s*=/.test(line))) {
+        const messageLine = lines.findIndex(line => /^\s*nachricht\s*=/.test(line));
+        const insertAt = messageLine >= 0 ? messageLine + 1 : 0;
+        lines.splice(insertAt, 0, 'geheimtext = ""  # Startbonus');
+    }
+
+    if (!lines.some(line => /^\s*print\s*\(\s*geheimtext\s*\)/.test(line))) {
+        let insertAt = lines.length;
+        while (insertAt > 0 && lines[insertAt - 1] === "") {
+            insertAt -= 1;
+        }
+        lines.splice(insertAt, 0, "", "print(geheimtext)  # Startbonus");
+    }
+
+    return lines.join("\n");
+}
+
+function buildInheritedLevelCode(levelId) {
+    const inheritance = LEVEL_CODE_INHERITANCE[levelId];
+    if (!inheritance) {
+        return null;
+    }
+
+    const previousCode = getCompletedLevelCode(inheritance.from);
+    if (previousCode === null) {
+        return null;
+    }
+
+    return typeof inheritance.prepare === "function"
+        ? inheritance.prepare(previousCode)
+        : previousCode;
+}
+
+function restoreLevelCode(levelId) {
+    if (restoreCompletedLevelCode(levelId)) {
+        return true;
+    }
+
+    const inheritedCode = buildInheritedLevelCode(levelId);
+    if (
+        inheritedCode === null ||
+        !window.editor ||
+        typeof window.editor.setValue !== "function"
+    ) {
+        return false;
+    }
+
+    window.editor.setValue(inheritedCode);
     return true;
 }
 
@@ -471,6 +529,16 @@ function numberToken(value) {
     return { type: "number", value: String(value) };
 }
 
+function outputMatchesLines(output, expectedLines) {
+    const actualLines = output
+        .trim()
+        .split(/\r?\n/)
+        .map(line => line.trim())
+        .filter(Boolean);
+    return actualLines.length === expectedLines.length &&
+        actualLines.every((line, index) => line === expectedLines[index]);
+}
+
 const LEVEL_VALIDATORS = {
     mission1_level1({ output }) {
         return firstFailedRequirement([
@@ -551,6 +619,36 @@ const LEVEL_VALIDATORS = {
             { passed: hasNestedStatement(statements, whilePattern, ["elif", "tipp", ">", "geheim", ":"]), message: "Prüfe innerhalb der Schleife, ob der Tipp zu hoch ist." },
             { passed: output.includes("Knack!"), message: "Gib nach dem richtigen Tipp ‚Knack!‘ aus." }
         ]);
+    },
+    mission4_level1({ statements, output }) {
+        const forPattern = ["for", "buchstabe", "in", "nachricht", ":"];
+        return firstFailedRequirement([
+            { passed: Boolean(findStatement(statements, ["nachricht", "=", stringToken("GEHEIM")])), message: "Setze nachricht auf den Text ‚GEHEIM‘." },
+            { passed: Boolean(findStatement(statements, forPattern)), message: "Durchlaufe nachricht mit for buchstabe in nachricht:." },
+            { passed: hasNestedStatement(statements, forPattern, ["print", "(", "buchstabe", ")"]), message: "Gib buchstabe eingerückt innerhalb der for-Schleife aus." },
+            { passed: outputMatchesLines(output, ["G", "E", "H", "E", "I", "M"]), message: "Die Ausgabe muss jeden Buchstaben von GEHEIM in einer eigenen Zeile zeigen." }
+        ]);
+    },
+    mission4_level2({ statements, output }) {
+        const forPattern = ["for", "buchstabe", "in", "nachricht", ":"];
+        return firstFailedRequirement([
+            { passed: Boolean(findStatement(statements, ["nachricht", "=", stringToken("GEHEIM")])), message: "Behalte nachricht mit dem Text ‚GEHEIM‘ bei." },
+            { passed: Boolean(findStatement(statements, forPattern)), message: "Behalte die for-Schleife über nachricht bei." },
+            { passed: hasNestedStatement(statements, forPattern, ["print", "(", "ord", "(", "buchstabe", ")", ")"]), message: "Gib eingerückt mit ord(buchstabe) den Zahlenwert aus." },
+            { passed: outputMatchesLines(output, ["71", "69", "72", "69", "73", "77"]), message: "Die Ausgabe muss die sechs Zahlenwerte von GEHEIM zeigen." }
+        ]);
+    },
+    mission4_level3({ statements, output }) {
+        const forPattern = ["for", "buchstabe", "in", "nachricht", ":"];
+        return firstFailedRequirement([
+            { passed: Boolean(findStatement(statements, ["nachricht", "=", stringToken("GEHEIM")])), message: "Behalte nachricht mit dem Text ‚GEHEIM‘ bei." },
+            { passed: Boolean(findStatement(statements, ["geheimtext", "=", stringToken("")])), message: "Starte geheimtext als leeren Text." },
+            { passed: Boolean(findStatement(statements, forPattern)), message: "Behalte die for-Schleife über nachricht bei." },
+            { passed: hasNestedStatement(statements, forPattern, ["zahl", "=", "ord", "(", "buchstabe", ")", "+", numberToken(3)]), message: "Setze zahl eingerückt auf ord(buchstabe) + 3." },
+            { passed: hasNestedStatement(statements, forPattern, ["geheimtext", "=", "geheimtext", "+", "chr", "(", "zahl", ")"]), message: "Hänge eingerückt mit chr(zahl) das neue Zeichen an geheimtext an." },
+            { passed: Boolean(findStatement(statements, ["print", "(", "geheimtext", ")"])), message: "Gib geheimtext nach der Schleife aus." },
+            { passed: outputMatchesLines(output, ["JHKHLP"]), message: "Der fertige Caesar-Code muss JHKHLP ergeben." }
+        ]);
     }
 };
 
@@ -564,8 +662,19 @@ const LEVEL_OUTCOMES = {
     mission2_level3: { unlocks: ["link-m3-title", "link-m3-l1"], finale: true },
     mission3_level1: { unlocks: ["link-m3-l2"] },
     mission3_level2: { unlocks: ["link-m3-l3"] },
-    mission3_level3: { unlocks: [], finale: true }
+    mission3_level3: { unlocks: ["link-m4-title", "link-m4-l1"], finale: true },
+    mission4_level1: { unlocks: ["link-m4-l2"], successMessage: "Scan abgeschlossen: 6 Zeichen erkannt!" },
+    mission4_level2: { unlocks: ["link-m4-l3"], successMessage: "Matrix gelesen: Jeder Buchstabe hat eine Zahl!" },
+    mission4_level3: { unlocks: [], finale: true, successMessage: "Nachricht verschlüsselt! Übertragung gesichert." }
 };
+
+const LEVEL_CODE_INHERITANCE = Object.freeze({
+    mission4_level2: Object.freeze({ from: "mission4_level1" }),
+    mission4_level3: Object.freeze({
+        from: "mission4_level2",
+        prepare: addMission4FinaleBonuses
+    })
+});
 
 function validateLevelSolution(levelId, code, output) {
     const validator = LEVEL_VALIDATORS[levelId];
@@ -585,7 +694,7 @@ function setupLevel(levelId) {
     const outcome = LEVEL_OUTCOMES[levelId];
     if (!runButton || !outcome) return;
 
-    const restoreCode = () => restoreCompletedLevelCode(levelId);
+    const restoreCode = () => restoreLevelCode(levelId);
     if (document.readyState === "loading") {
         document.addEventListener("DOMContentLoaded", restoreCode, { once: true });
     } else {
@@ -602,7 +711,7 @@ function setupLevel(levelId) {
 
             saveCompletedLevelCode(levelId, code);
             outcome.unlocks.forEach(unlockLevel);
-            triggerSuccess(Boolean(outcome.finale));
+            triggerSuccess(Boolean(outcome.finale), outcome.successMessage);
         });
     });
 }
@@ -697,7 +806,7 @@ function runit(levelTestFunction) {
     }
 }
 
-function triggerSuccess(isFinale = false) {
+function triggerSuccess(isFinale = false, successMessage = "") {
     // Falls das Success-Overlay nicht existiert, bauen wir es dynamisch ins Dokument ein
     let overlay = document.getElementById("success-overlay");
     if (!overlay) {
@@ -706,7 +815,7 @@ function triggerSuccess(isFinale = false) {
         overlay.className = "success-overlay";
         
         let titleText = isFinale ? "MISSION ERFÜLLT" : "LEVEL GESCHAFFT";
-        let subText = isFinale ? "Sehr starker Code, Agent!" : "Gut gemacht! Weiter geht's.";
+        let subText = successMessage || (isFinale ? "Sehr starker Code, Agent!" : "Gut gemacht! Weiter geht's.");
 
                 overlay.innerHTML = `
             <div class="success-badge">

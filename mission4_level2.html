@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mission 4 – ASCII-Matrix</title>
+    <script src="assets/vendor/skulpt/1.2.0/skulpt.min.js"></script>
+    <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
+    <script src="assets/vendor/canvas-confetti/1.9.2/confetti.browser.min.js"></script>
+    <script src="assets/runner.js"></script>
+    <script src="assets/teacher-solutions.js"></script>
+    <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
+    <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+    <div id="navigation-root"></div>
+    <script src="assets/navigation.js"></script>
+
+    <button id="menu-btn" class="menu-btn inside-sidebar" onclick="toggleNav()">✕</button>
+
+    <div id="main-content" style="padding-left: 280px;">
+        <div style="max-width: 1200px; margin: 0 auto;">
+            <div class="progress-container">
+                <span class="level-badge">Level 2 von 3</span>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" id="progress-fill" style="width: 66%;"></div>
+                </div>
+                <span id="status-text">Warte auf Eingabe...</span>
+                <button id="next-level-btn" class="next-level-btn" onclick="window.location.href='mission4_level3.html'">Nächstes Level</button>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="panel guide-panel">
+                <h1>Geheimdienst-Chat – 2:</h1>
+                <h2>ASCII-Matrix</h2>
+                <p>Computer speichern Buchstaben als Zahlen. <code>ord()</code> zeigt dir den Zahlenwert eines Zeichens.</p>
+
+                <div class="carryover-note">Dein bestandener Code aus Level 1 ist schon da. Ändere nur eine Zeile.</div>
+
+                <h2>Dein Programm-Plan</h2>
+                <p>Die ersten beiden Blöcke bleiben. Nur die Ausgabe wird erweitert.</p>
+                <div class="block-hint" style="display: flex; flex-direction: column; align-items: flex-start; gap: 0;">
+                    <div class="makecode-block block-tooltip">setze <span class="makecode-var-pill" style="background:#005a9e;">nachricht</span> auf <span class="makecode-input">"GEHEIM"</span>
+                        <span class="tooltiptext">nachricht = "GEHEIM"</span>
+                    </div>
+                    <div class="makecode-block-var block-tooltip" style="margin-top: 5px;">für jeden <span class="makecode-input">buchstabe</span> in <span class="makecode-input">nachricht</span> mache
+                        <span class="tooltiptext">for buchstabe in nachricht:</span>
+                    </div>
+                    <div class="makecode-block block-tooltip" style="margin-left: 20px;">zeige Zahl von <span class="makecode-var-pill">buchstabe</span>
+                        <span class="tooltiptext">    print(ord(buchstabe))</span>
+                    </div>
+                </div>
+
+                <h2>Aufgabe</h2>
+                <p>Ersetze nur die eingerückte Ausgabe. Gib statt des Buchstabens seinen Zahlenwert aus.</p>
+            </div>
+
+            <div class="panel editor-panel">
+                <h2>Python Terminal</h2>
+                <textarea id="python-editor">nachricht = "GEHEIM"
+for buchstabe in nachricht:
+    print(buchstabe)
+</textarea>
+                <div style="display: flex; gap: 10px;">
+                    <button id="run-btn" style="flex-grow: 1;">▶ Code ausführen</button>
+                    <button class="test-btn" data-teacher-solution="mission4_level2">Musterlösung (Für Lehrer)</button>
+                </div>
+                <div id="console-output">Bereit für deine Befehle, Agent.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>setupLevel("mission4_level2");</script>
+    <script src="assets/vendor/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="assets/vendor/codemirror/5.65.2/python.min.js"></script>
+    <script src="assets/editor.js"></script>
+</body>
+</html>

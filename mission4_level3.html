@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mission 4 – Caesar-Code</title>
+    <script src="assets/vendor/skulpt/1.2.0/skulpt.min.js"></script>
+    <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
+    <script src="assets/vendor/canvas-confetti/1.9.2/confetti.browser.min.js"></script>
+    <script src="assets/runner.js"></script>
+    <script src="assets/teacher-solutions.js"></script>
+    <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
+    <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+    <div id="navigation-root"></div>
+    <script src="assets/navigation.js"></script>
+
+    <button id="menu-btn" class="menu-btn inside-sidebar" onclick="toggleNav()">✕</button>
+
+    <div id="main-content" style="padding-left: 280px;">
+        <div style="max-width: 1200px; margin: 0 auto;">
+            <div class="progress-container">
+                <span class="level-badge">Level 3 von 3</span>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" id="progress-fill" style="width: 100%;"></div>
+                </div>
+                <span id="status-text">Warte auf Eingabe...</span>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="panel guide-panel">
+                <h1>Geheimdienst-Chat – 3:</h1>
+                <h2>Caesar-Code</h2>
+                <p><code>ord()</code> macht Buchstaben zu Zahlen. <strong>+3</strong> verschiebt sie. <code>chr()</code> macht daraus wieder Buchstaben.</p>
+
+                <div class="carryover-note start-bonus">Dein Level-2-Code bleibt. Zwei Startbonus-Zeilen wurden ergänzt.</div>
+
+                <h2>Dein Programm-Plan</h2>
+                <p>Ersetze die alte Zahlenausgabe durch die zwei eingerückten Blöcke.</p>
+                <div class="block-hint" style="display: flex; flex-direction: column; align-items: flex-start; gap: 0;">
+                    <div class="makecode-block block-tooltip">setze <span class="makecode-var-pill" style="background:#005a9e;">nachricht</span> auf <span class="makecode-input">"GEHEIM"</span>
+                        <span class="tooltiptext">nachricht = "GEHEIM"</span>
+                    </div>
+                    <div class="makecode-block block-tooltip">setze <span class="makecode-var-pill" style="background:#005a9e;">geheimtext</span> auf <span class="makecode-input">""</span>
+                        <span class="tooltiptext">geheimtext = ""</span>
+                    </div>
+                    <div class="makecode-block-var block-tooltip" style="margin-top: 5px;">für jeden <span class="makecode-input">buchstabe</span> in <span class="makecode-input">nachricht</span> mache
+                        <span class="tooltiptext">for buchstabe in nachricht:</span>
+                    </div>
+                    <div class="makecode-block block-tooltip" style="margin-left: 20px;">setze <span class="makecode-var-pill">zahl</span> auf <span class="makecode-input">ord(buchstabe) + 3</span>
+                        <span class="tooltiptext">    zahl = ord(buchstabe) + 3</span>
+                    </div>
+                    <div class="makecode-block block-tooltip" style="margin-left: 20px;">setze <span class="makecode-var-pill">geheimtext</span> auf <span class="makecode-input">geheimtext + chr(zahl)</span>
+                        <span class="tooltiptext">    geheimtext = geheimtext + chr(zahl)</span>
+                    </div>
+                    <div class="makecode-block block-tooltip" style="margin-top: 5px;">zeige <span class="makecode-var-pill">geheimtext</span>
+                        <span class="tooltiptext">print(geheimtext)</span>
+                    </div>
+                </div>
+
+                <h2>Aufgabe</h2>
+                <p>Erhöhe jeden Zahlenwert um 3, verwandle ihn zurück und hänge das Zeichen an <strong>geheimtext</strong>. Das Ergebnis lautet <strong>JHKHLP</strong>.</p>
+            </div>
+
+            <div class="panel editor-panel">
+                <h2>Python Terminal</h2>
+                <textarea id="python-editor">nachricht = "GEHEIM"
+geheimtext = ""  # Startbonus
+for buchstabe in nachricht:
+    print(ord(buchstabe))
+
+print(geheimtext)  # Startbonus
+</textarea>
+                <div style="display: flex; gap: 10px;">
+                    <button id="run-btn" style="flex-grow: 1;">▶ Code ausführen</button>
+                    <button class="test-btn" data-teacher-solution="mission4_level3">Musterlösung (Für Lehrer)</button>
+                </div>
+                <div id="console-output">Bereit für deine Befehle, Agent.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>setupLevel("mission4_level3");</script>
+    <script src="assets/vendor/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="assets/vendor/codemirror/5.65.2/python.min.js"></script>
+    <script src="assets/editor.js"></script>
+</body>
+</html>

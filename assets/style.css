@@ -298,6 +298,7 @@ button:disabled { background: #e8eaed; color: #9aa0a6; cursor: not-allowed; box-
     margin-left: 8px;
     font-family: monospace;
     box-shadow: inset 0px 2px 0px rgba(0,0,0,0.1);
+    white-space: nowrap;
 }
 
 /* CSS MakeCode Block Design (Variablen: Pink) */
@@ -321,6 +322,22 @@ button:disabled { background: #e8eaed; color: #9aa0a6; cursor: not-allowed; box-
     padding: 2px 8px;
     margin: 0 4px;
     display: inline-block;
+}
+
+.carryover-note {
+    background: #e8f0fe;
+    border-left: 4px solid #1a73e8;
+    border-radius: 6px;
+    color: #174ea6;
+    font-weight: 600;
+    margin: 14px 0;
+    padding: 10px 12px;
+}
+
+.start-bonus {
+    background: #e6f4ea;
+    border-left-color: #34a853;
+    color: #137333;
 }
 
 /* Fortschritts-Anzeige */

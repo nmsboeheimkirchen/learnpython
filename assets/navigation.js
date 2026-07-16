@@ -31,6 +31,16 @@ window.AgentNavigation = (() => {
                 { id: "link-m3-l2", label: "Level 2: Zu hoch, zu niedrig" },
                 { id: "link-m3-l3", label: "Level 3: Safe knacken" }
             ]
+        },
+        {
+            title: "Mission 4: Geheimdienst-Chat",
+            titleId: "link-m4-title",
+            description: "Scanne eine Nachricht Zeichen für Zeichen und verschlüssele sie mit dem Caesar-Code.",
+            levels: [
+                { id: "link-m4-l1", label: "Level 1: Buchstaben-Scanner" },
+                { id: "link-m4-l2", label: "Level 2: ASCII-Matrix" },
+                { id: "link-m4-l3", label: "Level 3: Caesar-Code" }
+            ]
         }
     ]);
 
