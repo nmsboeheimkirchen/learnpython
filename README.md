@@ -67,6 +67,7 @@ Alternativ kann jeder andere statische Webserver verwendet werden.
 ├── assets/
 │   ├── vendor/                # Browserbibliotheken, Lizenzen und Prüfsummen
 │   ├── style.css              # Gemeinsames Layout und Design
+│   ├── editor.js              # Gemeinsame Einrichtung des Python-Editors
 │   ├── navigation.js          # Gemeinsame Navigation aller Missionen
 │   └── runner.js              # Python-Ausführung, Fortschritt und Validierung
 ├── tests/

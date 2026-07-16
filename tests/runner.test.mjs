@@ -341,3 +341,38 @@ test("mission navigation is rendered from one central definition", () => {
         assert.doesNotMatch(html, /id="mySidebar"/);
     }
 });
+
+test("CodeMirror is initialized from one central editor module", () => {
+    const textarea = { id: "python-editor" };
+    const createdEditor = { name: "editor" };
+    let receivedTextarea = null;
+    let receivedOptions = null;
+    const document = {
+        getElementById(id) { return id === "python-editor" ? textarea : null; }
+    };
+    const window = {
+        CodeMirror: {
+            fromTextArea(element, options) {
+                receivedTextarea = element;
+                receivedOptions = options;
+                return createdEditor;
+            }
+        }
+    };
+    const context = vm.createContext({ document, Error, window });
+    const source = readFileSync(new URL("../assets/editor.js", import.meta.url), "utf8");
+    vm.runInContext(source, context);
+
+    assert.equal(receivedTextarea, textarea);
+    assert.equal(window.editor, createdEditor);
+    assert.deepEqual(
+        JSON.parse(JSON.stringify(receivedOptions)),
+        { mode: "python", theme: "monokai", lineNumbers: true, indentUnit: 4 }
+    );
+
+    for (const page of missionPages.filter(name => name.includes("_level"))) {
+        const html = readFileSync(new URL(`../${page}`, import.meta.url), "utf8");
+        assert.match(html, /<script src="assets\/editor\.js"><\/script>/);
+        assert.doesNotMatch(html, /CodeMirror\.fromTextArea/);
+    }
+});
