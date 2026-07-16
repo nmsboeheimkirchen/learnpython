@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { TextDecoder } from "node:util";
@@ -231,5 +232,58 @@ test("teacher solutions are centralized and available for every level", () => {
         assert.match(html, /assets\/teacher-solutions\.js/);
         assert.match(html, new RegExp(`data-teacher-solution="${levelId}"`));
         assert.doesNotMatch(html, /onclick="[^"]*(?:atob|editor\.setValue)/);
+    }
+});
+
+test("browser dependencies are local and checksum-protected", () => {
+    const missionPages = [
+        "mission1_start.html",
+        "mission1_level1.html",
+        "mission1_level2.html",
+        "mission1_level3.html",
+        "mission1_level4.html",
+        "mission2_start.html",
+        "mission2_level1.html",
+        "mission2_level2.html",
+        "mission2_level3.html",
+        "mission3_start.html",
+        "mission3_level1.html",
+        "mission3_level2.html",
+        "mission3_level3.html"
+    ];
+    const referencedVendorFiles = new Set();
+
+    for (const page of missionPages) {
+        const html = readFileSync(new URL(`../${page}`, import.meta.url), "utf8");
+        assert.doesNotMatch(
+            html,
+            /https:\/\/(?:ajax\.googleapis\.com|cdn\.jsdelivr\.net|cdnjs\.cloudflare\.com)/,
+            `${page} enthält noch eine externe Browserbibliothek`
+        );
+
+        for (const match of html.matchAll(/(?:src|href)="(assets\/vendor\/[^"]+)"/g)) {
+            referencedVendorFiles.add(match[1]);
+        }
+    }
+
+    assert.equal(referencedVendorFiles.size, 7);
+
+    const checksumFile = readFileSync(new URL("../assets/vendor/SHA256SUMS", import.meta.url), "utf8");
+    const expectedChecksums = new Map(
+        checksumFile.trim().split(/\r?\n/).map(line => {
+            const [hash, relativePath] = line.split(/\s{2,}/);
+            return [relativePath, hash];
+        })
+    );
+    assert.equal(expectedChecksums.size, 10);
+
+    for (const [relativePath, expectedHash] of expectedChecksums) {
+        const contents = readFileSync(new URL(`../${relativePath}`, import.meta.url));
+        const actualHash = createHash("sha256").update(contents).digest("hex");
+        assert.equal(actualHash, expectedHash, `${relativePath} wurde unerwartet verändert`);
+    }
+
+    for (const relativePath of referencedVendorFiles) {
+        assert.equal(expectedChecksums.has(relativePath), true, `${relativePath} fehlt in SHA256SUMS`);
     }
 });

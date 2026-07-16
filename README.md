@@ -38,7 +38,7 @@ Danach:
 4. Die Rückmeldung beachten und den Code bei Bedarf verbessern.
 5. Nach bestandener Aufgabe mit dem nächsten Level fortfahren.
 
-Für die extern geladenen Browserbibliotheken wird eine Internetverbindung benötigt. Die Anwendung ist für aktuelle Versionen von Chrome, Edge, Firefox und Safari ausgelegt.
+Alle benötigten Browserbibliotheken liegen versionsfest im Repository. Die veröffentlichte Website benötigt daher keine zusätzlichen Verbindungen zu externen CDNs. Die Anwendung ist für aktuelle Versionen von Chrome, Edge, Firefox und Safari ausgelegt.
 
 ## Lokal ausführen
 
@@ -65,6 +65,7 @@ Alternativ kann jeder andere statische Webserver verwendet werden.
 ├── mission2_*.html            # Mission 2 mit drei Leveln
 ├── mission3_*.html            # Mission 3 mit drei Leveln
 ├── assets/
+│   ├── vendor/                # Browserbibliotheken, Lizenzen und Prüfsummen
 │   ├── style.css              # Gemeinsames Layout und Design
 │   └── runner.js              # Python-Ausführung, Fortschritt und Validierung
 ├── tests/

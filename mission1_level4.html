@@ -5,16 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Python Agenten-Training</title>
     <!-- Skulpt für Python im Browser -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script> 
-    <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js"></script> 
-    <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js"></script> 
+    <script src="assets/vendor/skulpt/1.2.0/skulpt.min.js"></script>
+    <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
     <!-- Confetti Bibliothek für Belohnungen -->
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    <script src="assets/vendor/canvas-confetti/1.9.2/confetti.browser.min.js"></script>
     <script src="assets/runner.js"></script>
     <script src="assets/teacher-solutions.js"></script>
     <!-- CodeMirror für den Editor -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
+    <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
     <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -104,8 +103,8 @@ agent_name = input("Gib deinen Namen ein: ")
     </script>
 
     <!-- CodeMirror Setup für Syntax Highlighting -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+    <script src="assets/vendor/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="assets/vendor/codemirror/5.65.2/python.min.js"></script>
     <script>
         window.editor = CodeMirror.fromTextArea(document.getElementById("python-editor"), {
             mode: "python",
