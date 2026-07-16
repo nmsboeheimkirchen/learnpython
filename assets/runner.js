@@ -1,6 +1,7 @@
 ﻿// --- SIDEBAR & PROGRESS LOGIC ---
 
 const PROGRESS_STORAGE_KEY = "unlockedLevels_v2";
+const COMPLETED_CODE_STORAGE_KEY = "completedLevelCode_v1";
 const TEACHER_MODE_STORAGE_KEY = "cheatMode";
 const DEFAULT_UNLOCKED_LEVELS = Object.freeze(["link-level1"]);
 const LEVEL_ROUTES = Object.freeze({
@@ -76,8 +77,79 @@ function readUnlockedLevels() {
     }
 }
 
+function normalizeCompletedLevelCode(value) {
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+        return {};
+    }
+
+    const normalized = {};
+    Object.entries(value).forEach(([levelId, code]) => {
+        if (
+            Object.prototype.hasOwnProperty.call(LEVEL_OUTCOMES, levelId) &&
+            typeof code === "string"
+        ) {
+            normalized[levelId] = code;
+        }
+    });
+    return normalized;
+}
+
+function readCompletedLevelCode() {
+    const storedValue = safeStorageGetItem(COMPLETED_CODE_STORAGE_KEY);
+    if (!storedValue) {
+        return {};
+    }
+
+    try {
+        const parsedValue = JSON.parse(storedValue);
+        const normalized = normalizeCompletedLevelCode(parsedValue);
+        if (JSON.stringify(parsedValue) !== JSON.stringify(normalized)) {
+            safeStorageSetItem(COMPLETED_CODE_STORAGE_KEY, JSON.stringify(normalized));
+        }
+        return normalized;
+    } catch (_error) {
+        safeStorageRemoveItem(COMPLETED_CODE_STORAGE_KEY);
+        return {};
+    }
+}
+
+function saveCompletedLevelCode(levelId, code) {
+    if (
+        !Object.prototype.hasOwnProperty.call(LEVEL_OUTCOMES, levelId) ||
+        typeof code !== "string"
+    ) {
+        return false;
+    }
+
+    const completedCode = readCompletedLevelCode();
+    completedCode[levelId] = code;
+    return safeStorageSetItem(COMPLETED_CODE_STORAGE_KEY, JSON.stringify(completedCode));
+}
+
+function getCompletedLevelCode(levelId) {
+    const completedCode = readCompletedLevelCode();
+    return Object.prototype.hasOwnProperty.call(completedCode, levelId)
+        ? completedCode[levelId]
+        : null;
+}
+
+function restoreCompletedLevelCode(levelId) {
+    const savedCode = getCompletedLevelCode(levelId);
+    if (
+        savedCode === null ||
+        !window.editor ||
+        typeof window.editor.setValue !== "function"
+    ) {
+        return false;
+    }
+
+    window.editor.setValue(savedCode);
+    return true;
+}
+
 function clearProgress() {
     safeStorageRemoveItem(PROGRESS_STORAGE_KEY);
+    safeStorageRemoveItem(COMPLETED_CODE_STORAGE_KEY);
     safeStorageRemoveItem(TEACHER_MODE_STORAGE_KEY);
 }
 
@@ -513,6 +585,13 @@ function setupLevel(levelId) {
     const outcome = LEVEL_OUTCOMES[levelId];
     if (!runButton || !outcome) return;
 
+    const restoreCode = () => restoreCompletedLevelCode(levelId);
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", restoreCode, { once: true });
+    } else {
+        restoreCode();
+    }
+
     runButton.addEventListener("click", () => {
         runit((code, output) => {
             const result = validateLevelSolution(levelId, code, output);
@@ -521,6 +600,7 @@ function setupLevel(levelId) {
                 return;
             }
 
+            saveCompletedLevelCode(levelId, code);
             outcome.unlocks.forEach(unlockLevel);
             triggerSuccess(Boolean(outcome.finale));
         });

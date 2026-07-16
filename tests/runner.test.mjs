@@ -9,6 +9,7 @@ class FakeElement {
     constructor(tagName = "div") {
         this.tagName = tagName;
         this.children = [];
+        this.listeners = new Map();
         this.style = {};
         this.classList = {
             add() {},
@@ -23,7 +24,18 @@ class FakeElement {
         return child;
     }
 
-    addEventListener() {}
+    addEventListener(type, listener) {
+        const listeners = this.listeners.get(type) ?? [];
+        listeners.push(listener);
+        this.listeners.set(type, listeners);
+    }
+
+    dispatch(type) {
+        for (const listener of this.listeners.get(type) ?? []) {
+            listener({ type, target: this });
+        }
+    }
+
     focus() {}
     querySelector() { return new FakeElement(); }
 }
@@ -33,7 +45,8 @@ function createRunnerContext(initialStorage = {}) {
     const elements = new Map([
         ["console-output", new FakeElement()],
         ["progress-fill", new FakeElement()],
-        ["status-text", new FakeElement()]
+        ["status-text", new FakeElement()],
+        ["run-btn", new FakeElement("button")]
     ]);
 
     const document = {
@@ -96,6 +109,7 @@ test("student output is appended as text instead of HTML", () => {
 test("corrupted progress data falls back safely", () => {
     const { context, storage } = createRunnerContext({
         unlockedLevels_v2: "not valid JSON",
+        completedLevelCode_v1: JSON.stringify({ mission1_level1: 'print("Alt")' }),
         cheatMode: "true"
     });
 
@@ -104,6 +118,7 @@ test("corrupted progress data falls back safely", () => {
     assert.equal(storage.has("unlockedLevels_v2"), false);
 
     vm.runInContext("clearProgress()", context);
+    assert.equal(storage.has("completedLevelCode_v1"), false);
     assert.equal(storage.has("cheatMode"), false);
 });
 
@@ -122,6 +137,83 @@ test("progress data is normalized and unknown levels are ignored", () => {
         storage.get("unlockedLevels_v2"),
         JSON.stringify(["link-level1", "link-level2", "link-level3"])
     );
+});
+
+test("the exact passing code is stored and restored per level", () => {
+    const { context, storage } = createRunnerContext({
+        completedLevelCode_v1: JSON.stringify({
+            mission1_level1: 'print("Vorher")',
+            unknown_level: "ignore me",
+            mission2_level1: 42
+        })
+    });
+    const passingCode = '# Mein bestandener Code\nprint("Grüße aus Böheimkirchen")\n';
+    const editor = {
+        value: "",
+        setValue(value) { this.value = value; }
+    };
+
+    context.passingCode = passingCode;
+    context.window.editor = editor;
+
+    assert.equal(
+        vm.runInContext('saveCompletedLevelCode("mission3_level2", passingCode)', context),
+        true
+    );
+    assert.equal(
+        vm.runInContext('getCompletedLevelCode("mission3_level2")', context),
+        passingCode
+    );
+    assert.equal(
+        vm.runInContext('restoreCompletedLevelCode("mission3_level2")', context),
+        true
+    );
+    assert.equal(editor.value, passingCode);
+    assert.equal(
+        vm.runInContext('saveCompletedLevelCode("unknown_level", passingCode)', context),
+        false
+    );
+    assert.deepEqual(JSON.parse(storage.get("completedLevelCode_v1")), {
+        mission1_level1: 'print("Vorher")',
+        mission3_level2: passingCode
+    });
+});
+
+test("corrupted completed-code data is discarded safely", () => {
+    const { context, storage } = createRunnerContext({
+        completedLevelCode_v1: "not valid JSON"
+    });
+
+    assert.equal(vm.runInContext('getCompletedLevelCode("mission1_level1")', context), null);
+    assert.equal(storage.has("completedLevelCode_v1"), false);
+});
+
+test("a level stores code through the normal success path", () => {
+    const { context, elements, storage } = createRunnerContext();
+    const passingCode = 'print("Verbindung wird hergestellt...")\n';
+
+    context.passingCode = passingCode;
+    context.runit = callback => callback(passingCode, "Verbindung wird hergestellt...\n");
+    vm.runInContext('setupLevel("mission1_level1")', context);
+    elements.get("run-btn").dispatch("click");
+
+    assert.deepEqual(JSON.parse(storage.get("completedLevelCode_v1")), {
+        mission1_level1: passingCode
+    });
+});
+
+test("assignment microcode consistently uses setze auf", () => {
+    const mission3Level2 = readFileSync(new URL("../mission3_level2.html", import.meta.url), "utf8");
+    const mission3Level3 = readFileSync(new URL("../mission3_level3.html", import.meta.url), "utf8");
+
+    for (const html of [mission3Level2, mission3Level3]) {
+        assert.doesNotMatch(html, /<div class="makecode-block block-tooltip"[^>]*>mach\s/i);
+    }
+
+    assert.match(mission3Level2, />setze <span[^>]*>tipp<\/span> auf die Zahl aus /);
+    assert.match(mission3Level3, />setze <span[^>]*>geheim<\/span> auf eine Zufallszahl /);
+    assert.match(mission3Level3, />setze <span[^>]*>tipp<\/span> auf <span[^>]*>0<\/span>/);
+    assert.match(mission3Level3, />setze <span[^>]*>tipp<\/span> auf die Zahl aus /);
 });
 
 const validSolutions = [
