@@ -123,6 +123,19 @@ document.addEventListener('DOMContentLoaded', () => {
 // Globale Hilfsfunktionen für Skulpt und UI
 let currentOutput = "";
 
+function appendConsoleText(outDiv, text) {
+    outDiv.appendChild(document.createTextNode(String(text)));
+}
+
+function appendConsoleError(outDiv, error) {
+    appendConsoleText(outDiv, "\n");
+    const errorSpan = document.createElement("span");
+    errorSpan.style.color = "#ea4335";
+    errorSpan.textContent = "FEHLER: " + String(error);
+    outDiv.appendChild(errorSpan);
+    outDiv.scrollTop = outDiv.scrollHeight;
+}
+
 function builtinRead(x) {
     if (Sk.builtinFiles === undefined || Sk.builtinFiles["files"][x] === undefined) {
         throw "File not found: '" + x + "'";
@@ -132,7 +145,7 @@ function builtinRead(x) {
 
 function outf(text) {
     const outDiv = document.getElementById("console-output");
-    outDiv.innerHTML += text.replace(/\n/g, "<br>");
+    appendConsoleText(outDiv, text);
     currentOutput += text;
     // Automatisch nach unten scrollen
     outDiv.scrollTop = outDiv.scrollHeight;
@@ -145,7 +158,7 @@ function customInput(promptMsg) {
         
         // Zeige den Prompt an, falls vorhanden
         if (promptMsg) {
-            outDiv.innerHTML += promptMsg.replace(/\n/g, "<br>");
+            appendConsoleText(outDiv, promptMsg);
             currentOutput += promptMsg;
         }
 
@@ -169,7 +182,7 @@ function customInput(promptMsg) {
                 // Damit der Cursor verschwindet und die Eingabe zum Text wird
                 inputSpan.contentEditable = "false";
                 inputSpan.style.borderBottom = "none";
-                outDiv.innerHTML += "<br>";
+                appendConsoleText(outDiv, "\n");
                 currentOutput += v + "\n";
                 resolve(v);
             }
@@ -180,7 +193,7 @@ function customInput(promptMsg) {
 function runit(levelTestFunction) {
     const code = window.editor.getValue();
     const outDiv = document.getElementById("console-output");
-    outDiv.innerHTML = ""; 
+    outDiv.textContent = "";
     currentOutput = "";
 
     // Skulpt konfigurieren
@@ -206,11 +219,10 @@ function runit(levelTestFunction) {
                 }, 1000); // 1 Sekunde Verzögerung
             }
         }, function(err) {
-            outDiv.innerHTML += "<br><span style='color:#ea4335'>FEHLER: " + err.toString() + "</span>";
-            outDiv.scrollTop = outDiv.scrollHeight;
+            appendConsoleError(outDiv, err);
         });
     } catch(e) {
-        outDiv.innerHTML += "<br><span style='color:#ea4335'>FEHLER: " + e.toString() + "</span>";
+        appendConsoleError(outDiv, e);
     }
 }
 
@@ -221,8 +233,6 @@ function triggerSuccess(isFinale = false) {
         overlay = document.createElement("div");
         overlay.id = "success-overlay";
         overlay.className = "success-overlay";
-        
-        const nextBtnHtml = document.getElementById("next-level-btn").outerHTML;
         
         let titleText = isFinale ? "MISSION ERFÜLLT" : "LEVEL GESCHAFFT";
         let subText = isFinale ? "Sehr starker Code, Agent!" : "Gut gemacht! Weiter geht's.";
