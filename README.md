@@ -22,7 +22,7 @@ Eine browserbasierte Python-Lernplattform für Schüler:innen. In kurzen Agenten
 | 2 – Bombe entschärfen | Entscheidungen | Vergleiche, `if`, `elif` und `else` |
 | 3 – Safe-Knacker | Wiederholungen und Zufall | `while`-Schleifen, Zahleneingaben und `random.randint()` |
 
-Die Aufgaben bauen aufeinander auf. Nach erfolgreicher Ausführung wird das nächste Level freigeschaltet. Der Fortschritt wird im jeweiligen Browser gespeichert.
+Die Aufgaben bauen aufeinander auf. Nach erfolgreicher Ausführung wird das nächste Level freigeschaltet. Der Fortschritt wird im jeweiligen Browser gespeichert und kann über **Fortschritt zurücksetzen** am Ende der Navigation gelöscht werden.
 
 ## Verwendung
 

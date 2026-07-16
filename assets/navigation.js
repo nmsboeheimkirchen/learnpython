@@ -85,6 +85,13 @@ window.AgentNavigation = (() => {
             });
         });
 
+        const resetButton = document.createElement("button");
+        resetButton.id = "reset-progress-btn";
+        resetButton.type = "button";
+        resetButton.className = "progress-reset-btn";
+        resetButton.textContent = "Fortschritt zurücksetzen";
+        sidebar.appendChild(resetButton);
+
         root.replaceWith(sidebar);
         return true;
     }

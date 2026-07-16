@@ -180,6 +180,23 @@ button:disabled { background: #e8eaed; color: #9aa0a6; cursor: not-allowed; box-
     border-left: 4px solid #174ea6;
     font-weight: 600;
 }
+.progress-reset-btn {
+    width: calc(100% - 40px);
+    margin: 18px 20px 28px;
+    padding: 9px 12px;
+    border: 1px solid #9aa0a6;
+    border-radius: 5px;
+    background: transparent;
+    color: #5f6368;
+    font-size: 12px;
+    cursor: pointer;
+}
+.progress-reset-btn:hover,
+.progress-reset-btn:focus-visible {
+    border-color: #d93025;
+    color: #d93025;
+    background: #fce8e6;
+}
 
 /* Button um Sidebar zu öffnen */
 .menu-btn {

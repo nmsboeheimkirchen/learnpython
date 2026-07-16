@@ -28,7 +28,8 @@ class FakeElement {
     querySelector() { return new FakeElement(); }
 }
 
-function createRunnerContext() {
+function createRunnerContext(initialStorage = {}) {
+    const storage = new Map(Object.entries(initialStorage));
     const elements = new Map([
         ["console-output", new FakeElement()],
         ["progress-fill", new FakeElement()],
@@ -55,9 +56,9 @@ function createRunnerContext() {
         confetti() {},
         document,
         localStorage: {
-            getItem() { return null; },
-            removeItem() {},
-            setItem() {}
+            getItem(key) { return storage.get(key) ?? null; },
+            removeItem(key) { storage.delete(key); },
+            setItem(key, value) { storage.set(key, String(value)); }
         },
         setInterval() { return 0; },
         setTimeout() { return 0; },
@@ -68,7 +69,7 @@ function createRunnerContext() {
 
     const source = readFileSync(new URL("../assets/runner.js", import.meta.url), "utf8");
     vm.runInContext(source, context);
-    return { context, elements };
+    return { context, elements, storage };
 }
 
 test("final success works without a next-level button", () => {
@@ -90,6 +91,37 @@ test("student output is appended as text instead of HTML", () => {
     assert.equal(consoleOutput.children.length, 1);
     assert.equal(consoleOutput.children[0].nodeType, 3);
     assert.equal(consoleOutput.children[0].textContent, payload);
+});
+
+test("corrupted progress data falls back safely", () => {
+    const { context, storage } = createRunnerContext({
+        unlockedLevels_v2: "not valid JSON",
+        cheatMode: "true"
+    });
+
+    const levels = vm.runInContext("readUnlockedLevels()", context);
+    assert.deepEqual(JSON.parse(JSON.stringify(levels)), ["link-level1"]);
+    assert.equal(storage.has("unlockedLevels_v2"), false);
+
+    vm.runInContext("clearProgress()", context);
+    assert.equal(storage.has("cheatMode"), false);
+});
+
+test("progress data is normalized and unknown levels are ignored", () => {
+    const { context, storage } = createRunnerContext({
+        unlockedLevels_v2: JSON.stringify(["unknown-level", "link-level2", "link-level2", 42])
+    });
+
+    const levels = vm.runInContext("readUnlockedLevels()", context);
+    assert.deepEqual(JSON.parse(JSON.stringify(levels)), ["link-level1", "link-level2"]);
+    assert.equal(storage.get("unlockedLevels_v2"), JSON.stringify(["link-level1", "link-level2"]));
+
+    assert.equal(vm.runInContext('unlockLevel("unknown-level")', context), false);
+    assert.equal(vm.runInContext('unlockLevel("link-level3")', context), true);
+    assert.equal(
+        storage.get("unlockedLevels_v2"),
+        JSON.stringify(["link-level1", "link-level2", "link-level3"])
+    );
 });
 
 const validSolutions = [
@@ -328,11 +360,12 @@ test("mission navigation is rendered from one central definition", () => {
     }
     collectElements(renderedSidebar);
 
-    assert.equal(elementsById.size, 14);
+    assert.equal(elementsById.size, 15);
     assert.equal(elementsById.get("link-level1").className.includes("locked"), false);
     assert.equal(elementsById.get("link-level2").className.includes("locked"), true);
     assert.equal(elementsById.get("link-m2-title").textContent.endsWith("🔒"), true);
     assert.equal(elementsById.get("link-m3-l3").textContent, "Level 3: Safe knacken 🔒");
+    assert.equal(elementsById.get("reset-progress-btn").textContent, "Fortschritt zurücksetzen");
 
     for (const page of missionPages) {
         const html = readFileSync(new URL(`../${page}`, import.meta.url), "utf8");

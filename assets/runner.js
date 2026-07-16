@@ -1,8 +1,89 @@
 ﻿// --- SIDEBAR & PROGRESS LOGIC ---
 
+const PROGRESS_STORAGE_KEY = "unlockedLevels_v2";
+const TEACHER_MODE_STORAGE_KEY = "cheatMode";
+const DEFAULT_UNLOCKED_LEVELS = Object.freeze(["link-level1"]);
+const LEVEL_ROUTES = Object.freeze({
+    "link-level1": "mission1_level1.html",
+    "link-level2": "mission1_level2.html",
+    "link-level3": "mission1_level3.html",
+    "link-level4": "mission1_level4.html",
+    "link-m2-title": "mission2_start.html",
+    "link-m2-l1": "mission2_level1.html",
+    "link-m2-l2": "mission2_level2.html",
+    "link-m2-l3": "mission2_level3.html",
+    "link-m3-title": "mission3_start.html",
+    "link-m3-l1": "mission3_level1.html",
+    "link-m3-l2": "mission3_level2.html",
+    "link-m3-l3": "mission3_level3.html"
+});
+
+function safeStorageGetItem(key) {
+    try {
+        return localStorage.getItem(key);
+    } catch (_error) {
+        return null;
+    }
+}
+
+function safeStorageSetItem(key, value) {
+    try {
+        localStorage.setItem(key, value);
+        return true;
+    } catch (_error) {
+        return false;
+    }
+}
+
+function safeStorageRemoveItem(key) {
+    try {
+        localStorage.removeItem(key);
+        return true;
+    } catch (_error) {
+        return false;
+    }
+}
+
+function normalizeUnlockedLevels(value) {
+    const candidates = Array.isArray(value) ? value : [];
+    const normalized = [...new Set(candidates.filter(levelId =>
+        typeof levelId === "string" &&
+        Object.prototype.hasOwnProperty.call(LEVEL_ROUTES, levelId)
+    ))];
+
+    if (!normalized.includes("link-level1")) {
+        normalized.unshift("link-level1");
+    }
+    return normalized;
+}
+
+function readUnlockedLevels() {
+    const storedValue = safeStorageGetItem(PROGRESS_STORAGE_KEY);
+    if (!storedValue) {
+        return [...DEFAULT_UNLOCKED_LEVELS];
+    }
+
+    try {
+        const parsedValue = JSON.parse(storedValue);
+        const normalized = normalizeUnlockedLevels(parsedValue);
+        if (JSON.stringify(parsedValue) !== JSON.stringify(normalized)) {
+            safeStorageSetItem(PROGRESS_STORAGE_KEY, JSON.stringify(normalized));
+        }
+        return normalized;
+    } catch (_error) {
+        safeStorageRemoveItem(PROGRESS_STORAGE_KEY);
+        return [...DEFAULT_UNLOCKED_LEVELS];
+    }
+}
+
+function clearProgress() {
+    safeStorageRemoveItem(PROGRESS_STORAGE_KEY);
+    safeStorageRemoveItem(TEACHER_MODE_STORAGE_KEY);
+}
+
 function toggleNav() {
     const sb = document.getElementById('mySidebar');
-    localStorage.setItem('sidebarState', sb.classList.contains('active') ? 'closed' : 'open');
+    safeStorageSetItem('sidebarState', sb.classList.contains('active') ? 'closed' : 'open');
     const sidebar = document.getElementById("mySidebar");
     const mainContent = document.getElementById("main-content");
     const menuBtn = document.getElementById("menu-btn");
@@ -21,64 +102,50 @@ function toggleNav() {
 }
 
 function unlockLevel(levelId) {
-    let unlockedLevels = JSON.parse(localStorage.getItem('unlockedLevels_v2')) || ['link-level1'];
+    if (!Object.prototype.hasOwnProperty.call(LEVEL_ROUTES, levelId)) {
+        return false;
+    }
+
+    const unlockedLevels = readUnlockedLevels();
     if (!unlockedLevels.includes(levelId)) {
         unlockedLevels.push(levelId);
-        localStorage.setItem('unlockedLevels_v2', JSON.stringify(unlockedLevels));
+        safeStorageSetItem(PROGRESS_STORAGE_KEY, JSON.stringify(unlockedLevels));
     }
     applyUnlocks();
+    return true;
 }
 
-function applyUnlocks() {
-    // Reset mode: Clear progress if hash #reset is present
-    if (window.location.hash === '#reset') {
-        localStorage.removeItem('unlockedLevels_v2');
-        window.location.hash = ''; // Remove hash after reset
-    }
-
-    let unlockedLevels = JSON.parse(localStorage.getItem('unlockedLevels_v2')) || ['link-level1'];
-    
-    // Cheat mode: Unlock all if hash #l is present
-    if (window.location.hash === '#l') { localStorage.setItem('cheatMode', 'true'); }
-    if (localStorage.getItem('cheatMode') === 'true') {
-        const allLinks = document.querySelectorAll('.sidebar a, .sidebar .mission-title a');
-        allLinks.forEach(link => {
-            link.classList.remove('locked');
-            link.innerHTML = link.innerHTML.replace(' 🔒', '');
-            if(link.id === 'link-level2') link.href = 'mission1_level2.html';
-            if(link.id === 'link-level3') link.href = 'mission1_level3.html';
-            if(link.id === 'link-level4') link.href = 'mission1_level4.html';
-            if(link.id === 'link-m2-title') link.href = 'mission2_start.html';
-            if(link.id === 'link-m2-l1') link.href = 'mission2_level1.html';
-            if(link.id === 'link-m2-l2') link.href = 'mission2_level2.html';
-            if(link.id === 'link-m2-l3') link.href = 'mission2_level3.html';
-            if(link.id === 'link-m3-title') link.href = 'mission3_start.html';
-            if(link.id === 'link-m3-l1') link.href = 'mission3_level1.html';
-            if(link.id === 'link-m3-l2') link.href = 'mission3_level2.html';
-            if(link.id === 'link-m3-l3') link.href = 'mission3_level3.html';
-        });
+function unlockLink(levelId) {
+    const link = document.getElementById(levelId);
+    if (!link) {
         return;
     }
 
-    unlockedLevels.forEach(id => {
-        let link = document.getElementById(id);
-        if (link && link.classList.contains('locked')) {
-            link.classList.remove('locked');
-            link.innerHTML = link.innerHTML.replace(' 🔒', '');
-            
-            if(id === 'link-level2') link.href = 'mission1_level2.html';
-            if(id === 'link-level3') link.href = 'mission1_level3.html';
-            if(id === 'link-level4') link.href = 'mission1_level4.html';
-            if(id === 'link-m2-title') link.href = 'mission2_start.html';
-            if(id === 'link-m2-l1') link.href = 'mission2_level1.html';
-            if(id === 'link-m2-l2') link.href = 'mission2_level2.html';
-            if(id === 'link-m2-l3') link.href = 'mission2_level3.html';
-            if(id === 'link-m3-title') link.href = 'mission3_start.html';
-            if(id === 'link-m3-l1') link.href = 'mission3_level1.html';
-            if(id === 'link-m3-l2') link.href = 'mission3_level2.html';
-            if(id === 'link-m3-l3') link.href = 'mission3_level3.html';
+    link.classList.remove("locked");
+    link.textContent = link.textContent.replace(/\s*🔒/g, "");
+    link.href = LEVEL_ROUTES[levelId];
+}
+
+function applyUnlocks() {
+    if (window.location.hash === "#reset") {
+        clearProgress();
+        if (window.history && typeof window.history.replaceState === "function") {
+            window.history.replaceState(null, "", window.location.pathname + window.location.search);
+        } else {
+            window.location.hash = "";
         }
-    });
+    }
+
+    const unlockedLevels = readUnlockedLevels();
+
+    if (window.location.hash === "#l") {
+        safeStorageSetItem(TEACHER_MODE_STORAGE_KEY, "true");
+    }
+
+    const levelsToUnlock = safeStorageGetItem(TEACHER_MODE_STORAGE_KEY) === "true"
+        ? Object.keys(LEVEL_ROUTES)
+        : unlockedLevels;
+    levelsToUnlock.forEach(unlockLink);
 
     // Update listeners for newly unlocked links
     document.querySelectorAll('.sidebar a').forEach(link => {
@@ -94,7 +161,7 @@ function preventLockedClick(e) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    const savedState = localStorage.getItem('sidebarState');
+    const savedState = safeStorageGetItem('sidebarState');
     if (savedState === 'closed') { 
         document.getElementById('mySidebar').classList.remove('active'); 
         document.getElementById('main-content').style.paddingLeft = '60px'; 
@@ -105,6 +172,21 @@ document.addEventListener('DOMContentLoaded', () => {
     applyUnlocks();
     if(window.location.hash === '#l') {
         document.querySelectorAll('.next-level-btn').forEach(btn => btn.style.display = 'block');
+    }
+
+    const resetButton = document.getElementById("reset-progress-btn");
+    if (resetButton) {
+        resetButton.addEventListener("click", () => {
+            const confirmed = typeof window.confirm !== "function" || window.confirm(
+                "Möchtest du deinen gesamten Lernfortschritt wirklich zurücksetzen?"
+            );
+            if (!confirmed) {
+                return;
+            }
+
+            clearProgress();
+            window.location.href = "mission1_start.html";
+        });
     }
     
     // Auto-highlight active link based on current page
