@@ -235,22 +235,23 @@ test("teacher solutions are centralized and available for every level", () => {
     }
 });
 
+const missionPages = [
+    "mission1_start.html",
+    "mission1_level1.html",
+    "mission1_level2.html",
+    "mission1_level3.html",
+    "mission1_level4.html",
+    "mission2_start.html",
+    "mission2_level1.html",
+    "mission2_level2.html",
+    "mission2_level3.html",
+    "mission3_start.html",
+    "mission3_level1.html",
+    "mission3_level2.html",
+    "mission3_level3.html"
+];
+
 test("browser dependencies are local and checksum-protected", () => {
-    const missionPages = [
-        "mission1_start.html",
-        "mission1_level1.html",
-        "mission1_level2.html",
-        "mission1_level3.html",
-        "mission1_level4.html",
-        "mission2_start.html",
-        "mission2_level1.html",
-        "mission2_level2.html",
-        "mission2_level3.html",
-        "mission3_start.html",
-        "mission3_level1.html",
-        "mission3_level2.html",
-        "mission3_level3.html"
-    ];
     const referencedVendorFiles = new Set();
 
     for (const page of missionPages) {
@@ -285,5 +286,58 @@ test("browser dependencies are local and checksum-protected", () => {
 
     for (const relativePath of referencedVendorFiles) {
         assert.equal(expectedChecksums.has(relativePath), true, `${relativePath} fehlt in SHA256SUMS`);
+    }
+});
+
+test("mission navigation is rendered from one central definition", () => {
+    let renderedSidebar = null;
+    const root = {
+        replaceWith(element) { renderedSidebar = element; }
+    };
+    class NavigationElement {
+        constructor(tagName) {
+            this.tagName = tagName;
+            this.children = [];
+            this.className = "";
+            this.href = "";
+            this.id = "";
+            this.textContent = "";
+        }
+
+        appendChild(child) {
+            this.children.push(child);
+            return child;
+        }
+    }
+    const document = {
+        createElement(tagName) { return new NavigationElement(tagName); },
+        getElementById(id) { return id === "navigation-root" ? root : null; }
+    };
+    const window = {};
+    const context = vm.createContext({ document, Object, window });
+    const source = readFileSync(new URL("../assets/navigation.js", import.meta.url), "utf8");
+    vm.runInContext(source, context);
+
+    assert.equal(renderedSidebar.id, "mySidebar");
+    assert.equal(renderedSidebar.className, "sidebar active");
+
+    const elementsById = new Map();
+    function collectElements(element) {
+        if (element.id) elementsById.set(element.id, element);
+        element.children.forEach(collectElements);
+    }
+    collectElements(renderedSidebar);
+
+    assert.equal(elementsById.size, 14);
+    assert.equal(elementsById.get("link-level1").className.includes("locked"), false);
+    assert.equal(elementsById.get("link-level2").className.includes("locked"), true);
+    assert.equal(elementsById.get("link-m2-title").textContent.endsWith("🔒"), true);
+    assert.equal(elementsById.get("link-m3-l3").textContent, "Level 3: Safe knacken 🔒");
+
+    for (const page of missionPages) {
+        const html = readFileSync(new URL(`../${page}`, import.meta.url), "utf8");
+        assert.match(html, /<div id="navigation-root"><\/div>/);
+        assert.match(html, /<script src="assets\/navigation\.js"><\/script>/);
+        assert.doesNotMatch(html, /id="mySidebar"/);
     }
 });

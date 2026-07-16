@@ -158,6 +158,15 @@ button:disabled { background: #e8eaed; color: #9aa0a6; cursor: not-allowed; box-
     background-color: #d2e3fc; /* Helleres hover blau */
     border-left: 4px solid #1a73e8;
 }
+.sidebar a.mission-heading-link,
+.sidebar a.mission-heading-link:hover:not(.locked) {
+    padding: 0;
+    margin: 0;
+    display: inline;
+    color: inherit;
+    border: none;
+    background: transparent;
+}
 .sidebar a.locked {
     color: #9aa0a6; /* Ausgegraut */
     cursor: not-allowed;
