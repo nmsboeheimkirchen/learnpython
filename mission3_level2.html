@@ -122,15 +122,7 @@
 
     <!-- Ausführung -->
     <script>
-        document.getElementById("run-btn").addEventListener("click", () => {
-            runit((code, output) => {
-                                let checkCode = code.replace(/#.*$/gm, ''); 
-                if (checkCode.includes("int(") && (checkCode.includes("<") || checkCode.includes(">"))) {
-                    unlockLevel('link-m3-l3');
-                    triggerSuccess();
-                }
-            });
-        });
+        setupLevel("mission3_level2");
     </script>
 
     <!-- CodeMirror Setup für Syntax Highlighting -->

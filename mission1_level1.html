@@ -95,15 +95,7 @@ print("Irgendein Text")
 
     <!-- Ausführung -->
     <script>
-        document.getElementById("run-btn").addEventListener("click", () => {
-            runit((code, output) => {
-                let checkCode = code.replace(/#.*$/gm, ''); // ignoriere Kommentare
-                if (output.toLowerCase().includes("verbindung wird hergestellt") || checkCode.includes("print(\"Verbindung")) {
-                    unlockLevel('link-level2');
-                    triggerSuccess();
-                }
-            });
-        });
+        setupLevel("mission1_level1");
     </script>
 
     <!-- CodeMirror Setup für Syntax Highlighting -->

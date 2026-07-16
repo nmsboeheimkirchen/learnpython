@@ -99,16 +99,7 @@ else:
 
     <!-- Ausführung -->
     <script>
-        document.getElementById("run-btn").addEventListener("click", () => {
-            runit((code, output) => {
-                                let checkCode = code.replace(/#.*$/gm, ''); 
-                if (checkCode.includes("elif") && checkCode.includes("input") && checkCode.includes("else:")) {
-                    unlockLevel('link-m3-title');
-                    unlockLevel('link-m3-l1');
-                    triggerSuccess(true);
-                }
-            });
-        });
+        setupLevel("mission2_level3");
     </script>
 
     <!-- CodeMirror Setup für Syntax Highlighting -->

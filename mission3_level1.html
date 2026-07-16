@@ -95,15 +95,7 @@ print("Irgendein Text")
 
     <!-- Ausführung -->
     <script>
-        document.getElementById("run-btn").addEventListener("click", () => {
-            runit((code, output) => {
-                                let checkCode = code.replace(/#.*$/gm, ''); 
-                if (checkCode.includes("while") && checkCode.includes("!=") && checkCode.includes("input")) {
-                    unlockLevel('link-m3-l2');
-                    triggerSuccess();
-                }
-            });
-        });
+        setupLevel("mission3_level1");
     </script>
 
     <!-- CodeMirror Setup für Syntax Highlighting -->

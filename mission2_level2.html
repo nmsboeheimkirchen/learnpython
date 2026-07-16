@@ -97,15 +97,7 @@ if kabel == "rot":
 
     <!-- Ausführung -->
     <script>
-        document.getElementById("run-btn").addEventListener("click", () => {
-            runit((code, output) => {
-                                let checkCode = code.replace(/#.*$/gm, ''); 
-                if (output.includes("KABUMM") && checkCode.includes("else:")) {
-                    unlockLevel('link-m2-l3');
-                    triggerSuccess();
-                }
-            });
-        });
+        setupLevel("mission2_level2");
     </script>
 
     <!-- CodeMirror Setup für Syntax Highlighting -->

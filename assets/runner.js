@@ -136,6 +136,315 @@ function appendConsoleError(outDiv, error) {
     outDiv.scrollTop = outDiv.scrollHeight;
 }
 
+function tokenizePython(source) {
+    const tokens = [];
+    let index = 0;
+    let line = 1;
+    let column = 0;
+
+    while (index < source.length) {
+        const char = source[index];
+
+        if (char === "\r") {
+            index += 1;
+            continue;
+        }
+        if (char === "\n") {
+            index += 1;
+            line += 1;
+            column = 0;
+            continue;
+        }
+        if (char === " " || char === "\t") {
+            index += 1;
+            column += char === "\t" ? 4 : 1;
+            continue;
+        }
+        if (char === "#") {
+            while (index < source.length && source[index] !== "\n") {
+                index += 1;
+                column += 1;
+            }
+            continue;
+        }
+
+        const tokenLine = line;
+        const tokenColumn = column;
+
+        if (char === "\"" || char === "'") {
+            const quote = char;
+            const triple = source.slice(index, index + 3) === quote.repeat(3);
+            const delimiterLength = triple ? 3 : 1;
+            let value = "";
+            index += delimiterLength;
+            column += delimiterLength;
+
+            while (index < source.length) {
+                if (source.slice(index, index + delimiterLength) === quote.repeat(delimiterLength)) {
+                    index += delimiterLength;
+                    column += delimiterLength;
+                    break;
+                }
+
+                const stringChar = source[index];
+                if (stringChar === "\\" && index + 1 < source.length) {
+                    value += source[index + 1];
+                    index += 2;
+                    column += 2;
+                    continue;
+                }
+                if (stringChar === "\n") {
+                    value += "\n";
+                    index += 1;
+                    line += 1;
+                    column = 0;
+                    if (!triple) break;
+                    continue;
+                }
+
+                value += stringChar;
+                index += 1;
+                column += 1;
+            }
+
+            tokens.push({ type: "string", value, line: tokenLine, column: tokenColumn });
+            continue;
+        }
+
+        if (/[A-Za-z_]/.test(char)) {
+            let value = char;
+            index += 1;
+            column += 1;
+            while (index < source.length && /[A-Za-z0-9_]/.test(source[index])) {
+                value += source[index];
+                index += 1;
+                column += 1;
+            }
+            tokens.push({ type: "name", value, line: tokenLine, column: tokenColumn });
+            continue;
+        }
+
+        if (/[0-9]/.test(char)) {
+            let value = char;
+            index += 1;
+            column += 1;
+            while (index < source.length && /[0-9.]/.test(source[index])) {
+                value += source[index];
+                index += 1;
+                column += 1;
+            }
+            tokens.push({ type: "number", value, line: tokenLine, column: tokenColumn });
+            continue;
+        }
+
+        const doubleOperator = source.slice(index, index + 2);
+        if (["==", "!=", "<=", ">="].includes(doubleOperator)) {
+            tokens.push({ type: "operator", value: doubleOperator, line: tokenLine, column: tokenColumn });
+            index += 2;
+            column += 2;
+            continue;
+        }
+
+        tokens.push({ type: "operator", value: char, line: tokenLine, column: tokenColumn });
+        index += 1;
+        column += 1;
+    }
+
+    return tokens;
+}
+
+function pythonStatements(source) {
+    const statementsByLine = new Map();
+    tokenizePython(source).forEach((token) => {
+        if (!statementsByLine.has(token.line)) statementsByLine.set(token.line, []);
+        statementsByLine.get(token.line).push(token);
+    });
+
+    return [...statementsByLine.entries()].map(([statementLine, tokens]) => ({
+        line: statementLine,
+        indent: tokens[0].column,
+        tokens
+    }));
+}
+
+function tokenMatches(token, expected) {
+    if (!token) return false;
+    if (typeof expected === "string") return token.value === expected;
+    return (!expected.type || token.type === expected.type) &&
+        (!Object.prototype.hasOwnProperty.call(expected, "value") || token.value === expected.value);
+}
+
+function statementStartsWith(statement, pattern) {
+    return pattern.every((expected, index) => tokenMatches(statement.tokens[index], expected));
+}
+
+function statementContains(statement, pattern) {
+    for (let start = 0; start <= statement.tokens.length - pattern.length; start += 1) {
+        if (pattern.every((expected, offset) => tokenMatches(statement.tokens[start + offset], expected))) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function findStatement(statements, pattern) {
+    return statements.find((statement) => statementStartsWith(statement, pattern));
+}
+
+function hasNestedStatement(statements, parentPattern, childPattern) {
+    const parentIndex = statements.findIndex((statement) => statementStartsWith(statement, parentPattern));
+    if (parentIndex < 0) return false;
+
+    const parentIndent = statements[parentIndex].indent;
+    for (let index = parentIndex + 1; index < statements.length; index += 1) {
+        const statement = statements[index];
+        if (statement.indent <= parentIndent) return false;
+        if (statementStartsWith(statement, childPattern)) return true;
+    }
+    return false;
+}
+
+function firstFailedRequirement(requirements) {
+    const failed = requirements.find((requirement) => !requirement.passed);
+    return failed || { passed: true, message: "" };
+}
+
+function stringToken(value) {
+    return { type: "string", value };
+}
+
+function numberToken(value) {
+    return { type: "number", value: String(value) };
+}
+
+const LEVEL_VALIDATORS = {
+    mission1_level1({ output }) {
+        return firstFailedRequirement([
+            { passed: output.toLowerCase().includes("verbindung wird hergestellt"), message: "Gib mit print() den Text ‚Verbindung wird hergestellt...‘ aus." }
+        ]);
+    },
+    mission1_level2({ statements, output }) {
+        return firstFailedRequirement([
+            { passed: Boolean(findStatement(statements, ["import", "time"])), message: "Lade zuerst das Modul mit import time." },
+            { passed: statements.some((statement) => statementContains(statement, ["time", ".", "sleep", "("])), message: "Rufe time.sleep(...) für die Pause auf." },
+            { passed: output.toLowerCase().includes("verbindung wird hergestellt"), message: "Gib zusätzlich ‚Verbindung wird hergestellt...‘ aus." }
+        ]);
+    },
+    mission1_level3({ statements }) {
+        return firstFailedRequirement([
+            { passed: Boolean(findStatement(statements, ["agent_name", "=", "input", "("])), message: "Speichere input(...) in der Variable agent_name." }
+        ]);
+    },
+    mission1_level4({ statements, output }) {
+        const hasWelcomePrint = statements.some(statement =>
+            statementStartsWith(statement, ["print", "("]) &&
+            statementContains(statement, [",", "agent_name"])
+        );
+        return firstFailedRequirement([
+            { passed: hasWelcomePrint, message: "Gib den festen Text und agent_name gemeinsam mit einem Komma in print(...) aus." },
+            { passed: output.toLowerCase().includes("willkommen im system"), message: "Die Ausgabe muss ‚Willkommen im System‘ enthalten." }
+        ]);
+    },
+    mission2_level1({ statements, output }) {
+        return firstFailedRequirement([
+            { passed: Boolean(findStatement(statements, ["kabel", "=", stringToken("rot")])), message: "Setze kabel auf den Text ‚rot‘." },
+            { passed: Boolean(findStatement(statements, ["if", "kabel", "==", stringToken("rot"), ":"])), message: "Prüfe mit if, ob kabel gleich ‚rot‘ ist." },
+            { passed: output.includes("Entschärft!"), message: "Gib im richtigen if-Zweig ‚Entschärft!‘ aus." }
+        ]);
+    },
+    mission2_level2({ statements, output }) {
+        return firstFailedRequirement([
+            { passed: Boolean(findStatement(statements, ["kabel", "=", stringToken("blau")])), message: "Setze kabel für diesen Test auf ‚blau‘." },
+            { passed: Boolean(findStatement(statements, ["if", "kabel", "==", stringToken("rot"), ":"])), message: "Behalte die Prüfung auf das rote Kabel bei." },
+            { passed: Boolean(findStatement(statements, ["else", ":"])), message: "Ergänze einen else-Zweig." },
+            { passed: output.includes("KABUMM"), message: "Gib im else-Zweig ‚KABUMM!‘ aus." }
+        ]);
+    },
+    mission2_level3({ statements, output }) {
+        return firstFailedRequirement([
+            { passed: Boolean(findStatement(statements, ["kabel", "=", "input", "("])), message: "Lies die Kabelwahl mit input(...) in kabel ein." },
+            { passed: Boolean(findStatement(statements, ["if", "kabel", "==", stringToken("rot"), ":"])), message: "Prüfe zuerst das rote Kabel mit if." },
+            { passed: Boolean(findStatement(statements, ["elif", "kabel", "==", stringToken("blau"), ":"])), message: "Prüfe das blaue Kabel mit elif." },
+            { passed: Boolean(findStatement(statements, ["else", ":"])), message: "Fange alle übrigen Kabel mit else ab." },
+            { passed: output.includes("Entschärft!"), message: "Teste das Programm mit der Eingabe rot, bis ‚Entschärft!‘ erscheint." }
+        ]);
+    },
+    mission3_level1({ statements }) {
+        const whilePattern = ["while", "tipp", "!=", stringToken("123"), ":"];
+        return firstFailedRequirement([
+            { passed: Boolean(findStatement(statements, ["tipp", "=", stringToken("")])), message: "Initialisiere tipp mit einem leeren Text." },
+            { passed: Boolean(findStatement(statements, whilePattern)), message: "Wiederhole mit while, solange tipp nicht ‚123‘ ist." },
+            { passed: hasNestedStatement(statements, whilePattern, ["tipp", "=", "input", "("]), message: "Die neue Eingabe für tipp muss eingerückt in der while-Schleife stehen." }
+        ]);
+    },
+    mission3_level2({ statements, output }) {
+        return firstFailedRequirement([
+            { passed: Boolean(findStatement(statements, ["tipp", "=", "int", "(", "input", "("])), message: "Wandle die Eingabe mit int(input(...)) in eine Zahl um." },
+            { passed: Boolean(findStatement(statements, ["if", "tipp", "<", numberToken(50), ":"])), message: "Prüfe mit if, ob tipp kleiner als 50 ist." },
+            { passed: Boolean(findStatement(statements, ["elif", "tipp", ">", numberToken(50), ":"])), message: "Prüfe mit elif, ob tipp größer als 50 ist." },
+            { passed: output.includes("Zu niedrig!") || output.includes("Zu hoch!"), message: "Teste mit einer Zahl unter oder über 50 und gib den passenden Hinweis aus." }
+        ]);
+    },
+    mission3_level3({ statements, output }) {
+        const whilePattern = ["while", "tipp", "!=", "geheim", ":"];
+        return firstFailedRequirement([
+            { passed: Boolean(findStatement(statements, ["import", "random"])), message: "Lade das Modul random." },
+            { passed: Boolean(findStatement(statements, ["geheim", "=", "random", ".", "randint", "(", numberToken(1), ",", numberToken(100), ")"])), message: "Erzeuge geheim mit random.randint(1, 100)." },
+            { passed: Boolean(findStatement(statements, ["tipp", "=", numberToken(0)])), message: "Initialisiere tipp mit 0." },
+            { passed: Boolean(findStatement(statements, whilePattern)), message: "Wiederhole, solange tipp und geheim verschieden sind." },
+            { passed: hasNestedStatement(statements, whilePattern, ["tipp", "=", "int", "(", "input", "("]), message: "Lies den Zahlentipp eingerückt in der while-Schleife ein." },
+            { passed: hasNestedStatement(statements, whilePattern, ["if", "tipp", "<", "geheim", ":"]), message: "Prüfe innerhalb der Schleife, ob der Tipp zu niedrig ist." },
+            { passed: hasNestedStatement(statements, whilePattern, ["elif", "tipp", ">", "geheim", ":"]), message: "Prüfe innerhalb der Schleife, ob der Tipp zu hoch ist." },
+            { passed: output.includes("Knack!"), message: "Gib nach dem richtigen Tipp ‚Knack!‘ aus." }
+        ]);
+    }
+};
+
+const LEVEL_OUTCOMES = {
+    mission1_level1: { unlocks: ["link-level2"] },
+    mission1_level2: { unlocks: ["link-level3"] },
+    mission1_level3: { unlocks: ["link-level4"] },
+    mission1_level4: { unlocks: ["link-m2-title", "link-m2-l1"], finale: true },
+    mission2_level1: { unlocks: ["link-m2-l2"] },
+    mission2_level2: { unlocks: ["link-m2-l3"] },
+    mission2_level3: { unlocks: ["link-m3-title", "link-m3-l1"], finale: true },
+    mission3_level1: { unlocks: ["link-m3-l2"] },
+    mission3_level2: { unlocks: ["link-m3-l3"] },
+    mission3_level3: { unlocks: [], finale: true }
+};
+
+function validateLevelSolution(levelId, code, output) {
+    const validator = LEVEL_VALIDATORS[levelId];
+    if (!validator) return { passed: false, message: "Für dieses Level fehlt die Prüfregel." };
+    return validator({ statements: pythonStatements(code), output });
+}
+
+function showLevelFeedback(message) {
+    const statusText = document.getElementById("status-text");
+    if (!statusText) return;
+    statusText.textContent = "Noch nicht: " + message;
+    statusText.style.color = "#ea4335";
+}
+
+function setupLevel(levelId) {
+    const runButton = document.getElementById("run-btn");
+    const outcome = LEVEL_OUTCOMES[levelId];
+    if (!runButton || !outcome) return;
+
+    runButton.addEventListener("click", () => {
+        runit((code, output) => {
+            const result = validateLevelSolution(levelId, code, output);
+            if (!result.passed) {
+                showLevelFeedback(result.message);
+                return;
+            }
+
+            outcome.unlocks.forEach(unlockLevel);
+            triggerSuccess(Boolean(outcome.finale));
+        });
+    });
+}
+
 function builtinRead(x) {
     if (Sk.builtinFiles === undefined || Sk.builtinFiles["files"][x] === undefined) {
         throw "File not found: '" + x + "'";

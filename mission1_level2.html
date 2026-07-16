@@ -99,15 +99,7 @@ print("Verbindung wird hergestellt...")
 
     <!-- Ausführung -->
     <script>
-        document.getElementById("run-btn").addEventListener("click", () => {
-             runit((code, output) => {
-                let checkCode = code.replace(/#.*$/gm, ''); // Kommentare weg
-                if (checkCode.includes("import") && checkCode.includes("time") && checkCode.includes("sleep")) {
-                    unlockLevel('link-level3');
-                    triggerSuccess();
-                }
-            });
-        });
+        setupLevel("mission1_level2");
     </script>
 
 

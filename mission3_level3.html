@@ -128,14 +128,7 @@
 
     <!-- Ausführung -->
     <script>
-        document.getElementById("run-btn").addEventListener("click", () => {
-            runit((code, output) => {
-                                let checkCode = code.replace(/#.*$/gm, ''); 
-                if (checkCode.includes("import random") && checkCode.includes("randint")) {
-                    triggerSuccess(true);
-                }
-            });
-        });
+        setupLevel("mission3_level3");
     </script>
 
     <!-- CodeMirror Setup für Syntax Highlighting -->

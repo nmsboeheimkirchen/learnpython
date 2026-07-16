@@ -96,15 +96,7 @@ print("Irgendein Text")
 
     <!-- Ausführung -->
     <script>
-        document.getElementById("run-btn").addEventListener("click", () => {
-            runit((code, output) => {
-                                let checkCode = code.replace(/#.*$/gm, ''); 
-                if (output.includes("Entschärft!") && checkCode.includes("kabel") && checkCode.includes("==") && checkCode.includes("if")) {
-                    unlockLevel('link-m2-l2');
-                    triggerSuccess();
-                }
-            });
-        });
+        setupLevel("mission2_level1");
     </script>
 
     <!-- CodeMirror Setup für Syntax Highlighting -->
