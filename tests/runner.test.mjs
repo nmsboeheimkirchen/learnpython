@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { readFileSync } from "node:fs";
+import { readFileSync, statSync } from "node:fs";
 import test from "node:test";
 import { TextDecoder } from "node:util";
 import vm from "node:vm";
@@ -605,5 +605,50 @@ test("CodeMirror is initialized from one central editor module", () => {
         const html = readFileSync(new URL(`../${page}`, import.meta.url), "utf8");
         assert.match(html, /<script src="assets\/editor\.js"><\/script>/);
         assert.doesNotMatch(html, /CodeMirror\.fromTextArea/);
+    }
+});
+
+test("finale prototypes stay unlinked, isolated and locally hosted", () => {
+    const prototypes = [
+        "pico_finale.html",
+        "pixelmuseum_finale.html"
+    ];
+    const navigation = readFileSync(new URL("../assets/navigation.js", import.meta.url), "utf8");
+
+    for (const page of prototypes) {
+        assert.doesNotMatch(navigation, new RegExp(page.replace(".", "\\.")));
+
+        const html = readFileSync(new URL(`../prototypes/${page}`, import.meta.url), "utf8");
+        assert.doesNotMatch(html, /https?:\/\//);
+        assert.doesNotMatch(html, /localStorage|navigation\.js|runner\.js/);
+        assert.match(html, /class="turtle-target"/);
+        assert.match(html, /window\.FINALE_CONFIG/);
+        assert.match(html, /src="finale\.js"/);
+        assert.match(html, /assets\/images\/finales\/.+\.webp/);
+        assert.match(html, /assets\/vendor\/skulpt\/1\.2\.0\/skulpt\.min\.js/);
+        assert.match(html, /assets\/vendor\/codemirror\/5\.65\.2\/codemirror\.min\.js/);
+    }
+});
+
+test("finale runtime guards creative code and optimized artwork stays small", () => {
+    const runtime = readFileSync(new URL("../prototypes/finale.js", import.meta.url), "utf8");
+    assert.match(runtime, /execLimit:\s*8000/);
+    assert.match(runtime, /killableWhile:\s*true/);
+    assert.match(runtime, /killableFor:\s*true/);
+    assert.match(runtime, /lineWrapping:\s*true/);
+    assert.match(runtime, /runGeneration/);
+    assert.match(runtime, /turtleTarget\.replaceChildren\(\)/);
+    assert.doesNotMatch(runtime, /localStorage/);
+
+    const artwork = [
+        "pico-rescue-station.webp",
+        "pixel-museum.webp"
+    ];
+    for (const file of artwork) {
+        const url = new URL(`../assets/images/finales/${file}`, import.meta.url);
+        const bytes = readFileSync(url);
+        assert.equal(bytes.subarray(0, 4).toString("ascii"), "RIFF");
+        assert.equal(bytes.subarray(8, 12).toString("ascii"), "WEBP");
+        assert.ok(statSync(url).size < 350_000, `${file} ist für die Webseite zu groß`);
     }
 });

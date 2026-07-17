@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="color-scheme" content="dark">
+    <title>PICO – Finale-Prototyp</title>
+    <link rel="stylesheet" href="../assets/vendor/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="../assets/vendor/codemirror/5.65.2/monokai.min.css">
+    <link rel="stylesheet" href="finale.css">
+</head>
+<body class="prototype-page pico-theme">
+    <a class="skip-link" href="#editor-panel">Zum Python-Editor</a>
+
+    <header class="prototype-header">
+        <div>
+            <span class="prototype-kicker">Unverlinkter Endprototyp</span>
+            <h1>PICO: Das letzte Rettungssignal</h1>
+            <p>Programmiere PICOs Weg von der Ladestation bis zur Funkbake.</p>
+        </div>
+        <div class="path-badge" aria-label="Lernpfad PICO">
+            <span class="path-badge-dot" aria-hidden="true"></span>
+            Geführter Pfad
+        </div>
+    </header>
+
+    <main class="prototype-main">
+        <section class="briefing-card" aria-labelledby="pico-briefing-title">
+            <div>
+                <span class="eyebrow">Finale · Forschungsstation 07</span>
+                <h2 id="pico-briefing-title">Ein Programm. Ein Agent. Ein Signal.</h2>
+                <p>Dein erfolgreicher Code wächst bis hierher weiter. Name, Route und Funkspruch bleiben deine Entscheidung.</p>
+            </div>
+            <ul class="concept-strip" aria-label="Python-Ziele">
+                <li>Schleife</li>
+                <li>Entscheidung</li>
+                <li>Status-Dictionary</li>
+                <li>Eigene Route</li>
+            </ul>
+        </section>
+
+        <div class="workspace-grid">
+            <section class="game-column" aria-labelledby="pico-stage-title">
+                <div class="section-heading">
+                    <div>
+                        <span class="eyebrow">Live-Missionsansicht</span>
+                        <h2 id="pico-stage-title">Rettungsstation</h2>
+                    </div>
+                    <span id="run-status" class="run-status is-ready" role="status">Bereit</span>
+                </div>
+
+                <div class="game-shell">
+                    <div class="game-stage" id="game-stage" aria-label="Futuristische Forschungsstation mit Ladestation links und Funkbake rechts">
+                        <img class="scene-image" src="../assets/images/finales/pico-rescue-station.webp" alt="" fetchpriority="high">
+                        <div class="scene-shade" aria-hidden="true"></div>
+
+                        <svg class="stage-overlay" viewBox="0 0 960 540" preserveAspectRatio="none" aria-hidden="true">
+                            <defs>
+                                <filter id="pico-glow" x="-80%" y="-80%" width="260%" height="260%">
+                                    <feGaussianBlur stdDeviation="7" result="blur"></feGaussianBlur>
+                                    <feMerge><feMergeNode in="blur"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
+                                </filter>
+                                <linearGradient id="pico-route" x1="0" x2="1">
+                                    <stop offset="0" stop-color="#ffbd66"></stop>
+                                    <stop offset="0.55" stop-color="#77f8ff"></stop>
+                                    <stop offset="1" stop-color="#3ee9ff"></stop>
+                                </linearGradient>
+                            </defs>
+                            <path class="suggested-route" d="M128 360 C265 394 360 345 470 330 S674 284 824 256" stroke="url(#pico-route)"></path>
+                            <circle class="target-pulse charger-pulse" cx="128" cy="360" r="30" filter="url(#pico-glow)"></circle>
+                            <circle class="target-pulse beacon-pulse" cx="824" cy="256" r="34" filter="url(#pico-glow)"></circle>
+                        </svg>
+
+                        <div id="pico-turtle" class="turtle-target" aria-hidden="true"></div>
+
+                        <div class="stage-label charger-label"><span aria-hidden="true">⚡</span> Ladestation</div>
+                        <div class="stage-label beacon-label"><span aria-hidden="true">◉</span> Funkbake</div>
+
+                        <div class="stage-hud pico-hud" aria-label="PICO Status">
+                            <div class="agent-id">
+                                <span class="agent-avatar" aria-hidden="true">P</span>
+                                <div><small>Agent</small><strong id="agent-name">PICO</strong></div>
+                            </div>
+                            <div class="meter-block">
+                                <div class="meter-label"><span>Energie</span><strong id="energy-value">6 / 10</strong></div>
+                                <div class="meter-track"><span id="energy-fill" style="width: 60%"></span></div>
+                            </div>
+                            <div class="signal-block"><small>Signal</small><strong id="mission-state">Wartet</strong></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="result-panel">
+                    <div>
+                        <span class="eyebrow">Technische Abnahme</span>
+                        <h3 id="validation-title">Noch nicht ausgeführt</h3>
+                        <p id="validation-message">Starte den Beispielcode oder verändere PICOs Route.</p>
+                    </div>
+                    <ul id="checks-list" class="checks-list" aria-label="Prüfergebnisse">
+                        <li><span aria-hidden="true">○</span> Turtle-Agent</li>
+                        <li><span aria-hidden="true">○</span> Schleife</li>
+                        <li><span aria-hidden="true">○</span> Entscheidung</li>
+                        <li><span aria-hidden="true">○</span> Status</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section class="code-column" id="editor-panel" aria-labelledby="pico-code-title">
+                <div class="section-heading">
+                    <div>
+                        <span class="eyebrow">Dein erfolgreicher Endcode</span>
+                        <h2 id="pico-code-title">Python-Kontrollraum</h2>
+                    </div>
+                    <span class="autosave-note">Prototyp · keine Speicherung</span>
+                </div>
+
+                <div class="editor-card">
+                    <label class="sr-only" for="python-editor">Python-Code für PICO</label>
+                    <textarea id="python-editor" spellcheck="false">import turtle
+
+pico = turtle.Turtle()
+pico.shape("turtle")
+pico.color("#55f6ff")
+pico.pensize(5)
+pico.speed(9)
+pico.penup()
+pico.goto(-350, -90)
+pico.pendown()
+
+status = {"name": "PICO", "energie": 6, "signal": "suche"}
+
+for schritt in range(4):
+    pico.forward(90)
+    status["energie"] = status["energie"] - 1
+
+pico.left(25)
+pico.forward(120)
+
+if status["energie"] &lt;= 2:
+    print("Ladestation aktiviert")
+    status["energie"] = status["energie"] + 4
+
+pico.goto(340, 15)
+status["signal"] = "gesendet"
+
+print("PICO_STATUS|" + status["name"] + "|" + str(status["energie"]) + "|" + status["signal"])
+print("Rettungssignal gesendet!")</textarea>
+
+                    <div class="control-bar" aria-label="Programmaktionen">
+                        <button id="run-btn" class="primary-action" type="button"><span aria-hidden="true">▶</span> Mission starten</button>
+                        <button id="reset-btn" class="secondary-action" type="button">↺ Beispiel laden</button>
+                        <button id="presentation-btn" class="secondary-action" type="button">◫ Präsentieren</button>
+                    </div>
+                </div>
+
+                <div class="console-card">
+                    <div class="console-title"><span>Ausgabe</span><span class="console-light" aria-hidden="true"></span></div>
+                    <pre id="console-output" aria-live="polite">Bereit für PICOs Rettungsmission.</pre>
+                </div>
+
+                <aside class="creative-card">
+                    <span aria-hidden="true">✦</span>
+                    <div><strong>Dein Finale darf anders aussehen.</strong><p>Ändere Agentenname, Farbe, Route oder Funkspruch. Entscheidend ist, dass dein Programm nachvollziehbar funktioniert.</p></div>
+                </aside>
+            </section>
+        </div>
+    </main>
+
+    <button id="exit-presentation-btn" class="exit-presentation" type="button">Editor anzeigen</button>
+
+    <script src="../assets/vendor/skulpt/1.2.0/skulpt.min.js"></script>
+    <script src="../assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
+    <script src="../assets/vendor/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="../assets/vendor/codemirror/5.65.2/python.min.js"></script>
+    <script>
+        window.FINALE_CONFIG = {
+            targetId: "pico-turtle",
+            runningLabel: "PICO unterwegs",
+            defaultCode: document.getElementById("python-editor").value,
+            parseOutput(output) {
+                const line = output.split(/\r?\n/).find(entry => entry.startsWith("PICO_STATUS|"));
+                if (!line) return null;
+                const [, name, energy, signal] = line.split("|");
+                return { name, energy: Number(energy), signal };
+            },
+            resetHud() {
+                document.getElementById("agent-name").textContent = "PICO";
+                document.getElementById("energy-value").textContent = "6 / 10";
+                document.getElementById("energy-fill").style.width = "60%";
+                document.getElementById("mission-state").textContent = "Wartet";
+                document.body.classList.remove("mission-complete");
+            },
+            applyHud(data) {
+                const energy = Number.isFinite(data.energy) ? Math.max(0, Math.min(10, data.energy)) : 0;
+                document.getElementById("agent-name").textContent = data.name || "PICO";
+                document.getElementById("energy-value").textContent = energy + " / 10";
+                document.getElementById("energy-fill").style.width = (energy * 10) + "%";
+                document.getElementById("mission-state").textContent = data.signal === "gesendet" ? "Gesendet" : "Unterwegs";
+                document.body.classList.toggle("mission-complete", data.signal === "gesendet");
+            },
+            validate(code, output) {
+                const checks = [
+                    { label: "Turtle-Agent wird gesteuert", passed: /\bimport\s+turtle\b/.test(code) && /\.forward\s*\(|\.goto\s*\(/.test(code) },
+                    { label: "Route nutzt eine Schleife", passed: /\bfor\s+\w+\s+in\s+range\s*\(/.test(code) },
+                    { label: "Energie wird entschieden", passed: /\bif\s+[^\n]+:/.test(code) },
+                    { label: "Status wird strukturiert gespeichert", passed: /\bstatus\s*=\s*\{/.test(code) },
+                    { label: "Rettungssignal erreicht", passed: /Rettungssignal gesendet!/.test(output) }
+                ];
+                const passed = checks.every(check => check.passed);
+                return {
+                    passed,
+                    checks,
+                    message: passed ? "Technisch bereit – jetzt kann PICO präsentiert werden." : "Der Weg ist offen: Ergänze die noch fehlenden Bausteine."
+                };
+            }
+        };
+    </script>
+    <script src="finale.js"></script>
+</body>
+</html>
