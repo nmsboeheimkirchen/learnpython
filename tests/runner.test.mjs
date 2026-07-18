@@ -627,10 +627,23 @@ test("finale prototypes stay unlinked, isolated and locally hosted", () => {
         assert.match(html, /assets\/images\/finales\/.+\.webp/);
         assert.match(html, /assets\/vendor\/skulpt\/1\.2\.0\/skulpt\.min\.js/);
         assert.match(html, /assets\/vendor\/codemirror\/5\.65\.2\/codemirror\.min\.js/);
-        assert.match(html, /\.speed\(3\)/);
-        assert.match(html, /turtle\.Screen\(\)\.delay\(35\)/);
         assert.doesNotMatch(html, /\.speed\(9\)/);
     }
+
+    const pico = readFileSync(new URL("../prototypes/pico_finale.html", import.meta.url), "utf8");
+    assert.match(pico, /pico\.goto\(-365, 55\)/);
+    assert.match(pico, /def fahre_zu\(x, y\):/);
+    assert.match(pico, /Eigene Funktion wird verwendet/);
+    assert.match(pico, /\.speed\(3\)/);
+    assert.match(pico, /turtle\.Screen\(\)\.delay\(35\)/);
+
+    const museum = readFileSync(new URL("../prototypes/pixelmuseum_finale.html", import.meta.url), "utf8");
+    assert.match(museum, /pixel-museum-recovered\.webp/);
+    assert.match(museum, /gehe_zu\(-250, 60\)/);
+    assert.match(museum, /Seruianer-Artefakt/);
+    assert.match(museum, /Energiezelle geladen!/);
+    assert.match(museum, /\.speed\(4\)/);
+    assert.match(museum, /turtle\.Screen\(\)\.delay\(30\)/);
 });
 
 test("finale runtime guards creative code and optimized artwork stays small", () => {
@@ -641,12 +654,14 @@ test("finale runtime guards creative code and optimized artwork stays small", ()
     assert.match(runtime, /lineWrapping:\s*true/);
     assert.match(runtime, /runGeneration/);
     assert.match(runtime, /classList\.toggle\("program-running", nextRunning\)/);
+    assert.match(runtime, /config\.onOutput\?\.\(chunk, outputText\)/);
     assert.match(runtime, /turtleTarget\.replaceChildren\(\)/);
     assert.doesNotMatch(runtime, /localStorage/);
 
     const artwork = [
         "pico-rescue-station.webp",
-        "pixel-museum.webp"
+        "pixel-museum.webp",
+        "pixel-museum-recovered.webp"
     ];
     for (const file of artwork) {
         const url = new URL(`../assets/images/finales/${file}`, import.meta.url);

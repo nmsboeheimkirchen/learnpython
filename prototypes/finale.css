@@ -1102,11 +1102,21 @@ svg.stage-overlay {
     backdrop-filter: blur(8px);
 }
 
-.charger-label { top: 61%; left: 4%; }
+.elevator-label { top: 38%; left: 3%; }
 .beacon-label { top: 41%; right: 7%; }
-.keycard-label { top: 58%; left: 10%; }
+.keycard-label { top: 34%; left: 16%; }
+.artifact-label { top: 47%; left: 2%; }
 .cell-label { top: 61%; right: 10%; }
 .portal-label { top: 22%; left: 50%; transform: translateX(-50%); }
+
+.museum-scene-recovered {
+    opacity: 0;
+    transition: opacity 420ms ease;
+}
+
+.artifact-secured .museum-scene-recovered {
+    opacity: 1;
+}
 
 .stage-hud > * {
     min-width: 112px;
@@ -1204,6 +1214,7 @@ svg.stage-overlay {
 
 .museum-hud { align-items: stretch; }
 .alarm-block,
+.energy-block,
 .exit-block { flex: 0 0 auto; }
 .inventory-block { flex: 1 1 240px; max-width: 390px; }
 

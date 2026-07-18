@@ -16,7 +16,7 @@
         <div>
             <span class="prototype-kicker">Unverlinkter Endprototyp</span>
             <h1>PICO: Das letzte Rettungssignal</h1>
-            <p>Programmiere PICOs Weg von der Ladestation bis zur Funkbake.</p>
+            <p>Programmiere PICOs Weg vom Aufzug bis zur Funkbake.</p>
         </div>
         <div class="path-badge" aria-label="Lernpfad PICO">
             <span class="path-badge-dot" aria-hidden="true"></span>
@@ -35,6 +35,7 @@
                 <li>Schleife</li>
                 <li>Entscheidung</li>
                 <li>Status-Dictionary</li>
+                <li>Funktion</li>
                 <li>Eigene Route</li>
             </ul>
         </section>
@@ -50,7 +51,7 @@
                 </div>
 
                 <div class="game-shell">
-                    <div class="game-stage" id="game-stage" aria-label="Futuristische Forschungsstation mit Ladestation links und Funkbake rechts">
+                    <div class="game-stage" id="game-stage" aria-label="Futuristische Forschungsstation mit Aufzug links und Funkbake rechts">
                         <img class="scene-image" src="../assets/images/finales/pico-rescue-station.webp" alt="" fetchpriority="high">
                         <div class="scene-shade" aria-hidden="true"></div>
 
@@ -66,14 +67,14 @@
                                     <stop offset="1" stop-color="#3ee9ff"></stop>
                                 </linearGradient>
                             </defs>
-                            <path class="suggested-route" d="M128 360 C265 394 360 345 470 330 S674 284 824 256" stroke="url(#pico-route)"></path>
-                            <circle class="target-pulse charger-pulse" cx="128" cy="360" r="30" filter="url(#pico-glow)"></circle>
+                            <path class="suggested-route" d="M112 225 C170 300 260 330 390 330 S674 284 824 256" stroke="url(#pico-route)"></path>
+                            <circle class="target-pulse charger-pulse" cx="112" cy="225" r="30" filter="url(#pico-glow)"></circle>
                             <circle class="target-pulse beacon-pulse" cx="824" cy="256" r="34" filter="url(#pico-glow)"></circle>
                         </svg>
 
                         <div id="pico-turtle" class="turtle-target" aria-hidden="true"></div>
 
-                        <div class="stage-label charger-label"><span aria-hidden="true">⚡</span> Ladestation</div>
+                        <div class="stage-label elevator-label"><span aria-hidden="true">⬒</span> Aufzug</div>
                         <div class="stage-label beacon-label"><span aria-hidden="true">◉</span> Funkbake</div>
 
                         <div class="stage-hud pico-hud" aria-label="PICO Status">
@@ -82,8 +83,8 @@
                                 <div><small>Agent</small><strong id="agent-name">PICO</strong></div>
                             </div>
                             <div class="meter-block">
-                                <div class="meter-label"><span>Energie</span><strong id="energy-value">6 / 10</strong></div>
-                                <div class="meter-track"><span id="energy-fill" style="width: 60%"></span></div>
+                                <div class="meter-label"><span>Energie</span><strong id="energy-value">7 / 10</strong></div>
+                                <div class="meter-track"><span id="energy-fill" style="width: 70%"></span></div>
                             </div>
                             <div class="signal-block"><small>Signal</small><strong id="mission-state">Wartet</strong></div>
                         </div>
@@ -101,6 +102,7 @@
                         <li><span aria-hidden="true">○</span> Schleife</li>
                         <li><span aria-hidden="true">○</span> Entscheidung</li>
                         <li><span aria-hidden="true">○</span> Status</li>
+                        <li><span aria-hidden="true">○</span> Funktion</li>
                     </ul>
                 </div>
             </section>
@@ -125,29 +127,33 @@ pico.pensize(5)
 pico.speed(0)
 pico.hideturtle()
 pico.penup()
-pico.goto(-350, -90)
+pico.goto(-365, 55)
 pico.speed(3)  # langsam genug, damit du den Weg siehst
 pico.showturtle()
 pico.pendown()
 
 turtle.Screen().delay(35)
 
-status = {"name": "PICO", "energie": 6, "signal": "suche"}
+status = {"name": "PICO", "energie": 7, "signal": "suche"}
+
+def fahre_zu(x, y):
+    pico.goto(x, y)
+    status["energie"] = status["energie"] - 1
+
+fahre_zu(-285, -30)
+pico.dot(14, "#ffe083")
+pico.setheading(0)
 
 for schritt in range(4):
-    pico.forward(90)
+    pico.forward(95)
     status["energie"] = status["energie"] - 1
     print("Streckenabschnitt " + str(schritt + 1) + " von 4")
 
-pico.left(25)
-pico.forward(120)
-pico.dot(14, "#ffe083")
-
-if status["energie"] &lt;= 2:
-    print("Ladestation aktiviert")
+if status["energie"] &lt;= 3:
+    print("Energiesparmodus aktiviert")
     status["energie"] = status["energie"] + 4
 
-pico.goto(340, 15)
+fahre_zu(340, 15)
 pico.dot(20, "#76f5a7")
 status["signal"] = "gesendet"
 
@@ -193,8 +199,8 @@ print("Rettungssignal gesendet!")</textarea>
             },
             resetHud() {
                 document.getElementById("agent-name").textContent = "PICO";
-                document.getElementById("energy-value").textContent = "6 / 10";
-                document.getElementById("energy-fill").style.width = "60%";
+                document.getElementById("energy-value").textContent = "7 / 10";
+                document.getElementById("energy-fill").style.width = "70%";
                 document.getElementById("mission-state").textContent = "Wartet";
                 document.body.classList.remove("mission-complete");
             },
@@ -207,11 +213,16 @@ print("Rettungssignal gesendet!")</textarea>
                 document.body.classList.toggle("mission-complete", data.signal === "gesendet");
             },
             validate(code, output) {
+                const functionName = code.match(/\bdef\s+([A-Za-z_]\w*)\s*\(/)?.[1];
+                const functionUses = functionName
+                    ? (code.match(new RegExp("\\b" + functionName + "\\s*\\(", "g")) || []).length
+                    : 0;
                 const checks = [
                     { label: "Turtle-Agent wird gesteuert", passed: /\bimport\s+turtle\b/.test(code) && /\.forward\s*\(|\.goto\s*\(/.test(code) },
                     { label: "Route nutzt eine Schleife", passed: /\bfor\s+\w+\s+in\s+range\s*\(/.test(code) },
                     { label: "Energie wird entschieden", passed: /\bif\s+[^\n]+:/.test(code) },
                     { label: "Status wird strukturiert gespeichert", passed: /\bstatus\s*=\s*\{/.test(code) },
+                    { label: "Eigene Funktion wird verwendet", passed: functionUses >= 2 },
                     { label: "Rettungssignal erreicht", passed: /Rettungssignal gesendet!/.test(output) }
                 ];
                 const passed = checks.every(check => check.passed);

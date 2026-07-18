@@ -72,9 +72,11 @@
     }
 
     function appendOutput(text) {
-        outputText += String(text);
+        const chunk = String(text);
+        outputText += chunk;
         consoleOutput.textContent = outputText;
         consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        config.onOutput?.(chunk, outputText);
     }
 
     function clearTurtle() {
