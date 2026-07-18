@@ -47,6 +47,7 @@
     let outputText = "";
     let runGeneration = 0;
     let running = false;
+    let activeTurtle = null;
 
     function builtinRead(path) {
         if (!Sk.builtinFiles || !Sk.builtinFiles.files || !Sk.builtinFiles.files[path]) {
@@ -93,6 +94,7 @@
         } catch (_error) {
             turtleTarget.turtleInstance = undefined;
         }
+        activeTurtle = null;
         turtleTarget.replaceChildren();
     }
 
@@ -120,8 +122,79 @@
             __future__: Sk.python3
         });
         Sk.onAfterImport = moduleName => {
-            if (moduleName === "turtle") installTurtleObserver();
+            if (moduleName !== "turtle") return;
+            try {
+                installTurtleObserver();
+                installTurtleAgentApi();
+            } catch (error) {
+                console.error("Turtle-Agent-API konnte nicht installiert werden", error);
+            }
         };
+    }
+
+    function getPythonGlobal(name) {
+        const value = Sk.globals?.[name];
+        return value === undefined ? undefined : Sk.ffi.remapToJs(value);
+    }
+
+    function getTurtleContext(raw) {
+        const state = raw?.getState?.();
+        return {
+            x: Number(state?.x ?? 0),
+            y: Number(state?.y ?? 0),
+            raw,
+            getGlobal: getPythonGlobal
+        };
+    }
+
+    function syncPythonState(raw = activeTurtle) {
+        if (!raw || !config.syncPythonState) return null;
+        const result = config.syncPythonState(getTurtleContext(raw)) || null;
+
+        if (result?.resumeMovement && raw.__finaleMovementBlocked) {
+            const visibleState = raw.getState?.();
+            if (visibleState) {
+                raw._x = visibleState.x;
+                raw._y = visibleState.y;
+            }
+            raw.__finaleMovementBlocked = false;
+        }
+        return result;
+    }
+
+    function installTurtleAgentApi() {
+        const TurtleClass = Sk.TurtleGraphics?.module?.Turtle;
+        if (!TurtleClass || TurtleClass.prototype.__finaleAgentApiInstalled) return;
+
+        const defineMethod = name => {
+            const implementation = function (self) {
+                const raw = self?.instance;
+                activeTurtle = raw || activeTurtle;
+                const handler = config.agentApi?.[name];
+                const result = typeof handler === "function"
+                    ? handler.call(config, getTurtleContext(raw))
+                    : null;
+
+                if (name === "suche_hier") {
+                    window.queueMicrotask(() => syncPythonState(raw));
+                }
+                return Sk.ffi.remapToPy(result);
+            };
+            implementation.co_name = new Sk.builtin.str(name);
+            implementation.co_varnames = ["self"];
+            Sk.abstr.sattr(
+                TurtleClass,
+                new Sk.builtin.str(name),
+                new Sk.builtin.func(implementation)
+            );
+        };
+
+        defineMethod("suche_hier");
+        defineMethod("sende");
+        Object.defineProperty(TurtleClass.prototype, "__finaleAgentApiInstalled", {
+            value: true,
+            configurable: false
+        });
     }
 
     function installTurtleObserver() {
@@ -136,6 +209,8 @@
         });
 
         prototype.addUpdate = function (...args) {
+            activeTurtle = this;
+            syncPythonState(this);
             if (this.__finaleMovementBlocked) return Promise.resolve();
 
             const update = originalAddUpdate.apply(this, args);
@@ -200,6 +275,7 @@
     function refreshValidation() {
         if (running) return;
         const code = editor.getValue();
+        syncPythonState();
         const hudData = config.parseOutput?.(outputText);
         if (hudData) config.applyHud?.(hudData);
         const result = config.validate(code, outputText);
@@ -228,6 +304,7 @@
             ));
 
             if (generation !== runGeneration) return;
+            syncPythonState();
 
             const hudData = config.parseOutput?.(outputText);
             if (hudData) config.applyHud?.(hudData);

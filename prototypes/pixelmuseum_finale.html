@@ -28,7 +28,7 @@
         <section class="briefing-card" aria-labelledby="museum-briefing-title">
             <div>
                 <span class="eyebrow">Finale · Galerie nach Mitternacht</span>
-                <h2 id="museum-briefing-title">Der Pixellord darf das Artefakt nicht behalten.</h2>
+                <h2 id="museum-briefing-title">Der böse Lord darf das Artefakt nicht behalten.</h2>
                 <p>Plane den Weg, fülle dein Inventar und hacke den Alarm, bevor die letzte Stufe endet.</p>
             </div>
             <ul class="concept-strip" aria-label="Python-Ziele">
@@ -148,26 +148,37 @@ def alarm_hacken(code):
 
 gehe_zu(-250, 60)
 agent.dot(16, "#ffd56b")
-inventar.append("Schlüsselkarte")
-print("Schlüsselkarte gefunden!")
+fund = agent.suche_hier()
+print("Gefunden: " + str(fund))
 
-if "Schlüsselkarte" in inventar:
-    gehe_zu(-390, 45)
-    agent.dot(18, "#7df9ff")
-    inventar.append("Seruianer-Artefakt")
+if fund == "Schlüsselkarte":
+    inventar.append(fund)
+    print("Schlüsselkarte aufgenommen.")
+else:
+    print("Schlüsselkarte nicht gefunden.")
 
-if "Seruianer-Artefakt" in inventar:
-    gehe_zu(250, -60)
-    agent.dot(18, "#76f5a7")
-    alarm_hacken("SERU-7")
+gehe_zu(-390, 45)
+agent.dot(18, "#7df9ff")
+fund = agent.suche_hier()
+print("Gefunden: " + str(fund))
 
-    status["ausgang"] = "erreicht"
-    gehe_zu(0, 115)
-    agent.dot(20, "#76f5a7")
-    print("Portal erreicht!")
+if fund == "Artefakt":
+    inventar.append(fund)
+    print("Artefakt sichergestellt.")
+else:
+    print("Artefakt nicht gefunden.")
+
+gehe_zu(250, -60)
+agent.dot(18, "#76f5a7")
+alarm_hacken("SERU-7")
+
+status["ausgang"] = "erreicht"
+gehe_zu(0, 115)
+agent.dot(20, "#76f5a7")
+print("Portal erreicht!")
 
 print("MUSEUM_STATUS|" + ",".join(inventar) + "|" + status["ausgang"])
-print("Fluchtweg gesichert!")</textarea>
+print("Fluchtweg programmiert.")</textarea>
 
                     <div class="control-bar" aria-label="Programmaktionen">
                         <button id="run-btn" class="primary-action" type="button"><span aria-hidden="true">▶</span> Flucht starten</button>
@@ -200,14 +211,56 @@ print("Fluchtweg gesichert!")</textarea>
             targetId: "museum-turtle",
             runningLabel: "Agent unterwegs",
             defaultCode: document.getElementById("python-editor").value,
-            onRunStart(code) {
-                const lines = code.split(/\r?\n/);
-                this.keycardPickupProgrammed = lines.some(line => (
-                    /^\s*inventar\.append\s*\(\s*["']Schlüsselkarte["']\s*\)/.test(line)
-                ));
-                this.artifactPickupProgrammed = lines.some(line => (
-                    /^\s*inventar\.append\s*\(\s*["']Seruianer-Artefakt["']\s*\)/.test(line)
-                ));
+            distanceTo(point, target) {
+                return Math.hypot(point.x - target.x, point.y - target.y);
+            },
+            countItem(items, item) {
+                return Array.isArray(items) ? items.filter(entry => entry === item).length : 0;
+            },
+            agentApi: {
+                suche_hier(context) {
+                    const keycard = { x: -250, y: 60 };
+                    const artifact = { x: -390, y: 45 };
+                    let item = null;
+
+                    if (this.distanceTo(context, keycard) <= 12 && !this.runtimeInventory.includes("Schlüsselkarte")) {
+                        item = "Schlüsselkarte";
+                    } else if (this.distanceTo(context, artifact) <= 12 && !this.artifactSecured) {
+                        if (this.runtimeInventory.includes("Schlüsselkarte")) {
+                            item = "Artefakt";
+                        } else {
+                            document.getElementById("artifact-label").innerHTML = '<span aria-hidden="true">⌧</span> Schlüsselkarte fehlt';
+                        }
+                    }
+
+                    if (!item) {
+                        this.pendingFind = null;
+                        return null;
+                    }
+
+                    const inventory = context.getGlobal("inventar");
+                    this.pendingFind = {
+                        item,
+                        x: context.x,
+                        y: context.y,
+                        baselineCount: this.countItem(inventory, item)
+                    };
+                    return item;
+                }
+            },
+            syncPythonState(context) {
+                if (!this.pendingFind) return null;
+                const inventory = context.getGlobal("inventar");
+                const currentCount = this.countItem(inventory, this.pendingFind.item);
+                if (currentCount <= this.pendingFind.baselineCount) return null;
+
+                const item = this.pendingFind.item;
+                this.pendingFind = null;
+                if (item === "Artefakt" && !this.runtimeInventory.includes("Schlüsselkarte")) {
+                    return null;
+                }
+                this.collectItem(item);
+                return { inventoryChanged: true };
             },
             onOutput(chunk) {
                 const hack = chunk.match(/ALARM_HACK\|([^\r\n]+)/);
@@ -250,8 +303,7 @@ print("Fluchtweg gesichert!")</textarea>
                 this.hackRequested = false;
                 this.hackCodeCorrect = false;
                 this.hackedInFinalWindow = false;
-                this.keycardPickupProgrammed = false;
-                this.artifactPickupProgrammed = false;
+                this.pendingFind = null;
                 this.runtimeInventory = [];
                 this.artifactSecured = false;
                 this.atAlarmConsole = false;
@@ -303,7 +355,11 @@ print("Fluchtweg gesichert!")</textarea>
                     label.innerHTML = '<span aria-hidden="true">×</span> Hackcode falsch';
                     return;
                 }
-                if (!this.artifactSecured || !this.atAlarmConsole || this.alarmFailed) {
+                if (!this.alarmStarted) {
+                    label.innerHTML = '<span aria-hidden="true">!</span> Noch kein Alarm ausgelöst – Hack nicht möglich!';
+                    return;
+                }
+                if (!this.atAlarmConsole || this.alarmFailed) {
                     label.innerHTML = '<span aria-hidden="true">!</span> Hack nicht möglich';
                     return;
                 }
@@ -344,24 +400,14 @@ print("Fluchtweg gesichert!")</textarea>
                 document.body.classList.toggle("mission-complete", this.exitUnlocked);
             },
             onTurtleFrame(point) {
-                const keycard = { x: -250, y: 60 };
-                const artifact = { x: -390, y: 45 };
                 const alarmConsole = { x: 250, y: -60 };
                 const portal = { x: 0, y: 115 };
                 const distance = target => Math.hypot(point.x - target.x, point.y - target.y);
                 this.currentPoint = { ...point };
                 this.atAlarmConsole = distance(alarmConsole) <= 22;
 
-                if (distance(keycard) <= 10 && this.keycardPickupProgrammed) {
-                    this.collectItem("Schlüsselkarte");
-                }
-
-                if (distance(artifact) <= 10 && this.artifactPickupProgrammed && !this.artifactSecured) {
-                    if (this.runtimeInventory.includes("Schlüsselkarte")) {
-                        this.collectItem("Seruianer-Artefakt");
-                    } else {
-                        document.getElementById("artifact-label").innerHTML = '<span aria-hidden="true">⌧</span> Schlüsselkarte fehlt';
-                    }
+                if (this.pendingFind && this.distanceTo(point, this.pendingFind) > 14) {
+                    this.pendingFind = null;
                 }
 
                 if (distance(portal) <= 28) {
@@ -391,7 +437,7 @@ print("Fluchtweg gesichert!")</textarea>
                     { label: "Eigene Entscheidung", passed: /\bif\s+[^\n]+:/.test(code) },
                     { label: "Hackcode an der Konsole gesendet", passed: this.hackCodeCorrect && this.hackRequested },
                     { label: "Alarm im letzten Zeitfenster gehackt", passed: this.alarmDisabled && this.hackedInFinalWindow },
-                    { label: "Gültiger Fluchtweg", passed: this.exitUnlocked && /Fluchtweg gesichert!/.test(output) }
+                    { label: "Gültiger Fluchtweg", passed: this.exitUnlocked }
                 ];
                 const passed = checks.every(check => check.passed);
                 return {

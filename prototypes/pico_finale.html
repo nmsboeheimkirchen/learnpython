@@ -151,18 +151,21 @@ def fahre_zu(x, y):
 
 fahre_zu(-380, -90)
 pico.dot(14, "#ffe083")
-ausruestung.append("Energiezelle")
+fund = pico.suche_hier()
+print("Gefunden: " + str(fund))
+ausruestung.append(fund)
 
-if "Energiezelle" in ausruestung:
-    print("Energiezelle geladen!")
-    fahre_zu(0, -90)
-    fahre_zu(340, 15)
-    pico.dot(20, "#76f5a7")
+fahre_zu(0, -90)
+fahre_zu(340, 15)
+pico.dot(20, "#76f5a7")
+
+if pico.sende():
     status["signal"] = "gesendet"
+    print("Rettungssignal gesendet!")
+else:
+    print("Keine Funkbase in Reichweite.")
 
-print("PICO_STATUS|" + status["name"] + "|" + status["signal"])
-if status["signal"] == "gesendet":
-    print("Rettungssignal gesendet!")</textarea>
+print("PICO_STATUS|" + status["name"] + "|" + status["signal"])</textarea>
 
                     <div class="control-bar" aria-label="Programmaktionen">
                         <button id="run-btn" class="primary-action" type="button"><span aria-hidden="true">▶</span> Mission starten</button>
@@ -212,17 +215,65 @@ if status["signal"] == "gesendet":
                 this.charged = false;
                 this.depleted = false;
                 this.beaconReached = false;
-                this.pickupProgrammed = false;
+                this.signalSent = false;
+                this.signalAttempted = false;
+                this.pendingFind = null;
                 document.getElementById("agent-name").textContent = "PICO";
                 this.renderEnergy(this.energy);
                 document.getElementById("mission-state").textContent = "Wartet";
                 document.getElementById("pico-cell-label").innerHTML = '<span aria-hidden="true">ϟ</span> Energiezelle';
                 document.body.classList.remove("mission-complete", "energy-cell-collected", "energy-depleted");
             },
-            onRunStart(code) {
-                this.pickupProgrammed = code.split(/\r?\n/).some(line => (
-                    /^\s*ausruestung\.append\s*\(\s*["']Energiezelle["']\s*\)/.test(line)
-                ));
+            distanceTo(point, target) {
+                return Math.hypot(point.x - target.x, point.y - target.y);
+            },
+            countItem(items, item) {
+                return Array.isArray(items) ? items.filter(entry => entry === item).length : 0;
+            },
+            agentApi: {
+                suche_hier(context) {
+                    const item = "Energiezelle";
+                    const cell = { x: -380, y: -90 };
+                    const equipment = context.getGlobal("ausruestung");
+                    if (!this.charged && this.distanceTo(context, cell) <= 10) {
+                        this.pendingFind = {
+                            item,
+                            baselineCount: this.countItem(equipment, item)
+                        };
+                        return item;
+                    }
+                    this.pendingFind = null;
+                    return null;
+                },
+                sende(context) {
+                    const beacon = { x: 340, y: 15 };
+                    this.signalAttempted = true;
+                    const success = this.distanceTo(context, beacon) <= 45 &&
+                        this.charged && !this.depleted && this.energy > 0;
+                    this.signalSent = success;
+                    document.getElementById("mission-state").textContent = success
+                        ? "Gesendet"
+                        : (this.depleted ? "Energie leer" : "Kein Empfang");
+                    document.body.classList.toggle("mission-complete", success);
+                    return success;
+                }
+            },
+            syncPythonState(context) {
+                if (!this.pendingFind || this.charged) return null;
+                const equipment = context.getGlobal("ausruestung");
+                const currentCount = this.countItem(equipment, this.pendingFind.item);
+                if (currentCount <= this.pendingFind.baselineCount) return null;
+
+                this.charged = true;
+                this.depleted = false;
+                this.energy = 100;
+                this.pendingFind = null;
+                document.body.classList.add("energy-cell-collected");
+                document.body.classList.remove("energy-depleted");
+                document.getElementById("pico-cell-label").innerHTML = '<span aria-hidden="true">✓</span> Energie geladen';
+                document.getElementById("mission-state").textContent = "Geladen";
+                this.renderEnergy(this.energy);
+                return { resumeMovement: true };
             },
             onTurtleFrame(point) {
                 const start = { x: -365, y: 55 };
@@ -241,16 +292,7 @@ if status["signal"] == "gesendet":
 
                 if (!this.charged) {
                     this.energy = Math.max(0, this.energy - travelled * 10 / initialRange);
-                    const reachedCell = distance(point, cell) <= 6;
-                    if (reachedCell && this.pickupProgrammed && !this.depleted) {
-                        this.charged = true;
-                        this.energy = 100;
-                        document.body.classList.add("energy-cell-collected");
-                        document.getElementById("pico-cell-label").innerHTML = '<span aria-hidden="true">✓</span> Energie geladen';
-                        document.getElementById("mission-state").textContent = "Geladen";
-                    } else if (this.energy <= 0) {
-                        this.depleted = true;
-                    }
+                    if (this.energy <= 0) this.depleted = true;
                 } else {
                     this.energy = Math.max(0, this.energy - travelled / 8.2);
                     if (this.energy <= 0) this.depleted = true;
@@ -278,10 +320,11 @@ if status["signal"] == "gesendet":
                 };
             },
             applyHud(data) {
-                const success = data.signal === "gesendet" && this.charged && this.beaconReached && !this.depleted && this.energy > 0;
                 document.getElementById("agent-name").textContent = data.name || "PICO";
-                document.getElementById("mission-state").textContent = success ? "Gesendet" : (this.depleted ? "Energie leer" : "Unterwegs");
-                document.body.classList.toggle("mission-complete", success);
+                document.getElementById("mission-state").textContent = this.signalSent
+                    ? "Gesendet"
+                    : (this.depleted ? "Energie leer" : (this.signalAttempted ? "Kein Empfang" : "Unterwegs"));
+                document.body.classList.toggle("mission-complete", this.signalSent);
             },
             validate(code, output) {
                 const functionName = code.match(/\bdef\s+([A-Za-z_]\w*)\s*\(/)?.[1];
@@ -292,11 +335,11 @@ if status["signal"] == "gesendet":
                     { label: "Turtle-Agent wird gesteuert", passed: /\bimport\s+turtle\b/.test(code) && /\.forward\s*\(|\.goto\s*\(/.test(code) },
                     { label: "Route nutzt einen Wegpunkt", passed: /\bfahre_zu\s*\(\s*0\s*,\s*-90\s*\)/.test(code) },
                     { label: "Route trifft eine Entscheidung", passed: /\bif\s+[^\n]+:/.test(code) },
-                    { label: "Energiezelle erreicht und geladen", passed: this.charged && this.pickupProgrammed },
+                    { label: "Energiezelle gefunden und aufgenommen", passed: this.charged },
                     { label: "Status wird strukturiert gespeichert", passed: /\bstatus\s*=\s*\{/.test(code) },
                     { label: "Eigene Funktion wird verwendet", passed: functionUses >= 2 },
                     { label: "Energie reicht bis zur Funkbase", passed: this.beaconReached && !this.depleted && this.energy > 0 },
-                    { label: "Rettungssignal erreicht", passed: /Rettungssignal gesendet!/.test(output) }
+                    { label: "Rettungssignal von der Funkbase bestätigt", passed: this.signalSent }
                 ];
                 const passed = checks.every(check => check.passed);
                 return {
