@@ -119,10 +119,15 @@ agent = turtle.Turtle()
 agent.shape("triangle")
 agent.color("#ff78f3")
 agent.pensize(5)
-agent.speed(9)
+agent.speed(0)
+agent.hideturtle()
 agent.penup()
 agent.goto(0, -210)
+agent.speed(3)  # langsam genug, damit du den Weg siehst
+agent.showturtle()
 agent.pendown()
+
+turtle.Screen().delay(35)
 
 status = {"alarm": 0, "energie": 5, "ausgang": "gesperrt"}
 inventar = []
@@ -132,11 +137,15 @@ def gehe_zu(x, y):
     status["energie"] = status["energie"] - 1
 
 gehe_zu(-250, -60)
+agent.dot(16, "#ffd56b")
 inventar.append("Schlüsselkarte")
+print("Schlüsselkarte gefunden!")
 
 if "Schlüsselkarte" in inventar:
     status["ausgang"] = "Portal"
     gehe_zu(0, 115)
+    agent.dot(20, "#76f5a7")
+    print("Portal entsperrt!")
 else:
     status["alarm"] = status["alarm"] + 1
 

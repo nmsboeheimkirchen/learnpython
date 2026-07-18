@@ -122,25 +122,33 @@ pico = turtle.Turtle()
 pico.shape("turtle")
 pico.color("#55f6ff")
 pico.pensize(5)
-pico.speed(9)
+pico.speed(0)
+pico.hideturtle()
 pico.penup()
 pico.goto(-350, -90)
+pico.speed(3)  # langsam genug, damit du den Weg siehst
+pico.showturtle()
 pico.pendown()
+
+turtle.Screen().delay(35)
 
 status = {"name": "PICO", "energie": 6, "signal": "suche"}
 
 for schritt in range(4):
     pico.forward(90)
     status["energie"] = status["energie"] - 1
+    print("Streckenabschnitt " + str(schritt + 1) + " von 4")
 
 pico.left(25)
 pico.forward(120)
+pico.dot(14, "#ffe083")
 
 if status["energie"] &lt;= 2:
     print("Ladestation aktiviert")
     status["energie"] = status["energie"] + 4
 
 pico.goto(340, 15)
+pico.dot(20, "#76f5a7")
 status["signal"] = "gesendet"
 
 print("PICO_STATUS|" + status["name"] + "|" + str(status["energie"]) + "|" + status["signal"])

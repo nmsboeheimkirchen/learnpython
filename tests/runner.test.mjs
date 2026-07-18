@@ -627,6 +627,9 @@ test("finale prototypes stay unlinked, isolated and locally hosted", () => {
         assert.match(html, /assets\/images\/finales\/.+\.webp/);
         assert.match(html, /assets\/vendor\/skulpt\/1\.2\.0\/skulpt\.min\.js/);
         assert.match(html, /assets\/vendor\/codemirror\/5\.65\.2\/codemirror\.min\.js/);
+        assert.match(html, /\.speed\(3\)/);
+        assert.match(html, /turtle\.Screen\(\)\.delay\(35\)/);
+        assert.doesNotMatch(html, /\.speed\(9\)/);
     }
 });
 
@@ -637,6 +640,7 @@ test("finale runtime guards creative code and optimized artwork stays small", ()
     assert.match(runtime, /killableFor:\s*true/);
     assert.match(runtime, /lineWrapping:\s*true/);
     assert.match(runtime, /runGeneration/);
+    assert.match(runtime, /classList\.toggle\("program-running", nextRunning\)/);
     assert.match(runtime, /turtleTarget\.replaceChildren\(\)/);
     assert.doesNotMatch(runtime, /localStorage/);
 

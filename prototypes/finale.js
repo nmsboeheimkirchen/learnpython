@@ -62,6 +62,7 @@
 
     function setRunning(nextRunning) {
         running = nextRunning;
+        document.body.classList.toggle("program-running", nextRunning);
         runButton.disabled = nextRunning;
         resetButton.disabled = nextRunning;
         runButton.setAttribute("aria-busy", String(nextRunning));

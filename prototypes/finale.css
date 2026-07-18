@@ -1060,6 +1060,14 @@ svg.stage-overlay {
     animation: route-flow 4s linear infinite;
 }
 
+.program-running .suggested-route {
+    opacity: 0.08;
+}
+
+.program-running .turtle-target canvas {
+    filter: drop-shadow(0 0 4px rgba(var(--accent-rgb), 0.9));
+}
+
 .target-pulse {
     fill: rgba(var(--accent-rgb), 0.08);
     stroke: var(--accent);
