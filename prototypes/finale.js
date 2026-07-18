@@ -119,6 +119,39 @@
             killableFor: true,
             __future__: Sk.python3
         });
+        Sk.onAfterImport = moduleName => {
+            if (moduleName === "turtle") installTurtleObserver();
+        };
+    }
+
+    function installTurtleObserver() {
+        const Turtle = turtleTarget.turtleInstance?.Turtle || Sk.TurtleGraphics?.raw?.Turtle;
+        const prototype = Turtle?.prototype;
+        if (!prototype || prototype.__finaleObserverInstalled) return;
+
+        const originalAddUpdate = prototype.addUpdate;
+        Object.defineProperty(prototype, "__finaleObserverInstalled", {
+            value: true,
+            configurable: false
+        });
+
+        prototype.addUpdate = function (...args) {
+            if (this.__finaleMovementBlocked) return Promise.resolve();
+
+            const update = originalAddUpdate.apply(this, args);
+            const notify = value => {
+                const state = this.getState?.();
+                if (state && Number.isFinite(state.x) && Number.isFinite(state.y)) {
+                    const frameResult = config.onTurtleFrame?.({ x: state.x, y: state.y });
+                    if (frameResult?.stop) this.__finaleMovementBlocked = true;
+                }
+                return value;
+            };
+
+            return update && typeof update.then === "function"
+                ? update.then(notify)
+                : notify(update);
+        };
     }
 
     function renderChecks(result) {
@@ -153,6 +186,27 @@
         return raw.replace(/^Error:\s*/, "");
     }
 
+    function finishAutomaticStop(automaticStop, code) {
+        if (automaticStop.output) {
+            appendOutput((outputText && !outputText.endsWith("\n") ? "\n" : "") + automaticStop.output + "\n");
+        }
+        const result = config.validate(code, outputText);
+        renderChecks({ ...result, passed: false, message: automaticStop.message });
+        validationTitle.textContent = automaticStop.title || "Mission automatisch gestoppt";
+        document.body.classList.remove("validation-passed", "mission-complete");
+        setStatus(automaticStop.status || "Automatisch gestoppt", "warning");
+    }
+
+    function refreshValidation() {
+        if (running) return;
+        const code = editor.getValue();
+        const hudData = config.parseOutput?.(outputText);
+        if (hudData) config.applyHud?.(hudData);
+        const result = config.validate(code, outputText);
+        renderChecks(result);
+        setStatus(result.passed ? "Technisch bereit" : "Code prüfen", result.passed ? "success" : "warning");
+    }
+
     async function runProgram() {
         if (running) return;
 
@@ -163,6 +217,7 @@
         consoleOutput.classList.remove("is-error");
         document.body.classList.remove("validation-passed", "mission-complete");
         config.resetHud?.();
+        config.onRunStart?.(code);
         setRunning(true);
         setStatus(config.runningLabel || "Programm läuft", "running");
 
@@ -176,6 +231,12 @@
 
             const hudData = config.parseOutput?.(outputText);
             if (hudData) config.applyHud?.(hudData);
+
+            const automaticStop = config.getAutomaticStop?.(code, outputText);
+            if (automaticStop) {
+                finishAutomaticStop(automaticStop, code);
+                return;
+            }
 
             const result = config.validate(code, outputText);
             renderChecks(result);
@@ -237,7 +298,7 @@
 
     config.resetHud?.();
     setStatus("Bereit", "ready");
-    window.finalePrototype = { editor, run: runProgram, reset: resetPrototype };
+    window.finalePrototype = { editor, run: runProgram, reset: resetPrototype, refresh: refreshValidation };
 
     if (testMode) {
         window.setTimeout(runProgram, 60);

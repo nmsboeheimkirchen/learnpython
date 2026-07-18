@@ -16,7 +16,7 @@
         <div>
             <span class="prototype-kicker">Unverlinkter Endprototyp</span>
             <h1>PICO: Das letzte Rettungssignal</h1>
-            <p>Programmiere PICOs Weg vom Aufzug bis zur Funkbake.</p>
+            <p>Hole Energie und programmiere PICOs Weg vom Aufzug bis zur Funkbase.</p>
         </div>
         <div class="path-badge" aria-label="Lernpfad PICO">
             <span class="path-badge-dot" aria-hidden="true"></span>
@@ -29,13 +29,14 @@
             <div>
                 <span class="eyebrow">Finale · Forschungsstation 07</span>
                 <h2 id="pico-briefing-title">Ein Programm. Ein Agent. Ein Signal.</h2>
-                <p>Dein erfolgreicher Code wächst bis hierher weiter. Name, Route und Funkspruch bleiben deine Entscheidung.</p>
+                <p>PICO startet fast leer. Erreiche zuerst die Energiezelle und sende danach das Rettungssignal.</p>
             </div>
             <ul class="concept-strip" aria-label="Python-Ziele">
-                <li>Schleife</li>
+                <li>Wegpunkte</li>
                 <li>Entscheidung</li>
                 <li>Status-Dictionary</li>
                 <li>Funktion</li>
+                <li>Energie-Route</li>
                 <li>Eigene Route</li>
             </ul>
         </section>
@@ -51,7 +52,7 @@
                 </div>
 
                 <div class="game-shell">
-                    <div class="game-stage" id="game-stage" aria-label="Futuristische Forschungsstation mit Aufzug links und Funkbake rechts">
+                    <div class="game-stage" id="game-stage" aria-label="Futuristische Forschungsstation mit Aufzug links und Funkbase rechts">
                         <img class="scene-image" src="../assets/images/finales/pico-rescue-station.webp" alt="" fetchpriority="high">
                         <div class="scene-shade" aria-hidden="true"></div>
 
@@ -67,15 +68,22 @@
                                     <stop offset="1" stop-color="#3ee9ff"></stop>
                                 </linearGradient>
                             </defs>
-                            <path class="suggested-route" d="M112 225 C170 300 260 330 390 330 S674 284 824 256" stroke="url(#pico-route)"></path>
-                            <circle class="target-pulse charger-pulse" cx="112" cy="225" r="30" filter="url(#pico-glow)"></circle>
+                            <path class="suggested-route" d="M115 215 C110 265 105 325 100 360 L480 360 L820 255" stroke="url(#pico-route)"></path>
+                            <circle class="target-pulse elevator-pulse" cx="115" cy="215" r="30" filter="url(#pico-glow)"></circle>
+                            <circle class="target-pulse energy-cell-pulse" cx="100" cy="360" r="25" filter="url(#pico-glow)"></circle>
+                            <g class="pico-energy-cell-graphic" transform="translate(100 360)" filter="url(#pico-glow)">
+                                <rect x="-12" y="-20" width="24" height="40" rx="7"></rect>
+                                <rect class="energy-cell-cap" x="-7" y="-25" width="14" height="6" rx="2"></rect>
+                                <path d="M3 -13 L-5 1 H1 L-3 13 L7 -3 H1 Z"></path>
+                            </g>
                             <circle class="target-pulse beacon-pulse" cx="824" cy="256" r="34" filter="url(#pico-glow)"></circle>
                         </svg>
 
                         <div id="pico-turtle" class="turtle-target" aria-hidden="true"></div>
 
                         <div class="stage-label elevator-label"><span aria-hidden="true">⬒</span> Aufzug</div>
-                        <div class="stage-label beacon-label"><span aria-hidden="true">◉</span> Funkbake</div>
+                        <div id="pico-cell-label" class="stage-label pico-cell-label"><span aria-hidden="true">ϟ</span> Energiezelle</div>
+                        <div class="stage-label beacon-label"><span aria-hidden="true">◉</span> Funkbase</div>
 
                         <div class="stage-hud pico-hud" aria-label="PICO Status">
                             <div class="agent-id">
@@ -83,8 +91,8 @@
                                 <div><small>Agent</small><strong id="agent-name">PICO</strong></div>
                             </div>
                             <div class="meter-block">
-                                <div class="meter-label"><span>Energie</span><strong id="energy-value">7 / 10</strong></div>
-                                <div class="meter-track"><span id="energy-fill" style="width: 70%"></span></div>
+                                <div class="meter-label"><span>Energie · automatisch</span><strong id="energy-value">10 %</strong></div>
+                                <div class="meter-track"><span id="energy-fill" style="width: 10%"></span></div>
                             </div>
                             <div class="signal-block"><small>Signal</small><strong id="mission-state">Wartet</strong></div>
                         </div>
@@ -99,8 +107,9 @@
                     </div>
                     <ul id="checks-list" class="checks-list" aria-label="Prüfergebnisse">
                         <li><span aria-hidden="true">○</span> Turtle-Agent</li>
-                        <li><span aria-hidden="true">○</span> Schleife</li>
+                        <li><span aria-hidden="true">○</span> Wegpunkt</li>
                         <li><span aria-hidden="true">○</span> Entscheidung</li>
+                        <li><span aria-hidden="true">○</span> Energiezelle</li>
                         <li><span aria-hidden="true">○</span> Status</li>
                         <li><span aria-hidden="true">○</span> Funktion</li>
                     </ul>
@@ -134,31 +143,26 @@ pico.pendown()
 
 turtle.Screen().delay(35)
 
-status = {"name": "PICO", "energie": 7, "signal": "suche"}
+status = {"name": "PICO", "signal": "suche"}
+ausruestung = []
 
 def fahre_zu(x, y):
     pico.goto(x, y)
-    status["energie"] = status["energie"] - 1
 
-fahre_zu(-285, -30)
+fahre_zu(-380, -90)
 pico.dot(14, "#ffe083")
-pico.setheading(0)
+ausruestung.append("Energiezelle")
 
-for schritt in range(4):
-    pico.forward(95)
-    status["energie"] = status["energie"] - 1
-    print("Streckenabschnitt " + str(schritt + 1) + " von 4")
+if "Energiezelle" in ausruestung:
+    print("Energiezelle geladen!")
+    fahre_zu(0, -90)
+    fahre_zu(340, 15)
+    pico.dot(20, "#76f5a7")
+    status["signal"] = "gesendet"
 
-if status["energie"] &lt;= 3:
-    print("Energiesparmodus aktiviert")
-    status["energie"] = status["energie"] + 4
-
-fahre_zu(340, 15)
-pico.dot(20, "#76f5a7")
-status["signal"] = "gesendet"
-
-print("PICO_STATUS|" + status["name"] + "|" + str(status["energie"]) + "|" + status["signal"])
-print("Rettungssignal gesendet!")</textarea>
+print("PICO_STATUS|" + status["name"] + "|" + status["signal"])
+if status["signal"] == "gesendet":
+    print("Rettungssignal gesendet!")</textarea>
 
                     <div class="control-bar" aria-label="Programmaktionen">
                         <button id="run-btn" class="primary-action" type="button"><span aria-hidden="true">▶</span> Mission starten</button>
@@ -174,7 +178,7 @@ print("Rettungssignal gesendet!")</textarea>
 
                 <aside class="creative-card">
                     <span aria-hidden="true">✦</span>
-                    <div><strong>Dein Finale darf anders aussehen.</strong><p>Ändere Agentenname, Farbe, Route oder Funkspruch. Entscheidend ist, dass dein Programm nachvollziehbar funktioniert.</p></div>
+                    <div><strong>Dein Finale darf anders aussehen.</strong><p>Die Anzeige berechnet PICOs Energie automatisch. Mit weiteren <code>fahre_zu(...)</code>-Wegpunkten planst du deine eigene Route.</p></div>
                 </aside>
             </section>
         </div>
@@ -194,23 +198,90 @@ print("Rettungssignal gesendet!")</textarea>
             parseOutput(output) {
                 const line = output.split(/\r?\n/).find(entry => entry.startsWith("PICO_STATUS|"));
                 if (!line) return null;
-                const [, name, energy, signal] = line.split("|");
-                return { name, energy: Number(energy), signal };
+                const [, name, signal] = line.split("|");
+                return { name, signal };
+            },
+            renderEnergy(percent) {
+                const energy = Math.max(0, Math.min(100, percent));
+                document.getElementById("energy-value").textContent = Math.round(energy) + " %";
+                document.getElementById("energy-fill").style.width = energy + "%";
             },
             resetHud() {
+                this.energy = 10;
+                this.lastPoint = null;
+                this.charged = false;
+                this.depleted = false;
+                this.beaconReached = false;
+                this.pickupProgrammed = false;
                 document.getElementById("agent-name").textContent = "PICO";
-                document.getElementById("energy-value").textContent = "7 / 10";
-                document.getElementById("energy-fill").style.width = "70%";
+                this.renderEnergy(this.energy);
                 document.getElementById("mission-state").textContent = "Wartet";
-                document.body.classList.remove("mission-complete");
+                document.getElementById("pico-cell-label").innerHTML = '<span aria-hidden="true">ϟ</span> Energiezelle';
+                document.body.classList.remove("mission-complete", "energy-cell-collected", "energy-depleted");
+            },
+            onRunStart(code) {
+                this.pickupProgrammed = code.split(/\r?\n/).some(line => (
+                    /^\s*ausruestung\.append\s*\(\s*["']Energiezelle["']\s*\)/.test(line)
+                ));
+            },
+            onTurtleFrame(point) {
+                const start = { x: -365, y: 55 };
+                const cell = { x: -380, y: -90 };
+                const beacon = { x: 340, y: 15 };
+                const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+                const initialRange = distance(start, cell);
+
+                if (!this.lastPoint) {
+                    if (distance(point, start) <= 5) this.lastPoint = { ...point };
+                    return;
+                }
+
+                const travelled = distance(point, this.lastPoint);
+                if (travelled < 0.01) return;
+
+                if (!this.charged) {
+                    this.energy = Math.max(0, this.energy - travelled * 10 / initialRange);
+                    const reachedCell = distance(point, cell) <= 6;
+                    if (reachedCell && this.pickupProgrammed && !this.depleted) {
+                        this.charged = true;
+                        this.energy = 100;
+                        document.body.classList.add("energy-cell-collected");
+                        document.getElementById("pico-cell-label").innerHTML = '<span aria-hidden="true">✓</span> Energie geladen';
+                        document.getElementById("mission-state").textContent = "Geladen";
+                    } else if (this.energy <= 0) {
+                        this.depleted = true;
+                    }
+                } else {
+                    this.energy = Math.max(0, this.energy - travelled / 8.2);
+                    if (this.energy <= 0) this.depleted = true;
+                }
+
+                if (distance(point, beacon) <= 45) this.beaconReached = true;
+                document.body.classList.toggle("energy-depleted", this.depleted);
+                if (this.depleted) document.getElementById("mission-state").textContent = "Energie leer";
+                this.renderEnergy(this.energy);
+                this.lastPoint = { ...point };
+                if (this.depleted) return { stop: true, reason: "PICO_ENERGY_DEPLETED" };
+            },
+            getAutomaticStop() {
+                if (!this.depleted) return null;
+                const hadCharge = this.charged;
+                return {
+                    title: "PICO bleibt stehen",
+                    status: "Energie leer",
+                    message: hadCharge
+                        ? "PICOs Energie ist leer. Verkürze den Weg zur Funkbase."
+                        : "PICOs Energie ist leer. Nimm die Energiezelle in die Ausrüstung auf.",
+                    output: hadCharge
+                        ? "PICO stoppt automatisch: Der Weg war zu lang."
+                        : "PICO stoppt automatisch: Energiezelle nicht aufgenommen."
+                };
             },
             applyHud(data) {
-                const energy = Number.isFinite(data.energy) ? Math.max(0, Math.min(10, data.energy)) : 0;
+                const success = data.signal === "gesendet" && this.charged && this.beaconReached && !this.depleted && this.energy > 0;
                 document.getElementById("agent-name").textContent = data.name || "PICO";
-                document.getElementById("energy-value").textContent = energy + " / 10";
-                document.getElementById("energy-fill").style.width = (energy * 10) + "%";
-                document.getElementById("mission-state").textContent = data.signal === "gesendet" ? "Gesendet" : "Unterwegs";
-                document.body.classList.toggle("mission-complete", data.signal === "gesendet");
+                document.getElementById("mission-state").textContent = success ? "Gesendet" : (this.depleted ? "Energie leer" : "Unterwegs");
+                document.body.classList.toggle("mission-complete", success);
             },
             validate(code, output) {
                 const functionName = code.match(/\bdef\s+([A-Za-z_]\w*)\s*\(/)?.[1];
@@ -219,10 +290,12 @@ print("Rettungssignal gesendet!")</textarea>
                     : 0;
                 const checks = [
                     { label: "Turtle-Agent wird gesteuert", passed: /\bimport\s+turtle\b/.test(code) && /\.forward\s*\(|\.goto\s*\(/.test(code) },
-                    { label: "Route nutzt eine Schleife", passed: /\bfor\s+\w+\s+in\s+range\s*\(/.test(code) },
-                    { label: "Energie wird entschieden", passed: /\bif\s+[^\n]+:/.test(code) },
+                    { label: "Route nutzt einen Wegpunkt", passed: /\bfahre_zu\s*\(\s*0\s*,\s*-90\s*\)/.test(code) },
+                    { label: "Route trifft eine Entscheidung", passed: /\bif\s+[^\n]+:/.test(code) },
+                    { label: "Energiezelle erreicht und geladen", passed: this.charged && this.pickupProgrammed },
                     { label: "Status wird strukturiert gespeichert", passed: /\bstatus\s*=\s*\{/.test(code) },
                     { label: "Eigene Funktion wird verwendet", passed: functionUses >= 2 },
+                    { label: "Energie reicht bis zur Funkbase", passed: this.beaconReached && !this.depleted && this.energy > 0 },
                     { label: "Rettungssignal erreicht", passed: /Rettungssignal gesendet!/.test(output) }
                 ];
                 const passed = checks.every(check => check.passed);
@@ -234,6 +307,6 @@ print("Rettungssignal gesendet!")</textarea>
             }
         };
     </script>
-    <script src="finale.js"></script>
+    <script src="finale.js?v=museum-physics-v1"></script>
 </body>
 </html>

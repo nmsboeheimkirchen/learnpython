@@ -1078,9 +1078,37 @@ svg.stage-overlay {
     animation: target-pulse 1.8s ease-out infinite;
 }
 
-.charger-pulse {
+.elevator-pulse {
     fill: rgba(255, 198, 103, 0.08);
     stroke: #ffc667;
+}
+
+.energy-cell-pulse {
+    fill: rgba(119, 248, 255, 0.12);
+    stroke: #77f8ff;
+}
+
+.pico-energy-cell-graphic {
+    opacity: 1;
+    transition: opacity 300ms ease, filter 300ms ease;
+}
+
+.pico-energy-cell-graphic rect:first-child {
+    fill: rgba(9, 42, 62, 0.95);
+    stroke: #8bfbff;
+    stroke-width: 2;
+}
+
+.pico-energy-cell-graphic .energy-cell-cap {
+    fill: #d5ffff;
+    stroke: #55f6ff;
+    stroke-width: 1.5;
+}
+
+.pico-energy-cell-graphic path {
+    fill: #ffe083;
+    stroke: #fff3b7;
+    stroke-width: 1;
 }
 
 .stage-label {
@@ -1103,11 +1131,31 @@ svg.stage-overlay {
 }
 
 .elevator-label { top: 38%; left: 3%; }
+.pico-cell-label { top: 67%; left: 3%; }
 .beacon-label { top: 41%; right: 7%; }
 .keycard-label { top: 34%; left: 16%; }
 .artifact-label { top: 47%; left: 2%; }
-.cell-label { top: 61%; right: 10%; }
+.alarm-console-label { top: 61%; right: 8%; }
 .portal-label { top: 22%; left: 50%; transform: translateX(-50%); }
+
+.energy-cell-collected .pico-energy-cell-graphic {
+    opacity: 0.22;
+    filter: saturate(0.35);
+}
+
+.energy-cell-collected .energy-cell-pulse {
+    stroke: var(--success);
+}
+
+.energy-cell-collected .pico-cell-label {
+    color: var(--success);
+    border-color: rgba(118, 245, 167, 0.45);
+}
+
+.energy-depleted #energy-fill {
+    background: linear-gradient(90deg, #ff756b, var(--danger));
+    box-shadow: 0 0 12px var(--danger);
+}
 
 .museum-scene-recovered {
     opacity: 0;
@@ -1214,7 +1262,6 @@ svg.stage-overlay {
 
 .museum-hud { align-items: stretch; }
 .alarm-block,
-.energy-block,
 .exit-block { flex: 0 0 auto; }
 .inventory-block { flex: 1 1 240px; max-width: 390px; }
 
@@ -1225,17 +1272,38 @@ svg.stage-overlay {
 }
 
 .alarm-dots i {
-    width: 18px;
+    width: 12px;
     height: 4px;
     background: rgba(255, 255, 255, 0.17);
     border-radius: 999px;
 }
 
-.alarm-dots[data-level="1"] i:nth-child(-n + 1),
-.alarm-dots[data-level="2"] i:nth-child(-n + 2),
-.alarm-dots[data-level="3"] i:nth-child(-n + 3) {
+.alarm-dots i.is-active {
     background: var(--danger);
     box-shadow: 0 0 9px var(--danger);
+}
+
+.alarm-active .alarm-block {
+    border-color: rgba(255, 82, 102, 0.62);
+    box-shadow: 0 0 24px rgba(255, 82, 102, 0.25);
+}
+
+.alarm-disabled .alarm-console-label {
+    color: var(--success);
+    border-color: rgba(118, 245, 167, 0.5);
+}
+
+.alarm-failed .alarm-block,
+.alarm-failed .alarm-console-label {
+    color: #fff;
+    background: rgba(102, 7, 24, 0.9);
+    border-color: var(--danger);
+    box-shadow: 0 0 28px rgba(255, 82, 102, 0.45);
+}
+
+.artifact-secured .artifact-label {
+    color: var(--success);
+    border-color: rgba(118, 245, 167, 0.5);
 }
 
 .inventory-items {

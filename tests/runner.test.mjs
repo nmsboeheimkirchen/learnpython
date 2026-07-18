@@ -623,7 +623,7 @@ test("finale prototypes stay unlinked, isolated and locally hosted", () => {
         assert.doesNotMatch(html, /localStorage|navigation\.js|runner\.js/);
         assert.match(html, /class="turtle-target"/);
         assert.match(html, /window\.FINALE_CONFIG/);
-        assert.match(html, /src="finale\.js"/);
+        assert.match(html, /src="finale\.js\?v=museum-physics-v1"/);
         assert.match(html, /assets\/images\/finales\/.+\.webp/);
         assert.match(html, /assets\/vendor\/skulpt\/1\.2\.0\/skulpt\.min\.js/);
         assert.match(html, /assets\/vendor\/codemirror\/5\.65\.2\/codemirror\.min\.js/);
@@ -632,8 +632,22 @@ test("finale prototypes stay unlinked, isolated and locally hosted", () => {
 
     const pico = readFileSync(new URL("../prototypes/pico_finale.html", import.meta.url), "utf8");
     assert.match(pico, /pico\.goto\(-365, 55\)/);
+    assert.match(pico, /fahre_zu\(-380, -90\)/);
+    assert.match(pico, /fahre_zu\(0, -90\)/);
+    assert.match(pico, /Funkbase/);
+    assert.doesNotMatch(pico, /for schritt in range\(4\)/);
     assert.match(pico, /def fahre_zu\(x, y\):/);
     assert.match(pico, /Eigene Funktion wird verwendet/);
+    assert.match(pico, /id="energy-value">10 %/);
+    assert.match(pico, /Energiezelle geladen!/);
+    assert.match(pico, /onTurtleFrame\(point\)/);
+    assert.match(pico, /onRunStart\(code\)/);
+    assert.match(pico, /this\.pickupProgrammed/);
+    assert.match(pico, /return \{ stop: true, reason: "PICO_ENERGY_DEPLETED" \}/);
+    assert.match(pico, /getAutomaticStop\(\)/);
+    assert.doesNotMatch(pico, /else:\s*\n\s*print\("Ohne Energiezelle/);
+    assert.match(pico, /this\.energy = 10/);
+    assert.doesNotMatch(pico, /status\s*=\s*\{[^\n}]*"energie"/);
     assert.match(pico, /\.speed\(3\)/);
     assert.match(pico, /turtle\.Screen\(\)\.delay\(35\)/);
 
@@ -641,7 +655,14 @@ test("finale prototypes stay unlinked, isolated and locally hosted", () => {
     assert.match(museum, /pixel-museum-recovered\.webp/);
     assert.match(museum, /gehe_zu\(-250, 60\)/);
     assert.match(museum, /Seruianer-Artefakt/);
-    assert.match(museum, /Energiezelle geladen!/);
+    assert.match(museum, /def alarm_hacken\(code\):/);
+    assert.match(museum, /ALARM_HACK\|/);
+    assert.match(museum, /this\.alarmMax = 8/);
+    assert.match(museum, /window\.setInterval/);
+    assert.match(museum, /this\.runtimeInventory\.includes\("Schlüsselkarte"\)/);
+    assert.match(museum, /document\.body\.classList\.add\("artifact-secured"\)/);
+    assert.doesNotMatch(museum, /status\["alarm"\]/);
+    assert.doesNotMatch(museum, /Energiezelle|museum-energy|"energie"/);
     assert.match(museum, /\.speed\(4\)/);
     assert.match(museum, /turtle\.Screen\(\)\.delay\(30\)/);
 });
@@ -655,6 +676,12 @@ test("finale runtime guards creative code and optimized artwork stays small", ()
     assert.match(runtime, /runGeneration/);
     assert.match(runtime, /classList\.toggle\("program-running", nextRunning\)/);
     assert.match(runtime, /config\.onOutput\?\.\(chunk, outputText\)/);
+    assert.match(runtime, /installTurtleObserver/);
+    assert.match(runtime, /config\.onTurtleFrame\?\.\(\{ x: state\.x, y: state\.y \}\)/);
+    assert.match(runtime, /config\.onRunStart\?\.\(code\)/);
+    assert.match(runtime, /this\.__finaleMovementBlocked/);
+    assert.match(runtime, /config\.getAutomaticStop/);
+    assert.match(runtime, /refresh: refreshValidation/);
     assert.match(runtime, /turtleTarget\.replaceChildren\(\)/);
     assert.doesNotMatch(runtime, /localStorage/);
 
