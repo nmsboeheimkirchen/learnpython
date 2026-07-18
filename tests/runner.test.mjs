@@ -676,7 +676,17 @@ test("finale prototypes stay unlinked, isolated and locally hosted", () => {
     assert.match(museum, /window\.setInterval/);
     assert.match(museum, /this\.runtimeInventory\.includes\("Schlüsselkarte"\)/);
     assert.match(museum, /document\.body\.classList\.add\("artifact-secured"\)/);
-    assert.doesNotMatch(museum, /status\["alarm"\]/);
+    assert.doesNotMatch(museum, /\bstatus\s*=\s*\{/);
+    assert.doesNotMatch(museum, /status\[/);
+    assert.match(museum, /print\(","\.join\(inventar\)\)/);
+    assert.match(museum, /data-alarm-code="SERU-7"/);
+    assert.equal((museum.match(/SERU-7/g) || []).length, 1, "Der Hackcode soll nur als Quelltext-Spur vorkommen");
+    assert.match(museum, /alarm_hacken\("CODE_AUS_DEM_QUELLTEXT"\)/);
+    assert.match(museum, /dataset\.alarmCode/);
+    assert.match(museum, /playOneShotSound\("alarm"\)/);
+    assert.match(museum, /playOneShotSound\("trapped"\)/);
+    assert.match(museum, /this\.portalOpen = !this\.artifactSecured \|\| this\.alarmDisabled/);
+    assert.match(museum, /DU BIST GEFANGEN!/);
     assert.doesNotMatch(museum, /Energiezelle|museum-energy|"energie"/);
     assert.match(museum, /\.speed\(4\)/);
     assert.match(museum, /turtle\.Screen\(\)\.delay\(30\)/);
@@ -684,6 +694,7 @@ test("finale prototypes stay unlinked, isolated and locally hosted", () => {
 
 test("finale runtime guards creative code and optimized artwork stays small", () => {
     const runtime = readFileSync(new URL("../prototypes/finale.js", import.meta.url), "utf8");
+    const finaleCss = readFileSync(new URL("../prototypes/finale.css", import.meta.url), "utf8");
     assert.match(runtime, /execLimit:\s*8000/);
     assert.match(runtime, /killableWhile:\s*true/);
     assert.match(runtime, /killableFor:\s*true/);
@@ -704,6 +715,9 @@ test("finale runtime guards creative code and optimized artwork stays small", ()
     assert.match(runtime, /refresh: refreshValidation/);
     assert.match(runtime, /turtleTarget\.replaceChildren\(\)/);
     assert.doesNotMatch(runtime, /localStorage/);
+    assert.match(finaleCss, /\.alarm-active \.alarm-flash/);
+    assert.match(finaleCss, /\.portal-locked \.portal-gate/);
+    assert.match(finaleCss, /\.portal-trapped \.museum-warning/);
 
     const artwork = [
         "pico-rescue-station.webp",

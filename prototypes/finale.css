@@ -1044,6 +1044,23 @@ body.is-presenting {
         radial-gradient(ellipse at center, transparent 48%, rgba(1, 5, 12, 0.28) 100%);
 }
 
+.alarm-flash {
+    position: absolute;
+    z-index: 3;
+    pointer-events: none;
+    inset: 0;
+    opacity: 0;
+    background:
+        linear-gradient(180deg, rgba(255, 30, 58, 0.55), transparent 24%),
+        radial-gradient(ellipse at center, transparent 42%, rgba(255, 16, 48, 0.34));
+    mix-blend-mode: screen;
+}
+
+.alarm-active .alarm-flash,
+.alarm-failed .alarm-flash {
+    animation: alarm-flash 0.78s ease-in-out infinite alternate;
+}
+
 svg.stage-overlay {
     z-index: 2;
     width: 100%;
@@ -1258,6 +1275,68 @@ svg.stage-overlay {
     stroke-width: 2;
     stroke-dasharray: 4 6;
     animation: target-pulse 2s ease-out infinite;
+}
+
+.portal-gate {
+    opacity: 0;
+    transition: opacity 220ms ease;
+}
+
+.portal-gate .portal-seal {
+    fill: rgba(112, 26, 168, 0.58);
+    stroke: #ff78f3;
+    stroke-width: 4;
+    filter: drop-shadow(0 0 12px #cc4dff);
+}
+
+.portal-gate path {
+    fill: none;
+    stroke: #f39cff;
+    stroke-width: 5;
+    stroke-linecap: round;
+    filter: drop-shadow(0 0 7px #ba32ff);
+}
+
+.portal-locked .portal-gate {
+    opacity: 1;
+    animation: portal-lock-pulse 1.15s ease-in-out infinite alternate;
+}
+
+.portal-locked .portal-label,
+.portal-locked .exit-block {
+    color: #ff9af5;
+    border-color: rgba(255, 86, 235, 0.65);
+    box-shadow: 0 0 24px rgba(190, 44, 255, 0.34);
+}
+
+.portal-open .portal-label,
+.portal-open .exit-block {
+    color: var(--success);
+    border-color: rgba(118, 245, 167, 0.48);
+}
+
+.museum-warning {
+    position: absolute;
+    z-index: 7;
+    top: 48%;
+    left: 50%;
+    padding: 12px 20px;
+    color: #fff;
+    background: rgba(84, 3, 36, 0.92);
+    border: 2px solid #ff78f3;
+    border-radius: 12px;
+    box-shadow: 0 0 36px rgba(255, 63, 220, 0.72);
+    font-size: clamp(1rem, 2.4vw, 1.65rem);
+    font-weight: 950;
+    letter-spacing: 0.08em;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, -50%) scale(0.8);
+}
+
+.portal-trapped .museum-warning {
+    opacity: 1;
+    animation: trapped-warning 0.42s ease-out both;
 }
 
 .museum-hud { align-items: stretch; }
@@ -1518,6 +1597,13 @@ svg.stage-overlay {
     75%, 100% { opacity: 0; transform: scale(1.28); }
 }
 @keyframes laser-flicker { from { opacity: 0.42; } to { opacity: 0.9; } }
+@keyframes alarm-flash { from { opacity: 0.08; } to { opacity: 0.68; } }
+@keyframes portal-lock-pulse { from { opacity: 0.62; } to { opacity: 1; } }
+@keyframes trapped-warning {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+    55% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+    100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
 @keyframes hud-pulse { from { opacity: 0.55; } to { opacity: 1; } }
 @keyframes spin { to { transform: rotate(360deg); } }
 

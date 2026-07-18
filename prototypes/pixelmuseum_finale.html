@@ -7,7 +7,7 @@
     <title>Pixelmuseum: Das gestohlene Sternenfragment – Finale-Prototyp</title>
     <link rel="stylesheet" href="../assets/vendor/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="../assets/vendor/codemirror/5.65.2/monokai.min.css">
-    <link rel="stylesheet" href="finale.css">
+    <link rel="stylesheet" href="finale.css?v=museum-portal-v2">
 </head>
 <body class="prototype-page museum-theme">
     <a class="skip-link" href="#editor-panel">Zum Python-Editor</a>
@@ -33,7 +33,6 @@
             </div>
             <ul class="concept-strip" aria-label="Python-Ziele">
                 <li>Inventarliste</li>
-                <li>Status</li>
                 <li>Entscheidungen</li>
                 <li>Alarm-Timing</li>
                 <li>Funktion · vorbereitet</li>
@@ -52,9 +51,11 @@
 
                 <div class="game-shell">
                     <div class="game-stage" id="game-stage" aria-label="Nächtliches Pixelmuseum mit gestohlenem Artefakt, Alarmstation und leuchtendem Ausgang">
+                        <div id="museum-system-log" data-alarm-code="SERU-7" hidden></div>
                         <img class="scene-image museum-scene-intact" src="../assets/images/finales/pixel-museum.webp" alt="" fetchpriority="high">
                         <img class="scene-image museum-scene-recovered" src="../assets/images/finales/pixel-museum-recovered.webp" alt="">
                         <div class="scene-shade" aria-hidden="true"></div>
+                        <div class="alarm-flash" aria-hidden="true"></div>
 
                         <svg class="stage-overlay museum-overlay" viewBox="0 0 960 540" preserveAspectRatio="none" aria-hidden="true">
                             <defs>
@@ -74,6 +75,10 @@
                                 <circle cx="730" cy="330" r="18"></circle>
                                 <circle cx="480" cy="155" r="24"></circle>
                             </g>
+                            <g class="portal-gate" transform="translate(480 155)">
+                                <circle class="portal-seal" cx="0" cy="0" r="43"></circle>
+                                <path d="M-28 -34 V34 M-14 -40 V40 M0 -42 V42 M14 -40 V40 M28 -34 V34"></path>
+                            </g>
                         </svg>
 
                         <div id="museum-turtle" class="turtle-target" aria-hidden="true"></div>
@@ -81,12 +86,13 @@
                         <div id="keycard-label" class="stage-label keycard-label"><span aria-hidden="true">▣</span> Schlüsselkarte</div>
                         <div id="artifact-label" class="stage-label artifact-label"><span aria-hidden="true">✦</span> Gestohlenes Artefakt</div>
                         <div id="alarm-console-label" class="stage-label alarm-console-label"><span aria-hidden="true">◈</span> Alarm ausschalten</div>
-                        <div class="stage-label portal-label"><span aria-hidden="true">⬡</span> Ausgang</div>
+                        <div id="portal-label" class="stage-label portal-label"><span aria-hidden="true">⬡</span> Ausgang offen</div>
+                        <div id="museum-warning" class="museum-warning" role="status" aria-live="assertive"></div>
 
                         <div class="stage-hud museum-hud" aria-label="Museumsstatus">
                             <div class="alarm-block"><small>Alarm</small><strong id="alarm-value">0</strong><div class="alarm-dots" id="alarm-dots"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
                             <div class="inventory-block"><small>Inventar</small><div id="inventory-items" class="inventory-items"><span>leer</span></div></div>
-                            <div class="exit-block"><small>Ausgang</small><strong id="exit-state">gesperrt</strong></div>
+                            <div class="exit-block"><small>Ausgang</small><strong id="exit-state">offen</strong></div>
                         </div>
                     </div>
                 </div>
@@ -98,7 +104,6 @@
                         <p id="validation-message">Der Beispielweg ist nur eine Möglichkeit. Baue deinen eigenen.</p>
                     </div>
                     <ul id="checks-list" class="checks-list" aria-label="Prüfergebnisse">
-                        <li><span aria-hidden="true">○</span> Status</li>
                         <li><span aria-hidden="true">○</span> Schlüsselkarte</li>
                         <li><span aria-hidden="true">○</span> Artefakt</li>
                         <li><span aria-hidden="true">○</span> Entscheidung</li>
@@ -112,7 +117,7 @@
             <section class="code-column" id="editor-panel" aria-labelledby="museum-code-title">
                 <div class="section-heading">
                     <div>
-                        <span class="eyebrow">Eine mögliche Lösung</span>
+                        <span class="eyebrow">Dein Hacker-Einsatz</span>
                         <h2 id="museum-code-title">Python-Einsatzzentrale</h2>
                     </div>
                     <span class="autosave-note">Prototyp · keine Speicherung</span>
@@ -136,7 +141,6 @@ agent.pendown()
 
 turtle.Screen().delay(30)
 
-status = {"auftrag": "Artefakt retten", "ausgang": "gesperrt"}
 inventar = []
 
 def gehe_zu(x, y):
@@ -170,14 +174,13 @@ else:
 
 gehe_zu(250, -60)
 agent.dot(18, "#76f5a7")
-alarm_hacken("SERU-7")
+alarm_hacken("CODE_AUS_DEM_QUELLTEXT")
 
-status["ausgang"] = "erreicht"
 gehe_zu(0, 115)
 agent.dot(20, "#76f5a7")
 print("Portal erreicht!")
 
-print("MUSEUM_STATUS|" + ",".join(inventar) + "|" + status["ausgang"])
+print(",".join(inventar))
 print("Fluchtweg programmiert.")</textarea>
 
                     <div class="control-bar" aria-label="Programmaktionen">
@@ -194,7 +197,7 @@ print("Fluchtweg programmiert.")</textarea>
 
                 <aside class="creative-card museum-creative">
                     <span aria-hidden="true">✦</span>
-                    <div><strong>Du steuerst den Agenten – das Museum reagiert.</strong><p>Schlüsselkarte und Artefakt müssen in dein Inventar. Danach läuft der Alarm automatisch jede Sekunde; an der Konsole startest du den vorbereiteten Hack.</p></div>
+                    <div><strong>Du steuerst den Agenten – das Museum reagiert.</strong><p>Schlüsselkarte und Artefakt müssen in dein Inventar. Der Alarmcode wurde im HTML-Quelltext des Museums versteckt.</p></div>
                 </aside>
             </section>
         </div>
@@ -211,6 +214,52 @@ print("Fluchtweg programmiert.")</textarea>
             targetId: "museum-turtle",
             runningLabel: "Agent unterwegs",
             defaultCode: document.getElementById("python-editor").value,
+            onRunStart() {
+                this.prepareAudio();
+            },
+            prepareAudio() {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return;
+                try {
+                    if (!this.audioContext) this.audioContext = new AudioContext();
+                    if (this.audioContext.state === "suspended") {
+                        this.audioContext.resume().catch(() => {});
+                    }
+                } catch (_error) {
+                    // Das Spiel bleibt auch in Browsern ohne Web-Audio vollständig nutzbar.
+                }
+            },
+            playOneShotSound(kind) {
+                const flag = kind === "alarm" ? "alarmSoundPlayed" : "trappedSoundPlayed";
+                if (this[flag]) return;
+                this[flag] = true;
+                document.body.classList.add(kind === "alarm" ? "alarm-sound-played" : "trapped-sound-played");
+                this.prepareAudio();
+
+                const context = this.audioContext;
+                if (!context) return;
+                const play = () => {
+                    if (context.state !== "running") return;
+                    const oscillator = context.createOscillator();
+                    const gain = context.createGain();
+                    const now = context.currentTime;
+                    oscillator.type = kind === "alarm" ? "sawtooth" : "square";
+                    oscillator.frequency.setValueAtTime(kind === "alarm" ? 720 : 190, now);
+                    gain.gain.setValueAtTime(0.0001, now);
+                    gain.gain.exponentialRampToValueAtTime(0.045, now + 0.025);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.32);
+                    oscillator.connect(gain);
+                    gain.connect(context.destination);
+                    oscillator.start(now);
+                    oscillator.stop(now + 0.34);
+                };
+
+                if (context.state === "suspended") {
+                    context.resume().then(play).catch(() => {});
+                } else {
+                    play();
+                }
+            },
             distanceTo(point, target) {
                 return Math.hypot(point.x - target.x, point.y - target.y);
             },
@@ -266,12 +315,6 @@ print("Fluchtweg programmiert.")</textarea>
                 const hack = chunk.match(/ALARM_HACK\|([^\r\n]+)/);
                 if (hack) this.requestAlarmHack(hack[1].trim());
             },
-            parseOutput(output) {
-                const line = output.split(/\r?\n/).find(entry => entry.startsWith("MUSEUM_STATUS|"));
-                if (!line) return null;
-                const [, inventory, exit] = line.split("|");
-                return { inventory: inventory ? inventory.split(",") : [], exit };
-            },
             renderAlarm(level) {
                 const alarm = Number.isFinite(level) ? Math.max(0, Math.min(this.alarmMax, level)) : 0;
                 this.alarmLevel = alarm;
@@ -293,8 +336,10 @@ print("Fluchtweg programmiert.")</textarea>
             resetHud() {
                 window.clearInterval(this.alarmTimer);
                 window.clearTimeout(this.hackFinishTimer);
+                window.clearTimeout(this.portalWarningTimer);
                 this.alarmTimer = null;
                 this.hackFinishTimer = null;
+                this.portalWarningTimer = null;
                 this.alarmMax = 8;
                 this.alarmLevel = 0;
                 this.alarmStarted = false;
@@ -303,20 +348,29 @@ print("Fluchtweg programmiert.")</textarea>
                 this.hackRequested = false;
                 this.hackCodeCorrect = false;
                 this.hackedInFinalWindow = false;
+                this.alarmSoundPlayed = false;
+                this.trappedSoundPlayed = false;
                 this.pendingFind = null;
                 this.runtimeInventory = [];
                 this.artifactSecured = false;
                 this.atAlarmConsole = false;
                 this.portalReached = false;
+                this.atPortal = false;
+                this.portalOpen = true;
                 this.exitUnlocked = false;
                 this.currentPoint = null;
                 this.renderAlarm(0);
                 this.renderInventory();
-                document.getElementById("exit-state").textContent = "gesperrt";
                 document.getElementById("keycard-label").innerHTML = '<span aria-hidden="true">▣</span> Schlüsselkarte';
                 document.getElementById("artifact-label").innerHTML = '<span aria-hidden="true">✦</span> Gestohlenes Artefakt';
                 document.getElementById("alarm-console-label").innerHTML = '<span aria-hidden="true">◈</span> Alarm ausschalten';
-                document.body.classList.remove("mission-complete", "artifact-secured", "alarm-active", "alarm-disabled", "alarm-failed");
+                document.getElementById("museum-warning").textContent = "";
+                document.body.classList.remove(
+                    "mission-complete", "artifact-secured", "alarm-active", "alarm-disabled", "alarm-failed",
+                    "portal-locked", "portal-trapped", "alarm-sound-played", "trapped-sound-played"
+                );
+                document.body.classList.add("portal-open");
+                this.updateExitState();
             },
             collectItem(item) {
                 if (this.runtimeInventory.includes(item)) return;
@@ -329,14 +383,18 @@ print("Fluchtweg programmiert.")</textarea>
                 }
 
                 this.artifactSecured = true;
+                this.portalReached = false;
+                this.atPortal = false;
                 document.body.classList.add("artifact-secured");
                 document.getElementById("artifact-label").innerHTML = '<span aria-hidden="true">✓</span> Artefakt sichergestellt';
+                this.updateExitState();
                 this.startAlarm();
             },
             startAlarm() {
                 if (this.alarmStarted) return;
                 this.alarmStarted = true;
                 this.renderAlarm(1);
+                this.playOneShotSound("alarm");
                 this.alarmTimer = window.setInterval(() => {
                     if (this.alarmDisabled || this.alarmFailed) return;
                     const nextLevel = this.alarmLevel + 1;
@@ -351,7 +409,8 @@ print("Fluchtweg programmiert.")</textarea>
             },
             requestAlarmHack(code) {
                 const label = document.getElementById("alarm-console-label");
-                if (code !== "SERU-7") {
+                const expectedCode = document.getElementById("museum-system-log")?.dataset.alarmCode || "";
+                if (code !== expectedCode) {
                     label.innerHTML = '<span aria-hidden="true">×</span> Hackcode falsch';
                     return;
                 }
@@ -391,12 +450,34 @@ print("Fluchtweg programmiert.")</textarea>
                 this.alarmFailed = true;
                 document.body.classList.add("alarm-failed");
                 document.getElementById("alarm-console-label").innerHTML = '<span aria-hidden="true">×</span> Alarm ausgelöst';
-                document.getElementById("exit-state").textContent = "Alarm!";
+                this.updateExitState();
                 window.setTimeout(() => window.finalePrototype?.refresh?.(), 0);
+            },
+            renderPortal() {
+                this.portalOpen = !this.artifactSecured || this.alarmDisabled;
+                document.body.classList.toggle("portal-open", this.portalOpen);
+                document.body.classList.toggle("portal-locked", !this.portalOpen);
+                document.getElementById("exit-state").textContent = this.exitUnlocked
+                    ? "entkommen"
+                    : (this.portalOpen ? "offen" : "gesperrt");
+                document.getElementById("portal-label").innerHTML = this.portalOpen
+                    ? '<span aria-hidden="true">⬡</span> Ausgang offen'
+                    : '<span aria-hidden="true">▥</span> Portal verriegelt';
+            },
+            showTrappedWarning() {
+                const warning = document.getElementById("museum-warning");
+                warning.textContent = "DU BIST GEFANGEN!";
+                document.body.classList.add("portal-trapped");
+                this.playOneShotSound("trapped");
+                window.clearTimeout(this.portalWarningTimer);
+                this.portalWarningTimer = window.setTimeout(() => {
+                    document.body.classList.remove("portal-trapped");
+                    warning.textContent = "";
+                }, 2200);
             },
             updateExitState() {
                 this.exitUnlocked = this.artifactSecured && this.alarmDisabled && this.portalReached;
-                document.getElementById("exit-state").textContent = this.exitUnlocked ? "Portal offen" : "gesperrt";
+                this.renderPortal();
                 document.body.classList.toggle("mission-complete", this.exitUnlocked);
             },
             onTurtleFrame(point) {
@@ -410,15 +491,15 @@ print("Fluchtweg programmiert.")</textarea>
                     this.pendingFind = null;
                 }
 
-                if (distance(portal) <= 28) {
+                const atPortal = distance(portal) <= 28;
+                if (atPortal && !this.atPortal && this.artifactSecured) {
                     this.portalReached = true;
+                    if (!this.portalOpen) this.showTrappedWarning();
                     this.updateExitState();
                 }
+                this.atPortal = atPortal;
 
                 if (this.alarmFailed) return { stop: true, reason: "MUSEUM_ALARM_TRIGGERED" };
-            },
-            applyHud() {
-                this.updateExitState();
             },
             getAutomaticStop() {
                 if (!this.alarmFailed) return null;
@@ -429,9 +510,8 @@ print("Fluchtweg programmiert.")</textarea>
                     output: "Das Museum verriegelt automatisch alle Wege."
                 };
             },
-            validate(code, output) {
+            validate(code) {
                 const checks = [
-                    { label: "Status-Dictionary", passed: /\bstatus\s*=\s*\{/.test(code) },
                     { label: "Schlüsselkarte selbst aufgenommen", passed: this.runtimeInventory.includes("Schlüsselkarte") },
                     { label: "Gestohlenes Artefakt gesichert", passed: this.artifactSecured },
                     { label: "Eigene Entscheidung", passed: /\bif\s+[^\n]+:/.test(code) },
