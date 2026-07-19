@@ -1339,6 +1339,31 @@ svg.stage-overlay {
     animation: trapped-warning 0.42s ease-out both;
 }
 
+.museum-success {
+    position: absolute;
+    z-index: 7;
+    top: 48%;
+    left: 50%;
+    padding: 14px 22px;
+    color: #062d1a;
+    background: rgba(118, 245, 167, 0.96);
+    border: 2px solid #d8ffe7;
+    border-radius: 12px;
+    box-shadow: 0 0 38px rgba(80, 255, 156, 0.68);
+    font-size: clamp(1rem, 2.4vw, 1.65rem);
+    font-weight: 950;
+    letter-spacing: 0.06em;
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, -50%) scale(0.82);
+}
+
+.escape-success .museum-success {
+    opacity: 1;
+    animation: escape-success 0.46s ease-out both;
+}
+
 .museum-hud { align-items: stretch; }
 .alarm-block,
 .exit-block { flex: 0 0 auto; }
@@ -1602,6 +1627,12 @@ svg.stage-overlay {
 @keyframes trapped-warning {
     0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
     55% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+    100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes escape-success {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.72); }
+    70% { opacity: 1; transform: translate(-50%, -50%) scale(1.06); }
     100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }
 @keyframes hud-pulse { from { opacity: 0.55; } to { opacity: 1; } }

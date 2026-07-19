@@ -88,6 +88,7 @@
                         <div id="alarm-console-label" class="stage-label alarm-console-label"><span aria-hidden="true">◈</span> Alarm ausschalten</div>
                         <div id="portal-label" class="stage-label portal-label"><span aria-hidden="true">⬡</span> Ausgang offen</div>
                         <div id="museum-warning" class="museum-warning" role="status" aria-live="assertive"></div>
+                        <div id="museum-success" class="museum-success" role="status" aria-live="polite"></div>
 
                         <div class="stage-hud museum-hud" aria-label="Museumsstatus">
                             <div class="alarm-block"><small>Alarm</small><strong id="alarm-value">0</strong><div class="alarm-dots" id="alarm-dots"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
@@ -180,7 +181,7 @@ gehe_zu(0, 115)
 agent.dot(20, "#76f5a7")
 print("Portal erreicht!")
 
-print(",".join(inventar))
+print("INVENTARLISTE: " + ",".join(inventar))
 print("Fluchtweg programmiert.")</textarea>
 
                     <div class="control-bar" aria-label="Programmaktionen">
@@ -214,6 +215,9 @@ print("Fluchtweg programmiert.")</textarea>
             targetId: "museum-turtle",
             runningLabel: "Agent unterwegs",
             defaultCode: document.getElementById("python-editor").value,
+            getTurtleSpeedMultiplier(speed) {
+                return Number(speed) >= 8 ? 3 : 1;
+            },
             onRunStart() {
                 this.prepareAudio();
             },
@@ -347,7 +351,7 @@ print("Fluchtweg programmiert.")</textarea>
                 this.alarmFailed = false;
                 this.hackRequested = false;
                 this.hackCodeCorrect = false;
-                this.hackedInFinalWindow = false;
+                this.hackCompleted = false;
                 this.alarmSoundPlayed = false;
                 this.trappedSoundPlayed = false;
                 this.pendingFind = null;
@@ -358,6 +362,7 @@ print("Fluchtweg programmiert.")</textarea>
                 this.atPortal = false;
                 this.portalOpen = true;
                 this.exitUnlocked = false;
+                this.escaped = false;
                 this.currentPoint = null;
                 this.renderAlarm(0);
                 this.renderInventory();
@@ -365,9 +370,10 @@ print("Fluchtweg programmiert.")</textarea>
                 document.getElementById("artifact-label").innerHTML = '<span aria-hidden="true">✦</span> Gestohlenes Artefakt';
                 document.getElementById("alarm-console-label").innerHTML = '<span aria-hidden="true">◈</span> Alarm ausschalten';
                 document.getElementById("museum-warning").textContent = "";
+                document.getElementById("museum-success").textContent = "";
                 document.body.classList.remove(
                     "mission-complete", "artifact-secured", "alarm-active", "alarm-disabled", "alarm-failed",
-                    "portal-locked", "portal-trapped", "alarm-sound-played", "trapped-sound-played"
+                    "portal-locked", "portal-trapped", "escape-success", "alarm-sound-played", "trapped-sound-played"
                 );
                 document.body.classList.add("portal-open");
                 this.updateExitState();
@@ -393,16 +399,16 @@ print("Fluchtweg programmiert.")</textarea>
             startAlarm() {
                 if (this.alarmStarted) return;
                 this.alarmStarted = true;
-                this.renderAlarm(1);
+                this.renderAlarm(0);
+                this.updateExitState();
                 this.playOneShotSound("alarm");
                 this.alarmTimer = window.setInterval(() => {
                     if (this.alarmDisabled || this.alarmFailed) return;
                     const nextLevel = this.alarmLevel + 1;
                     this.renderAlarm(nextLevel);
+                    this.updateExitState();
 
-                    if (nextLevel === this.alarmMax - 1 && this.hackRequested) {
-                        this.scheduleHackCompletion();
-                    } else if (nextLevel >= this.alarmMax) {
+                    if (nextLevel >= this.alarmMax) {
                         this.failAlarm();
                     }
                 }, 1000);
@@ -410,12 +416,12 @@ print("Fluchtweg programmiert.")</textarea>
             requestAlarmHack(code) {
                 const label = document.getElementById("alarm-console-label");
                 const expectedCode = document.getElementById("museum-system-log")?.dataset.alarmCode || "";
-                if (code !== expectedCode) {
-                    label.innerHTML = '<span aria-hidden="true">×</span> Hackcode falsch';
-                    return;
-                }
                 if (!this.alarmStarted) {
                     label.innerHTML = '<span aria-hidden="true">!</span> Noch kein Alarm ausgelöst – Hack nicht möglich!';
+                    return;
+                }
+                if (code !== expectedCode) {
+                    label.innerHTML = '<span aria-hidden="true">×</span> Hackcode falsch';
                     return;
                 }
                 if (!this.atAlarmConsole || this.alarmFailed) {
@@ -426,18 +432,18 @@ print("Fluchtweg programmiert.")</textarea>
                 this.hackCodeCorrect = true;
                 this.hackRequested = true;
                 label.innerHTML = '<span aria-hidden="true">⌁</span> Hack läuft …';
-                if (this.alarmLevel >= this.alarmMax - 1) this.scheduleHackCompletion();
+                this.scheduleHackCompletion();
             },
             scheduleHackCompletion() {
                 if (this.hackFinishTimer || this.alarmDisabled || this.alarmFailed) return;
-                window.clearInterval(this.alarmTimer);
-                this.alarmTimer = null;
-                this.hackFinishTimer = window.setTimeout(() => this.finishAlarmHack(), 650);
+                this.hackFinishTimer = window.setTimeout(() => this.finishAlarmHack(), 1000);
             },
             finishAlarmHack() {
                 this.hackFinishTimer = null;
+                window.clearInterval(this.alarmTimer);
+                this.alarmTimer = null;
                 this.alarmDisabled = true;
-                this.hackedInFinalWindow = true;
+                this.hackCompleted = true;
                 this.renderAlarm(0);
                 document.body.classList.add("alarm-disabled");
                 document.getElementById("alarm-console-label").innerHTML = '<span aria-hidden="true">✓</span> Alarm gehackt';
@@ -454,7 +460,7 @@ print("Fluchtweg programmiert.")</textarea>
                 window.setTimeout(() => window.finalePrototype?.refresh?.(), 0);
             },
             renderPortal() {
-                this.portalOpen = !this.artifactSecured || this.alarmDisabled;
+                this.portalOpen = !this.artifactSecured || this.alarmLevel < 1 || this.alarmDisabled;
                 document.body.classList.toggle("portal-open", this.portalOpen);
                 document.body.classList.toggle("portal-locked", !this.portalOpen);
                 document.getElementById("exit-state").textContent = this.exitUnlocked
@@ -475,8 +481,16 @@ print("Fluchtweg programmiert.")</textarea>
                     warning.textContent = "";
                 }, 2200);
             },
+            showEscapeSuccess() {
+                window.clearInterval(this.alarmTimer);
+                this.alarmTimer = null;
+                const success = document.getElementById("museum-success");
+                success.textContent = "MISSION ERFOLGREICH – DU BIST ENTKOMMEN!";
+                document.body.classList.remove("portal-trapped");
+                document.body.classList.add("escape-success");
+            },
             updateExitState() {
-                this.exitUnlocked = this.artifactSecured && this.alarmDisabled && this.portalReached;
+                this.exitUnlocked = this.escaped;
                 this.renderPortal();
                 document.body.classList.toggle("mission-complete", this.exitUnlocked);
             },
@@ -494,7 +508,12 @@ print("Fluchtweg programmiert.")</textarea>
                 const atPortal = distance(portal) <= 28;
                 if (atPortal && !this.atPortal && this.artifactSecured) {
                     this.portalReached = true;
-                    if (!this.portalOpen) this.showTrappedWarning();
+                    if (this.portalOpen) {
+                        this.escaped = true;
+                        this.showEscapeSuccess();
+                    } else {
+                        this.showTrappedWarning();
+                    }
                     this.updateExitState();
                 }
                 this.atPortal = atPortal;
@@ -511,12 +530,13 @@ print("Fluchtweg programmiert.")</textarea>
                 };
             },
             validate(code) {
+                const securityStrategyPassed = this.escaped && (this.alarmDisabled || this.alarmLevel < 1);
                 const checks = [
                     { label: "Schlüsselkarte selbst aufgenommen", passed: this.runtimeInventory.includes("Schlüsselkarte") },
                     { label: "Gestohlenes Artefakt gesichert", passed: this.artifactSecured },
                     { label: "Eigene Entscheidung", passed: /\bif\s+[^\n]+:/.test(code) },
-                    { label: "Hackcode an der Konsole gesendet", passed: this.hackCodeCorrect && this.hackRequested },
-                    { label: "Alarm im letzten Zeitfenster gehackt", passed: this.alarmDisabled && this.hackedInFinalWindow },
+                    { label: "Sicherheitsstrategie erfolgreich", passed: securityStrategyPassed },
+                    { label: "Alarm gehackt oder rechtzeitig umgangen", passed: securityStrategyPassed },
                     { label: "Gültiger Fluchtweg", passed: this.exitUnlocked }
                 ];
                 const passed = checks.every(check => check.passed);
@@ -528,6 +548,6 @@ print("Fluchtweg programmiert.")</textarea>
             }
         };
     </script>
-    <script src="finale.js?v=museum-physics-v1"></script>
+    <script src="finale.js?v=museum-physics-v2"></script>
 </body>
 </html>

@@ -203,10 +203,23 @@
         if (!prototype || prototype.__finaleObserverInstalled) return;
 
         const originalAddUpdate = prototype.addUpdate;
+        const originalSpeed = prototype.$speed;
         Object.defineProperty(prototype, "__finaleObserverInstalled", {
             value: true,
             configurable: false
         });
+
+        if (typeof originalSpeed === "function" && typeof config.getTurtleSpeedMultiplier === "function") {
+            prototype.$speed = function (requestedSpeed) {
+                const result = originalSpeed.call(this, requestedSpeed);
+                const numericSpeed = Number(requestedSpeed?.v ?? requestedSpeed);
+                const multiplier = Number(config.getTurtleSpeedMultiplier(numericSpeed));
+                if (requestedSpeed !== undefined && Number.isFinite(multiplier) && multiplier > 1) {
+                    this._computed_speed *= multiplier;
+                }
+                return result;
+            };
+        }
 
         prototype.addUpdate = function (...args) {
             activeTurtle = this;

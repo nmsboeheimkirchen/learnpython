@@ -85,6 +85,69 @@ function createRunnerContext(initialStorage = {}) {
     return { context, elements, storage };
 }
 
+function createClassList() {
+    const values = new Set();
+    return {
+        add(...names) { names.forEach(name => values.add(name)); },
+        contains(name) { return values.has(name); },
+        remove(...names) { names.forEach(name => values.delete(name)); },
+        toggle(name, force) {
+            const enabled = force === undefined ? !values.has(name) : Boolean(force);
+            if (enabled) values.add(name);
+            else values.delete(name);
+            return enabled;
+        }
+    };
+}
+
+function createMuseumConfig() {
+    const html = readFileSync(new URL("../prototypes/pixelmuseum_finale.html", import.meta.url), "utf8");
+    const code = html.match(/<textarea id="python-editor"[^>]*>([\s\S]*?)<\/textarea>/)?.[1] ?? "";
+    const configScript = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)]
+        .map(match => match[1])
+        .find(source => source.includes("window.FINALE_CONFIG"));
+    assert.ok(configScript, "Pixelmuseum-Konfiguration fehlt");
+
+    const elements = new Map();
+    const element = id => {
+        if (!elements.has(id)) {
+            elements.set(id, {
+                appendChild() {},
+                classList: createClassList(),
+                dataset: {},
+                innerHTML: "",
+                textContent: "",
+                value: id === "python-editor" ? code : ""
+            });
+        }
+        return elements.get(id);
+    };
+    element("museum-system-log").dataset.alarmCode = "SERU-7";
+
+    const timers = [];
+    const document = {
+        body: { classList: createClassList() },
+        createElement() { return { textContent: "" }; },
+        getElementById(id) { return element(id); },
+        querySelectorAll() { return []; }
+    };
+    const window = {
+        clearInterval() {},
+        clearTimeout() {},
+        setInterval(callback, delay) {
+            timers.push({ callback, delay, type: "interval" });
+            return timers.length;
+        },
+        setTimeout(callback, delay) {
+            timers.push({ callback, delay, type: "timeout" });
+            return timers.length;
+        }
+    };
+    const context = vm.createContext({ document, window });
+    vm.runInContext(configScript, context);
+    return { config: window.FINALE_CONFIG, document, elements, timers };
+}
+
 test("final success works without a next-level button", () => {
     const { context, elements } = createRunnerContext();
 
@@ -623,7 +686,7 @@ test("finale prototypes stay unlinked, isolated and locally hosted", () => {
         assert.doesNotMatch(html, /localStorage|navigation\.js|runner\.js/);
         assert.match(html, /class="turtle-target"/);
         assert.match(html, /window\.FINALE_CONFIG/);
-        assert.match(html, /src="finale\.js\?v=museum-physics-v1"/);
+        assert.match(html, /src="finale\.js\?v=museum-physics-v2"/);
         assert.match(html, /assets\/images\/finales\/.+\.webp/);
         assert.match(html, /assets\/vendor\/skulpt\/1\.2\.0\/skulpt\.min\.js/);
         assert.match(html, /assets\/vendor\/codemirror\/5\.65\.2\/codemirror\.min\.js/);
@@ -678,18 +741,76 @@ test("finale prototypes stay unlinked, isolated and locally hosted", () => {
     assert.match(museum, /document\.body\.classList\.add\("artifact-secured"\)/);
     assert.doesNotMatch(museum, /\bstatus\s*=\s*\{/);
     assert.doesNotMatch(museum, /status\[/);
-    assert.match(museum, /print\(","\.join\(inventar\)\)/);
+    assert.match(museum, /print\("INVENTARLISTE: " \+ ","\.join\(inventar\)\)/);
     assert.match(museum, /data-alarm-code="SERU-7"/);
     assert.equal((museum.match(/SERU-7/g) || []).length, 1, "Der Hackcode soll nur als Quelltext-Spur vorkommen");
     assert.match(museum, /alarm_hacken\("CODE_AUS_DEM_QUELLTEXT"\)/);
     assert.match(museum, /dataset\.alarmCode/);
     assert.match(museum, /playOneShotSound\("alarm"\)/);
     assert.match(museum, /playOneShotSound\("trapped"\)/);
-    assert.match(museum, /this\.portalOpen = !this\.artifactSecured \|\| this\.alarmDisabled/);
+    assert.match(museum, /this\.portalOpen = !this\.artifactSecured \|\| this\.alarmLevel < 1 \|\| this\.alarmDisabled/);
+    assert.match(museum, /this\.renderAlarm\(0\);\s*this\.updateExitState\(\);\s*this\.playOneShotSound\("alarm"\)/);
+    assert.match(museum, /setTimeout\(\(\) => this\.finishAlarmHack\(\), 1000\)/);
     assert.match(museum, /DU BIST GEFANGEN!/);
+    assert.match(museum, /MISSION ERFOLGREICH – DU BIST ENTKOMMEN!/);
     assert.doesNotMatch(museum, /Energiezelle|museum-energy|"energie"/);
     assert.match(museum, /\.speed\(4\)/);
     assert.match(museum, /turtle\.Screen\(\)\.delay\(30\)/);
+});
+
+test("museum keeps the portal open until alarm level 1, then locks it", () => {
+    const { config } = createMuseumConfig();
+    config.artifactSecured = true;
+    config.alarmDisabled = false;
+    config.exitUnlocked = false;
+
+    config.alarmLevel = 0;
+    config.renderPortal();
+    assert.equal(config.portalOpen, true);
+
+    config.alarmLevel = 1;
+    config.renderPortal();
+    assert.equal(config.portalOpen, false);
+});
+
+test("museum accepts the hidden speed-8 escape before the first alarm tick", () => {
+    const { config } = createMuseumConfig();
+    const fastCode = config.defaultCode.replace("agent.speed(4)", "agent.speed(8)");
+    assert.match(fastCode, /agent\.speed\(8\)/);
+    assert.equal(config.getTurtleSpeedMultiplier(8), 3);
+    assert.equal(config.getTurtleSpeedMultiplier(4), 1);
+
+    config.runtimeInventory = ["Schlüsselkarte", "Artefakt"];
+    config.artifactSecured = true;
+    config.escaped = true;
+    config.exitUnlocked = true;
+    config.alarmLevel = 0;
+    config.alarmDisabled = false;
+    config.hackRequested = false;
+
+    const result = config.validate(fastCode);
+    assert.equal(result.passed, true);
+    assert.equal(config.hackRequested, false);
+});
+
+test("museum reports an early hack and completes a valid hack in one second", () => {
+    const { config, elements, timers } = createMuseumConfig();
+    config.alarmStarted = false;
+    config.requestAlarmHack("SERU-7");
+    assert.match(elements.get("alarm-console-label").innerHTML, /Noch kein Alarm ausgelöst – Hack nicht möglich!/);
+
+    config.alarmStarted = true;
+    config.atAlarmConsole = true;
+    config.alarmFailed = false;
+    config.alarmDisabled = false;
+    config.hackFinishTimer = null;
+    config.requestAlarmHack("SERU-7");
+
+    const hackTimer = timers.find(timer => timer.type === "timeout" && timer.delay === 1000);
+    assert.ok(hackTimer, "Der Alarm-Hack muss genau eine Sekunde dauern");
+    hackTimer.callback();
+    assert.equal(config.alarmDisabled, true);
+    assert.equal(config.hackCompleted, true);
 });
 
 test("finale runtime guards creative code and optimized artwork stays small", () => {
@@ -703,6 +824,7 @@ test("finale runtime guards creative code and optimized artwork stays small", ()
     assert.match(runtime, /classList\.toggle\("program-running", nextRunning\)/);
     assert.match(runtime, /config\.onOutput\?\.\(chunk, outputText\)/);
     assert.match(runtime, /installTurtleObserver/);
+    assert.match(runtime, /config\.getTurtleSpeedMultiplier/);
     assert.match(runtime, /installTurtleAgentApi/);
     assert.match(runtime, /defineMethod\("suche_hier"\)/);
     assert.match(runtime, /defineMethod\("sende"\)/);
@@ -718,6 +840,7 @@ test("finale runtime guards creative code and optimized artwork stays small", ()
     assert.match(finaleCss, /\.alarm-active \.alarm-flash/);
     assert.match(finaleCss, /\.portal-locked \.portal-gate/);
     assert.match(finaleCss, /\.portal-trapped \.museum-warning/);
+    assert.match(finaleCss, /\.escape-success \.museum-success/);
 
     const artwork = [
         "pico-rescue-station.webp",
