@@ -720,7 +720,8 @@ test("finale prototypes stay unlinked, isolated and locally hosted", () => {
     assert.match(pico, /print\("Gefunden: " \+ str\(fund\)\)/);
     assert.match(pico, /ausruestung\.append\(fund\)/);
     assert.doesNotMatch(pico, /if fund == "Energiezelle":/);
-    assert.match(pico, /if pico\.sende\(\):/);
+    assert.match(pico, /signal_erfolgreich = pico\.sende\(\)/);
+    assert.match(pico, /status\.update\(\{"signal": "gesendet"\}\)/);
     assert.match(pico, /Keine Funkbase in Reichweite\./);
     assert.match(pico, /onTurtleFrame\(point\)/);
     assert.match(pico, /syncPythonState\(context\)/);
@@ -730,7 +731,7 @@ test("finale prototypes stay unlinked, isolated and locally hosted", () => {
     assert.match(pico, /Status-Dictionary füllt Agent und Signal/);
     assert.match(pico, /optional: true/);
     assert.match(pico, /checks\.filter\(check => !check\.optional\)\.every/);
-    assert.match(pico, /GERETTET!/);
+    assert.match(pico, /Signal gesendet - gerettet!/);
     assert.match(pico, /NICHT GERETTET – SIGNAL FEHLGESCHLAGEN/);
     assert.doesNotMatch(pico, /pickupProgrammed/);
     assert.match(pico, /return \{ stop: true, reason: "PICO_ENERGY_DEPLETED" \}/);
@@ -782,14 +783,18 @@ test("finale prototypes stay unlinked, isolated and locally hosted", () => {
     assert.match(museum, /turtle\.Screen\(\)\.delay\(30\)/);
 });
 
-test("pico HUD renders agent and signal exactly from the status dictionary output", () => {
+test("pico HUD mirrors the status dictionary during turtle movement", () => {
     const { config, elements } = createPicoConfig();
-    config.signalSent = true;
-    config.applyHud({ name: "NOVA", signal: "bereit" });
+    config.signalSent = false;
+    config.syncPythonState({
+        getGlobal(name) {
+            return name === "status" ? { name: "NOVA", signal: "suche" } : undefined;
+        }
+    });
 
     assert.equal(elements.get("agent-avatar").textContent, "N");
     assert.equal(elements.get("agent-name").textContent, "NOVA");
-    assert.equal(elements.get("mission-state").textContent, "bereit");
+    assert.equal(elements.get("mission-state").textContent, "suche");
 });
 
 test("pico dictionary feedback is visible but not a mission knockout criterion", () => {
@@ -811,7 +816,7 @@ test("pico dictionary feedback is visible but not a mission knockout criterion",
 test("pico shows truthful green rescue and red failure messages", () => {
     const { config, document, elements } = createPicoConfig();
     config.showRescueResult(true);
-    assert.equal(elements.get("pico-result-message").textContent, "GERETTET!");
+    assert.equal(elements.get("pico-result-message").textContent, "Signal gesendet - gerettet!");
     assert.equal(document.body.classList.contains("rescue-success"), true);
     assert.equal(document.body.classList.contains("rescue-failed"), false);
 
@@ -819,6 +824,30 @@ test("pico shows truthful green rescue and red failure messages", () => {
     assert.equal(elements.get("pico-result-message").textContent, "NICHT GERETTET – SIGNAL FEHLGESCHLAGEN");
     assert.equal(document.body.classList.contains("rescue-success"), false);
     assert.equal(document.body.classList.contains("rescue-failed"), true);
+});
+
+test("pico clears a provisional energy warning when the cell is collected", () => {
+    const { config, document, elements } = createPicoConfig();
+    config.showRescueResult(false, "NICHT GERETTET – ENERGIE LEER");
+    config.pendingFind = { item: "Energiezelle", baselineCount: 0 };
+    config.charged = false;
+    config.depleted = true;
+    config.energy = 0;
+
+    const result = config.syncPythonState({
+        getGlobal(name) {
+            if (name === "status") return { name: "PICO", signal: "suche" };
+            if (name === "ausruestung") return ["Energiezelle"];
+            return undefined;
+        }
+    });
+
+    assert.equal(result.resumeMovement, true);
+    assert.equal(config.charged, true);
+    assert.equal(config.depleted, false);
+    assert.equal(config.energy, 100);
+    assert.equal(elements.get("pico-result-message").textContent, "");
+    assert.equal(document.body.classList.contains("rescue-failed"), false);
 });
 
 test("museum keeps the portal open until alarm level 1, then locks it", () => {

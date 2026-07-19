@@ -163,13 +163,19 @@ fahre_zu(0, -90)
 fahre_zu(340, 15)
 markiere()
 
-if pico.sende():
-    status["signal"] = "gesendet"
-    print("Rettungssignal gesendet!")
-else:
-    print("Keine Funkbase in Reichweite.")
+signal_erfolgreich = pico.sende()
 
-print("PICO_STATUS|" + status["name"] + "|" + status["signal"])</textarea>
+if signal_erfolgreich:
+    status.update({"signal": "gesendet"})
+else:
+    status.update({"signal": "fehlgeschlagen"})
+
+print("PICO_STATUS|" + status["name"] + "|" + status["signal"])
+
+if signal_erfolgreich:
+    print("Signal gesendet - gerettet!")
+else:
+    print("Keine Funkbase in Reichweite.")</textarea>
 
                     <div class="control-bar" aria-label="Programmaktionen">
                         <button id="run-btn" class="primary-action" type="button"><span aria-hidden="true">▶</span> Mission starten</button>
@@ -207,6 +213,10 @@ print("PICO_STATUS|" + status["name"] + "|" + status["signal"])</textarea>
                 if (!line) return null;
                 const [, name, signal] = line.split("|");
                 return { name: (name || "").trim(), signal: (signal || "").trim() };
+            },
+            onOutput(_chunk, output) {
+                const statusData = this.parseOutput(output);
+                if (statusData) this.applyHud(statusData);
             },
             renderEnergy(percent) {
                 const energy = Math.max(0, Math.min(100, percent));
@@ -261,11 +271,15 @@ print("PICO_STATUS|" + status["name"] + "|" + status["signal"])</textarea>
                         this.charged && !this.depleted && this.energy > 0;
                     this.signalSent = success;
                     document.body.classList.toggle("mission-complete", success);
-                    this.showRescueResult(success);
+                    this.showRescueResult(success, this.getRescueFailureText());
                     return success;
                 }
             },
             syncPythonState(context) {
+                const liveStatus = context.getGlobal("status");
+                if (liveStatus && typeof liveStatus === "object") {
+                    this.applyHud({ name: liveStatus.name, signal: liveStatus.signal });
+                }
                 if (!this.pendingFind || this.charged) return null;
                 const equipment = context.getGlobal("ausruestung");
                 const currentCount = this.countItem(equipment, this.pendingFind.item);
@@ -278,6 +292,7 @@ print("PICO_STATUS|" + status["name"] + "|" + status["signal"])</textarea>
                 document.body.classList.add("energy-cell-collected");
                 document.body.classList.remove("energy-depleted");
                 document.getElementById("pico-cell-label").innerHTML = '<span aria-hidden="true">✓</span> Energie geladen';
+                this.clearRescueResult();
                 this.renderEnergy(this.energy);
                 return { resumeMovement: true };
             },
@@ -306,7 +321,6 @@ print("PICO_STATUS|" + status["name"] + "|" + status["signal"])</textarea>
 
                 if (distance(point, beacon) <= 45) this.beaconReached = true;
                 document.body.classList.toggle("energy-depleted", this.depleted);
-                if (this.depleted) this.showRescueResult(false, "NICHT GERETTET – ENERGIE LEER");
                 this.renderEnergy(this.energy);
                 this.lastPoint = { ...point };
                 if (this.depleted) return { stop: true, reason: "PICO_ENERGY_DEPLETED" };
@@ -326,17 +340,27 @@ print("PICO_STATUS|" + status["name"] + "|" + status["signal"])</textarea>
                 };
             },
             applyHud(data) {
-                const name = data.name || "–";
-                const signal = data.signal || "–";
+                const name = String(data?.name ?? "").trim() || "–";
+                const signal = String(data?.signal ?? "").trim() || "–";
                 this.lastStatusData = { name, signal };
                 document.getElementById("agent-avatar").textContent = name === "–" ? "?" : name.charAt(0).toUpperCase();
                 document.getElementById("agent-name").textContent = name;
                 document.getElementById("mission-state").textContent = signal;
                 document.body.classList.toggle("mission-complete", this.signalSent);
             },
+            clearRescueResult() {
+                document.getElementById("pico-result-message").textContent = "";
+                document.body.classList.remove("rescue-success", "rescue-failed");
+            },
+            getRescueFailureText() {
+                if (!this.depleted) return "NICHT GERETTET – SIGNAL FEHLGESCHLAGEN";
+                return this.charged
+                    ? "NICHT GERETTET – ENERGIE LEER"
+                    : "NICHT GERETTET – ENERGIEZELLE FEHLT";
+            },
             showRescueResult(success, failureText = "NICHT GERETTET – SIGNAL FEHLGESCHLAGEN") {
                 const message = document.getElementById("pico-result-message");
-                message.textContent = success ? "GERETTET!" : failureText;
+                message.textContent = success ? "Signal gesendet - gerettet!" : failureText;
                 document.body.classList.toggle("rescue-success", success);
                 document.body.classList.toggle("rescue-failed", !success);
             },
@@ -351,7 +375,7 @@ print("PICO_STATUS|" + status["name"] + "|" + status["signal"])</textarea>
                     /\bstatus\s*=\s*\{/.test(code) &&
                     /PICO_STATUS\|[\s\S]*status\["name"\][\s\S]*status\["signal"\]/.test(code)
                 );
-                if (!this.signalSent) this.showRescueResult(false);
+                if (!this.signalSent) this.showRescueResult(false, this.getRescueFailureText());
                 const checks = [
                     { label: "Turtle-Agent wird gesteuert", passed: /\bimport\s+turtle\b/.test(code) && /\.forward\s*\(|\.goto\s*\(/.test(code) },
                     { label: "Route nutzt einen Wegpunkt", passed: /\bfahre_zu\s*\(\s*0\s*,\s*-90\s*\)/.test(code) },
