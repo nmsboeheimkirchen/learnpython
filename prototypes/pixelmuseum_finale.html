@@ -7,7 +7,7 @@
     <title>Pixelmuseum: Das gestohlene Sternenfragment – Finale-Prototyp</title>
     <link rel="stylesheet" href="../assets/vendor/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="../assets/vendor/codemirror/5.65.2/monokai.min.css">
-    <link rel="stylesheet" href="finale.css?v=museum-portal-v2">
+    <link rel="stylesheet" href="finale.css?v=p1-audit-v1">
 </head>
 <body class="prototype-page museum-theme">
     <a class="skip-link" href="#editor-panel">Zum Python-Editor</a>
@@ -98,6 +98,13 @@
                     </div>
                 </div>
 
+                <ul class="mobile-target-legend" aria-label="Ziele im Pixelmuseum">
+                    <li>Schlüsselkarte <span>(−250, 60)</span></li>
+                    <li>Artefakt <span>(−390, 45)</span></li>
+                    <li>Alarmkonsole <span>(250, −60)</span></li>
+                    <li>Portal <span>(0, 115)</span></li>
+                </ul>
+
                 <div class="result-panel">
                     <div>
                         <span class="eyebrow">Technische Abnahme</span>
@@ -126,6 +133,7 @@
 
                 <div class="editor-card">
                     <label class="sr-only" for="python-editor">Python-Code für das Pixelmuseum</label>
+                    <span id="editor-shortcut-hint" class="sr-only">Mit Steuerung und Enter startest du das Programm.</span>
                     <textarea id="python-editor" spellcheck="false">import turtle
 
 agent = turtle.Turtle()
@@ -213,13 +221,16 @@ print("Fluchtweg programmiert.")</textarea>
     <script src="../assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
     <script src="../assets/vendor/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="../assets/vendor/codemirror/5.65.2/python.min.js"></script>
+    <script src="finale-analysis.js?v=p1-audit-v1"></script>
     <script>
         window.FINALE_CONFIG = {
             targetId: "museum-turtle",
             runningLabel: "Agent unterwegs",
             defaultCode: document.getElementById("python-editor").value,
             getTurtleSpeedMultiplier(speed) {
-                return Number(speed) >= 8 ? 3 : 1;
+                // Speed 8 ist die bewusst schnelle Alternativstrategie. Der deutliche Faktor
+                // hält sie auch bei langsameren iPad-Frames sicher vor dem ersten Alarmtick.
+                return Number(speed) >= 8 ? 12 : 1;
             },
             onRunStart() {
                 this.prepareAudio();
@@ -443,6 +454,7 @@ print("Fluchtweg programmiert.")</textarea>
             },
             finishAlarmHack() {
                 this.hackFinishTimer = null;
+                if (this.alarmFailed) return;
                 window.clearInterval(this.alarmTimer);
                 this.alarmTimer = null;
                 this.alarmDisabled = true;
@@ -455,7 +467,9 @@ print("Fluchtweg programmiert.")</textarea>
             },
             failAlarm() {
                 window.clearInterval(this.alarmTimer);
+                window.clearTimeout(this.hackFinishTimer);
                 this.alarmTimer = null;
+                this.hackFinishTimer = null;
                 this.alarmFailed = true;
                 document.body.classList.add("alarm-failed");
                 document.getElementById("alarm-console-label").innerHTML = '<span aria-hidden="true">×</span> Alarm ausgelöst';
@@ -532,13 +546,16 @@ print("Fluchtweg programmiert.")</textarea>
                     output: "Das Museum verriegelt automatisch alle Wege."
                 };
             },
-            validate(code) {
+            validate(code, output = "") {
+                const analysis = window.FinalePythonAnalysis.analyze(code);
                 const securityStrategyPassed = this.escaped && (this.alarmDisabled || this.alarmLevel < 1);
+                const expectedInventoryOutput = "INVENTARLISTE: " + this.runtimeInventory.join(",");
+                const inventoryOutputPassed = String(output).split(/\r?\n/).some(line => line.trim() === expectedInventoryOutput);
                 const checks = [
                     { label: "Schlüsselkarte selbst aufgenommen", passed: this.runtimeInventory.includes("Schlüsselkarte") },
                     { label: "Gestohlenes Artefakt gesichert", passed: this.artifactSecured },
-                    { label: "Eigene Entscheidung", passed: /\bif\s+[^\n]+:/.test(code) },
-                    { label: "Sicherheitsstrategie erfolgreich", passed: securityStrategyPassed },
+                    { label: "Eigene Entscheidung", passed: analysis.hasIf },
+                    { label: "Inventarliste korrekt ausgegeben", passed: inventoryOutputPassed },
                     { label: "Alarm gehackt oder rechtzeitig umgangen", passed: securityStrategyPassed },
                     { label: "Gültiger Fluchtweg", passed: this.exitUnlocked }
                 ];
@@ -551,6 +568,6 @@ print("Fluchtweg programmiert.")</textarea>
             }
         };
     </script>
-    <script src="finale.js?v=museum-physics-v2"></script>
+    <script src="finale.js?v=p1-audit-v1"></script>
 </body>
 </html>

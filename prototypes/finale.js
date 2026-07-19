@@ -43,11 +43,21 @@
         }
     });
 
-    const testMode = new URLSearchParams(window.location.search).has("test");
+    const editorInput = editor.getInputField?.();
+    if (editorInput) {
+        const editorLabel = document.querySelector('label[for="python-editor"]')?.textContent?.trim();
+        editorInput.setAttribute("aria-label", editorLabel || "Python-Code");
+        editorInput.setAttribute("aria-describedby", "editor-shortcut-hint");
+    }
+
+    const searchParams = new URLSearchParams(window.location.search);
+    const testMode = searchParams.has("test") || searchParams.has("e2e");
+    const autoRunTest = searchParams.has("test");
     let outputText = "";
     let runGeneration = 0;
     let running = false;
     let activeTurtle = null;
+    let automaticStopRendered = false;
 
     function builtinRead(path) {
         if (!Sk.builtinFiles || !Sk.builtinFiles.files || !Sk.builtinFiles.files[path]) {
@@ -204,6 +214,8 @@
 
         const originalAddUpdate = prototype.addUpdate;
         const originalSpeed = prototype.$speed;
+        const originalTranslate = prototype.translate;
+        const originalDot = prototype.$dot;
         Object.defineProperty(prototype, "__finaleObserverInstalled", {
             value: true,
             configurable: false
@@ -221,6 +233,48 @@
             };
         }
 
+        if (typeof originalTranslate === "function" && typeof config.limitTurtleMovement === "function") {
+            prototype.translate = function (startX, startY, deltaX, deltaY, ...rest) {
+                activeTurtle = this;
+                syncPythonState(this);
+
+                const visibleState = this.getState?.();
+                if (this.__finaleMovementBlocked) {
+                    if (visibleState) {
+                        this._x = visibleState.x;
+                        this._y = visibleState.y;
+                    }
+                    return Promise.resolve([this._x, this._y]);
+                }
+
+                const target = { x: startX + deltaX, y: startY + deltaY };
+                const limit = config.limitTurtleMovement({ x: startX, y: startY }, target);
+                if (!limit || !Number.isFinite(limit.x) || !Number.isFinite(limit.y)) {
+                    return originalTranslate.call(this, startX, startY, deltaX, deltaY, ...rest);
+                }
+
+                const movement = originalTranslate.call(
+                    this,
+                    startX,
+                    startY,
+                    limit.x - startX,
+                    limit.y - startY,
+                    ...rest
+                );
+                return Promise.resolve(movement).then(position => {
+                    if (limit.stop) this.__finaleMovementBlocked = true;
+                    return position;
+                });
+            };
+        }
+
+        if (typeof originalDot === "function" && typeof config.onTurtleMark === "function") {
+            prototype.$dot = function (...args) {
+                config.onTurtleMark();
+                return originalDot.apply(this, args);
+            };
+        }
+
         prototype.addUpdate = function (...args) {
             activeTurtle = this;
             syncPythonState(this);
@@ -232,6 +286,9 @@
                 if (state && Number.isFinite(state.x) && Number.isFinite(state.y)) {
                     const frameResult = config.onTurtleFrame?.({ x: state.x, y: state.y });
                     if (frameResult?.stop) this.__finaleMovementBlocked = true;
+                    // Animationszeit ist keine Python-Endlosschleife. Echte Schleifen ohne Turtle-Frames
+                    // bleiben weiterhin durch execLimit begrenzt.
+                    Sk.execStart = new Date();
                 }
                 return value;
             };
@@ -266,6 +323,17 @@
         document.body.classList.toggle("validation-passed", result.passed);
     }
 
+    function renderPendingChecks(label = "Prüfung läuft …") {
+        checksList.textContent = "";
+        const item = document.createElement("li");
+        item.className = "check-item is-pending";
+        item.textContent = label;
+        checksList.appendChild(item);
+        validationTitle.textContent = "Programm wird geprüft";
+        validationMessage.textContent = "Die Simulation ermittelt gerade die echten Missionszustände.";
+        document.body.classList.remove("validation-passed", "mission-complete");
+    }
+
     function friendlyError(error) {
         const raw = String(error);
         if (/TimeLimit|timed out|Execution exceeded/i.test(raw)) {
@@ -275,9 +343,10 @@
     }
 
     function finishAutomaticStop(automaticStop, code) {
-        if (automaticStop.output) {
+        if (automaticStop.output && !automaticStopRendered) {
             appendOutput((outputText && !outputText.endsWith("\n") ? "\n" : "") + automaticStop.output + "\n");
         }
+        automaticStopRendered = true;
         const result = config.validate(code, outputText);
         renderChecks({ ...result, passed: false, message: automaticStop.message });
         validationTitle.textContent = automaticStop.title || "Mission automatisch gestoppt";
@@ -291,6 +360,11 @@
         syncPythonState();
         const hudData = config.parseOutput?.(outputText);
         if (hudData) config.applyHud?.(hudData);
+        const automaticStop = config.getAutomaticStop?.(code, outputText);
+        if (automaticStop) {
+            finishAutomaticStop(automaticStop, code);
+            return;
+        }
         const result = config.validate(code, outputText);
         renderChecks(result);
         setStatus(result.passed ? "Technisch bereit" : "Code prüfen", result.passed ? "success" : "warning");
@@ -302,9 +376,11 @@
         const generation = ++runGeneration;
         const code = editor.getValue();
         outputText = "";
+        automaticStopRendered = false;
         consoleOutput.textContent = "";
         consoleOutput.classList.remove("is-error");
         document.body.classList.remove("validation-passed", "mission-complete");
+        renderPendingChecks();
         config.resetHud?.();
         config.onRunStart?.(code);
         setRunning(true);
@@ -342,6 +418,8 @@
             consoleOutput.classList.add("is-error");
             validationTitle.textContent = "Programm gestoppt";
             validationMessage.textContent = "Verbessere den markierten Code und starte erneut.";
+            checksList.innerHTML = '<li class="check-item is-missing">Programmfehler beheben</li>';
+            document.body.classList.remove("validation-passed", "mission-complete");
             setStatus("Fehler gefunden", "error");
         } finally {
             if (generation === runGeneration) setRunning(false);
@@ -354,6 +432,7 @@
         editor.setValue(config.defaultCode);
         editor.clearHistory();
         outputText = "";
+        automaticStopRendered = false;
         consoleOutput.textContent = document.body.classList.contains("museum-theme")
             ? "Das Museum wartet auf deinen Fluchtplan."
             : "Bereit für PICOs Rettungsmission.";
@@ -390,7 +469,7 @@
     setStatus("Bereit", "ready");
     window.finalePrototype = { editor, run: runProgram, reset: resetPrototype, refresh: refreshValidation };
 
-    if (testMode) {
+    if (autoRunTest) {
         window.setTimeout(runProgram, 60);
     }
 })();

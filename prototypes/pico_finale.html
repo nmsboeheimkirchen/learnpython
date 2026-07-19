@@ -7,7 +7,7 @@
     <title>PICO – Finale-Prototyp</title>
     <link rel="stylesheet" href="../assets/vendor/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="../assets/vendor/codemirror/5.65.2/monokai.min.css">
-    <link rel="stylesheet" href="finale.css">
+    <link rel="stylesheet" href="finale.css?v=p1-audit-v1">
 </head>
 <body class="prototype-page pico-theme">
     <a class="skip-link" href="#editor-panel">Zum Python-Editor</a>
@@ -93,12 +93,18 @@
                             </div>
                             <div class="meter-block">
                                 <div class="meter-label"><span>Energie · automatisch</span><strong id="energy-value">10 %</strong></div>
-                                <div class="meter-track"><span id="energy-fill" style="width: 10%"></span></div>
+                                <div id="energy-meter" class="meter-track" role="progressbar" aria-label="PICO Energie" aria-valuemin="0" aria-valuemax="100" aria-valuenow="10"><span id="energy-fill" style="width: 10%"></span></div>
                             </div>
                             <div class="signal-block"><small>FUNK</small><strong id="mission-state">–</strong></div>
                         </div>
                     </div>
                 </div>
+
+                <ul class="mobile-target-legend" aria-label="Ziele in der Rettungsstation">
+                    <li>Aufzug <span>(−365, 55)</span></li>
+                    <li>Energiezelle <span>(−380, −90)</span></li>
+                    <li>Funkbase <span>(340, 15)</span></li>
+                </ul>
 
                 <div class="result-panel">
                     <div>
@@ -128,6 +134,7 @@
 
                 <div class="editor-card">
                     <label class="sr-only" for="python-editor">Python-Code für PICO</label>
+                    <span id="editor-shortcut-hint" class="sr-only">Mit Steuerung und Enter startest du das Programm.</span>
                     <textarea id="python-editor" spellcheck="false">import turtle
 
 pico = turtle.Turtle()
@@ -175,7 +182,7 @@ print("PICO_STATUS|" + status["AGENT"] + "|" + status["FUNK"])
 if signal_erfolgreich:
     print("Signal gesendet - gerettet!")
 else:
-    print("Keine Funkbase in Reichweite.")</textarea>
+    print("Signal konnte nicht gesendet werden.")</textarea>
 
                     <div class="control-bar" aria-label="Programmaktionen">
                         <button id="run-btn" class="primary-action" type="button"><span aria-hidden="true">▶</span> Mission starten</button>
@@ -203,6 +210,7 @@ else:
     <script src="../assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
     <script src="../assets/vendor/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="../assets/vendor/codemirror/5.65.2/python.min.js"></script>
+    <script src="finale-analysis.js?v=p1-audit-v1"></script>
     <script>
         window.FINALE_CONFIG = {
             targetId: "pico-turtle",
@@ -212,6 +220,7 @@ else:
                 const energy = Math.max(0, Math.min(100, percent));
                 document.getElementById("energy-value").textContent = Math.round(energy) + " %";
                 document.getElementById("energy-fill").style.width = energy + "%";
+                document.getElementById("energy-meter").setAttribute("aria-valuenow", String(Math.round(energy)));
             },
             resetHud() {
                 this.energy = 10;
@@ -222,6 +231,9 @@ else:
                 this.signalSent = false;
                 this.signalAttempted = false;
                 this.pendingFind = null;
+                this.lastSignalFailure = null;
+                this.movementLimitPoint = null;
+                this.turtleMarks = 0;
                 this.lastStatusData = null;
                 this.lastRuntimeStatusData = null;
                 document.getElementById("agent-avatar").textContent = "?";
@@ -258,8 +270,11 @@ else:
                 sende(context) {
                     const beacon = { x: 340, y: 15 };
                     this.signalAttempted = true;
-                    const success = this.distanceTo(context, beacon) <= 45 &&
-                        this.charged && !this.depleted && this.energy > 0;
+                    const atBeacon = this.distanceTo(context, beacon) <= 45;
+                    const success = atBeacon && this.charged && !this.depleted && this.energy > 0;
+                    this.lastSignalFailure = success
+                        ? null
+                        : (!atBeacon ? "BEACON_OUT_OF_RANGE" : (!this.charged ? "CELL_MISSING" : "ENERGY_EMPTY"));
                     this.signalSent = success;
                     document.body.classList.toggle("mission-complete", success);
                     this.showRescueResult(success, this.getRescueFailureText());
@@ -288,6 +303,24 @@ else:
                 this.renderEnergy(this.energy);
                 return { resumeMovement: true };
             },
+            limitTurtleMovement(start, target) {
+                if (!this.lastPoint || this.depleted) return null;
+                const travelled = this.distanceTo(start, target);
+                if (travelled < 0.01) return null;
+                const drainPerUnit = this.charged ? 1 / 8.2 : 10 / this.distanceTo({ x: -365, y: 55 }, { x: -380, y: -90 });
+                const availableDistance = this.energy / drainPerUnit;
+                if (travelled <= availableDistance + 0.001) return null;
+
+                const ratio = availableDistance / travelled;
+                this.movementLimitPoint = {
+                    x: start.x + (target.x - start.x) * ratio,
+                    y: start.y + (target.y - start.y) * ratio
+                };
+                return { ...this.movementLimitPoint, stop: true };
+            },
+            onTurtleMark() {
+                this.turtleMarks += 1;
+            },
             onTurtleFrame(point) {
                 const start = { x: -365, y: 55 };
                 const cell = { x: -380, y: -90 };
@@ -311,6 +344,11 @@ else:
                     if (this.energy <= 0) this.depleted = true;
                 }
 
+                if (this.movementLimitPoint && distance(point, this.movementLimitPoint) <= 0.01) {
+                    this.energy = 0;
+                    this.depleted = true;
+                    this.movementLimitPoint = null;
+                }
                 if (distance(point, beacon) <= 45) this.beaconReached = true;
                 document.body.classList.toggle("energy-depleted", this.depleted);
                 this.renderEnergy(this.energy);
@@ -345,10 +383,12 @@ else:
                 document.body.classList.remove("rescue-success", "rescue-failed");
             },
             getRescueFailureText() {
-                if (!this.depleted) return "NICHT GERETTET – SIGNAL FEHLGESCHLAGEN";
-                return this.charged
-                    ? "NICHT GERETTET – ENERGIE LEER"
-                    : "NICHT GERETTET – ENERGIEZELLE FEHLT";
+                if (this.lastSignalFailure === "BEACON_OUT_OF_RANGE") return "NICHT GERETTET – FUNKBASE AUSSER REICHWEITE";
+                if (this.lastSignalFailure === "CELL_MISSING" || (!this.charged && this.depleted)) {
+                    return "NICHT GERETTET – ENERGIEZELLE FEHLT";
+                }
+                if (this.lastSignalFailure === "ENERGY_EMPTY" || this.depleted) return "NICHT GERETTET – ENERGIE LEER";
+                return "NICHT GERETTET – SIGNAL FEHLGESCHLAGEN";
             },
             showRescueResult(success, failureText = "NICHT GERETTET – SIGNAL FEHLGESCHLAGEN") {
                 const message = document.getElementById("pico-result-message");
@@ -357,24 +397,24 @@ else:
                 document.body.classList.toggle("rescue-failed", !success);
             },
             validate(code) {
-                const functionName = code.match(/\bdef\s+([A-Za-z_]\w*)\s*\(/)?.[1];
-                const functionUses = functionName
-                    ? (code.match(new RegExp("\\b" + functionName + "\\s*\\(", "g")) || []).length
-                    : 0;
+                const analysis = window.FinalePythonAnalysis.analyze(code);
+                const ownFunctionUsed = analysis.functionNames.some(name => (
+                    name !== "markiere" && analysis.topLevelCalledFunctionNames.includes(name)
+                ));
+                const markFunctionUsed = analysis.functionNames.includes("markiere") &&
+                    analysis.calledFunctionNames.includes("markiere") && this.turtleMarks > 0;
                 const statusData = this.lastRuntimeStatusData;
                 const dictionaryHudPassed = Boolean(
                     statusData?.agent && statusData.funk === "gesendet" &&
-                    /\bstatus\s*=\s*\{/.test(code) &&
-                    /PICO_STATUS\|[\s\S]*status\["AGENT"\][\s\S]*status\["FUNK"\]/.test(code)
+                    analysis.hasExactStatusDictionary
                 );
                 if (!this.signalSent) this.showRescueResult(false, this.getRescueFailureText());
                 const checks = [
-                    { label: "Turtle-Agent wird gesteuert", passed: /\bimport\s+turtle\b/.test(code) && /\.forward\s*\(|\.goto\s*\(/.test(code) },
-                    { label: "Route nutzt einen Wegpunkt", passed: /\bfahre_zu\s*\(\s*0\s*,\s*-90\s*\)/.test(code) },
-                    { label: "Route trifft eine Entscheidung", passed: /\bif\s+[^\n]+:/.test(code) },
+                    { label: "Turtle-Agent wird gesteuert", passed: analysis.importsTurtle && analysis.usesTurtleMovement },
+                    { label: "Route trifft eine echte Entscheidung", passed: analysis.hasIf },
                     { label: "Energiezelle gefunden und aufgenommen", passed: this.charged },
                     { label: "Status-Dictionary füllt AGENT und FUNK", passed: dictionaryHudPassed, optional: true },
-                    { label: "Eigene Funktion wird verwendet", passed: functionUses >= 2 },
+                    { label: "Eigene Funktion und markiere() werden verwendet", passed: ownFunctionUsed && markFunctionUsed },
                     { label: "Energie reicht bis zur Funkbase", passed: this.beaconReached && !this.depleted && this.energy > 0 },
                     { label: "Rettungssignal von der Funkbase bestätigt", passed: this.signalSent }
                 ];
@@ -387,6 +427,6 @@ else:
             }
         };
     </script>
-    <script src="finale.js?v=museum-physics-v2"></script>
+    <script src="finale.js?v=p1-audit-v1"></script>
 </body>
 </html>

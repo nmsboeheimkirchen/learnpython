@@ -116,6 +116,7 @@ function createFinaleConfig(fileName) {
                 classList: createClassList(),
                 dataset: {},
                 innerHTML: "",
+                setAttribute(name, value) { this[name] = String(value); },
                 style: {},
                 textContent: "",
                 value: id === "python-editor" ? code : ""
@@ -147,6 +148,8 @@ function createFinaleConfig(fileName) {
         }
     };
     const context = vm.createContext({ document, window });
+    const analysisSource = readFileSync(new URL("../prototypes/finale-analysis.js", import.meta.url), "utf8");
+    vm.runInContext(analysisSource, context);
     vm.runInContext(configScript, context);
     return { config: window.FINALE_CONFIG, document, elements, timers };
 }
@@ -697,7 +700,8 @@ test("finale prototypes stay unlinked, isolated and locally hosted", () => {
         assert.doesNotMatch(html, /localStorage|navigation\.js|runner\.js/);
         assert.match(html, /class="turtle-target"/);
         assert.match(html, /window\.FINALE_CONFIG/);
-        assert.match(html, /src="finale\.js\?v=museum-physics-v2"/);
+        assert.match(html, /src="finale\.js\?v=p1-audit-v1"/);
+        assert.match(html, /src="finale-analysis\.js\?v=p1-audit-v1"/);
         assert.match(html, /assets\/images\/finales\/.+\.webp/);
         assert.match(html, /assets\/vendor\/skulpt\/1\.2\.0\/skulpt\.min\.js/);
         assert.match(html, /assets\/vendor\/codemirror\/5\.65\.2\/codemirror\.min\.js/);
@@ -712,9 +716,10 @@ test("finale prototypes stay unlinked, isolated and locally hosted", () => {
     assert.doesNotMatch(pico, /for schritt in range\(4\)/);
     assert.match(pico, /def fahre_zu\(x, y\):/);
     assert.match(pico, /def markiere\(\):\s*\n\s*pico\.dot\(18, "#55f6ff"\)/);
-    assert.equal((pico.match(/pico\.dot\(/g) || []).length, 1, "PICO-Punkte sollen nur in markiere() gezeichnet werden");
-    assert.equal((pico.match(/markiere\(\)/g) || []).length, 3, "PICO soll beide Ziele einheitlich markieren");
-    assert.match(pico, /Eigene Funktion wird verwendet/);
+    const picoCode = pico.match(/<textarea id="python-editor"[^>]*>([\s\S]*?)<\/textarea>/)?.[1] ?? "";
+    assert.equal((picoCode.match(/pico\.dot\(/g) || []).length, 1, "PICO-Punkte sollen nur in markiere() gezeichnet werden");
+    assert.equal((picoCode.match(/markiere\(\)/g) || []).length, 3, "PICO soll beide Ziele einheitlich markieren");
+    assert.match(pico, /Eigene Funktion und markiere\(\) werden verwendet/);
     assert.match(pico, /id="energy-value">10 %/);
     assert.match(pico, /fund = pico\.suche_hier\(\)/);
     assert.match(pico, /print\("Gefunden: " \+ str\(fund\)\)/);
@@ -725,7 +730,7 @@ test("finale prototypes stay unlinked, isolated and locally hosted", () => {
     assert.match(pico, /status\.update\(\{"FUNK": "gesendet"\}\)/);
     assert.match(pico, /status\.update\(\{"FUNK": "fehlgeschlagen"\}\)/);
     assert.match(pico, /print\("PICO_STATUS\|" \+ status\["AGENT"\] \+ "\|" \+ status\["FUNK"\]\)/);
-    assert.match(pico, /Keine Funkbase in Reichweite\./);
+    assert.match(pico, /Signal konnte nicht gesendet werden\./);
     assert.match(pico, /onTurtleFrame\(point\)/);
     assert.match(pico, /syncPythonState\(context\)/);
     assert.match(pico, /this\.signalSent = success/);
@@ -745,6 +750,7 @@ test("finale prototypes stay unlinked, isolated and locally hosted", () => {
     assert.match(pico, /NICHT GERETTET – SIGNAL FEHLGESCHLAGEN/);
     assert.doesNotMatch(pico, /pickupProgrammed/);
     assert.match(pico, /return \{ stop: true, reason: "PICO_ENERGY_DEPLETED" \}/);
+    assert.match(pico, /limitTurtleMovement\(start, target\)/);
     assert.match(pico, /getAutomaticStop\(\)/);
     assert.doesNotMatch(pico, /else:\s*\n\s*print\("Ohne Energiezelle/);
     assert.match(pico, /this\.energy = 10/);
@@ -823,6 +829,7 @@ test("pico dictionary check accepts the real AGENT/FUNK runtime dictionary", () 
         }
     });
 
+    config.turtleMarks = 2;
     const result = config.validate(config.defaultCode, "PICO_STATUS|gefälscht|falsch\n");
     const dictionaryCheck = result.checks.find(check => check.label.includes("Status-Dictionary"));
     assert.equal(dictionaryCheck.optional, true);
@@ -850,6 +857,7 @@ test("pico rejects legacy or forged status data without failing the whole missio
             assert.equal(elements.get("mission-state").textContent, expectedFunk);
         }
 
+        config.turtleMarks = 2;
         const result = config.validate(config.defaultCode, "PICO_STATUS|NOVA|gesendet\n");
         const dictionaryCheck = result.checks.find(check => check.label.includes("Status-Dictionary"));
         assert.equal(dictionaryCheck.passed, false);
@@ -939,6 +947,74 @@ test("pico also stops after an excessively long detour with a charged cell", () 
     assert.equal(config.depleted, true);
     assert.equal(stop.stop, true);
     assert.match(config.getAutomaticStop().output, /Weg war zu lang/);
+});
+
+test("pico clamps a single oversized turtle move to the reachable endpoint", () => {
+    const { config } = createPicoConfig();
+    config.resetHud();
+    const start = { x: -365, y: 55 };
+    const target = { x: 1000, y: 55 };
+    config.onTurtleFrame(start);
+
+    const limit = config.limitTurtleMovement(start, target);
+    const initialRange = Math.hypot(-380 - start.x, -90 - start.y);
+    assert.equal(limit.stop, true);
+    assert.ok(Math.abs(limit.x - (start.x + initialRange)) < 0.001);
+    assert.equal(limit.y, start.y);
+
+    const stop = config.onTurtleFrame({ x: limit.x, y: limit.y });
+    assert.equal(config.energy, 0);
+    assert.equal(config.depleted, true);
+    assert.equal(stop.stop, true);
+});
+
+test("pico accepts a successful creative route without the sample midpoint", () => {
+    const { config } = createPicoConfig();
+    config.charged = true;
+    config.beaconReached = true;
+    config.depleted = false;
+    config.energy = 30;
+    config.signalSent = true;
+    config.turtleMarks = 2;
+    config.lastRuntimeStatusData = { agent: "NOVA", funk: "gesendet" };
+    const creativeCode = config.defaultCode.replace("fahre_zu(0, -90)\n", "");
+
+    const result = config.validate(creativeCode);
+    assert.equal(result.passed, true);
+    assert.equal(result.checks.some(check => check.label.includes("Wegpunkt")), false);
+});
+
+test("pico structure checks ignore comments, strings and unused functions", () => {
+    const { config } = createPicoConfig();
+    Object.assign(config, {
+        charged: true,
+        beaconReached: true,
+        depleted: false,
+        energy: 30,
+        signalSent: true,
+        turtleMarks: 1,
+        lastRuntimeStatusData: { agent: "PICO", funk: "gesendet" }
+    });
+    const misleadingCode = `import turtle
+pico = turtle.Turtle()
+pico.goto(-380, -90)
+
+def dekorativ():
+    pass
+
+def markiere():
+    pico.dot(18)
+
+markiere()
+# dekorativ()
+# if signal_erfolgreich:
+text = "if signal_erfolgreich:"
+status = {"AGENT": "PICO", "FUNK": "gesendet"}`;
+
+    const result = config.validate(misleadingCode);
+    assert.equal(result.checks.find(check => check.label.includes("Entscheidung")).passed, false);
+    assert.equal(result.checks.find(check => check.label.includes("Eigene Funktion")).passed, false);
+    assert.equal(result.passed, false);
 });
 
 test("pico cannot pass by printing a success marker", () => {
@@ -1105,6 +1181,25 @@ test("museum alarm level 8 stops the mission", () => {
     assert.equal(config.getAutomaticStop().status, "Mission gestoppt");
 });
 
+test("museum alarm failure cancels and invalidates a pending hack", () => {
+    const { config, timers } = createMuseumConfig();
+    config.resetHud();
+    config.alarmStarted = true;
+    config.artifactSecured = true;
+    config.atAlarmConsole = true;
+    config.requestAlarmHack("SERU-7");
+    const hackTimer = timers.find(timer => timer.type === "timeout" && timer.delay === 1000);
+    assert.ok(hackTimer);
+
+    config.failAlarm();
+    hackTimer.callback();
+
+    assert.equal(config.alarmFailed, true);
+    assert.equal(config.alarmDisabled, false);
+    assert.equal(config.hackCompleted, false);
+    assert.equal(config.hackFinishTimer, null);
+});
+
 test("museum opens the portal after a successful hack and confirms escape", () => {
     const { config, document, elements } = createMuseumConfig();
     config.resetHud();
@@ -1137,7 +1232,7 @@ test("museum accepts a speed-8 portal arrival before the first alarm tick", () =
     const { config } = createMuseumConfig();
     const fastCode = config.defaultCode.replace("agent.speed(4)", "agent.speed(8)");
     assert.match(fastCode, /agent\.speed\(8\)/);
-    assert.equal(config.getTurtleSpeedMultiplier(8), 3);
+    assert.equal(config.getTurtleSpeedMultiplier(8), 12);
     assert.equal(config.getTurtleSpeedMultiplier(4), 1);
 
     config.resetHud();
@@ -1153,9 +1248,51 @@ test("museum accepts a speed-8 portal arrival before the first alarm tick", () =
     assert.equal(config.escaped, true);
     assert.equal(config.exitUnlocked, true);
 
-    const result = config.validate(fastCode);
+    const result = config.validate(fastCode, "INVENTARLISTE: Schlüsselkarte,Artefakt\n");
     assert.equal(result.passed, true);
     assert.equal(config.hackRequested, false);
+});
+
+test("museum validator requires the real inventory line and has no duplicate strategy check", () => {
+    const { config } = createMuseumConfig();
+    config.resetHud();
+    Object.assign(config, {
+        runtimeInventory: ["Schlüsselkarte", "Artefakt"],
+        artifactSecured: true,
+        alarmDisabled: true,
+        escaped: true,
+        exitUnlocked: true
+    });
+
+    const missing = config.validate(config.defaultCode, "Fluchtweg programmiert.\n");
+    assert.equal(missing.checks.find(check => check.label.includes("Inventarliste")).passed, false);
+    assert.equal(missing.passed, false);
+
+    const exact = config.validate(config.defaultCode, "INVENTARLISTE: Schlüsselkarte,Artefakt\n");
+    assert.equal(exact.checks.find(check => check.label.includes("Inventarliste")).passed, true);
+    assert.equal(exact.checks.filter(check => check.label.includes("Strategie") || check.label.includes("Alarm gehackt")).length, 1);
+    assert.equal(exact.passed, true);
+});
+
+test("museum decision check ignores comments and string literals", () => {
+    const { config } = createMuseumConfig();
+    config.resetHud();
+    Object.assign(config, {
+        runtimeInventory: ["Schlüsselkarte", "Artefakt"],
+        artifactSecured: true,
+        alarmDisabled: true,
+        escaped: true,
+        exitUnlocked: true
+    });
+    const codeWithoutDecision = `import turtle
+agent = turtle.Turtle()
+agent.goto(0, 115)
+# if fund == "Artefakt":
+hinweis = "if fund == 'Artefakt':"`;
+
+    const result = config.validate(codeWithoutDecision, "INVENTARLISTE: Schlüsselkarte,Artefakt\n");
+    assert.equal(result.checks.find(check => check.label === "Eigene Entscheidung").passed, false);
+    assert.equal(result.passed, false);
 });
 
 test("museum reports an early hack and completes a valid hack in one second", () => {
@@ -1188,6 +1325,7 @@ test("finale runtime guards creative code and optimized artwork stays small", ()
     const runtime = readFileSync(new URL("../prototypes/finale.js", import.meta.url), "utf8");
     const finaleCss = readFileSync(new URL("../prototypes/finale.css", import.meta.url), "utf8");
     assert.match(runtime, /execLimit:\s*8000/);
+    assert.match(runtime, /Sk\.execStart = new Date\(\)/);
     assert.match(runtime, /killableWhile:\s*true/);
     assert.match(runtime, /killableFor:\s*true/);
     assert.match(runtime, /lineWrapping:\s*true/);
@@ -1207,6 +1345,9 @@ test("finale runtime guards creative code and optimized artwork stays small", ()
     assert.match(runtime, /config\.onRunStart\?\.\(code\)/);
     assert.match(runtime, /this\.__finaleMovementBlocked/);
     assert.match(runtime, /config\.getAutomaticStop/);
+    assert.match(runtime, /finishAutomaticStop\(automaticStop, code\)/);
+    assert.match(runtime, /renderPendingChecks/);
+    assert.match(runtime, /originalTranslate/);
     assert.match(runtime, /refresh: refreshValidation/);
     assert.match(runtime, /turtleTarget\.replaceChildren\(\)/);
     assert.doesNotMatch(runtime, /localStorage/);
@@ -1216,6 +1357,7 @@ test("finale runtime guards creative code and optimized artwork stays small", ()
     assert.match(finaleCss, /\.escape-success \.museum-success/);
     assert.match(finaleCss, /\.rescue-success \.pico-result-message/);
     assert.match(finaleCss, /\.rescue-failed \.pico-result-message/);
+    assert.match(finaleCss, /\.mobile-target-legend/);
 
     const artwork = [
         "pico-rescue-station.webp",

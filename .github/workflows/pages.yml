@@ -27,8 +27,17 @@ jobs:
         with:
           node-version: 22
 
-      - name: Run tests
-        run: node tests/runner.test.mjs
+      - name: Install locked test dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Run logic and validator tests
+        run: npm test
+
+      - name: Install browser engines
+        run: npx playwright install --with-deps chromium webkit
+
+      - name: Run finale browser tests
+        run: npm run test:e2e
 
   deploy:
     name: Deploy to GitHub Pages
