@@ -3,27 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mission 4: Geheimdienst-Chat</title>
+    <meta name="description" content="Mission 4 des Python Agenten-Trainings: Zeichen, Zahlencodes und Caesar-Verschlüsselung.">
+    <title>Mission 4 – Geheimdienst-Chat</title>
     <script src="assets/runner.js"></script>
     <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
+    <a class="skip-link" href="#mission-briefing">Zum Missionsbriefing</a>
     <div id="navigation-root"></div>
     <script src="assets/navigation.js"></script>
 
-    <button id="menu-btn" class="menu-btn inside-sidebar" onclick="toggleNav()">✕</button>
-
-    <div id="main-content" style="padding-left: 280px;">
-        <div class="container" style="justify-content: center; text-align: center; margin-top: 10vh;">
-            <div class="panel guide-panel" style="width: 100%; max-width: 650px; padding: 50px;">
-                <h1 style="font-size: 32px;">Mission 4: Geheimdienst-Chat</h1>
-                <p style="font-size: 18px; font-style: italic; color: #5f6368; margin-bottom: 24px;">Eine geheime Nachricht wurde abgefangen.</p>
-                <p style="font-size: 16px; margin-bottom: 18px;">Scanne ihre Buchstaben, entdecke die Zahlen dahinter und verschlüssele sie mit dem Caesar-Code.</p>
-                <p class="carryover-note">Dein Programm wächst von Level zu Level weiter.</p>
-                <p style="font-size: 15px; color: #5f6368; margin-bottom: 34px;"><code>while</code> wiederholt, solange etwas gilt. <code>for</code> arbeitet alle Zeichen nacheinander ab.</p>
-                <button class="next-level-btn" style="display: inline-block; font-size: 20px; padding: 15px 40px;" onclick="window.location.href='mission4_level1.html'">Mission starten ▶</button>
+    <main id="main-content">
+        <section class="mission-landing" aria-labelledby="mission-title">
+            <div class="mission-hero-card" id="mission-briefing">
+                <span class="mission-kicker">Mission 04 · Zeichen &amp; Codes</span>
+                <h1 id="mission-title">Geheimdienst-Chat</h1>
+                <p class="mission-lead">Scanne eine Nachricht Zeichen für Zeichen, lies ihre Zahlenwerte und sende sie mit dem Caesar-Code verschlüsselt weiter.</p>
+                <ul class="mission-meta" aria-label="Python-Themen dieser Mission">
+                    <li>for</li>
+                    <li>ord()</li>
+                    <li>chr()</li>
+                    <li>Caesar-Code</li>
+                </ul>
+                <div class="mission-start-row">
+                    <a class="mission-start-action" id="mission-start-action" href="mission4_level1.html">
+                        Mission starten <span aria-hidden="true">→</span>
+                    </a>
+                    <span class="mission-level-count">3 Level</span>
+                </div>
             </div>
-        </div>
-    </div>
+        </section>
+    </main>
 </body>
 </html>

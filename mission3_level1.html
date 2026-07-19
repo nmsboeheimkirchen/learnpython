@@ -18,16 +18,14 @@
     <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
+    <a class="skip-link" href="#python-editor">Zum Python-Editor</a>
 
         <!-- Sidebar Navigation -->
     <div id="navigation-root"></div>
     <script src="assets/navigation.js"></script>
 
-    <!-- Toggle Button -->
-    <button id="menu-btn" class="menu-btn inside-sidebar" onclick="toggleNav()">✕</button>
-
     <!-- Main Content -->
-    <div id="main-content" style="padding-left: 280px;">
+    <main id="main-content">
         <div style="max-width: 1200px; margin: 0 auto;">
             <!-- Fortschritts-Tracker UI -->
             <div class="progress-container">
@@ -72,6 +70,7 @@ print("Irgendein Text")
             <div id="console-output">Bereit für deine Befehle, Agent.</div>
         </div>
     </div>
+    </main>
 
     <!-- Ausführung -->
     <script>

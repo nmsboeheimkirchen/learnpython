@@ -18,16 +18,14 @@
     <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
+    <a class="skip-link" href="#python-editor">Zum Python-Editor</a>
 
         <!-- Sidebar Navigation -->
     <div id="navigation-root"></div>
     <script src="assets/navigation.js"></script>
 
-    <!-- Toggle Button -->
-    <button id="menu-btn" class="menu-btn inside-sidebar" onclick="toggleNav()">✕</button>
-
     <!-- Main Content -->
-    <div id="main-content" style="padding-left: 280px;">
+    <main id="main-content">
         <div style="max-width: 1200px; margin: 0 auto;">
             <!-- Fortschritts-Tracker UI -->
             <div class="progress-container">
@@ -50,7 +48,7 @@
             <p>In Python ist "5" (Text) nicht das gleiche wie 5 (Zahl). Um Text in echte Zahlen umzuwandeln, setzen wir ein <span class="tooltip">int()<span class="tooltiptext">Integer, auf Deutsch: Ganzzahl.</span></span> darum.</p>
             
             <h2>Dein Programm-Plan</h2>
-            <p>Fahre mit der Maus über die Blöcke, um den <span style="color: #1a73e8; font-weight: bold;">Python-Code</span> zu sehen!</p>
+            <p>Tippe auf einen Block oder fahre mit der Maus darüber, um den <strong>Python-Code</strong> zu sehen.</p>
             
             <div class="block-hint" style="display: flex; flex-direction: column; align-items: flex-start; gap: 0;">
                 <!-- Block 1 -->
@@ -99,6 +97,7 @@
             <div id="console-output">Bereit für deine Befehle, Agent.</div>
         </div>
     </div>
+    </main>
 
     <!-- Ausführung -->
     <script>

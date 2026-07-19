@@ -209,26 +209,34 @@ function clearProgress() {
     safeStorageRemoveItem(PROGRESS_STORAGE_KEY);
     safeStorageRemoveItem(COMPLETED_CODE_STORAGE_KEY);
     safeStorageRemoveItem(TEACHER_MODE_STORAGE_KEY);
+    safeStorageRemoveItem("sidebarState");
+}
+
+function setNavOpen(open, returnFocus = true) {
+    const sidebar = document.getElementById("mySidebar");
+    const menuButton = document.getElementById("menu-btn");
+    if (!sidebar || !menuButton) return false;
+
+    if (open) {
+        if (!sidebar.open && typeof sidebar.showModal === "function") sidebar.showModal();
+        document.body.classList.add("navigation-open");
+        menuButton.setAttribute("aria-expanded", "true");
+        menuButton.setAttribute("aria-label", "Lernpfad schließen");
+        document.getElementById("navigation-close-btn")?.focus();
+        return true;
+    }
+
+    if (sidebar.open && typeof sidebar.close === "function") sidebar.close();
+    document.body.classList.remove("navigation-open");
+    menuButton.setAttribute("aria-expanded", "false");
+    menuButton.setAttribute("aria-label", "Lernpfad öffnen");
+    if (returnFocus) menuButton.focus();
+    return true;
 }
 
 function toggleNav() {
-    const sb = document.getElementById('mySidebar');
-    safeStorageSetItem('sidebarState', sb.classList.contains('active') ? 'closed' : 'open');
     const sidebar = document.getElementById("mySidebar");
-    const mainContent = document.getElementById("main-content");
-    const menuBtn = document.getElementById("menu-btn");
-    
-    if (sidebar.classList.contains("active")) {
-        sidebar.classList.remove("active");
-        mainContent.style.paddingLeft = "60px";
-        menuBtn.innerHTML = "☰";
-        menuBtn.classList.remove("inside-sidebar");
-    } else {
-        sidebar.classList.add("active");
-        mainContent.style.paddingLeft = "280px";
-        menuBtn.innerHTML = "✕";
-        menuBtn.classList.add("inside-sidebar");
-    }
+    return setNavOpen(!sidebar?.open);
 }
 
 function unlockLevel(levelId) {
@@ -252,7 +260,10 @@ function unlockLink(levelId) {
     }
 
     link.classList.remove("locked");
-    link.textContent = link.textContent.replace(/\s*🔒/g, "");
+    const lockBadge = link.querySelector?.(".nav-lock");
+    if (lockBadge && typeof lockBadge.remove === "function") lockBadge.remove();
+    link.removeAttribute("aria-disabled");
+    link.removeAttribute("tabindex");
     link.href = LEVEL_ROUTES[levelId];
 }
 
@@ -291,14 +302,23 @@ function preventLockedClick(e) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    const savedState = safeStorageGetItem('sidebarState');
-    if (savedState === 'closed') { 
-        document.getElementById('mySidebar').classList.remove('active'); 
-        document.getElementById('main-content').style.paddingLeft = '60px'; 
-        const btn = document.getElementById('menu-btn');
-        btn.innerHTML = '☰';
-        btn.classList.remove('inside-sidebar');
-    }
+    const sidebar = document.getElementById("mySidebar");
+    const menuButton = document.getElementById("menu-btn");
+    const closeButton = document.getElementById("navigation-close-btn");
+    menuButton?.addEventListener("click", toggleNav);
+    closeButton?.addEventListener("click", () => setNavOpen(false));
+    sidebar?.addEventListener("cancel", event => {
+        event.preventDefault();
+        setNavOpen(false);
+    });
+    sidebar?.addEventListener("click", event => {
+        if (event.target === sidebar) setNavOpen(false);
+    });
+
+    document.querySelectorAll(".tooltip, .block-tooltip").forEach(element => {
+        if (!element.hasAttribute("tabindex")) element.tabIndex = 0;
+    });
+
     applyUnlocks();
     if(window.location.hash === '#l') {
         document.querySelectorAll('.next-level-btn').forEach(btn => btn.style.display = 'block');
@@ -320,13 +340,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Auto-highlight active link based on current page
-    let currentPage = window.location.pathname.split("/").pop();
-    if(currentPage === 'index.html' || currentPage === '') currentPage = 'mission1_level1.html';
+    const currentPage = window.location.pathname.split("/").pop();
     document.querySelectorAll('.sidebar a').forEach(link => {
-        if(link.getAttribute('href') === currentPage && !link.id.includes('title')) {
+        if(link.getAttribute('href') === currentPage) {
             link.classList.add('active-link');
+            link.setAttribute("aria-current", "page");
         } else {
             link.classList.remove('active-link');
+            link.removeAttribute("aria-current");
         }
     });
 });
@@ -807,6 +828,9 @@ function runit(levelTestFunction) {
 }
 
 function triggerSuccess(isFinale = false, successMessage = "") {
+    // Ein modaler Drawer läge sonst in der Browser-Top-Layer über der Belohnung.
+    setNavOpen(false, false);
+
     // Falls das Success-Overlay nicht existiert, bauen wir es dynamisch ins Dokument ein
     let overlay = document.getElementById("success-overlay");
     if (!overlay) {
@@ -823,7 +847,7 @@ function triggerSuccess(isFinale = false, successMessage = "") {
                 <h1>${titleText}</h1>
                 <p>${subText}</p>
                 <div class="btn-container"></div>
-                <button class="close-overlay-btn" onclick="document.getElementById('success-overlay').style.display='none'" style="margin-top: 20px; background: transparent; color: #5f6368; border: none; cursor: pointer; text-decoration: underline; font-size: 14px;">Weiterspielen / Editor ansehen</button>
+                <button class="close-overlay-btn" onclick="document.getElementById('success-overlay').style.display='none'">Weiterspielen / Editor ansehen</button>
             </div>
         `;
         document.body.appendChild(overlay);
@@ -832,6 +856,7 @@ function triggerSuccess(isFinale = false, successMessage = "") {
         const nextBtnSource = document.getElementById("next-level-btn");
         if (nextBtnSource) {
             const btnClone = nextBtnSource.cloneNode(true);
+            btnClone.removeAttribute("id");
             btnClone.style.display = "inline-block";
             btnClone.className = "success-btn";
             overlay.querySelector(".btn-container").appendChild(btnClone);

@@ -595,23 +595,34 @@ test("browser dependencies are local and checksum-protected", () => {
 });
 
 test("mission navigation is rendered from one central definition", () => {
-    let renderedSidebar = null;
+    let renderedNodes = [];
     const root = {
-        replaceWith(element) { renderedSidebar = element; }
+        replaceWith(...elements) { renderedNodes = elements; }
     };
     class NavigationElement {
         constructor(tagName) {
             this.tagName = tagName;
             this.children = [];
+            this.attributes = new Map();
             this.className = "";
+            this.dataset = {};
             this.href = "";
             this.id = "";
+            this.tabIndex = 0;
             this.textContent = "";
         }
 
         appendChild(child) {
             this.children.push(child);
             return child;
+        }
+
+        getAttribute(name) {
+            return this.attributes.get(name) ?? null;
+        }
+
+        setAttribute(name, value) {
+            this.attributes.set(name, String(value));
         }
     }
     const document = {
@@ -623,23 +634,65 @@ test("mission navigation is rendered from one central definition", () => {
     const source = readFileSync(new URL("../assets/navigation.js", import.meta.url), "utf8");
     vm.runInContext(source, context);
 
+    assert.equal(renderedNodes.length, 2);
+    const [renderedMenuButton, renderedSidebar] = renderedNodes;
+    assert.equal(renderedMenuButton.tagName, "button");
+    assert.equal(renderedMenuButton.id, "menu-btn");
+    assert.equal(renderedMenuButton.getAttribute("aria-controls"), "mySidebar");
+    assert.equal(renderedMenuButton.getAttribute("aria-expanded"), "false");
+
+    assert.equal(renderedSidebar.tagName, "dialog");
     assert.equal(renderedSidebar.id, "mySidebar");
-    assert.equal(renderedSidebar.className, "sidebar active");
+    assert.equal(renderedSidebar.className, "sidebar");
+    assert.equal(renderedSidebar.getAttribute("aria-labelledby"), "sidebar-title");
 
     const elementsById = new Map();
     function collectElements(element) {
         if (element.id) elementsById.set(element.id, element);
         element.children.forEach(collectElements);
     }
+    collectElements(renderedMenuButton);
     collectElements(renderedSidebar);
 
-    assert.equal(elementsById.size, 19);
+    const expectedNavigationIds = [
+        "menu-btn",
+        "mySidebar",
+        "sidebar-title",
+        "navigation-close-btn",
+        "link-m1-title",
+        "link-level1",
+        "link-level2",
+        "link-level3",
+        "link-level4",
+        "link-m2-title",
+        "link-m2-l1",
+        "link-m2-l2",
+        "link-m2-l3",
+        "link-m3-title",
+        "link-m3-l1",
+        "link-m3-l2",
+        "link-m3-l3",
+        "link-m4-title",
+        "link-m4-l1",
+        "link-m4-l2",
+        "link-m4-l3",
+        "reset-progress-btn"
+    ];
+    for (const id of expectedNavigationIds) {
+        assert.equal(elementsById.has(id), true, `${id} fehlt in der zentralen Navigation`);
+    }
+
     assert.equal(elementsById.get("link-level1").className.includes("locked"), false);
+    assert.equal(elementsById.get("link-level1").href, "mission1_level1.html");
+    assert.equal(elementsById.get("link-level1").getAttribute("aria-disabled"), null);
     assert.equal(elementsById.get("link-level2").className.includes("locked"), true);
-    assert.equal(elementsById.get("link-m2-title").textContent.endsWith("🔒"), true);
-    assert.equal(elementsById.get("link-m3-l3").textContent, "Level 3: Safe knacken 🔒");
-    assert.equal(elementsById.get("link-m4-title").textContent.endsWith("🔒"), true);
-    assert.equal(elementsById.get("link-m4-l3").textContent, "Level 3: Caesar-Code 🔒");
+    assert.equal(elementsById.get("link-level2").getAttribute("aria-disabled"), "true");
+    assert.equal(elementsById.get("link-level2").tabIndex, -1);
+    assert.equal(elementsById.get("link-level2").href, "");
+    assert.equal(elementsById.get("link-m2-title").getAttribute("aria-disabled"), "true");
+    assert.equal(elementsById.get("link-m3-l3").getAttribute("aria-disabled"), "true");
+    assert.equal(elementsById.get("link-m4-title").getAttribute("aria-disabled"), "true");
+    assert.equal(elementsById.get("link-m4-l3").getAttribute("aria-disabled"), "true");
     assert.equal(elementsById.get("reset-progress-btn").textContent, "Fortschritt zurücksetzen");
 
     for (const page of missionPages) {
@@ -647,6 +700,68 @@ test("mission navigation is rendered from one central definition", () => {
         assert.match(html, /<div id="navigation-root"><\/div>/);
         assert.match(html, /<script src="assets\/navigation\.js"><\/script>/);
         assert.doesNotMatch(html, /id="mySidebar"/);
+    }
+});
+
+test("all progress link ids keep their established unlock routes", () => {
+    const { context } = createRunnerContext();
+    const routes = JSON.parse(vm.runInContext("JSON.stringify(LEVEL_ROUTES)", context));
+
+    assert.deepEqual(routes, {
+        "link-level1": "mission1_level1.html",
+        "link-level2": "mission1_level2.html",
+        "link-level3": "mission1_level3.html",
+        "link-level4": "mission1_level4.html",
+        "link-m2-title": "mission2_start.html",
+        "link-m2-l1": "mission2_level1.html",
+        "link-m2-l2": "mission2_level2.html",
+        "link-m2-l3": "mission2_level3.html",
+        "link-m3-title": "mission3_start.html",
+        "link-m3-l1": "mission3_level1.html",
+        "link-m3-l2": "mission3_level2.html",
+        "link-m3-l3": "mission3_level3.html",
+        "link-m4-title": "mission4_start.html",
+        "link-m4-l1": "mission4_level1.html",
+        "link-m4-l2": "mission4_level2.html",
+        "link-m4-l3": "mission4_level3.html"
+    });
+});
+
+test("mission pages use the central drawer without legacy offsets and contain one balanced main", () => {
+    assert.equal(missionPages.length, 17);
+
+    for (const page of missionPages) {
+        const html = readFileSync(new URL(`../${page}`, import.meta.url), "utf8");
+        const mainOpenings = html.match(/<main\b[^>]*>/gi) ?? [];
+        const mainClosings = html.match(/<\/main>/gi) ?? [];
+
+        assert.doesNotMatch(html, /id=["']menu-btn["']/i, `${page} enthält noch den alten Menübutton`);
+        assert.doesNotMatch(
+            html,
+            /padding-left\s*:\s*280px/i,
+            `${page} enthält noch den alten Sidebar-Abstand`
+        );
+        assert.equal(mainOpenings.length, 1, `${page} braucht genau ein <main>`);
+        assert.equal(mainClosings.length, 1, `${page} braucht genau ein </main>`);
+        assert.match(mainOpenings[0], /id=["']main-content["']/i, `${page}: <main> braucht #main-content`);
+    }
+});
+
+test("all four mission artworks are local, valid and web-sized", () => {
+    const artwork = [
+        "mission-1-system-access.webp",
+        "mission-2-cable-lab.webp",
+        "mission-3-vault.webp",
+        "mission-4-signal-room.webp"
+    ];
+
+    for (const file of artwork) {
+        const url = new URL(`../assets/images/missions/${file}`, import.meta.url);
+        const bytes = readFileSync(url);
+        assert.equal(bytes.subarray(0, 4).toString("ascii"), "RIFF", `${file} ist kein RIFF-WebP`);
+        assert.equal(bytes.subarray(8, 12).toString("ascii"), "WEBP", `${file} ist kein WebP`);
+        assert.ok(bytes.length > 20_000, `${file} ist unerwartet leer oder zu klein`);
+        assert.ok(statSync(url).size < 300_000, `${file} ist für die Missionsseite zu groß`);
     }
 });
 

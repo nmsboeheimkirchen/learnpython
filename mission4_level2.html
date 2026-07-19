@@ -14,12 +14,11 @@
     <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
+    <a class="skip-link" href="#python-editor">Zum Python-Editor</a>
     <div id="navigation-root"></div>
     <script src="assets/navigation.js"></script>
 
-    <button id="menu-btn" class="menu-btn inside-sidebar" onclick="toggleNav()">✕</button>
-
-    <div id="main-content" style="padding-left: 280px;">
+    <main id="main-content">
         <div style="max-width: 1200px; margin: 0 auto;">
             <div class="progress-container">
                 <span class="level-badge">Level 2 von 3</span>
@@ -70,7 +69,7 @@ for buchstabe in nachricht:
                 <div id="console-output">Bereit für deine Befehle, Agent.</div>
             </div>
         </div>
-    </div>
+    </main>
 
     <script>setupLevel("mission4_level2");</script>
     <script src="assets/vendor/codemirror/5.65.2/codemirror.min.js"></script>

@@ -18,16 +18,14 @@
     <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
+    <a class="skip-link" href="#python-editor">Zum Python-Editor</a>
 
         <!-- Sidebar Navigation -->
     <div id="navigation-root"></div>
     <script src="assets/navigation.js"></script>
 
-    <!-- Toggle Button -->
-    <button id="menu-btn" class="menu-btn inside-sidebar" onclick="toggleNav()">✕</button>
-
     <!-- Main Content -->
-    <div id="main-content" style="padding-left: 280px;">
+    <main id="main-content">
         <div style="max-width: 1200px; margin: 0 auto;">
             <!-- Fortschritts-Tracker UI -->
             <div class="progress-container">
@@ -50,7 +48,7 @@
             <p>Mit <span class="tooltip">elif:<span class="tooltiptext">Kurz für "else if" (ansonsten wenn). Erlaubt es, eine weitere Bedingung zu prüfen, falls die erste falsch war.</span></span> können wir noch mehr Bedingungen prüfen, bevor wir zum <code>else</code> kommen.</p>
             
             <div class="block-hint">
-                <div class="makecode-block-var">anstosten wenn <span class="makecode-input">kabel = "blau"</span> dann</div>
+                <div class="makecode-block-var">ansonsten wenn <span class="makecode-input">kabel = "blau"</span> dann</div>
                 <p>In Python:</p>
                 <code>elif kabel == "blau":<br>&nbsp;&nbsp;&nbsp;&nbsp;print("Das war falsch herum!")</code>
             </div>
@@ -76,6 +74,7 @@ else:
             <div id="console-output">Bereit für deine Befehle, Agent.</div>
         </div>
     </div>
+    </main>
 
     <!-- Ausführung -->
     <script>

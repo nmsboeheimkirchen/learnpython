@@ -1,39 +1,38 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Python Agenten-Training</title>
+    <meta name="description" content="Mission 2 des Python Agenten-Trainings: Entscheidungen mit if, elif und else.">
+    <title>Mission 2 – Bombe entschärfen</title>
     <script src="assets/runner.js"></script>
     <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-
-        <!-- Sidebar Navigation -->
+    <a class="skip-link" href="#mission-briefing">Zum Missionsbriefing</a>
     <div id="navigation-root"></div>
     <script src="assets/navigation.js"></script>
 
-    <!-- Toggle Button -->
-    <button id="menu-btn" class="menu-btn inside-sidebar" onclick="toggleNav()">✕</button>
-
-    <!-- Main Content -->
-    <div id="main-content" style="padding-left: 280px;">
-        <div style="max-width: 1200px; margin: 0 auto;">
-            <!-- Fortschritts-Tracker UI -->
-                <div class="container" style="justify-content: center; text-align: center; margin-top: 10vh;">
-        <div class="panel guide-panel" style="width: 100%; max-width: 600px; padding: 50px;">
-            <h1 style="font-size: 32px;">Mission 2: Bombe entschärfen</h1>
-            <p style="font-size: 18px; font-style: italic; color: #5f6368; margin-bottom: 30px;">Willkommen, Agent! Welches Kabel (Rot, Blau oder Grün) musst du durchschneiden?</p>
-            <p style="font-size: 16px; margin-bottom: 40px;">Eine Codekarte allein reicht nicht – ab jetzt muss dein Programm eigene Entscheidungen treffen können. Nutze dein Wissen weise. Ein Fehler und... KABUMM!</p>
-            <button class="next-level-btn" style="display: inline-block; font-size: 20px; padding: 15px 40px;" onclick="window.location.href='mission2_level1.html'">Mission Starten ▶</button>
-        </div>
-    </div>
-    <!-- Keine Code-Ausführung auf Startseiten -->
+    <main id="main-content">
+        <section class="mission-landing" aria-labelledby="mission-title">
+            <div class="mission-hero-card" id="mission-briefing">
+                <span class="mission-kicker">Mission 02 · Entscheidungen</span>
+                <h1 id="mission-title">Bombe entschärfen</h1>
+                <p class="mission-lead">Lass dein Programm zwischen den Kabeln entscheiden. Nur eine klare Bedingung führt dich sicher durch das Trainingslabor.</p>
+                <ul class="mission-meta" aria-label="Python-Themen dieser Mission">
+                    <li>if</li>
+                    <li>elif</li>
+                    <li>else</li>
+                    <li>Bedingungen</li>
+                </ul>
+                <div class="mission-start-row">
+                    <a class="mission-start-action" id="mission-start-action" href="mission2_level1.html">
+                        Mission starten <span aria-hidden="true">→</span>
+                    </a>
+                    <span class="mission-level-count">3 Level</span>
+                </div>
+            </div>
+        </section>
+    </main>
 </body>
 </html>
-
-
-
-
-
-

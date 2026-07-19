@@ -14,12 +14,11 @@
     <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
+    <a class="skip-link" href="#python-editor">Zum Python-Editor</a>
     <div id="navigation-root"></div>
     <script src="assets/navigation.js"></script>
 
-    <button id="menu-btn" class="menu-btn inside-sidebar" onclick="toggleNav()">✕</button>
-
-    <div id="main-content" style="padding-left: 280px;">
+    <main id="main-content">
         <div style="max-width: 1200px; margin: 0 auto;">
             <div class="progress-container">
                 <span class="level-badge">Level 1 von 3</span>
@@ -43,7 +42,7 @@
                 <div class="carryover-note start-bonus">Startbonus: Die erste Zeile ist schon bereit.</div>
 
                 <h2>Dein Programm-Plan</h2>
-                <p>Fahre über die Blöcke, um den Python-Code zu sehen.</p>
+                <p>Tippe auf einen Block oder fahre mit der Maus darüber, um den Python-Code zu sehen.</p>
                 <div class="block-hint" style="display: flex; flex-direction: column; align-items: flex-start; gap: 0;">
                     <div class="makecode-block block-tooltip">setze <span class="makecode-var-pill" style="background:#005a9e;">nachricht</span> auf <span class="makecode-input">"GEHEIM"</span>
                         <span class="tooltiptext">nachricht = "GEHEIM"</span>
@@ -71,7 +70,7 @@
                 <div id="console-output">Bereit für deine Befehle, Agent.</div>
             </div>
         </div>
-    </div>
+    </main>
 
     <script>setupLevel("mission4_level1");</script>
     <script src="assets/vendor/codemirror/5.65.2/codemirror.min.js"></script>
