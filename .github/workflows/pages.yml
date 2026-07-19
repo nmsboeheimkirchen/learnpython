@@ -36,7 +36,7 @@ jobs:
       - name: Install browser engines
         run: npx playwright install --with-deps chromium webkit
 
-      - name: Run finale browser tests
+      - name: Run browser end-to-end tests
         run: npm run test:e2e
 
   deploy:

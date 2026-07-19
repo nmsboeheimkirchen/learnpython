@@ -66,8 +66,21 @@ async function documentOverflow(page) {
     }));
 }
 
+test("the public root opens the redesigned first mission", async ({ page }) => {
+    const pageErrors = capturePageErrors(page);
+    await page.goto("/");
+
+    await expect(page).toHaveURL(/\/mission1_start\.html$/);
+    await expect(page.locator("body")).toHaveClass(/mission-start-page/);
+    await expect(page.locator(".mission-hero-card")).toBeVisible();
+    await expect(page.locator(".mission-start-action")).toHaveAttribute("href", "mission1_level1.html");
+    expect(pageErrors).toEqual([]);
+});
+
 test("the learning-path drawer overlays the workspace without moving it", async ({ page }) => {
     const pageErrors = capturePageErrors(page);
+    // Geometrie wird im stabilen Endzustand geprüft; die Animation hat einen eigenen Designtest.
+    await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto("/mission1_level1.html");
 
     const main = page.locator("#main-content");
@@ -81,8 +94,7 @@ test("the learning-path drawer overlays the workspace without moving it", async 
     await menuButton.click();
     await expect(drawer).toBeVisible();
     await expect(drawer).toHaveAttribute("open", "");
-    // WebKit meldet das Dialogelement schon zu Beginn der kurzen Slide-in-Transition als sichtbar.
-    await page.waitForTimeout(300);
+    await expect.poll(async () => (await elementRect(drawer)).left).toBeGreaterThanOrEqual(0);
     const after = await elementRect(main);
 
     expect(Math.abs(after.left - before.left)).toBeLessThanOrEqual(1);
