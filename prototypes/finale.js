@@ -58,6 +58,7 @@
     let running = false;
     let activeTurtle = null;
     let automaticStopRendered = false;
+    let cancelRequested = false;
 
     function builtinRead(path) {
         if (!Sk.builtinFiles || !Sk.builtinFiles.files || !Sk.builtinFiles.files[path]) {
@@ -75,14 +76,18 @@
         running = nextRunning;
         document.body.classList.toggle("program-running", nextRunning);
         runButton.disabled = nextRunning;
-        resetButton.disabled = nextRunning;
+        resetButton.disabled = nextRunning && cancelRequested;
         runButton.setAttribute("aria-busy", String(nextRunning));
         runButton.innerHTML = nextRunning
             ? '<span class="button-spinner" aria-hidden="true"></span> ' + (config.runningLabel || "Programm läuft")
             : '<span aria-hidden="true">▶</span> ' + (document.body.classList.contains("museum-theme") ? "Flucht starten" : "Mission starten");
+        resetButton.textContent = nextRunning
+            ? (cancelRequested ? "Wird gestoppt …" : "■ Mission stoppen")
+            : "↺ Beispiel laden";
     }
 
     function appendOutput(text) {
+        if (cancelRequested) return;
         const chunk = String(text);
         outputText += chunk;
         consoleOutput.textContent = outputText;
@@ -158,7 +163,7 @@
     }
 
     function syncPythonState(raw = activeTurtle) {
-        if (!raw || !config.syncPythonState) return null;
+        if (cancelRequested || !raw || !config.syncPythonState) return null;
         const result = config.syncPythonState(getTurtleContext(raw)) || null;
 
         if (result?.resumeMovement && raw.__finaleMovementBlocked) {
@@ -235,6 +240,7 @@
 
         if (typeof originalTranslate === "function" && typeof config.limitTurtleMovement === "function") {
             prototype.translate = function (startX, startY, deltaX, deltaY, ...rest) {
+                if (cancelRequested) throw new Error("FINALE_RUN_CANCELLED");
                 activeTurtle = this;
                 syncPythonState(this);
 
@@ -276,12 +282,14 @@
         }
 
         prototype.addUpdate = function (...args) {
+            if (cancelRequested) return Promise.reject(new Error("FINALE_RUN_CANCELLED"));
             activeTurtle = this;
             syncPythonState(this);
             if (this.__finaleMovementBlocked) return Promise.resolve();
 
             const update = originalAddUpdate.apply(this, args);
             const notify = value => {
+                if (cancelRequested) throw new Error("FINALE_RUN_CANCELLED");
                 const state = this.getState?.();
                 if (state && Number.isFinite(state.x) && Number.isFinite(state.y)) {
                     const frameResult = config.onTurtleFrame?.({ x: state.x, y: state.y });
@@ -374,6 +382,7 @@
         if (running) return;
 
         const generation = ++runGeneration;
+        cancelRequested = false;
         const code = editor.getValue();
         outputText = "";
         automaticStopRendered = false;
@@ -413,6 +422,12 @@
             }
         } catch (error) {
             if (generation !== runGeneration) return;
+            if (cancelRequested) return;
+            try {
+                config.onRunError?.(error);
+            } catch (cleanupError) {
+                console.error("Finale-Zustand konnte nach dem Programmfehler nicht gestoppt werden", cleanupError);
+            }
             const message = friendlyError(error);
             consoleOutput.textContent = "FEHLER: " + message;
             consoleOutput.classList.add("is-error");
@@ -422,12 +437,25 @@
             document.body.classList.remove("validation-passed", "mission-complete");
             setStatus("Fehler gefunden", "error");
         } finally {
-            if (generation === runGeneration) setRunning(false);
+            if (generation === runGeneration) {
+                const restoreExample = cancelRequested;
+                setRunning(false);
+                if (restoreExample) {
+                    cancelRequested = false;
+                    resetPrototype();
+                }
+            }
         }
     }
 
     function resetPrototype() {
-        if (running) return;
+        if (running) {
+            cancelRequested = true;
+            Sk.execStart = new Date(0);
+            setRunning(true);
+            setStatus("Mission wird gestoppt", "warning");
+            return;
+        }
         runGeneration += 1;
         editor.setValue(config.defaultCode);
         editor.clearHistory();

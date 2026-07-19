@@ -70,8 +70,26 @@ test("PICO default route also succeeds with real Turtle animation", async ({ pag
     expect(pageErrors).toEqual([]);
 });
 
+test("a running Turtle mission can be stopped and reset from the UI", async ({ page }) => {
+    const pageErrors = await openFinale(page, "/prototypes/pico_finale.html");
+    const defaultCode = await page.evaluate(() => window.FINALE_CONFIG.defaultCode);
+    await page.evaluate(source => {
+        window.finalePrototype.editor.setValue(source);
+        void window.finalePrototype.run();
+    }, defaultCode);
+
+    await expect(page.locator("#reset-btn")).toHaveText("■ Mission stoppen");
+    await page.locator("#reset-btn").click();
+    await expect(page.locator("#run-status")).toHaveText("Bereit", { timeout: 6_000 });
+    await expect(page.locator("#reset-btn")).toHaveText("↺ Beispiel laden");
+    await expect(page.locator("#console-output")).toHaveText("Bereit für PICOs Rettungsmission.");
+    await expect.poll(() => page.evaluate(() => window.finalePrototype.editor.getValue())).toBe(defaultCode);
+    await expect(page.locator("body")).not.toHaveClass(/program-running/);
+    expect(pageErrors).toEqual([]);
+});
+
 test("Pixelmuseum completes the one-second source-code hack with truthful inventory", async ({ page }) => {
-    const pageErrors = await openFinale(page, "/prototypes/pixelmuseum_finale.html?e2e");
+    const pageErrors = await openFinale(page, "/prototypes/pixelmuseum_finale.html");
     const solution = await page.evaluate(() => {
         const code = document.getElementById("museum-system-log").dataset.alarmCode;
         return window.FINALE_CONFIG.defaultCode.replace("CODE_AUS_DEM_QUELLTEXT", code);
@@ -123,7 +141,7 @@ print("INVENTARLISTE: " + ",".join(inventar))`);
         window.finalePrototype.refresh();
     });
     const output = await page.locator("#console-output").textContent();
-    expect(output.match(/Das Museum verriegelt automatisch alle Wege\./g)).toHaveLength(1);
+    expect(output.match(/Alarmstufe 8: Das Museum stoppt die Mission\./g)).toHaveLength(1);
     expect(pageErrors).toEqual([]);
 });
 

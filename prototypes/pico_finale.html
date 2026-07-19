@@ -7,7 +7,7 @@
     <title>PICO – Finale-Prototyp</title>
     <link rel="stylesheet" href="../assets/vendor/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="../assets/vendor/codemirror/5.65.2/monokai.min.css">
-    <link rel="stylesheet" href="finale.css?v=p1-audit-v1">
+    <link rel="stylesheet" href="finale.css?v=p2-audit-v1">
 </head>
 <body class="prototype-page pico-theme">
     <a class="skip-link" href="#editor-panel">Zum Python-Editor</a>
@@ -106,19 +106,20 @@
                     <li>Funkbase <span>(340, 15)</span></li>
                 </ul>
 
-                <div class="result-panel">
+                <div class="result-panel" role="status" aria-live="polite">
                     <div>
                         <span class="eyebrow">Technische Abnahme</span>
                         <h3 id="validation-title">Noch nicht ausgeführt</h3>
                         <p id="validation-message">Starte den Beispielcode oder verändere PICOs Route.</p>
                     </div>
                     <ul id="checks-list" class="checks-list" aria-label="Prüfergebnisse">
-                        <li><span aria-hidden="true">○</span> Turtle-Agent</li>
-                        <li><span aria-hidden="true">○</span> Wegpunkt</li>
-                        <li><span aria-hidden="true">○</span> Entscheidung</li>
-                        <li><span aria-hidden="true">○</span> Energiezelle</li>
-                        <li><span aria-hidden="true">○</span> Status</li>
-                        <li><span aria-hidden="true">○</span> Funktion</li>
+                        <li><span aria-hidden="true">○</span> Turtle-Agent steuern</li>
+                        <li><span aria-hidden="true">○</span> Echte Entscheidung</li>
+                        <li><span aria-hidden="true">○</span> Energiezelle aufnehmen</li>
+                        <li><span aria-hidden="true">○</span> Status-Dictionary (Teilbereich)</li>
+                        <li><span aria-hidden="true">○</span> Funktion und markiere()</li>
+                        <li><span aria-hidden="true">○</span> Energie bis zur Funkbase</li>
+                        <li><span aria-hidden="true">○</span> Rettungssignal senden</li>
                     </ul>
                 </div>
             </section>
@@ -177,8 +178,6 @@ if signal_erfolgreich:
 else:
     status.update({"FUNK": "fehlgeschlagen"})
 
-print("PICO_STATUS|" + status["AGENT"] + "|" + status["FUNK"])
-
 if signal_erfolgreich:
     print("Signal gesendet - gerettet!")
 else:
@@ -210,7 +209,7 @@ else:
     <script src="../assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
     <script src="../assets/vendor/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="../assets/vendor/codemirror/5.65.2/python.min.js"></script>
-    <script src="finale-analysis.js?v=p1-audit-v1"></script>
+    <script src="finale-analysis.js?v=p2-audit-v1"></script>
     <script>
         window.FINALE_CONFIG = {
             targetId: "pico-turtle",
@@ -260,6 +259,8 @@ else:
                     if (!this.charged && this.distanceTo(context, cell) <= 10) {
                         this.pendingFind = {
                             item,
+                            x: context.x,
+                            y: context.y,
                             baselineCount: this.countItem(equipment, item)
                         };
                         return item;
@@ -327,6 +328,10 @@ else:
                 const beacon = { x: 340, y: 15 };
                 const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
                 const initialRange = distance(start, cell);
+
+                if (this.pendingFind && this.distanceTo(point, this.pendingFind) > 14) {
+                    this.pendingFind = null;
+                }
 
                 if (!this.lastPoint) {
                     if (distance(point, start) <= 5) this.lastPoint = { ...point };
@@ -427,6 +432,6 @@ else:
             }
         };
     </script>
-    <script src="finale.js?v=p1-audit-v1"></script>
+    <script src="finale.js?v=p2-audit-v1"></script>
 </body>
 </html>

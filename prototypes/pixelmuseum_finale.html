@@ -7,7 +7,7 @@
     <title>Pixelmuseum: Das gestohlene Sternenfragment – Finale-Prototyp</title>
     <link rel="stylesheet" href="../assets/vendor/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="../assets/vendor/codemirror/5.65.2/monokai.min.css">
-    <link rel="stylesheet" href="finale.css?v=p1-audit-v1">
+    <link rel="stylesheet" href="finale.css?v=p2-audit-v1">
 </head>
 <body class="prototype-page museum-theme">
     <a class="skip-link" href="#editor-panel">Zum Python-Editor</a>
@@ -91,9 +91,9 @@
                         <div id="museum-success" class="museum-success" role="status" aria-live="polite"></div>
 
                         <div class="stage-hud museum-hud" aria-label="Museumsstatus">
-                            <div class="alarm-block"><small>Alarm</small><strong id="alarm-value">0</strong><div class="alarm-dots" id="alarm-dots"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
-                            <div class="inventory-block"><small>Inventar</small><div id="inventory-items" class="inventory-items"><span>leer</span></div></div>
-                            <div class="exit-block"><small>Ausgang</small><strong id="exit-state">offen</strong></div>
+                            <div class="alarm-block" role="status" aria-live="polite" aria-atomic="true"><small>Alarm</small><strong id="alarm-value">0</strong><div class="alarm-dots" id="alarm-dots" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+                            <div class="inventory-block" role="status" aria-live="polite" aria-atomic="true"><small>Inventar</small><div id="inventory-items" class="inventory-items"><span>leer</span></div></div>
+                            <div class="exit-block" role="status" aria-live="polite" aria-atomic="true"><small>Ausgang</small><strong id="exit-state">offen</strong></div>
                         </div>
                     </div>
                 </div>
@@ -105,19 +105,19 @@
                     <li>Portal <span>(0, 115)</span></li>
                 </ul>
 
-                <div class="result-panel">
+                <div class="result-panel" role="status" aria-live="polite">
                     <div>
                         <span class="eyebrow">Technische Abnahme</span>
                         <h3 id="validation-title">Noch nicht ausgeführt</h3>
                         <p id="validation-message">Der Beispielweg ist nur eine Möglichkeit. Baue deinen eigenen.</p>
                     </div>
                     <ul id="checks-list" class="checks-list" aria-label="Prüfergebnisse">
-                        <li><span aria-hidden="true">○</span> Schlüsselkarte</li>
-                        <li><span aria-hidden="true">○</span> Artefakt</li>
-                        <li><span aria-hidden="true">○</span> Entscheidung</li>
-                        <li><span aria-hidden="true">○</span> Alarm-Hack</li>
-                        <li><span aria-hidden="true">○</span> Alarm aus</li>
-                        <li><span aria-hidden="true">○</span> Ausgang</li>
+                        <li><span aria-hidden="true">○</span> Schlüsselkarte aufnehmen</li>
+                        <li><span aria-hidden="true">○</span> Artefakt sichern</li>
+                        <li><span aria-hidden="true">○</span> Eigene Entscheidung</li>
+                        <li><span aria-hidden="true">○</span> Inventarliste ausgeben</li>
+                        <li><span aria-hidden="true">○</span> Alarm hacken oder umgehen</li>
+                        <li><span aria-hidden="true">○</span> Gültiger Fluchtweg</li>
                     </ul>
                 </div>
             </section>
@@ -221,7 +221,7 @@ print("Fluchtweg programmiert.")</textarea>
     <script src="../assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
     <script src="../assets/vendor/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="../assets/vendor/codemirror/5.65.2/python.min.js"></script>
-    <script src="finale-analysis.js?v=p1-audit-v1"></script>
+    <script src="finale-analysis.js?v=p2-audit-v1"></script>
     <script>
         window.FINALE_CONFIG = {
             targetId: "museum-turtle",
@@ -351,13 +351,41 @@ print("Fluchtweg programmiert.")</textarea>
                     inventory.appendChild(chip);
                 });
             },
-            resetHud() {
+            stopMissionTimers() {
                 window.clearInterval(this.alarmTimer);
                 window.clearTimeout(this.hackFinishTimer);
                 window.clearTimeout(this.portalWarningTimer);
+                window.clearTimeout(this.validationRefreshTimer);
                 this.alarmTimer = null;
                 this.hackFinishTimer = null;
                 this.portalWarningTimer = null;
+                this.validationRefreshTimer = null;
+            },
+            invalidateMissionTimers() {
+                this.stopMissionTimers();
+                this.missionGeneration = (this.missionGeneration || 0) + 1;
+            },
+            clearPortalWarning() {
+                window.clearTimeout(this.portalWarningTimer);
+                this.portalWarningTimer = null;
+                document.getElementById("museum-warning").textContent = "";
+                document.body.classList.remove("portal-trapped");
+            },
+            scheduleValidationRefresh() {
+                const generation = this.missionGeneration;
+                this.validationRefreshTimer = window.setTimeout(() => {
+                    if (generation !== this.missionGeneration) return;
+                    this.validationRefreshTimer = null;
+                    window.finalePrototype?.refresh?.();
+                }, 0);
+            },
+            onRunError() {
+                this.invalidateMissionTimers();
+                this.clearPortalWarning();
+                document.body.classList.remove("alarm-active");
+            },
+            resetHud() {
+                this.invalidateMissionTimers();
                 this.alarmMax = 8;
                 this.alarmLevel = 0;
                 this.alarmStarted = false;
@@ -366,6 +394,7 @@ print("Fluchtweg programmiert.")</textarea>
                 this.hackRequested = false;
                 this.hackCodeCorrect = false;
                 this.hackCompleted = false;
+                this.lastHackFailure = null;
                 this.alarmSoundPlayed = false;
                 this.trappedSoundPlayed = false;
                 this.pendingFind = null;
@@ -416,7 +445,9 @@ print("Fluchtweg programmiert.")</textarea>
                 this.renderAlarm(0);
                 this.updateExitState();
                 this.playOneShotSound("alarm");
+                const generation = this.missionGeneration;
                 this.alarmTimer = window.setInterval(() => {
+                    if (generation !== this.missionGeneration) return;
                     if (this.alarmDisabled || this.alarmFailed) return;
                     const nextLevel = this.alarmLevel + 1;
                     this.renderAlarm(nextLevel);
@@ -431,18 +462,22 @@ print("Fluchtweg programmiert.")</textarea>
                 const label = document.getElementById("alarm-console-label");
                 const expectedCode = document.getElementById("museum-system-log")?.dataset.alarmCode || "";
                 if (!this.alarmStarted) {
+                    this.lastHackFailure = "TOO_EARLY";
                     label.innerHTML = '<span aria-hidden="true">!</span> Noch kein Alarm ausgelöst – Hack nicht möglich!';
                     return;
                 }
                 if (code !== expectedCode) {
+                    this.lastHackFailure = "WRONG_CODE";
                     label.innerHTML = '<span aria-hidden="true">×</span> Hackcode falsch';
                     return;
                 }
                 if (!this.atAlarmConsole || this.alarmFailed) {
+                    this.lastHackFailure = "WRONG_PLACE";
                     label.innerHTML = '<span aria-hidden="true">!</span> Hack nicht möglich';
                     return;
                 }
 
+                this.lastHackFailure = null;
                 this.hackCodeCorrect = true;
                 this.hackRequested = true;
                 label.innerHTML = '<span aria-hidden="true">⌁</span> Hack läuft …';
@@ -450,31 +485,31 @@ print("Fluchtweg programmiert.")</textarea>
             },
             scheduleHackCompletion() {
                 if (this.hackFinishTimer || this.alarmDisabled || this.alarmFailed) return;
-                this.hackFinishTimer = window.setTimeout(() => this.finishAlarmHack(), 1000);
+                const generation = this.missionGeneration;
+                this.hackFinishTimer = window.setTimeout(() => {
+                    if (generation !== this.missionGeneration) return;
+                    this.finishAlarmHack();
+                }, 1000);
             },
             finishAlarmHack() {
-                this.hackFinishTimer = null;
                 if (this.alarmFailed) return;
-                window.clearInterval(this.alarmTimer);
-                this.alarmTimer = null;
+                this.invalidateMissionTimers();
+                this.clearPortalWarning();
                 this.alarmDisabled = true;
                 this.hackCompleted = true;
                 this.renderAlarm(0);
                 document.body.classList.add("alarm-disabled");
                 document.getElementById("alarm-console-label").innerHTML = '<span aria-hidden="true">✓</span> Alarm gehackt';
                 this.updateExitState();
-                window.setTimeout(() => window.finalePrototype?.refresh?.(), 0);
+                this.scheduleValidationRefresh();
             },
             failAlarm() {
-                window.clearInterval(this.alarmTimer);
-                window.clearTimeout(this.hackFinishTimer);
-                this.alarmTimer = null;
-                this.hackFinishTimer = null;
+                this.invalidateMissionTimers();
                 this.alarmFailed = true;
                 document.body.classList.add("alarm-failed");
                 document.getElementById("alarm-console-label").innerHTML = '<span aria-hidden="true">×</span> Alarm ausgelöst';
                 this.updateExitState();
-                window.setTimeout(() => window.finalePrototype?.refresh?.(), 0);
+                this.scheduleValidationRefresh();
             },
             renderPortal() {
                 this.portalOpen = !this.artifactSecured || this.alarmLevel < 1 || this.alarmDisabled;
@@ -493,14 +528,17 @@ print("Fluchtweg programmiert.")</textarea>
                 document.body.classList.add("portal-trapped");
                 this.playOneShotSound("trapped");
                 window.clearTimeout(this.portalWarningTimer);
+                const generation = this.missionGeneration;
                 this.portalWarningTimer = window.setTimeout(() => {
+                    if (generation !== this.missionGeneration) return;
+                    this.portalWarningTimer = null;
                     document.body.classList.remove("portal-trapped");
                     warning.textContent = "";
                 }, 2200);
             },
             showEscapeSuccess() {
-                window.clearInterval(this.alarmTimer);
-                this.alarmTimer = null;
+                this.invalidateMissionTimers();
+                this.clearPortalWarning();
                 const success = document.getElementById("museum-success");
                 success.textContent = "MISSION ERFOLGREICH – DU BIST ENTKOMMEN!";
                 document.body.classList.remove("portal-trapped");
@@ -539,11 +577,21 @@ print("Fluchtweg programmiert.")</textarea>
             },
             getAutomaticStop() {
                 if (!this.alarmFailed) return null;
+                let message = "Kein gültiger Hack wurde gestartet. Hacke an der Alarmkonsole oder nutze einen schnelleren Fluchtweg.";
+                if (this.hackRequested) {
+                    message = "Der richtige Hack wurde gestartet, kam aber zu spät. Erreiche die Alarmkonsole früher.";
+                } else if (this.lastHackFailure === "WRONG_CODE") {
+                    message = "Der Hackcode war falsch. Suche die Spur im HTML-Quelltext und versuche es erneut.";
+                } else if (this.lastHackFailure === "WRONG_PLACE") {
+                    message = "Der Hack wurde nicht an der Alarmkonsole gestartet. Prüfe Ort und Route.";
+                } else if (this.lastHackFailure === "TOO_EARLY") {
+                    message = "Der Hack wurde vor dem Alarm versucht. Starte ihn nach der Artefaktaufnahme erneut.";
+                }
                 return {
                     title: "Alarm ausgelöst",
                     status: "Mission gestoppt",
-                    message: "Der Hack kam zu spät. Plane den Weg zur Alarmkonsole neu.",
-                    output: "Das Museum verriegelt automatisch alle Wege."
+                    message,
+                    output: "Alarmstufe 8: Das Museum stoppt die Mission."
                 };
             },
             validate(code, output = "") {
@@ -568,6 +616,6 @@ print("Fluchtweg programmiert.")</textarea>
             }
         };
     </script>
-    <script src="finale.js?v=p1-audit-v1"></script>
+    <script src="finale.js?v=p2-audit-v1"></script>
 </body>
 </html>

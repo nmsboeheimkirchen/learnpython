@@ -700,8 +700,8 @@ test("finale prototypes stay unlinked, isolated and locally hosted", () => {
         assert.doesNotMatch(html, /localStorage|navigation\.js|runner\.js/);
         assert.match(html, /class="turtle-target"/);
         assert.match(html, /window\.FINALE_CONFIG/);
-        assert.match(html, /src="finale\.js\?v=p1-audit-v1"/);
-        assert.match(html, /src="finale-analysis\.js\?v=p1-audit-v1"/);
+        assert.match(html, /src="finale\.js\?v=p2-audit-v1"/);
+        assert.match(html, /src="finale-analysis\.js\?v=p2-audit-v1"/);
         assert.match(html, /assets\/images\/finales\/.+\.webp/);
         assert.match(html, /assets\/vendor\/skulpt\/1\.2\.0\/skulpt\.min\.js/);
         assert.match(html, /assets\/vendor\/codemirror\/5\.65\.2\/codemirror\.min\.js/);
@@ -729,7 +729,7 @@ test("finale prototypes stay unlinked, isolated and locally hosted", () => {
     assert.match(pico, /status\s*=\s*\{"AGENT": "PICO", "FUNK": "suche"\}/);
     assert.match(pico, /status\.update\(\{"FUNK": "gesendet"\}\)/);
     assert.match(pico, /status\.update\(\{"FUNK": "fehlgeschlagen"\}\)/);
-    assert.match(pico, /print\("PICO_STATUS\|" \+ status\["AGENT"\] \+ "\|" \+ status\["FUNK"\]\)/);
+    assert.doesNotMatch(picoCode, /PICO_STATUS\|/, "Die GUI liest das Dictionary direkt und braucht kein Ausgabeprotokoll");
     assert.match(pico, /Signal konnte nicht gesendet werden\./);
     assert.match(pico, /onTurtleFrame\(point\)/);
     assert.match(pico, /syncPythonState\(context\)/);
@@ -760,6 +760,8 @@ test("finale prototypes stay unlinked, isolated and locally hosted", () => {
     assert.doesNotMatch(pico, /liveStatus\.(?:name|signal)/);
     assert.match(pico, /\.speed\(3\)/);
     assert.match(pico, /turtle\.Screen\(\)\.delay\(35\)/);
+    assert.doesNotMatch(pico, /<li><span aria-hidden="true">○<\/span> Wegpunkt<\/li>/);
+    assert.match(pico, /Status-Dictionary \(Teilbereich\)/);
 
     const museum = readFileSync(new URL("../prototypes/pixelmuseum_finale.html", import.meta.url), "utf8");
     assert.match(museum, /Der böse Lord darf das Artefakt nicht behalten\./);
@@ -794,12 +796,14 @@ test("finale prototypes stay unlinked, isolated and locally hosted", () => {
     assert.match(museum, /playOneShotSound\("trapped"\)/);
     assert.match(museum, /this\.portalOpen = !this\.artifactSecured \|\| this\.alarmLevel < 1 \|\| this\.alarmDisabled/);
     assert.match(museum, /this\.renderAlarm\(0\);\s*this\.updateExitState\(\);\s*this\.playOneShotSound\("alarm"\)/);
-    assert.match(museum, /setTimeout\(\(\) => this\.finishAlarmHack\(\), 1000\)/);
+    assert.match(museum, /this\.finishAlarmHack\(\);[\s\S]*?\}, 1000\)/);
     assert.match(museum, /DU BIST GEFANGEN!/);
     assert.match(museum, /MISSION ERFOLGREICH – DU BIST ENTKOMMEN!/);
     assert.doesNotMatch(museum, /Energiezelle|museum-energy|"energie"/);
     assert.match(museum, /\.speed\(4\)/);
     assert.match(museum, /turtle\.Screen\(\)\.delay\(30\)/);
+    assert.match(museum, /Inventarliste ausgeben/);
+    assert.match(museum, /Alarm hacken oder umgehen/);
 });
 
 test("pico HUD mirrors the status dictionary during turtle movement", () => {
@@ -1067,6 +1071,31 @@ test("pico clears a provisional energy warning when the cell is collected", () =
     assert.equal(document.body.classList.contains("rescue-failed"), false);
 });
 
+test("pico expires a found energy cell after the agent leaves its position", () => {
+    const { config } = createPicoConfig();
+    config.resetHud();
+    const equipment = [];
+    const context = {
+        x: -380,
+        y: -90,
+        getGlobal(name) {
+            if (name === "ausruestung") return equipment;
+            if (name === "status") return { AGENT: "PICO", FUNK: "suche" };
+            return undefined;
+        }
+    };
+
+    const found = config.agentApi.suche_hier.call(config, context);
+    assert.equal(found, "Energiezelle");
+    config.onTurtleFrame({ x: -350, y: -90 });
+    equipment.push(found);
+    config.syncPythonState(context);
+
+    assert.equal(config.pendingFind, null);
+    assert.equal(config.charged, false);
+    assert.equal(config.energy, 10);
+});
+
 test("museum keeps the portal open until alarm level 1, then locks it", () => {
     const { config } = createMuseumConfig();
     config.artifactSecured = true;
@@ -1179,6 +1208,79 @@ test("museum alarm level 8 stops the mission", () => {
     assert.equal(config.alarmLevel, 8);
     assert.equal(config.alarmFailed, true);
     assert.equal(config.getAutomaticStop().status, "Mission gestoppt");
+});
+
+test("museum automatic stop explains the actual hack failure", () => {
+    const { config } = createMuseumConfig();
+    config.resetHud();
+    config.alarmFailed = true;
+
+    assert.match(config.getAutomaticStop().message, /Kein gültiger Hack/);
+    config.lastHackFailure = "WRONG_CODE";
+    assert.match(config.getAutomaticStop().message, /Hackcode war falsch/);
+    config.lastHackFailure = "WRONG_PLACE";
+    assert.match(config.getAutomaticStop().message, /nicht an der Alarmkonsole/);
+    config.lastHackFailure = "TOO_EARLY";
+    assert.match(config.getAutomaticStop().message, /vor dem Alarm/);
+    config.hackRequested = true;
+    assert.match(config.getAutomaticStop().message, /kam aber zu spät/);
+    assert.match(config.getAutomaticStop().output, /Alarmstufe 8/);
+});
+
+test("museum reset invalidates already queued alarm and hack callbacks", () => {
+    const { config, timers } = createMuseumConfig();
+    config.resetHud();
+    config.runtimeInventory = ["Schlüsselkarte"];
+    config.collectItem("Artefakt");
+    config.atAlarmConsole = true;
+    config.requestAlarmHack("SERU-7");
+    const alarmTimer = timers.find(timer => timer.type === "interval" && timer.delay === 1000);
+    const hackTimer = timers.find(timer => timer.type === "timeout" && timer.delay === 1000);
+    assert.ok(alarmTimer);
+    assert.ok(hackTimer);
+
+    config.resetHud();
+    alarmTimer.callback();
+    hackTimer.callback();
+
+    assert.equal(config.alarmLevel, 0);
+    assert.equal(config.alarmFailed, false);
+    assert.equal(config.alarmDisabled, false);
+    assert.equal(config.hackCompleted, false);
+});
+
+test("museum runtime errors stop the active countdown", () => {
+    const { config, document, timers } = createMuseumConfig();
+    config.resetHud();
+    config.runtimeInventory = ["Schlüsselkarte"];
+    config.collectItem("Artefakt");
+    const alarmTimer = timers.find(timer => timer.type === "interval" && timer.delay === 1000);
+    assert.ok(alarmTimer);
+
+    config.onRunError(new Error("Python-Fehler"));
+    alarmTimer.callback();
+
+    assert.equal(config.alarmLevel, 0);
+    assert.equal(config.alarmFailed, false);
+    assert.equal(document.body.classList.contains("alarm-active"), false);
+});
+
+test("museum terminal escape invalidates a pending hack", () => {
+    const { config, timers } = createMuseumConfig();
+    config.resetHud();
+    config.alarmStarted = true;
+    config.artifactSecured = true;
+    config.atAlarmConsole = true;
+    config.requestAlarmHack("SERU-7");
+    const hackTimer = timers.find(timer => timer.type === "timeout" && timer.delay === 1000);
+    assert.ok(hackTimer);
+
+    config.escaped = true;
+    config.showEscapeSuccess();
+    hackTimer.callback();
+
+    assert.equal(config.alarmDisabled, false);
+    assert.equal(config.hackCompleted, false);
 });
 
 test("museum alarm failure cancels and invalidates a pending hack", () => {
@@ -1331,6 +1433,10 @@ test("finale runtime guards creative code and optimized artwork stays small", ()
     assert.match(runtime, /lineWrapping:\s*true/);
     assert.match(runtime, /runGeneration/);
     assert.match(runtime, /classList\.toggle\("program-running", nextRunning\)/);
+    assert.match(runtime, /resetButton\.disabled = nextRunning && cancelRequested/);
+    assert.match(runtime, /■ Mission stoppen/);
+    assert.match(runtime, /Sk\.execStart = new Date\(0\)/);
+    assert.match(runtime, /config\.onRunError\?\.\(error\)/);
     assert.match(runtime, /config\.onOutput\?\.\(chunk, outputText\)/);
     assert.match(runtime, /installTurtleObserver/);
     assert.match(runtime, /config\.getTurtleSpeedMultiplier/);
