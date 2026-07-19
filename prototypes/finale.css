@@ -1260,6 +1260,44 @@ svg.stage-overlay {
     color: var(--accent);
 }
 
+.pico-result-message {
+    position: absolute;
+    z-index: 7;
+    top: 50%;
+    left: 50%;
+    max-width: min(82%, 520px);
+    padding: 14px 22px;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    font-size: clamp(1rem, 2.5vw, 1.7rem);
+    font-weight: 950;
+    letter-spacing: 0.07em;
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, -50%) scale(0.82);
+}
+
+.rescue-success .pico-result-message,
+.rescue-failed .pico-result-message {
+    opacity: 1;
+    animation: escape-success 0.46s ease-out both;
+}
+
+.rescue-success .pico-result-message {
+    color: #062d1a;
+    background: rgba(118, 245, 167, 0.96);
+    border-color: #d8ffe7;
+    box-shadow: 0 0 38px rgba(80, 255, 156, 0.68);
+}
+
+.rescue-failed .pico-result-message {
+    color: #fff;
+    background: rgba(100, 8, 26, 0.94);
+    border-color: var(--danger);
+    box-shadow: 0 0 38px rgba(255, 82, 102, 0.68);
+}
+
 .museum-overlay .laser-grid path {
     fill: none;
     opacity: 0.72;

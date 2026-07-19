@@ -100,13 +100,13 @@ function createClassList() {
     };
 }
 
-function createMuseumConfig() {
-    const html = readFileSync(new URL("../prototypes/pixelmuseum_finale.html", import.meta.url), "utf8");
+function createFinaleConfig(fileName) {
+    const html = readFileSync(new URL(`../prototypes/${fileName}`, import.meta.url), "utf8");
     const code = html.match(/<textarea id="python-editor"[^>]*>([\s\S]*?)<\/textarea>/)?.[1] ?? "";
     const configScript = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)]
         .map(match => match[1])
         .find(source => source.includes("window.FINALE_CONFIG"));
-    assert.ok(configScript, "Pixelmuseum-Konfiguration fehlt");
+    assert.ok(configScript, `Finale-Konfiguration fehlt: ${fileName}`);
 
     const elements = new Map();
     const element = id => {
@@ -116,13 +116,16 @@ function createMuseumConfig() {
                 classList: createClassList(),
                 dataset: {},
                 innerHTML: "",
+                style: {},
                 textContent: "",
                 value: id === "python-editor" ? code : ""
             });
         }
         return elements.get(id);
     };
-    element("museum-system-log").dataset.alarmCode = "SERU-7";
+    if (fileName === "pixelmuseum_finale.html") {
+        element("museum-system-log").dataset.alarmCode = "SERU-7";
+    }
 
     const timers = [];
     const document = {
@@ -146,6 +149,14 @@ function createMuseumConfig() {
     const context = vm.createContext({ document, window });
     vm.runInContext(configScript, context);
     return { config: window.FINALE_CONFIG, document, elements, timers };
+}
+
+function createMuseumConfig() {
+    return createFinaleConfig("pixelmuseum_finale.html");
+}
+
+function createPicoConfig() {
+    return createFinaleConfig("pico_finale.html");
 }
 
 test("final success works without a next-level button", () => {
@@ -700,6 +711,9 @@ test("finale prototypes stay unlinked, isolated and locally hosted", () => {
     assert.match(pico, /Funkbase/);
     assert.doesNotMatch(pico, /for schritt in range\(4\)/);
     assert.match(pico, /def fahre_zu\(x, y\):/);
+    assert.match(pico, /def markiere\(\):\s*\n\s*pico\.dot\(18, "#55f6ff"\)/);
+    assert.equal((pico.match(/pico\.dot\(/g) || []).length, 1, "PICO-Punkte sollen nur in markiere() gezeichnet werden");
+    assert.equal((pico.match(/markiere\(\)/g) || []).length, 3, "PICO soll beide Ziele einheitlich markieren");
     assert.match(pico, /Eigene Funktion wird verwendet/);
     assert.match(pico, /id="energy-value">10 %/);
     assert.match(pico, /fund = pico\.suche_hier\(\)/);
@@ -711,6 +725,13 @@ test("finale prototypes stay unlinked, isolated and locally hosted", () => {
     assert.match(pico, /onTurtleFrame\(point\)/);
     assert.match(pico, /syncPythonState\(context\)/);
     assert.match(pico, /this\.signalSent = success/);
+    assert.match(pico, /document\.getElementById\("agent-name"\)\.textContent = name/);
+    assert.match(pico, /document\.getElementById\("mission-state"\)\.textContent = signal/);
+    assert.match(pico, /Status-Dictionary füllt Agent und Signal/);
+    assert.match(pico, /optional: true/);
+    assert.match(pico, /checks\.filter\(check => !check\.optional\)\.every/);
+    assert.match(pico, /GERETTET!/);
+    assert.match(pico, /NICHT GERETTET – SIGNAL FEHLGESCHLAGEN/);
     assert.doesNotMatch(pico, /pickupProgrammed/);
     assert.match(pico, /return \{ stop: true, reason: "PICO_ENERGY_DEPLETED" \}/);
     assert.match(pico, /getAutomaticStop\(\)/);
@@ -734,6 +755,9 @@ test("finale prototypes stay unlinked, isolated and locally hosted", () => {
     assert.match(museum, /baselineCount/);
     assert.doesNotMatch(museum, /PickupProgrammed/);
     assert.match(museum, /def alarm_hacken\(code\):/);
+    assert.match(museum, /def markiere\(\):\s*\n\s*agent\.dot\(18, "#ff78f3"\)/);
+    assert.equal((museum.match(/agent\.dot\(/g) || []).length, 1, "Museumspunkte sollen nur in markiere() gezeichnet werden");
+    assert.equal((museum.match(/markiere\(\)/g) || []).length, 5, "Alle Museumsziele sollen einheitlich markiert werden");
     assert.match(museum, /ALARM_HACK\|/);
     assert.match(museum, /this\.alarmMax = 8/);
     assert.match(museum, /window\.setInterval/);
@@ -756,6 +780,45 @@ test("finale prototypes stay unlinked, isolated and locally hosted", () => {
     assert.doesNotMatch(museum, /Energiezelle|museum-energy|"energie"/);
     assert.match(museum, /\.speed\(4\)/);
     assert.match(museum, /turtle\.Screen\(\)\.delay\(30\)/);
+});
+
+test("pico HUD renders agent and signal exactly from the status dictionary output", () => {
+    const { config, elements } = createPicoConfig();
+    config.signalSent = true;
+    config.applyHud({ name: "NOVA", signal: "bereit" });
+
+    assert.equal(elements.get("agent-avatar").textContent, "N");
+    assert.equal(elements.get("agent-name").textContent, "NOVA");
+    assert.equal(elements.get("mission-state").textContent, "bereit");
+});
+
+test("pico dictionary feedback is visible but not a mission knockout criterion", () => {
+    const { config } = createPicoConfig();
+    config.runtimeInventory = [];
+    config.charged = true;
+    config.beaconReached = true;
+    config.depleted = false;
+    config.energy = 25;
+    config.signalSent = true;
+
+    const result = config.validate(config.defaultCode, "PICO_STATUS|NOVA|falsch\n");
+    const dictionaryCheck = result.checks.find(check => check.label.includes("Status-Dictionary"));
+    assert.equal(dictionaryCheck.optional, true);
+    assert.equal(dictionaryCheck.passed, false);
+    assert.equal(result.passed, true);
+});
+
+test("pico shows truthful green rescue and red failure messages", () => {
+    const { config, document, elements } = createPicoConfig();
+    config.showRescueResult(true);
+    assert.equal(elements.get("pico-result-message").textContent, "GERETTET!");
+    assert.equal(document.body.classList.contains("rescue-success"), true);
+    assert.equal(document.body.classList.contains("rescue-failed"), false);
+
+    config.showRescueResult(false);
+    assert.equal(elements.get("pico-result-message").textContent, "NICHT GERETTET – SIGNAL FEHLGESCHLAGEN");
+    assert.equal(document.body.classList.contains("rescue-success"), false);
+    assert.equal(document.body.classList.contains("rescue-failed"), true);
 });
 
 test("museum keeps the portal open until alarm level 1, then locks it", () => {
@@ -825,6 +888,8 @@ test("finale runtime guards creative code and optimized artwork stays small", ()
     assert.match(runtime, /config\.onOutput\?\.\(chunk, outputText\)/);
     assert.match(runtime, /installTurtleObserver/);
     assert.match(runtime, /config\.getTurtleSpeedMultiplier/);
+    assert.match(runtime, /Teilbereich erfüllt/);
+    assert.match(runtime, /Teilbereich prüfen/);
     assert.match(runtime, /installTurtleAgentApi/);
     assert.match(runtime, /defineMethod\("suche_hier"\)/);
     assert.match(runtime, /defineMethod\("sende"\)/);
@@ -841,6 +906,8 @@ test("finale runtime guards creative code and optimized artwork stays small", ()
     assert.match(finaleCss, /\.portal-locked \.portal-gate/);
     assert.match(finaleCss, /\.portal-trapped \.museum-warning/);
     assert.match(finaleCss, /\.escape-success \.museum-success/);
+    assert.match(finaleCss, /\.rescue-success \.pico-result-message/);
+    assert.match(finaleCss, /\.rescue-failed \.pico-result-message/);
 
     const artwork = [
         "pico-rescue-station.webp",

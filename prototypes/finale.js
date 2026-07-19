@@ -255,7 +255,7 @@
 
             if (check.optional) {
                 const badge = document.createElement("small");
-                badge.textContent = check.passed ? "Bonus geschafft" : "freiwillig";
+                badge.textContent = check.passed ? "Teilbereich erfüllt" : "Teilbereich prüfen";
                 item.appendChild(badge);
             }
             checksList.appendChild(item);

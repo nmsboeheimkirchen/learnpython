@@ -147,12 +147,15 @@ inventar = []
 def gehe_zu(x, y):
     agent.goto(x, y)
 
+def markiere():
+    agent.dot(18, "#ff78f3")
+
 def alarm_hacken(code):
     # Das Museum prüft Code, Ort und Zeitpunkt automatisch.
     print("ALARM_HACK|" + code)
 
 gehe_zu(-250, 60)
-agent.dot(16, "#ffd56b")
+markiere()
 fund = agent.suche_hier()
 print("Gefunden: " + str(fund))
 
@@ -163,7 +166,7 @@ else:
     print("Schlüsselkarte nicht gefunden.")
 
 gehe_zu(-390, 45)
-agent.dot(18, "#7df9ff")
+markiere()
 fund = agent.suche_hier()
 print("Gefunden: " + str(fund))
 
@@ -174,11 +177,11 @@ else:
     print("Artefakt nicht gefunden.")
 
 gehe_zu(250, -60)
-agent.dot(18, "#76f5a7")
+markiere()
 alarm_hacken("CODE_AUS_DEM_QUELLTEXT")
 
 gehe_zu(0, 115)
-agent.dot(20, "#76f5a7")
+markiere()
 print("Portal erreicht!")
 
 print("INVENTARLISTE: " + ",".join(inventar))
