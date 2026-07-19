@@ -299,9 +299,9 @@ code {
 }
 
 .block-tooltip .tooltiptext {
-    top: calc(100% + 8px);
+    top: auto;
     right: auto;
-    bottom: auto;
+    bottom: calc(100% + 8px);
     left: 0;
     width: max-content;
     max-width: min(320px, calc(100vw - 56px));

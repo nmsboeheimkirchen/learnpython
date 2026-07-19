@@ -65,7 +65,7 @@ test("nested microcode keeps its one- and two-step indentation", async ({ page }
     }
 });
 
-test("a focused block helper opens below the module without being clipped", async ({ page }) => {
+test("a focused block helper opens above the module without being clipped", async ({ page }) => {
     await page.goto("/mission3_level2.html");
 
     const hint = page.locator(".block-hint").first();
@@ -91,9 +91,8 @@ test("a focused block helper opens below the module without being clipped", asyn
     expect(bubbleBox).not.toBeNull();
     expect(guideBox).not.toBeNull();
 
-    expect(bubbleBox.y).toBeGreaterThanOrEqual(blockBox.y + blockBox.height);
-    expect(bubbleBox.y).toBeGreaterThanOrEqual(hintBox.y);
-    expect(bubbleBox.y + bubbleBox.height).toBeLessThanOrEqual(hintBox.y + hintBox.height + 1);
+    expect(bubbleBox.y + bubbleBox.height).toBeLessThanOrEqual(blockBox.y + 1);
+    expect(bubbleBox.y).toBeGreaterThanOrEqual(guideBox.y);
     expect(bubbleBox.x).toBeGreaterThanOrEqual(guideBox.x);
     expect(bubbleBox.x + bubbleBox.width).toBeLessThanOrEqual(guideBox.x + guideBox.width + 1);
 
