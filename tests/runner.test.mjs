@@ -721,14 +721,24 @@ test("finale prototypes stay unlinked, isolated and locally hosted", () => {
     assert.match(pico, /ausruestung\.append\(fund\)/);
     assert.doesNotMatch(pico, /if fund == "Energiezelle":/);
     assert.match(pico, /signal_erfolgreich = pico\.sende\(\)/);
-    assert.match(pico, /status\.update\(\{"signal": "gesendet"\}\)/);
+    assert.match(pico, /status\s*=\s*\{"AGENT": "PICO", "FUNK": "suche"\}/);
+    assert.match(pico, /status\.update\(\{"FUNK": "gesendet"\}\)/);
+    assert.match(pico, /status\.update\(\{"FUNK": "fehlgeschlagen"\}\)/);
+    assert.match(pico, /print\("PICO_STATUS\|" \+ status\["AGENT"\] \+ "\|" \+ status\["FUNK"\]\)/);
     assert.match(pico, /Keine Funkbase in Reichweite\./);
     assert.match(pico, /onTurtleFrame\(point\)/);
     assert.match(pico, /syncPythonState\(context\)/);
     assert.match(pico, /this\.signalSent = success/);
-    assert.match(pico, /document\.getElementById\("agent-name"\)\.textContent = name/);
-    assert.match(pico, /document\.getElementById\("mission-state"\)\.textContent = signal/);
-    assert.match(pico, /Status-Dictionary füllt Agent und Signal/);
+    assert.match(pico, /document\.getElementById\("agent-name"\)\.textContent = agent/);
+    assert.match(pico, /document\.getElementById\("mission-state"\)\.textContent = funk/);
+    assert.match(pico, /liveStatus\.AGENT/);
+    assert.match(pico, /liveStatus\.FUNK/);
+    assert.match(pico, /this\.lastRuntimeStatusData = \{ \.\.\.this\.lastStatusData \}/);
+    assert.doesNotMatch(pico, /parseOutput\(output\)/);
+    assert.doesNotMatch(pico, /onOutput\(_chunk/);
+    assert.match(pico, /<small>AGENT<\/small>/);
+    assert.match(pico, /<small>FUNK<\/small>/);
+    assert.match(pico, /Status-Dictionary füllt AGENT und FUNK/);
     assert.match(pico, /optional: true/);
     assert.match(pico, /checks\.filter\(check => !check\.optional\)\.every/);
     assert.match(pico, /Signal gesendet - gerettet!/);
@@ -739,6 +749,9 @@ test("finale prototypes stay unlinked, isolated and locally hosted", () => {
     assert.doesNotMatch(pico, /else:\s*\n\s*print\("Ohne Energiezelle/);
     assert.match(pico, /this\.energy = 10/);
     assert.doesNotMatch(pico, /status\s*=\s*\{[^\n}]*"energie"/);
+    assert.doesNotMatch(pico, /status\s*=\s*\{[^\n}]*"name"/);
+    assert.doesNotMatch(pico, /status\s*=\s*\{[^\n}]*"signal"/);
+    assert.doesNotMatch(pico, /liveStatus\.(?:name|signal)/);
     assert.match(pico, /\.speed\(3\)/);
     assert.match(pico, /turtle\.Screen\(\)\.delay\(35\)/);
 
@@ -788,7 +801,7 @@ test("pico HUD mirrors the status dictionary during turtle movement", () => {
     config.signalSent = false;
     config.syncPythonState({
         getGlobal(name) {
-            return name === "status" ? { name: "NOVA", signal: "suche" } : undefined;
+            return name === "status" ? { AGENT: "NOVA", FUNK: "suche" } : undefined;
         }
     });
 
@@ -797,20 +810,148 @@ test("pico HUD mirrors the status dictionary during turtle movement", () => {
     assert.equal(elements.get("mission-state").textContent, "suche");
 });
 
-test("pico dictionary feedback is visible but not a mission knockout criterion", () => {
+test("pico dictionary check accepts the real AGENT/FUNK runtime dictionary", () => {
     const { config } = createPicoConfig();
-    config.runtimeInventory = [];
     config.charged = true;
     config.beaconReached = true;
     config.depleted = false;
     config.energy = 25;
     config.signalSent = true;
+    config.syncPythonState({
+        getGlobal(name) {
+            return name === "status" ? { AGENT: "NOVA", FUNK: "gesendet" } : undefined;
+        }
+    });
 
-    const result = config.validate(config.defaultCode, "PICO_STATUS|NOVA|falsch\n");
+    const result = config.validate(config.defaultCode, "PICO_STATUS|gefälscht|falsch\n");
     const dictionaryCheck = result.checks.find(check => check.label.includes("Status-Dictionary"));
     assert.equal(dictionaryCheck.optional, true);
-    assert.equal(dictionaryCheck.passed, false);
+    assert.equal(dictionaryCheck.passed, true);
     assert.equal(result.passed, true);
+});
+
+test("pico rejects legacy or forged status data without failing the whole mission", () => {
+    for (const { runtimeStatus, expectedAgent, expectedFunk } of [
+        { runtimeStatus: undefined },
+        { runtimeStatus: { name: "NOVA", signal: "gesendet" }, expectedAgent: "–", expectedFunk: "–" },
+        { runtimeStatus: { AGENT: "NOVA" }, expectedAgent: "NOVA", expectedFunk: "–" }
+    ]) {
+        const { config, elements } = createPicoConfig();
+        config.charged = true;
+        config.beaconReached = true;
+        config.depleted = false;
+        config.energy = 25;
+        config.signalSent = true;
+        if (runtimeStatus) {
+            config.syncPythonState({
+                getGlobal(name) { return name === "status" ? runtimeStatus : undefined; }
+            });
+            assert.equal(elements.get("agent-name").textContent, expectedAgent);
+            assert.equal(elements.get("mission-state").textContent, expectedFunk);
+        }
+
+        const result = config.validate(config.defaultCode, "PICO_STATUS|NOVA|gesendet\n");
+        const dictionaryCheck = result.checks.find(check => check.label.includes("Status-Dictionary"));
+        assert.equal(dictionaryCheck.passed, false);
+        assert.equal(dictionaryCheck.optional, true);
+        assert.equal(result.passed, true);
+    }
+});
+
+test("pico only charges after a real search result is appended", () => {
+    const { config } = createPicoConfig();
+    config.resetHud();
+    const equipment = [];
+    const contextAt = (x, y) => ({
+        x,
+        y,
+        getGlobal(name) {
+            if (name === "status") return { AGENT: "PICO", FUNK: "suche" };
+            if (name === "ausruestung") return equipment;
+            return undefined;
+        }
+    });
+
+    assert.equal(config.agentApi.suche_hier.call(config, contextAt(-340, -90)), null);
+    equipment.push("Energiezelle");
+    config.syncPythonState(contextAt(-340, -90));
+    assert.equal(config.charged, false, "Ein erfundener Inventareintrag darf nicht laden");
+
+    equipment.length = 0;
+    const cellContext = contextAt(-380, -90);
+    const found = config.agentApi.suche_hier.call(config, cellContext);
+    assert.equal(found, "Energiezelle");
+    config.syncPythonState(cellContext);
+    assert.equal(config.charged, false, "Suchen allein darf die Zelle nicht aufnehmen");
+
+    equipment.push(found);
+    const result = config.syncPythonState(cellContext);
+    assert.equal(result.resumeMovement, true);
+    assert.equal(config.charged, true);
+    assert.equal(config.energy, 100);
+});
+
+test("pico send is confirmed only at the powered Funkbase", () => {
+    const { config, elements } = createPicoConfig();
+    config.resetHud();
+
+    assert.equal(config.agentApi.sende.call(config, { x: 340, y: 15 }), false);
+    assert.equal(config.signalSent, false);
+
+    config.charged = true;
+    config.depleted = false;
+    config.energy = 30;
+    assert.equal(config.agentApi.sende.call(config, { x: 200, y: 15 }), false);
+    assert.equal(config.signalSent, false);
+
+    assert.equal(config.agentApi.sende.call(config, { x: 340, y: 15 }), true);
+    assert.equal(config.signalSent, true);
+    assert.equal(elements.get("pico-result-message").textContent, "Signal gesendet - gerettet!");
+
+    config.depleted = true;
+    config.energy = 0;
+    assert.equal(config.agentApi.sende.call(config, { x: 340, y: 15 }), false);
+    assert.equal(config.signalSent, false);
+});
+
+test("pico energy drain stops movement before an uncollected cell", () => {
+    const { config } = createPicoConfig();
+    config.resetHud();
+    config.onTurtleFrame({ x: -365, y: 55 });
+    const stop = config.onTurtleFrame({ x: -330, y: -90 });
+
+    assert.equal(config.energy, 0);
+    assert.equal(config.depleted, true);
+    assert.equal(stop.stop, true);
+    assert.equal(stop.reason, "PICO_ENERGY_DEPLETED");
+    assert.match(config.getAutomaticStop().output, /Energiezelle nicht aufgenommen/);
+});
+
+test("pico also stops after an excessively long detour with a charged cell", () => {
+    const { config } = createPicoConfig();
+    config.resetHud();
+    config.charged = true;
+    config.energy = 100;
+    config.onTurtleFrame({ x: -365, y: 55 });
+    const stop = config.onTurtleFrame({ x: 500, y: 55 });
+
+    assert.equal(config.energy, 0);
+    assert.equal(config.depleted, true);
+    assert.equal(stop.stop, true);
+    assert.match(config.getAutomaticStop().output, /Weg war zu lang/);
+});
+
+test("pico cannot pass by printing a success marker", () => {
+    const { config } = createPicoConfig();
+    config.charged = true;
+    config.beaconReached = true;
+    config.depleted = false;
+    config.energy = 25;
+    config.signalSent = false;
+
+    const result = config.validate(config.defaultCode, "PICO_STATUS|PICO|gesendet\nSignal gesendet - gerettet!\n");
+    assert.equal(result.passed, false);
+    assert.equal(result.checks.find(check => check.label.includes("Rettungssignal")).passed, false);
 });
 
 test("pico shows truthful green rescue and red failure messages", () => {
@@ -836,7 +977,7 @@ test("pico clears a provisional energy warning when the cell is collected", () =
 
     const result = config.syncPythonState({
         getGlobal(name) {
-            if (name === "status") return { name: "PICO", signal: "suche" };
+            if (name === "status") return { AGENT: "PICO", FUNK: "suche" };
             if (name === "ausruestung") return ["Energiezelle"];
             return undefined;
         }
@@ -865,20 +1006,152 @@ test("museum keeps the portal open until alarm level 1, then locks it", () => {
     assert.equal(config.portalOpen, false);
 });
 
-test("museum accepts the hidden speed-8 escape before the first alarm tick", () => {
+test("museum requires real searches and collects keycard before artifact", () => {
+    const { config, document, timers } = createMuseumConfig();
+    config.resetHud();
+    const inventory = [];
+    const contextAt = (x, y) => ({
+        x,
+        y,
+        getGlobal(name) { return name === "inventar" ? inventory : undefined; }
+    });
+
+    inventory.push("Schlüsselkarte");
+    config.syncPythonState(contextAt(0, 0));
+    assert.equal(JSON.stringify(config.runtimeInventory), "[]", "Inventar darf ohne Fund nicht gefälscht werden");
+    inventory.length = 0;
+
+    const artifactWithoutKey = config.agentApi.suche_hier.call(config, contextAt(-390, 45));
+    assert.equal(artifactWithoutKey, null);
+    assert.equal(config.artifactSecured, false);
+
+    const keycardContext = contextAt(-250, 60);
+    const keycard = config.agentApi.suche_hier.call(config, keycardContext);
+    assert.equal(keycard, "Schlüsselkarte");
+    config.syncPythonState(keycardContext);
+    assert.equal(JSON.stringify(config.runtimeInventory), "[]");
+    inventory.push(keycard);
+    config.syncPythonState(keycardContext);
+    assert.equal(JSON.stringify(config.runtimeInventory), JSON.stringify(["Schlüsselkarte"]));
+
+    const artifactContext = contextAt(-390, 45);
+    const artifact = config.agentApi.suche_hier.call(config, artifactContext);
+    assert.equal(artifact, "Artefakt");
+    inventory.push(artifact);
+    config.syncPythonState(artifactContext);
+    assert.equal(JSON.stringify(config.runtimeInventory), JSON.stringify(["Schlüsselkarte", "Artefakt"]));
+    assert.equal(config.artifactSecured, true);
+    assert.equal(config.alarmStarted, true);
+    assert.equal(config.alarmLevel, 0);
+    assert.equal(config.portalOpen, true);
+    assert.equal(document.body.classList.contains("alarm-sound-played"), true);
+    assert.equal(timers.filter(timer => timer.type === "interval" && timer.delay === 1000).length, 1);
+    config.startAlarm();
+    assert.equal(timers.filter(timer => timer.type === "interval" && timer.delay === 1000).length, 1);
+});
+
+test("museum locks at alarm level 1 and traps an agent at the portal", () => {
+    const { config, document, elements, timers } = createMuseumConfig();
+    config.resetHud();
+    config.runtimeInventory = ["Schlüsselkarte"];
+    config.collectItem("Artefakt");
+    const alarmTimer = timers.find(timer => timer.type === "interval" && timer.delay === 1000);
+    assert.ok(alarmTimer);
+
+    alarmTimer.callback();
+    assert.equal(config.alarmLevel, 1);
+    assert.equal(config.portalOpen, false);
+
+    config.onTurtleFrame({ x: 0, y: 115 });
+    assert.equal(config.escaped, false);
+    assert.equal(config.exitUnlocked, false);
+    assert.equal(elements.get("museum-warning").textContent, "DU BIST GEFANGEN!");
+    assert.equal(document.body.classList.contains("portal-trapped"), true);
+    assert.equal(document.body.classList.contains("trapped-sound-played"), true);
+});
+
+test("museum rejects wrong-place and wrong-code hacks", () => {
+    const { config, elements, timers } = createMuseumConfig();
+    config.resetHud();
+    config.requestAlarmHack("SERU-7");
+    assert.match(elements.get("alarm-console-label").innerHTML, /Noch kein Alarm ausgelöst/);
+    assert.equal(config.hackRequested, false);
+    assert.equal(timers.filter(timer => timer.type === "timeout" && timer.delay === 1000).length, 0);
+
+    config.alarmStarted = true;
+    config.atAlarmConsole = false;
+    config.requestAlarmHack("SERU-7");
+    assert.match(elements.get("alarm-console-label").innerHTML, /Hack nicht möglich/);
+    assert.equal(config.hackRequested, false);
+
+    config.atAlarmConsole = true;
+    config.requestAlarmHack("FALSCH");
+    assert.match(elements.get("alarm-console-label").innerHTML, /Hackcode falsch/);
+    assert.equal(config.hackRequested, false);
+    assert.equal(timers.filter(timer => timer.type === "timeout" && timer.delay === 1000).length, 0);
+});
+
+test("museum alarm level 8 stops the mission", () => {
+    const { config, timers } = createMuseumConfig();
+    config.resetHud();
+    config.runtimeInventory = ["Schlüsselkarte"];
+    config.collectItem("Artefakt");
+    const alarmTimer = timers.find(timer => timer.type === "interval" && timer.delay === 1000);
+    assert.ok(alarmTimer);
+
+    for (let level = 1; level <= 8; level += 1) alarmTimer.callback();
+    assert.equal(config.alarmLevel, 8);
+    assert.equal(config.alarmFailed, true);
+    assert.equal(config.getAutomaticStop().status, "Mission gestoppt");
+});
+
+test("museum opens the portal after a successful hack and confirms escape", () => {
+    const { config, document, elements } = createMuseumConfig();
+    config.resetHud();
+    config.runtimeInventory = ["Schlüsselkarte", "Artefakt"];
+    config.artifactSecured = true;
+    config.alarmLevel = 3;
+    config.alarmDisabled = true;
+    config.updateExitState();
+    assert.equal(config.portalOpen, true);
+
+    config.onTurtleFrame({ x: 0, y: 115 });
+    assert.equal(config.escaped, true);
+    assert.equal(config.exitUnlocked, true);
+    assert.equal(elements.get("museum-success").textContent, "MISSION ERFOLGREICH – DU BIST ENTKOMMEN!");
+    assert.equal(document.body.classList.contains("escape-success"), true);
+});
+
+test("museum cannot escape through an open portal without the artifact", () => {
+    const { config } = createMuseumConfig();
+    config.resetHud();
+    assert.equal(config.portalOpen, true);
+
+    config.onTurtleFrame({ x: 0, y: 115 });
+    assert.equal(config.portalReached, false);
+    assert.equal(config.escaped, false);
+    assert.equal(config.exitUnlocked, false);
+});
+
+test("museum accepts a speed-8 portal arrival before the first alarm tick", () => {
     const { config } = createMuseumConfig();
     const fastCode = config.defaultCode.replace("agent.speed(4)", "agent.speed(8)");
     assert.match(fastCode, /agent\.speed\(8\)/);
     assert.equal(config.getTurtleSpeedMultiplier(8), 3);
     assert.equal(config.getTurtleSpeedMultiplier(4), 1);
 
+    config.resetHud();
     config.runtimeInventory = ["Schlüsselkarte", "Artefakt"];
     config.artifactSecured = true;
-    config.escaped = true;
-    config.exitUnlocked = true;
     config.alarmLevel = 0;
     config.alarmDisabled = false;
     config.hackRequested = false;
+    config.updateExitState();
+    assert.equal(config.portalOpen, true);
+
+    config.onTurtleFrame({ x: 0, y: 115 });
+    assert.equal(config.escaped, true);
+    assert.equal(config.exitUnlocked, true);
 
     const result = config.validate(fastCode);
     assert.equal(result.passed, true);
@@ -887,22 +1160,28 @@ test("museum accepts the hidden speed-8 escape before the first alarm tick", () 
 
 test("museum reports an early hack and completes a valid hack in one second", () => {
     const { config, elements, timers } = createMuseumConfig();
-    config.alarmStarted = false;
+    config.resetHud();
     config.requestAlarmHack("SERU-7");
     assert.match(elements.get("alarm-console-label").innerHTML, /Noch kein Alarm ausgelöst – Hack nicht möglich!/);
 
     config.alarmStarted = true;
+    config.artifactSecured = true;
+    config.alarmLevel = 4;
     config.atAlarmConsole = true;
     config.alarmFailed = false;
     config.alarmDisabled = false;
     config.hackFinishTimer = null;
     config.requestAlarmHack("SERU-7");
 
-    const hackTimer = timers.find(timer => timer.type === "timeout" && timer.delay === 1000);
+    const hackTimers = timers.filter(timer => timer.type === "timeout" && timer.delay === 1000);
+    assert.equal(hackTimers.length, 1);
+    const hackTimer = hackTimers[0];
     assert.ok(hackTimer, "Der Alarm-Hack muss genau eine Sekunde dauern");
     hackTimer.callback();
     assert.equal(config.alarmDisabled, true);
     assert.equal(config.hackCompleted, true);
+    assert.equal(config.alarmLevel, 0);
+    assert.equal(config.portalOpen, true);
 });
 
 test("finale runtime guards creative code and optimized artwork stays small", () => {

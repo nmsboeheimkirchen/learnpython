@@ -89,13 +89,13 @@
                         <div class="stage-hud pico-hud" aria-label="PICO Status">
                             <div class="agent-id">
                                 <span id="agent-avatar" class="agent-avatar" aria-hidden="true">?</span>
-                                <div><small>Agent</small><strong id="agent-name">–</strong></div>
+                                <div><small>AGENT</small><strong id="agent-name">–</strong></div>
                             </div>
                             <div class="meter-block">
                                 <div class="meter-label"><span>Energie · automatisch</span><strong id="energy-value">10 %</strong></div>
                                 <div class="meter-track"><span id="energy-fill" style="width: 10%"></span></div>
                             </div>
-                            <div class="signal-block"><small>Signal</small><strong id="mission-state">–</strong></div>
+                            <div class="signal-block"><small>FUNK</small><strong id="mission-state">–</strong></div>
                         </div>
                     </div>
                 </div>
@@ -144,7 +144,7 @@ pico.pendown()
 
 turtle.Screen().delay(35)
 
-status = {"name": "PICO", "signal": "suche"}
+status = {"AGENT": "PICO", "FUNK": "suche"}
 ausruestung = []
 
 def fahre_zu(x, y):
@@ -166,11 +166,11 @@ markiere()
 signal_erfolgreich = pico.sende()
 
 if signal_erfolgreich:
-    status.update({"signal": "gesendet"})
+    status.update({"FUNK": "gesendet"})
 else:
-    status.update({"signal": "fehlgeschlagen"})
+    status.update({"FUNK": "fehlgeschlagen"})
 
-print("PICO_STATUS|" + status["name"] + "|" + status["signal"])
+print("PICO_STATUS|" + status["AGENT"] + "|" + status["FUNK"])
 
 if signal_erfolgreich:
     print("Signal gesendet - gerettet!")
@@ -208,16 +208,6 @@ else:
             targetId: "pico-turtle",
             runningLabel: "PICO unterwegs",
             defaultCode: document.getElementById("python-editor").value,
-            parseOutput(output) {
-                const line = output.split(/\r?\n/).find(entry => entry.startsWith("PICO_STATUS|"));
-                if (!line) return null;
-                const [, name, signal] = line.split("|");
-                return { name: (name || "").trim(), signal: (signal || "").trim() };
-            },
-            onOutput(_chunk, output) {
-                const statusData = this.parseOutput(output);
-                if (statusData) this.applyHud(statusData);
-            },
             renderEnergy(percent) {
                 const energy = Math.max(0, Math.min(100, percent));
                 document.getElementById("energy-value").textContent = Math.round(energy) + " %";
@@ -233,6 +223,7 @@ else:
                 this.signalAttempted = false;
                 this.pendingFind = null;
                 this.lastStatusData = null;
+                this.lastRuntimeStatusData = null;
                 document.getElementById("agent-avatar").textContent = "?";
                 document.getElementById("agent-name").textContent = "–";
                 this.renderEnergy(this.energy);
@@ -278,7 +269,8 @@ else:
             syncPythonState(context) {
                 const liveStatus = context.getGlobal("status");
                 if (liveStatus && typeof liveStatus === "object") {
-                    this.applyHud({ name: liveStatus.name, signal: liveStatus.signal });
+                    this.applyHud({ agent: liveStatus.AGENT, funk: liveStatus.FUNK });
+                    this.lastRuntimeStatusData = { ...this.lastStatusData };
                 }
                 if (!this.pendingFind || this.charged) return null;
                 const equipment = context.getGlobal("ausruestung");
@@ -340,12 +332,12 @@ else:
                 };
             },
             applyHud(data) {
-                const name = String(data?.name ?? "").trim() || "–";
-                const signal = String(data?.signal ?? "").trim() || "–";
-                this.lastStatusData = { name, signal };
-                document.getElementById("agent-avatar").textContent = name === "–" ? "?" : name.charAt(0).toUpperCase();
-                document.getElementById("agent-name").textContent = name;
-                document.getElementById("mission-state").textContent = signal;
+                const agent = String(data?.agent ?? "").trim() || "–";
+                const funk = String(data?.funk ?? "").trim() || "–";
+                this.lastStatusData = { agent, funk };
+                document.getElementById("agent-avatar").textContent = agent === "–" ? "?" : agent.charAt(0).toUpperCase();
+                document.getElementById("agent-name").textContent = agent;
+                document.getElementById("mission-state").textContent = funk;
                 document.body.classList.toggle("mission-complete", this.signalSent);
             },
             clearRescueResult() {
@@ -364,16 +356,16 @@ else:
                 document.body.classList.toggle("rescue-success", success);
                 document.body.classList.toggle("rescue-failed", !success);
             },
-            validate(code, output) {
+            validate(code) {
                 const functionName = code.match(/\bdef\s+([A-Za-z_]\w*)\s*\(/)?.[1];
                 const functionUses = functionName
                     ? (code.match(new RegExp("\\b" + functionName + "\\s*\\(", "g")) || []).length
                     : 0;
-                const statusData = this.parseOutput(output);
+                const statusData = this.lastRuntimeStatusData;
                 const dictionaryHudPassed = Boolean(
-                    statusData?.name && statusData.signal === "gesendet" &&
+                    statusData?.agent && statusData.funk === "gesendet" &&
                     /\bstatus\s*=\s*\{/.test(code) &&
-                    /PICO_STATUS\|[\s\S]*status\["name"\][\s\S]*status\["signal"\]/.test(code)
+                    /PICO_STATUS\|[\s\S]*status\["AGENT"\][\s\S]*status\["FUNK"\]/.test(code)
                 );
                 if (!this.signalSent) this.showRescueResult(false, this.getRescueFailureText());
                 const checks = [
@@ -381,7 +373,7 @@ else:
                     { label: "Route nutzt einen Wegpunkt", passed: /\bfahre_zu\s*\(\s*0\s*,\s*-90\s*\)/.test(code) },
                     { label: "Route trifft eine Entscheidung", passed: /\bif\s+[^\n]+:/.test(code) },
                     { label: "Energiezelle gefunden und aufgenommen", passed: this.charged },
-                    { label: "Status-Dictionary füllt Agent und Signal", passed: dictionaryHudPassed, optional: true },
+                    { label: "Status-Dictionary füllt AGENT und FUNK", passed: dictionaryHudPassed, optional: true },
                     { label: "Eigene Funktion wird verwendet", passed: functionUses >= 2 },
                     { label: "Energie reicht bis zur Funkbase", passed: this.beaconReached && !this.depleted && this.energy > 0 },
                     { label: "Rettungssignal von der Funkbase bestätigt", passed: this.signalSent }
