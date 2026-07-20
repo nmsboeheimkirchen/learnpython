@@ -827,6 +827,77 @@ body.is-presenting {
     --success: #8dffcf;
 }
 
+.prototype-page {
+    --radius-xl: 34px;
+    --radius-lg: 24px;
+    --prototype-glass-border: rgba(235, 248, 255, 0.17);
+    --prototype-glass-surface: linear-gradient(145deg, rgba(13, 30, 48, 0.78), rgba(5, 14, 25, 0.7));
+    --prototype-glass-shadow: inset 0 1px rgba(255, 255, 255, 0.1), 0 24px 70px rgba(0, 0, 0, 0.38);
+}
+
+.prototype-page .skip-link {
+    z-index: 1300;
+}
+
+.prototype-nav-dock {
+    position: fixed;
+    z-index: 1200;
+    top: max(16px, env(safe-area-inset-top));
+    left: max(16px, env(safe-area-inset-left));
+    display: inline-flex;
+    min-height: 54px;
+    align-items: center;
+    gap: 5px;
+    padding: 4px;
+    border: 1px solid rgba(235, 248, 255, 0.2);
+    border-radius: 19px;
+    background: linear-gradient(145deg, rgba(8, 23, 39, 0.76), rgba(4, 12, 23, 0.68));
+    box-shadow: inset 0 1px rgba(255, 255, 255, 0.1), 0 14px 38px rgba(0, 0, 0, 0.28);
+    -webkit-backdrop-filter: blur(18px) saturate(145%);
+    backdrop-filter: blur(18px) saturate(145%);
+}
+
+.prototype-home-link,
+.prototype-path-token {
+    display: inline-flex;
+    min-height: 46px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+}
+
+.prototype-home-link {
+    padding: 5px 10px;
+    text-decoration: none;
+}
+
+.prototype-home-link:hover {
+    background: rgba(255, 255, 255, 0.065);
+}
+
+.prototype-home-link img {
+    display: block;
+    width: 174px;
+    height: auto;
+}
+
+.prototype-path-token {
+    gap: 9px;
+    padding: 9px 15px;
+    border: 1px solid rgba(235, 248, 255, 0.11);
+    background: rgba(255, 255, 255, 0.055);
+    box-shadow: none;
+    color: var(--ink);
+    font-size: 0.82rem;
+    font-weight: 750;
+}
+
+.prototype-path-icon {
+    color: var(--accent);
+    font-size: 1.08rem;
+    line-height: 1;
+}
+
 .prototype-header,
 .prototype-main {
     width: min(1540px, calc(100% - 40px));
@@ -835,7 +906,15 @@ body.is-presenting {
 }
 
 .prototype-header {
-    padding-top: clamp(18px, 2.5vw, 34px);
+    margin-top: calc(max(16px, env(safe-area-inset-top)) + 72px);
+    padding: clamp(16px, 2vw, 22px);
+    border: 1px solid var(--prototype-glass-border);
+    border-top-color: rgba(var(--accent-rgb), 0.31);
+    border-radius: 28px;
+    background: var(--prototype-glass-surface);
+    box-shadow: var(--prototype-glass-shadow);
+    -webkit-backdrop-filter: blur(18px) saturate(138%);
+    backdrop-filter: blur(18px) saturate(138%);
 }
 
 .prototype-header > div:first-child {
@@ -1009,10 +1088,31 @@ body.is-presenting {
 .result-panel,
 .creative-card {
     overflow: hidden;
-    background: linear-gradient(155deg, rgba(14, 31, 49, 0.96), rgba(7, 16, 28, 0.96));
-    border: 1px solid var(--line);
+    border: 1px solid var(--prototype-glass-border);
+    border-top-color: rgba(var(--accent-rgb), 0.31);
     border-radius: var(--radius-lg);
-    box-shadow: var(--shadow);
+    background: var(--prototype-glass-surface);
+    box-shadow: var(--prototype-glass-shadow);
+    -webkit-backdrop-filter: blur(18px) saturate(138%);
+    backdrop-filter: blur(18px) saturate(138%);
+}
+
+.prototype-main > .briefing-card {
+    border: 1px solid var(--prototype-glass-border);
+    border-top-color: rgba(var(--accent-rgb), 0.31);
+    border-radius: var(--radius-xl);
+    background: var(--prototype-glass-surface);
+    box-shadow: var(--prototype-glass-shadow);
+    -webkit-backdrop-filter: blur(18px) saturate(138%);
+    backdrop-filter: blur(18px) saturate(138%);
+}
+
+.path-badge,
+.concept-strip li,
+.run-status {
+    box-shadow: inset 0 1px rgba(255, 255, 255, 0.08), 0 10px 30px rgba(0, 0, 0, 0.2);
+    -webkit-backdrop-filter: blur(14px) saturate(132%);
+    backdrop-filter: blur(14px) saturate(132%);
 }
 
 .game-shell {
@@ -1633,6 +1733,7 @@ svg.stage-overlay {
 .presentation-mode .exit-presentation { display: block; }
 
 .presentation-mode .prototype-header,
+.presentation-mode .prototype-nav-dock,
 .presentation-mode .prototype-main > .briefing-card,
 .presentation-mode .code-column,
 .presentation-mode .result-panel,
@@ -1693,6 +1794,13 @@ svg.stage-overlay {
 }
 
 @media (max-width: 760px) {
+    .prototype-nav-dock {
+        top: max(12px, env(safe-area-inset-top));
+        left: max(12px, env(safe-area-inset-left));
+    }
+    .prototype-home-link { padding-inline: 4px; }
+    .prototype-home-link img { width: 108px; }
+    .prototype-path-token { padding-inline: 11px; }
     .prototype-header,
     .prototype-main { width: min(100% - 24px, 1540px); }
     .prototype-header { align-items: flex-start; flex-direction: column; }
@@ -1705,6 +1813,45 @@ svg.stage-overlay {
     .control-bar { grid-template-columns: 1fr 1fr; }
     .control-bar .primary-action { grid-column: 1 / -1; }
     .CodeMirror { height: clamp(320px, 52vh, 430px); }
+    .prototype-header,
+    .prototype-main > .briefing-card,
+    .game-shell,
+    .editor-card,
+    .console-card,
+    .result-panel,
+    .creative-card {
+        -webkit-backdrop-filter: blur(14px) saturate(128%);
+        backdrop-filter: blur(14px) saturate(128%);
+    }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .prototype-nav-dock,
+    .prototype-header,
+    .prototype-main > .briefing-card,
+    .game-shell,
+    .editor-card,
+    .console-card,
+    .result-panel,
+    .creative-card {
+        background: rgba(7, 18, 31, 0.96);
+    }
+}
+
+@media (forced-colors: active) {
+    .prototype-nav-dock,
+    .prototype-header,
+    .prototype-main > .briefing-card,
+    .game-shell,
+    .editor-card,
+    .console-card,
+    .result-panel,
+    .creative-card {
+        border: 2px solid CanvasText;
+        background: Canvas;
+        color: CanvasText;
+        box-shadow: none;
+    }
 }
 
 @media (max-width: 560px) {

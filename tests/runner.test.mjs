@@ -921,6 +921,12 @@ test("finale prototypes stay unlinked, isolated and locally hosted", () => {
         "pixelmuseum_finale.html"
     ];
     const navigation = readFileSync(new URL("../assets/navigation.js", import.meta.url), "utf8");
+    const publicPages = ["index.html", "index-a.html", "index-b.html", ...missionPages];
+
+    for (const publicPage of publicPages) {
+        const html = readFileSync(new URL(`../${publicPage}`, import.meta.url), "utf8");
+        assert.doesNotMatch(html, /(?:pico|pixelmuseum)_finale\.html/);
+    }
 
     for (const page of prototypes) {
         assert.doesNotMatch(navigation, new RegExp(page.replace(".", "\\.")));
@@ -928,6 +934,13 @@ test("finale prototypes stay unlinked, isolated and locally hosted", () => {
         const html = readFileSync(new URL(`../prototypes/${page}`, import.meta.url), "utf8");
         assert.doesNotMatch(html, /https?:\/\//);
         assert.doesNotMatch(html, /localStorage|navigation\.js|runner\.js/);
+        assert.match(html, /Unverlinkter Endprototyp/);
+        assert.match(html, /class="prototype-nav-dock"/);
+        assert.match(html, /class="prototype-home-link" href="\.\.\/index\.html"/);
+        assert.match(html, /src="\.\.\/assets\/brand\/agent-py-logo\.png\?v=20260720-2"/);
+        assert.match(html, /class="prototype-path-token"/);
+        assert.doesNotMatch(html, /class="prototype-path-token"[^>]*(?:href=|onclick=)/);
+        assert.match(html, /href="finale\.css\?v=p3-glass-v1"/);
         assert.match(html, /class="turtle-target"/);
         assert.match(html, /window\.FINALE_CONFIG/);
         assert.match(html, /src="finale\.js\?v=p2-audit-v1"/);
@@ -1694,6 +1707,11 @@ test("finale runtime guards creative code and optimized artwork stays small", ()
     assert.match(finaleCss, /\.rescue-success \.pico-result-message/);
     assert.match(finaleCss, /\.rescue-failed \.pico-result-message/);
     assert.match(finaleCss, /\.mobile-target-legend/);
+    assert.match(finaleCss, /\.prototype-nav-dock/);
+    assert.match(finaleCss, /--prototype-glass-surface:/);
+    assert.match(finaleCss, /-webkit-backdrop-filter:\s*blur\(/);
+    assert.match(finaleCss, /backdrop-filter:\s*blur\(/);
+    assert.match(finaleCss, /\.presentation-mode \.prototype-nav-dock/);
 
     const artwork = [
         "pico-rescue-station.webp",

@@ -1,5 +1,10 @@
 import { expect, test } from "@playwright/test";
 
+const finalePages = [
+    { path: "/prototypes/pico_finale.html?e2e", pathLabel: "Lernpfad PICO" },
+    { path: "/prototypes/pixelmuseum_finale.html?e2e", pathLabel: "Lernpfad Pixelmuseum" }
+];
+
 async function openFinale(page, path) {
     const pageErrors = [];
     page.on("pageerror", error => pageErrors.push(String(error)));
@@ -14,6 +19,101 @@ async function runCode(page, code) {
         await window.finalePrototype.run();
     }, code);
 }
+
+test("both unlinked finales share the Agent PY dock and restrained glass material", async ({ page }) => {
+    const pageErrors = [];
+    page.on("pageerror", error => pageErrors.push(String(error)));
+
+    for (const finale of finalePages) {
+        await page.goto(finale.path);
+        await expect.poll(() => page.evaluate(() => Boolean(window.finalePrototype))).toBe(true);
+
+        const dock = page.locator(".prototype-nav-dock");
+        const home = page.locator(".prototype-home-link");
+        const logo = home.locator("img");
+        const pathToken = page.locator(".prototype-path-token");
+        const header = page.locator(".prototype-header");
+        const card = page.locator(".prototype-main > .briefing-card");
+
+        await expect(dock).toBeVisible();
+        await expect(home).toHaveAttribute("href", "../index.html");
+        await expect(logo).toHaveAttribute("src", "../assets/brand/agent-py-logo.png?v=20260720-2");
+        await expect(pathToken).toContainText("Pfad");
+        await expect(pathToken).not.toHaveAttribute("href", /.+/);
+        await expect(page.locator(".prototype-kicker")).toHaveText("Unverlinkter Endprototyp");
+        await expect(page.locator(".path-badge")).toHaveAttribute("aria-label", finale.pathLabel);
+
+        expect(await logo.evaluate(image => ({
+            complete: image.complete,
+            width: image.naturalWidth,
+            height: image.naturalHeight
+        }))).toEqual({ complete: true, width: 1600, height: 232 });
+
+        for (const surface of [dock, header, card]) {
+            const glass = await surface.evaluate(element => {
+                const style = getComputedStyle(element);
+                return {
+                    backdrop: style.backdropFilter || style.webkitBackdropFilter,
+                    background: style.backgroundImage,
+                    border: style.borderTopStyle,
+                    radius: Number.parseFloat(style.borderTopLeftRadius)
+                };
+            });
+            expect(glass.backdrop).toContain("blur(");
+            expect(glass.background).toContain("linear-gradient");
+            expect(glass.border).not.toBe("none");
+            expect(glass.radius).toBeGreaterThanOrEqual(19);
+        }
+
+        await page.evaluate(() => document.body.classList.add("presentation-mode"));
+        await expect(dock).toBeHidden();
+        await page.evaluate(() => document.body.classList.remove("presentation-mode"));
+    }
+
+    expect(pageErrors).toEqual([]);
+});
+
+test("finale branding remains contained on phones without activating the future path", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    const pageErrors = [];
+    page.on("pageerror", error => pageErrors.push(String(error)));
+
+    for (const finale of finalePages) {
+        await page.goto(finale.path);
+        const dock = page.locator(".prototype-nav-dock");
+        const logo = page.locator(".prototype-home-link img");
+        const pathToken = page.locator(".prototype-path-token");
+        const header = page.locator(".prototype-header");
+
+        await expect(dock).toBeVisible();
+        await expect(header).toBeVisible();
+        const geometry = await page.evaluate(() => {
+            const rect = element => {
+                const box = element.getBoundingClientRect();
+                return { left: box.left, right: box.right, top: box.top, bottom: box.bottom, width: box.width };
+            };
+            return {
+                dock: rect(document.querySelector(".prototype-nav-dock")),
+                logo: rect(document.querySelector(".prototype-home-link img")),
+                path: rect(document.querySelector(".prototype-path-token")),
+                header: rect(document.querySelector(".prototype-header")),
+                overflow: Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth)
+            };
+        });
+
+        expect(geometry.dock.left).toBeGreaterThanOrEqual(0);
+        expect(geometry.dock.right).toBeLessThanOrEqual(390);
+        expect(geometry.header.left).toBeGreaterThanOrEqual(0);
+        expect(geometry.header.right).toBeLessThanOrEqual(390);
+        expect(geometry.logo.width).toBeLessThanOrEqual(108.5);
+        expect(geometry.logo.right).toBeLessThanOrEqual(geometry.path.left + 1);
+        expect(geometry.dock.bottom).toBeLessThanOrEqual(geometry.header.top);
+        expect(geometry.overflow).toBeLessThanOrEqual(1);
+        await expect(pathToken).not.toHaveAttribute("href", /.+/);
+    }
+
+    expect(pageErrors).toEqual([]);
+});
 
 test("PICO clamps an oversized speed-0 move to the real energy range", async ({ page }) => {
     const pageErrors = await openFinale(page, "/prototypes/pico_finale.html?e2e");
