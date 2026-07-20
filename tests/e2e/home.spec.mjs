@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+const assetVersion = "20260720-2";
+
 const variants = [
     {
         path: "index-a.html",
@@ -57,7 +59,7 @@ test("the public root is the complete A homepage and keeps B reachable", async (
     await expect(page.locator('.variant-switch a[aria-current="page"]')).toHaveText("A");
     await expect(page.locator('.variant-switch a[href="index-b.html"]')).toBeVisible();
     await expect(page.locator(".course-brand")).toHaveAttribute("href", "index.html");
-    await expect(page.locator(".course-brand-logo")).toHaveAttribute("src", "assets/brand/agent-py-logo.png");
+    await expect(page.locator(".course-brand-logo")).toHaveAttribute("src", `assets/brand/agent-py-logo.png?v=${assetVersion}`);
     expect(page.url()).not.toContain("mission1_start.html");
     expect(pageErrors).toEqual([]);
 });
@@ -78,9 +80,23 @@ for (const variant of variants) {
         await expect(hero).toContainText(variant.leadText);
         await expect(hero).toBeVisible();
         await expect(hero).toHaveCSS("opacity", "1");
-        await expect(page.locator(".course-brand")).toHaveAttribute("href", "index.html");
-        await expect(page.locator(".course-brand")).toHaveAttribute("aria-label", variant.brandLabel);
-        await expect(page.locator(".course-brand-logo")).toHaveAttribute("src", "assets/brand/agent-py-logo.png");
+        const brand = page.locator(".course-brand");
+        const brandLogo = page.locator(".course-brand-logo");
+        await expect(brand).toHaveAttribute("href", "index.html");
+        await expect(brand).toHaveAttribute("aria-label", variant.brandLabel);
+        await expect(brandLogo).toHaveAttribute("src", `assets/brand/agent-py-logo.png?v=${assetVersion}`);
+        const brandMaterial = await brand.evaluate(element => {
+            const computed = getComputedStyle(element);
+            return {
+                backgroundImage: computed.backgroundImage,
+                borderTopWidth: computed.borderTopWidth,
+                boxShadow: computed.boxShadow
+            };
+        });
+        expect(brandMaterial.backgroundImage).toBe("none");
+        expect(brandMaterial.borderTopWidth).toBe("0px");
+        expect(brandMaterial.boxShadow).toBe("none");
+        expect((await brandLogo.boundingBox())?.width).toBeGreaterThanOrEqual(173);
         await expect(primaryAction).toBeVisible();
         await expect(primaryAction).toHaveAttribute("href", "mission1_start.html");
         await expect(missionCards).toHaveCount(4);
@@ -123,10 +139,10 @@ for (const variant of variants) {
         );
         expect(artwork).toContain(variant.artwork);
 
-        const artworkResponse = await page.request.get(`/assets/images/home/${variant.artwork}`);
+        const artworkResponse = await page.request.get(`/assets/images/home/${variant.artwork}?v=${assetVersion}`);
         expect(artworkResponse.ok()).toBe(true);
         expect(artworkResponse.headers()["content-type"]).toContain("image/webp");
-        const logoResponse = await page.request.get("/assets/brand/agent-py-logo.png");
+        const logoResponse = await page.request.get(`/assets/brand/agent-py-logo.png?v=${assetVersion}`);
         expect(logoResponse.ok()).toBe(true);
         expect(logoResponse.headers()["content-type"]).toContain("image/png");
         expect(pageErrors).toEqual([]);

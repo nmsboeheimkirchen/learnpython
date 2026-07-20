@@ -128,7 +128,7 @@ window.AgentNavigation = (() => {
 
         const logo = document.createElement("img");
         logo.className = "mission-home-logo";
-        logo.setAttribute("src", "assets/brand/agent-py-logo.png");
+        logo.setAttribute("src", "assets/brand/agent-py-logo.png?v=20260720-2");
         logo.setAttribute("alt", "");
         logo.setAttribute("width", "1600");
         logo.setAttribute("height", "232");

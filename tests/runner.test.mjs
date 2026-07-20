@@ -692,7 +692,7 @@ test("mission navigation is rendered from one central definition", () => {
     assert.equal(homeLink.href, "index.html");
     assert.equal(homeLink.getAttribute("aria-label"), "Agent PY – zur Startseite");
     assert.equal(homeLink.children.length, 1);
-    assert.equal(homeLink.children[0].getAttribute("src"), "assets/brand/agent-py-logo.png");
+    assert.equal(homeLink.children[0].getAttribute("src"), "assets/brand/agent-py-logo.png?v=20260720-2");
     assert.equal(homeLink.children[0].getAttribute("width"), "1600");
     assert.equal(homeLink.children[0].getAttribute("height"), "232");
 
@@ -712,7 +712,8 @@ test("mission navigation is rendered from one central definition", () => {
     for (const page of missionPages) {
         const html = readFileSync(new URL(`../${page}`, import.meta.url), "utf8");
         assert.match(html, /<div id="navigation-root"><\/div>/);
-        assert.match(html, /<script src="assets\/navigation\.js"><\/script>/);
+        assert.match(html, /<script src="assets\/navigation\.js\?v=20260720-2"><\/script>/);
+        assert.match(html, /<link rel="stylesheet" href="assets\/style\.css\?v=20260720-2">/);
         assert.doesNotMatch(html, /id="mySidebar"/);
     }
 });
@@ -814,10 +815,12 @@ test("both homepage options keep distinct light moods and one shared logo while 
             .trim();
 
         assert.match(html, new RegExp(`<body class="course-home ${variant.bodyClass}"`));
-        assert.match(html, new RegExp(`assets/images/home/${variant.artwork.replace(".", "\\.")}`));
+        assert.match(html, new RegExp(`assets/images/home/${variant.artwork.replace(".", "\\.")}\\?v=20260720-2`));
         assert.match(html, variant.concept);
         assert.match(html, variant.brand);
-        assert.match(html, /src="assets\/brand\/agent-py-logo\.png"/);
+        assert.match(html, /src="assets\/brand\/agent-py-logo\.png\?v=20260720-2"/);
+        assert.match(html, /href="assets\/style\.css\?v=20260720-2"/);
+        assert.match(html, /href="assets\/home\.css\?v=20260720-2"/);
         assert.match(html, /href="index\.html" aria-label="Agent PY – Startseite"/);
         assert.deepEqual(missionTargets, expectedMissionTargets);
         assert.equal((html.match(/<main\b/gi) ?? []).length, 1);

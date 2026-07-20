@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+const assetVersion = "20260720-2";
+
 const missionPages = [
     "mission1_start.html",
     "mission1_level1.html",
@@ -80,7 +82,7 @@ test("the public root opens the complete learning-path homepage", async ({ page 
 
 test("every mission page exposes the shared Agent PY home button", async ({ page }) => {
     const pageErrors = capturePageErrors(page);
-    const logoResponse = await page.request.get("/assets/brand/agent-py-logo.png");
+    const logoResponse = await page.request.get(`/assets/brand/agent-py-logo.png?v=${assetVersion}`);
     expect(logoResponse.ok()).toBe(true);
     expect(logoResponse.headers()["content-type"]).toContain("image/png");
 
@@ -93,7 +95,7 @@ test("every mission page exposes the shared Agent PY home button", async ({ page
         await expect(home).toBeVisible();
         await expect(home).toHaveAttribute("href", "index.html");
         await expect(home).toHaveAttribute("aria-label", "Agent PY – zur Startseite");
-        await expect(home.locator('.mission-home-logo')).toHaveAttribute("src", "assets/brand/agent-py-logo.png");
+        await expect(home.locator('.mission-home-logo')).toHaveAttribute("src", `assets/brand/agent-py-logo.png?v=${assetVersion}`);
         await expect(menu).toBeVisible();
 
         const dockRect = await elementRect(dock);

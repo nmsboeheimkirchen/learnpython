@@ -11,11 +11,11 @@
 }
 
 .course-home.home-path {
-    --home-image: url("images/home/agent-path-cyan-moon.webp");
+    --home-image: url("images/home/agent-path-cyan-moon.webp?v=20260720-2");
 }
 
 .course-home.home-agent-path {
-    --home-image: url("images/home/agent-path-magenta-portal.webp");
+    --home-image: url("images/home/agent-path-magenta-portal.webp?v=20260720-2");
 }
 
 .course-home #home-main {
@@ -63,13 +63,18 @@
 .course-brand {
     width: max-content;
     min-height: 44px;
-    padding: 0 6px;
+    padding: 0;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
     text-decoration: none;
 }
 
 .course-brand-logo {
     display: block;
-    width: clamp(142px, 15vw, 190px);
+    width: clamp(174px, 18vw, 230px);
     height: auto;
 }
 
@@ -659,6 +664,10 @@
         min-height: 60px;
         padding: 6px 7px 6px 9px;
         border-radius: 21px;
+    }
+
+    .course-brand-logo {
+        width: 150px;
     }
 
     .course-nav-link {
