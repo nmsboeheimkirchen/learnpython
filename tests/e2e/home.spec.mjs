@@ -6,15 +6,17 @@ const variants = [
         bodyClass: "home-path",
         artwork: "python-path-hero.webp",
         heroText: "Vier Missionen.",
-        conceptText: "Checkpoints",
+        leadText: "Jeder Auftrag bringt dir neue Werkzeuge bei.",
+        brandLabel: "Agent PY – Startseite A",
         currentVariant: "A"
     },
     {
         path: "index-b.html",
-        bodyClass: "home-observatory",
-        artwork: "python-observatory-hero.webp",
+        bodyClass: "home-agent-path",
+        artwork: "python-agent-path-hero.webp",
         heroText: "Entdecke,",
-        conceptText: "Werkzeuge",
+        leadText: "Vier Missionen und dein Weg beginnt hier.",
+        brandLabel: "agent.py – Startseite B",
         currentVariant: "B"
     }
 ];
@@ -47,7 +49,7 @@ function durationInMilliseconds(value) {
 }
 
 for (const variant of variants) {
-    test(`${variant.path} presents its own concept and links all four missions`, async ({ page }) => {
+    test(`${variant.path} presents its approved hero and links all four missions`, async ({ page }) => {
         const pageErrors = capturePageErrors(page);
         await page.goto(`/${variant.path}`);
 
@@ -59,9 +61,11 @@ for (const variant of variants) {
         await expect(body).toHaveClass(/course-home/);
         await expect(body).toHaveClass(new RegExp(`(?:^|\\s)${variant.bodyClass}(?:\\s|$)`));
         await expect(page.locator("h1")).toContainText(variant.heroText);
-        await expect(hero).toContainText(variant.conceptText);
+        await expect(hero).toContainText(variant.leadText);
         await expect(hero).toBeVisible();
         await expect(hero).toHaveCSS("opacity", "1");
+        await expect(page.locator(".course-brand")).toHaveAttribute("href", variant.path);
+        await expect(page.locator(".course-brand")).toHaveAttribute("aria-label", variant.brandLabel);
         await expect(primaryAction).toBeVisible();
         await expect(primaryAction).toHaveAttribute("href", "mission1_start.html");
         await expect(missionCards).toHaveCount(4);
@@ -79,6 +83,23 @@ for (const variant of variants) {
         await expect(page.locator(".course-future")).toContainText("PICO");
         await expect(page.locator(".course-future")).toContainText("Pixelmuseum");
 
+        const visibleCopy = await body.innerText();
+        expect(visibleCopy).not.toMatch(/checkpoint|observatorium|observation|beobacht/i);
+
+        const sectionOrder = await page.evaluate(() => {
+            const branch = document.querySelector(".course-branches");
+            const learning = document.querySelector(".course-learning");
+            return {
+                branchBeforeLearning: Boolean(
+                    branch?.compareDocumentPosition(learning) & Node.DOCUMENT_POSITION_FOLLOWING
+                ),
+                futureTop: document.querySelector(".course-future")?.getBoundingClientRect().top,
+                methodTop: document.querySelector(".course-method-grid")?.getBoundingClientRect().top
+            };
+        });
+        expect(sectionOrder.branchBeforeLearning).toBe(true);
+        expect(sectionOrder.futureTop).toBeLessThan(sectionOrder.methodTop);
+
         const prototypeLinks = await page.locator('a[href*="prototypes/"], a[href*="finale"]').count();
         expect(prototypeLinks).toBe(0);
 
@@ -94,26 +115,30 @@ for (const variant of variants) {
     });
 }
 
-test("the two home concepts differ in copy, information model and laptop composition", async ({ page }, testInfo) => {
+test("the two home options share the mission structure but keep distinct branding and hero art", async ({ page }, testInfo) => {
     const snapshots = [];
 
     for (const variant of variants) {
         await page.goto(`/${variant.path}`);
         snapshots.push(await page.evaluate(() => ({
             hero: document.querySelector("h1")?.textContent.trim(),
+            brand: document.querySelector(".course-brand")?.getAttribute("aria-label"),
             facts: [...document.querySelectorAll(".course-facts dt")].map(node => node.textContent.trim()),
             section: document.querySelector("#missions-title")?.textContent.trim(),
-            columns: getComputedStyle(document.querySelector(".course-mission-grid")).gridTemplateColumns
+            columns: getComputedStyle(document.querySelector(".course-mission-grid")).gridTemplateColumns,
+            artwork: getComputedStyle(document.querySelector(".course-hero-art")).backgroundImage
         })));
     }
 
     expect(snapshots[0].hero).not.toBe(snapshots[1].hero);
-    expect(snapshots[0].facts).not.toEqual(snapshots[1].facts);
-    expect(snapshots[0].section).not.toBe(snapshots[1].section);
+    expect(snapshots[0].brand).not.toBe(snapshots[1].brand);
+    expect(snapshots[0].artwork).not.toBe(snapshots[1].artwork);
+    expect(snapshots[0].facts).toEqual(snapshots[1].facts);
+    expect(snapshots[0].section).toBe(snapshots[1].section);
 
     if (testInfo.project.name === "chromium-school-laptop") {
         expect(snapshots[0].columns.split(" ")).toHaveLength(4);
-        expect(snapshots[1].columns.split(" ")).toHaveLength(2);
+        expect(snapshots[1].columns.split(" ")).toHaveLength(4);
     }
 });
 
@@ -175,5 +200,51 @@ test("home glass remains legible and reduced motion is respected", async ({ page
         expect(material.backgroundImage).toContain("linear-gradient");
         expect(material.borderColor).not.toBe("rgba(0, 0, 0, 0)");
         expect(durationInMilliseconds(material.animationDuration)).toBeLessThanOrEqual(1);
+    }
+});
+
+test("phone heroes keep the artwork visible through translucent cards and compact home logos", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+
+    for (const variant of variants) {
+        await page.goto(`/${variant.path}`);
+        const header = page.locator(".course-header");
+        const brand = page.locator(".course-brand");
+        const start = page.locator(".course-header-action");
+        const switcher = page.locator(".variant-switch");
+        const hero = page.locator(".course-hero-card");
+        const style = await hero.evaluate(element => {
+            const computed = getComputedStyle(element);
+            return {
+                backgroundColor: computed.backgroundColor,
+                backgroundImage: computed.backgroundImage,
+                backdropFilter: computed.backdropFilter || computed.webkitBackdropFilter
+            };
+        });
+        const alpha = Number.parseFloat(style.backgroundColor.match(/[\d.]+(?=\))/g)?.at(-1) ?? "1");
+
+        expect(alpha).toBeLessThanOrEqual(0.22);
+        expect(style.backgroundImage).toContain("linear-gradient");
+        expect(style.backdropFilter).toContain("blur(5px)");
+        await expect(brand).toBeVisible();
+        await expect(brand).toHaveAttribute("href", variant.path);
+
+        const headerBox = await header.boundingBox();
+        const brandBox = await brand.boundingBox();
+        const startBox = await start.boundingBox();
+        const switcherBox = await switcher.boundingBox();
+        expect(headerBox).not.toBeNull();
+        expect(brandBox).not.toBeNull();
+        expect(startBox).not.toBeNull();
+        expect(switcherBox).not.toBeNull();
+        expect(brandBox.height).toBeGreaterThanOrEqual(44);
+        expect(brandBox.x + brandBox.width).toBeLessThanOrEqual(headerBox.x + headerBox.width);
+        expect(brandBox.x + brandBox.width).toBeLessThanOrEqual(startBox.x + 1);
+        expect(startBox.x + startBox.width).toBeLessThanOrEqual(switcherBox.x + 1);
+        await expect(start).toHaveText("Starten");
+
+        const overflow = await documentOverflow(page);
+        expect(overflow.body).toBeLessThanOrEqual(1);
+        expect(overflow.document).toBeLessThanOrEqual(1);
     }
 });

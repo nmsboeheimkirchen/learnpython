@@ -765,19 +765,21 @@ test("all four mission artworks are local, valid and web-sized", () => {
     }
 });
 
-test("both homepage concepts are distinct, local and link the complete first mission path", () => {
+test("both homepage options keep distinct heroes and logos while linking the complete mission path", () => {
     const variants = [
         {
             page: "index-a.html",
             bodyClass: "home-path",
             artwork: "python-path-hero.webp",
-            concept: /Checkpoints|Route/
+            concept: /Vier Missionen\.|Jeder Auftrag bringt dir neue Werkzeuge bei\./,
+            brand: /aria-label="Agent PY – Startseite A"/
         },
         {
             page: "index-b.html",
-            bodyClass: "home-observatory",
-            artwork: "python-observatory-hero.webp",
-            concept: /Observatorium|Werkzeuge/
+            bodyClass: "home-agent-path",
+            artwork: "python-agent-path-hero.webp",
+            concept: /Entdecke,|Vier Missionen und dein Weg beginnt hier\./,
+            brand: /aria-label="agent\.py – Startseite B"/
         }
     ];
     const expectedMissionTargets = [
@@ -800,12 +802,18 @@ test("both homepage concepts are distinct, local and link the complete first mis
         assert.match(html, new RegExp(`<body class="course-home ${variant.bodyClass}"`));
         assert.match(html, new RegExp(`assets/images/home/${variant.artwork.replace(".", "\\.")}`));
         assert.match(html, variant.concept);
+        assert.match(html, variant.brand);
         assert.deepEqual(missionTargets, expectedMissionTargets);
         assert.equal((html.match(/<main\b/gi) ?? []).length, 1);
         assert.equal((html.match(/<\/main>/gi) ?? []).length, 1);
         assert.match(html, /<main id="home-main">/);
         assert.doesNotMatch(html, /href="[^"]*(?:prototypes\/|finale)/i);
         assert.doesNotMatch(html, /https?:\/\//i);
+        assert.doesNotMatch(html, /checkpoint|observatorium|observation|beobacht/i);
+        assert.ok(
+            html.indexOf('class="course-future"') < html.indexOf('class="course-method-grid"'),
+            `${variant.page}: Die Weggabelung muss vor „So kommst du voran“ stehen`
+        );
         assert.ok(hero, `${variant.page} braucht einen Hero-Titel`);
         heroTexts.push(hero);
     }
@@ -816,7 +824,7 @@ test("both homepage concepts are distinct, local and link the complete first mis
 test("both homepage hero renders are valid optimized WebP assets", () => {
     const artwork = [
         "python-path-hero.webp",
-        "python-observatory-hero.webp"
+        "python-agent-path-hero.webp"
     ];
 
     for (const file of artwork) {
