@@ -15,8 +15,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test:
-    name: Run automated tests
+  logic:
+    name: Logic and validator tests
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -26,6 +26,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
 
       - name: Install locked test dependencies
         run: npm ci --ignore-scripts
@@ -33,16 +35,52 @@ jobs:
       - name: Run logic and validator tests
         run: npm test
 
-      - name: Install browser engines
-        run: npx playwright install --with-deps chromium webkit
+  browser:
+    name: Browser tests (${{ matrix.project }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - project: chromium-school-laptop
+            engine: chromium
+          - project: webkit-ipad
+            engine: webkit
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install locked test dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Install browser system dependencies
+        run: npx playwright install-deps ${{ matrix.engine }}
+
+      - name: Download Chromium headless shell
+        if: matrix.engine == 'chromium'
+        run: npx playwright install --only-shell chromium
+
+      - name: Download WebKit
+        if: matrix.engine == 'webkit'
+        run: npx playwright install webkit
 
       - name: Run browser end-to-end tests
-        run: npm run test:e2e
+        run: npm run test:e2e -- --project=${{ matrix.project }}
 
   deploy:
     name: Deploy to GitHub Pages
     if: github.event_name != 'pull_request'
-    needs: test
+    needs:
+      - logic
+      - browser
     permissions:
       contents: read
       pages: write
