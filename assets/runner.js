@@ -20,7 +20,9 @@ const LEVEL_ROUTES = Object.freeze({
     "link-m4-title": "mission4_start.html",
     "link-m4-l1": "mission4_level1.html",
     "link-m4-l2": "mission4_level2.html",
-    "link-m4-l3": "mission4_level3.html"
+    "link-m4-l3": "mission4_level3.html",
+    "link-agent-training-title": "agent_training_start.html",
+    "link-agent-training-l1": "agent_training_level1.html"
 });
 
 function safeStorageGetItem(key) {
@@ -278,6 +280,20 @@ function applyUnlocks() {
     }
 
     const unlockedLevels = readUnlockedLevels();
+    const completedLevelCode = readCompletedLevelCode();
+    let restoredUnlock = false;
+    Object.keys(completedLevelCode).forEach(levelId => {
+        const outcome = LEVEL_OUTCOMES[levelId];
+        outcome?.unlocks?.forEach(unlockId => {
+            if (!unlockedLevels.includes(unlockId)) {
+                unlockedLevels.push(unlockId);
+                restoredUnlock = true;
+            }
+        });
+    });
+    if (restoredUnlock) {
+        safeStorageSetItem(PROGRESS_STORAGE_KEY, JSON.stringify(unlockedLevels));
+    }
 
     if (window.location.hash === "#l") {
         safeStorageSetItem(TEACHER_MODE_STORAGE_KEY, "true");
@@ -670,6 +686,15 @@ const LEVEL_VALIDATORS = {
             { passed: Boolean(findStatement(statements, ["print", "(", "geheimtext", ")"])), message: "Gib geheimtext nach der Schleife aus." },
             { passed: outputMatchesLines(output, ["JHKHLP"]), message: "Der fertige Caesar-Code muss JHKHLP ergeben." }
         ]);
+    },
+    agent_training_level1({ statements }) {
+        const printsRealPosition = statements.some(statement =>
+            statementStartsWith(statement, ["print", "("]) &&
+            statementContains(statement, [".", "position", "("])
+        );
+        return firstFailedRequirement([
+            { passed: printsRealPosition, message: "Gib die echte Agentenposition mit print(...position()) aus." }
+        ]);
     }
 };
 
@@ -686,7 +711,12 @@ const LEVEL_OUTCOMES = {
     mission3_level3: { unlocks: ["link-m4-title", "link-m4-l1"], finale: true },
     mission4_level1: { unlocks: ["link-m4-l2"], successMessage: "Scan abgeschlossen: 6 Zeichen erkannt!" },
     mission4_level2: { unlocks: ["link-m4-l3"], successMessage: "Matrix gelesen: Jeder Buchstabe hat eine Zahl!" },
-    mission4_level3: { unlocks: [], finale: true, successMessage: "Nachricht verschlüsselt! Übertragung gesichert." }
+    mission4_level3: {
+        unlocks: ["link-agent-training-title", "link-agent-training-l1"],
+        finale: true,
+        successMessage: "Nachricht verschlüsselt! Die Agentensteuerung ist freigeschaltet."
+    },
+    agent_training_level1: { unlocks: [], successMessage: "Signalpunkt erfasst und markiert." }
 };
 
 const LEVEL_CODE_INHERITANCE = Object.freeze({

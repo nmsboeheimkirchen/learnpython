@@ -85,6 +85,14 @@ function createRunnerContext(initialStorage = {}) {
     return { context, elements, storage };
 }
 
+function createAgentTrainingCore() {
+    const window = {};
+    const context = vm.createContext({ window });
+    const source = readFileSync(new URL("../assets/agent-training-core.js", import.meta.url), "utf8");
+    vm.runInContext(source, context);
+    return window.AgentTrainingCore;
+}
+
 function createClassList() {
     const values = new Set();
     return {
@@ -214,6 +222,21 @@ test("progress data is normalized and unknown levels are ignored", () => {
         storage.get("unlockedLevels_v2"),
         JSON.stringify(["link-level1", "link-level2", "link-level3"])
     );
+});
+
+test("completed mission 4 restores the new Agent training unlock for existing learners", () => {
+    const { context, storage } = createRunnerContext({
+        unlockedLevels_v2: JSON.stringify(["link-level1", "link-m4-l3"]),
+        completedLevelCode_v1: JSON.stringify({
+            mission4_level3: '# Bereits bestanden\nprint("JHKHLP")'
+        })
+    });
+
+    vm.runInContext("applyUnlocks()", context);
+
+    const unlocked = JSON.parse(storage.get("unlockedLevels_v2"));
+    assert.equal(unlocked.includes("link-agent-training-title"), true);
+    assert.equal(unlocked.includes("link-agent-training-l1"), true);
 });
 
 test("the exact passing code is stored and restored per level", () => {
@@ -420,6 +443,11 @@ const validSolutions = [
         level: "mission4_level3",
         code: 'nachricht = "GEHEIM"\ngeheimtext = ""\nfor buchstabe in nachricht:\n    zahl = ord(buchstabe) + 3\n    geheimtext = geheimtext + chr(zahl)\nprint(geheimtext)',
         output: "JHKHLP\n"
+    },
+    {
+        level: "agent_training_level1",
+        code: 'agent.goto(160, 80)\nagent.dot(18)\nprint("Position:", agent.position())',
+        output: "Position: (160.00,80.00)\n"
     }
 ];
 
@@ -485,6 +513,55 @@ test("mission 4 rejects Caesar steps outside the for loop", () => {
     assert.match(result.message, /eingerückt/);
 });
 
+test("Agent training position checks ignore comments and string literals", () => {
+    const { context } = createRunnerContext();
+    context.code = [
+        "# print(agent.position())",
+        'print("agent.position()")'
+    ].join("\n");
+    context.output = "agent.position()\n";
+
+    const result = vm.runInContext(
+        'validateLevelSolution("agent_training_level1", code, output)',
+        context
+    );
+
+    assert.equal(result.passed, false);
+    assert.match(result.message, /echte Agentenposition/);
+});
+
+test("Agent training validates real target, mark and position output as one runtime chain", () => {
+    const core = createAgentTrainingCore();
+
+    const wrongTarget = core.createState();
+    core.recordPosition(wrongTarget, { x: 80, y: 160 });
+    core.recordMark(wrongTarget, { x: 80, y: 160 });
+    assert.equal(core.validate(wrongTarget, "Position: (160, 80)", true).passed, false);
+
+    const missingMark = core.createState();
+    core.recordPosition(missingMark, core.TARGET);
+    assert.equal(core.validate(missingMark, "Position: (160, 80)", true).passed, false);
+
+    const hardcodedWithoutPositionCall = core.createState();
+    core.recordPosition(hardcodedWithoutPositionCall, core.TARGET);
+    core.recordMark(hardcodedWithoutPositionCall, core.TARGET);
+    assert.equal(
+        core.validate(hardcodedWithoutPositionCall, "Position: (160, 80)", false).passed,
+        false
+    );
+
+    const valid = core.createState();
+    core.recordPosition(valid, core.TARGET);
+    core.recordMark(valid, { x: 161, y: 79 });
+    const result = core.validate(valid, "Position: (160.00,80.00)\n", true);
+    assert.equal(result.passed, true);
+    assert.equal(result.checks.every(check => check.passed), true);
+
+    const reset = core.createState();
+    assert.equal(core.validate(reset, "", true).passed, false);
+    assert.equal(reset.marks.length, 0);
+});
+
 const teacherSolutionExpectations = new Map([
     ["mission1_level1", /Verbindung wird hergestellt/],
     ["mission1_level2", /time\.sleep\(1\)/],
@@ -498,7 +575,8 @@ const teacherSolutionExpectations = new Map([
     ["mission3_level3", /random\.randint\(1, 100\)/],
     ["mission4_level1", /for buchstabe in nachricht:/],
     ["mission4_level2", /ord\(buchstabe\)/],
-    ["mission4_level3", /geheimtext = geheimtext \+ chr\(zahl\)/]
+    ["mission4_level3", /geheimtext = geheimtext \+ chr\(zahl\)/],
+    ["agent_training_level1", /agent\.goto\(160, 80\)/]
 ]);
 
 test("teacher solutions are centralized and available for every level", () => {
@@ -553,7 +631,9 @@ const missionPages = [
     "mission4_start.html",
     "mission4_level1.html",
     "mission4_level2.html",
-    "mission4_level3.html"
+    "mission4_level3.html",
+    "agent_training_start.html",
+    "agent_training_level1.html"
 ];
 
 test("browser dependencies are local and checksum-protected", () => {
@@ -676,6 +756,10 @@ test("mission navigation is rendered from one central definition", () => {
         "link-m4-l1",
         "link-m4-l2",
         "link-m4-l3",
+        "link-agent-training-title",
+        "link-agent-training-l1",
+        "link-agent-training-l2",
+        "link-agent-training-l3",
         "reset-progress-btn"
     ];
     for (const id of expectedNavigationIds) {
@@ -707,13 +791,15 @@ test("mission navigation is rendered from one central definition", () => {
     assert.equal(elementsById.get("link-m3-l3").getAttribute("aria-disabled"), "true");
     assert.equal(elementsById.get("link-m4-title").getAttribute("aria-disabled"), "true");
     assert.equal(elementsById.get("link-m4-l3").getAttribute("aria-disabled"), "true");
+    assert.equal(elementsById.get("link-agent-training-title").getAttribute("aria-disabled"), "true");
+    assert.equal(elementsById.get("link-agent-training-l1").getAttribute("aria-disabled"), "true");
     assert.equal(elementsById.get("reset-progress-btn").textContent, "Fortschritt zurücksetzen");
 
     for (const page of missionPages) {
         const html = readFileSync(new URL(`../${page}`, import.meta.url), "utf8");
         assert.match(html, /<div id="navigation-root"><\/div>/);
-        assert.match(html, /<script src="assets\/navigation\.js\?v=20260720-2"><\/script>/);
-        assert.match(html, /<link rel="stylesheet" href="assets\/style\.css\?v=20260720-2">/);
+        assert.match(html, /<script src="assets\/navigation\.js\?v=20260720-[23]"><\/script>/);
+        assert.match(html, /<link rel="stylesheet" href="assets\/style\.css\?v=20260720-[23]">/);
         assert.doesNotMatch(html, /id="mySidebar"/);
     }
 });
@@ -738,12 +824,14 @@ test("all progress link ids keep their established unlock routes", () => {
         "link-m4-title": "mission4_start.html",
         "link-m4-l1": "mission4_level1.html",
         "link-m4-l2": "mission4_level2.html",
-        "link-m4-l3": "mission4_level3.html"
+        "link-m4-l3": "mission4_level3.html",
+        "link-agent-training-title": "agent_training_start.html",
+        "link-agent-training-l1": "agent_training_level1.html"
     });
 });
 
 test("mission pages use the central drawer without legacy offsets and contain one balanced main", () => {
-    assert.equal(missionPages.length, 17);
+    assert.equal(missionPages.length, 19);
 
     for (const page of missionPages) {
         const html = readFileSync(new URL(`../${page}`, import.meta.url), "utf8");
@@ -760,6 +848,20 @@ test("mission pages use the central drawer without legacy offsets and contain on
         assert.equal(mainClosings.length, 1, `${page} braucht genau ein </main>`);
         assert.match(mainOpenings[0], /id=["']main-content["']/i, `${page}: <main> braucht #main-content`);
     }
+});
+
+test("mission 4 hands off to the shared Agent training without exposing later project finales", () => {
+    const mission4Finale = readFileSync(new URL("../mission4_level3.html", import.meta.url), "utf8");
+    const trainingStart = readFileSync(new URL("../agent_training_start.html", import.meta.url), "utf8");
+    const trainingLevel = readFileSync(new URL("../agent_training_level1.html", import.meta.url), "utf8");
+
+    assert.match(mission4Finale, /id="next-level-btn"[^>]+agent_training_start\.html/);
+    assert.match(trainingStart, /href="agent_training_level1\.html"/);
+    assert.match(trainingStart, /Gemeinsame Vorbereitung · Große Mission/);
+    assert.match(trainingLevel, /agent\.goto\(160, 80\)/);
+    assert.match(trainingLevel, /agent\.dot\(18, &quot;#ffd479&quot;\)|agent\.dot\(18, "#ffd479"\)/);
+    assert.match(trainingLevel, /agent\.position\(\)/);
+    assert.doesNotMatch(trainingStart + trainingLevel, /pico_finale|pixelmuseum_finale/);
 });
 
 test("all four mission artworks are local, valid and web-sized", () => {

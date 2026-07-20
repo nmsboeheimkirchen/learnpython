@@ -47,6 +47,19 @@ window.AgentNavigation = (() => {
                 { id: "link-m4-l2", label: "ASCII-Matrix" },
                 { id: "link-m4-l3", label: "Caesar-Code" }
             ]
+        },
+        {
+            number: "AG",
+            title: "Agentensteuerung",
+            titleId: "link-agent-training-title",
+            href: "agent_training_start.html",
+            description: "Turtle-Agenten über Koordinaten steuern, Orte markieren und echte Rückgaben untersuchen.",
+            unitLabel: "Schritt",
+            levels: [
+                { id: "link-agent-training-l1", href: "agent_training_level1.html", label: "Zielpunkt erfassen" },
+                { id: "link-agent-training-l2", label: "Eigene Agentenbefehle" },
+                { id: "link-agent-training-l3", label: "Suchen und aufnehmen" }
+            ]
         }
     ]);
 
@@ -55,6 +68,7 @@ window.AgentNavigation = (() => {
     }
 
     function currentMissionIndex(pageName = currentPageName()) {
+        if (/^agent_training_/.test(pageName)) return missions.length - 1;
         const match = pageName.match(/^mission([1-4])_/);
         return match ? Number(match[1]) - 1 : 0;
     }
@@ -63,9 +77,10 @@ window.AgentNavigation = (() => {
         const body = document.body;
         if (!body?.classList) return;
         const missionIndex = currentMissionIndex(pageName);
-        body.classList.add("learning-page", `mission-${missionIndex + 1}`);
+        const isAgentTraining = /^agent_training_/.test(pageName);
+        body.classList.add("learning-page", isAgentTraining ? "agent-training" : `mission-${missionIndex + 1}`);
         body.classList.add(pageName.includes("_start") ? "mission-start-page" : "mission-level-page");
-        body.dataset.mission = String(missionIndex + 1);
+        body.dataset.mission = isAgentTraining ? "agent-training" : String(missionIndex + 1);
     }
 
     function createLockBadge() {
@@ -188,7 +203,7 @@ window.AgentNavigation = (() => {
 
         const nav = document.createElement("nav");
         nav.className = "mission-navigation";
-        nav.setAttribute("aria-label", "Missionen und Level");
+        nav.setAttribute("aria-label", "Missionen und Trainingsschritte");
 
         missions.forEach((mission, missionIndex) => {
             const locked = missionIndex > 0;
@@ -222,7 +237,7 @@ window.AgentNavigation = (() => {
             mission.levels.forEach((level, levelIndex) => {
                 levels.appendChild(createLink({
                     ...level,
-                    label: `Level ${levelIndex + 1}: ${level.label}`,
+                    label: `${mission.unitLabel || "Level"} ${levelIndex + 1}: ${level.label}`,
                     locked: missionIndex > 0 || levelIndex > 0
                 }));
             });

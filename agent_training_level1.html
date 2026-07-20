@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Agentensteuerung Level 1: Einen Turtle-Agenten mit goto bewegen, mit dot markieren und seine Position ausgeben.">
+    <meta name="color-scheme" content="dark">
+    <title>Agentensteuerung 1 – Zielpunkt erfassen</title>
+    <script src="assets/vendor/skulpt/1.2.0/skulpt.min.js"></script>
+    <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
+    <script src="assets/runner.js?v=20260720-3"></script>
+    <script src="assets/teacher-solutions.js?v=20260720-3"></script>
+    <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
+    <link rel="stylesheet" href="assets/style.css?v=20260720-3">
+    <link rel="stylesheet" href="assets/agent-training.css?v=20260720-1">
+</head>
+<body class="agent-training-level">
+    <a class="skip-link" href="#python-editor">Zum Python-Editor</a>
+    <div id="navigation-root"></div>
+    <script src="assets/navigation.js?v=20260720-3"></script>
+
+    <main id="main-content">
+        <div class="progress-container training-progress">
+            <span class="level-badge">Schritt 1 von 3</span>
+            <div class="progress-bar-bg" aria-hidden="true">
+                <div class="progress-bar-fill" id="progress-fill" style="width: 33.333%;"></div>
+            </div>
+            <span id="status-text" role="status">Warte auf deinen Code</span>
+        </div>
+
+        <div class="training-shell">
+            <section class="training-briefing" aria-labelledby="training-level-title">
+                <div>
+                    <span class="training-eyebrow">Agentensteuerung · Koordinatenlabor</span>
+                    <h1 id="training-level-title">Zielpunkt erfassen</h1>
+                    <p>Bringe deinen Agenten zum Signalpunkt <strong>(160, 80)</strong>, markiere den Ort und mache seine echte Position im Terminal sichtbar.</p>
+                </div>
+                <ul class="training-concept-row" aria-label="Neue Turtle-Befehle">
+                    <li>goto(x, y)</li>
+                    <li>dot(größe, farbe)</li>
+                    <li>position()</li>
+                </ul>
+            </section>
+
+            <div class="training-workspace">
+                <section class="training-stage-panel" aria-labelledby="simulation-title">
+                    <div class="training-section-heading">
+                        <div>
+                            <span class="training-eyebrow">Live-Simulation</span>
+                            <h2 id="simulation-title">Holo-Koordinatenkarte</h2>
+                        </div>
+                        <span id="run-status" class="training-run-status is-ready" role="status">Bereit</span>
+                    </div>
+
+                    <div class="training-stage" aria-label="Koordinatenkarte. Start bei 0, 0. Signalpunkt bei 160, 80.">
+                        <svg class="training-grid" viewBox="0 0 800 450" preserveAspectRatio="none" aria-hidden="true">
+                            <defs>
+                                <pattern id="training-minor-grid" width="50" height="50" patternUnits="userSpaceOnUse">
+                                    <path class="training-grid-minor" d="M 50 0 L 0 0 0 50" fill="none"></path>
+                                </pattern>
+                            </defs>
+                            <rect width="800" height="450" fill="url(#training-minor-grid)"></rect>
+                            <line class="training-axis" x1="0" y1="225" x2="800" y2="225"></line>
+                            <line class="training-axis" x1="400" y1="0" x2="400" y2="450"></line>
+                            <text class="training-axis-label" x="772" y="216">+X</text>
+                            <text class="training-axis-label" x="408" y="18">+Y</text>
+                            <text class="training-grid-label" x="554" y="129">(160, 80)</text>
+                            <circle class="training-target-halo" cx="560" cy="145" r="25"></circle>
+                            <circle class="training-target-core" cx="560" cy="145" r="5"></circle>
+                            <circle class="training-start-marker" cx="400" cy="225" r="8"></circle>
+                        </svg>
+
+                        <span class="training-target-label"><span aria-hidden="true">✦</span> Ziel (160, 80)</span>
+                        <span class="training-start-label">Start (0, 0)</span>
+                        <div id="agent-training-turtle" class="training-turtle-layer" aria-hidden="true"></div>
+
+                        <div class="training-coordinate-hud" aria-label="Aktuelle Agentenposition">
+                            <span>X <strong id="coordinate-x">0</strong></span>
+                            <span>Y <strong id="coordinate-y">0</strong></span>
+                        </div>
+                        <div id="training-stage-message" class="training-stage-message" role="status" hidden>SIGNALPUNKT KALIBRIERT</div>
+                    </div>
+
+                    <div class="training-legend" aria-label="Koordinatenhilfe">
+                        <span><strong>X</strong> bewegt nach rechts oder links.</span>
+                        <span><strong>Y</strong> bewegt nach oben oder unten.</span>
+                        <span><code>dot()</code> markiert den aktuellen Ort.</span>
+                    </div>
+
+                    <section class="training-feedback" aria-labelledby="training-feedback-title">
+                        <div>
+                            <span class="training-eyebrow">Live-Feedback</span>
+                            <h2 id="training-feedback-title">Noch nicht ausgeführt</h2>
+                            <p id="training-feedback-message">Starte deinen Code. Die Prüfung beobachtet den echten Agentenweg.</p>
+                        </div>
+                        <ul id="training-checks" class="training-checks" aria-label="Prüfergebnisse">
+                            <li class="training-check is-missing"><span class="training-check-icon" aria-hidden="true">○</span><span>Zielpunkt wirklich erreicht</span></li>
+                            <li class="training-check is-missing"><span class="training-check-icon" aria-hidden="true">○</span><span>Punkt direkt am Ziel markiert</span></li>
+                            <li class="training-check is-missing"><span class="training-check-icon" aria-hidden="true">○</span><span>Echte Position mit print() ausgegeben</span></li>
+                        </ul>
+                    </section>
+                </section>
+
+                <section class="training-code-panel" aria-labelledby="training-code-title">
+                    <div class="training-task-card">
+                        <h2>Dein Auftrag</h2>
+                        <p>Der Agent ist schon vorbereitet. Ergänze unter dem Kommentar genau diese drei neuen Schritte:</p>
+                        <ol class="training-command-list">
+                            <li><code>agent.goto(160, 80)</code></li>
+                            <li><code>agent.dot(18, "#ffd479")</code></li>
+                            <li><code>print("Position:", agent.position())</code></li>
+                        </ol>
+                    </div>
+
+                    <label class="training-editor-label" for="python-editor">
+                        <span id="training-code-title">Python-Kontrollraum</span>
+                        <small>Strg/⌘ + Enter startet</small>
+                    </label>
+                    <textarea id="python-editor" spellcheck="false">import turtle
+
+agent = turtle.Turtle()
+agent.shape("triangle")
+agent.color("#71edf4")
+agent.speed(4)
+agent.penup()
+
+# Ergänze hier deine drei Befehle:
+</textarea>
+
+                    <div class="training-controls" aria-label="Programmaktionen">
+                        <button id="run-btn" type="button"><span aria-hidden="true">▶</span> Training starten</button>
+                        <button id="reset-btn" class="secondary-action" type="button">↺ Startcode laden</button>
+                    </div>
+                    <button class="test-btn" type="button" data-teacher-solution="agent_training_level1">Musterlösung (Für Lehrer)</button>
+
+                    <pre id="console-output" aria-live="polite">Bereit für deine ersten Turtle-Befehle.</pre>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <script src="assets/vendor/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="assets/vendor/codemirror/5.65.2/python.min.js"></script>
+    <script src="assets/editor.js"></script>
+    <script src="assets/agent-training-core.js?v=20260720-1"></script>
+    <script src="assets/agent-training.js?v=20260720-1"></script>
+</body>
+</html>

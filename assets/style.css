@@ -89,6 +89,14 @@ a {
     --mission-image: url("images/missions/mission-4-signal-room.webp");
 }
 
+.agent-training {
+    --mission-accent: #71edf4;
+    --mission-accent-rgb: 113, 237, 244;
+    --mission-secondary: #d99cff;
+    --mission-secondary-rgb: 217, 156, 255;
+    --mission-image: url("images/home/agent-path-cyan-moon.webp");
+}
+
 body.learning-page {
     position: relative;
     isolation: isolate;

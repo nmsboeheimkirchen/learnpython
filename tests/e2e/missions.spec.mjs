@@ -19,7 +19,9 @@ const missionPages = [
     "mission4_start.html",
     "mission4_level1.html",
     "mission4_level2.html",
-    "mission4_level3.html"
+    "mission4_level3.html",
+    "agent_training_start.html",
+    "agent_training_level1.html"
 ];
 
 const ipadMissionPages = new Set([
@@ -27,7 +29,8 @@ const ipadMissionPages = new Set([
     "mission1_level1.html",
     "mission2_level1.html",
     "mission3_level3.html",
-    "mission4_level3.html"
+    "mission4_level3.html",
+    "agent_training_level1.html"
 ]);
 
 function capturePageErrors(page) {
