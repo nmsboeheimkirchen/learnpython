@@ -635,11 +635,9 @@ test("mission navigation is rendered from one central definition", () => {
     vm.runInContext(source, context);
 
     assert.equal(renderedNodes.length, 2);
-    const [renderedMenuButton, renderedSidebar] = renderedNodes;
-    assert.equal(renderedMenuButton.tagName, "button");
-    assert.equal(renderedMenuButton.id, "menu-btn");
-    assert.equal(renderedMenuButton.getAttribute("aria-controls"), "mySidebar");
-    assert.equal(renderedMenuButton.getAttribute("aria-expanded"), "false");
+    const [renderedDock, renderedSidebar] = renderedNodes;
+    assert.equal(renderedDock.tagName, "div");
+    assert.equal(renderedDock.id, "learning-nav-dock");
 
     assert.equal(renderedSidebar.tagName, "dialog");
     assert.equal(renderedSidebar.id, "mySidebar");
@@ -651,10 +649,12 @@ test("mission navigation is rendered from one central definition", () => {
         if (element.id) elementsById.set(element.id, element);
         element.children.forEach(collectElements);
     }
-    collectElements(renderedMenuButton);
+    collectElements(renderedDock);
     collectElements(renderedSidebar);
 
     const expectedNavigationIds = [
+        "learning-nav-dock",
+        "agent-py-home",
         "menu-btn",
         "mySidebar",
         "sidebar-title",
@@ -681,6 +681,19 @@ test("mission navigation is rendered from one central definition", () => {
     for (const id of expectedNavigationIds) {
         assert.equal(elementsById.has(id), true, `${id} fehlt in der zentralen Navigation`);
     }
+
+    const renderedMenuButton = elementsById.get("menu-btn");
+    assert.equal(renderedMenuButton.tagName, "button");
+    assert.equal(renderedMenuButton.getAttribute("aria-controls"), "mySidebar");
+    assert.equal(renderedMenuButton.getAttribute("aria-expanded"), "false");
+
+    const homeLink = elementsById.get("agent-py-home");
+    assert.equal(homeLink.tagName, "a");
+    assert.equal(homeLink.href, "index.html");
+    assert.equal(homeLink.getAttribute("aria-label"), "Agent PY – zur Startseite");
+    assert.equal(homeLink.children.length, 2);
+    assert.equal(homeLink.children[0].getAttribute("src"), "assets/brand/agent-py-logo.svg");
+    assert.equal(homeLink.children[1].getAttribute("src"), "assets/brand/agent-py-symbol.svg");
 
     assert.equal(elementsById.get("link-level1").className.includes("locked"), false);
     assert.equal(elementsById.get("link-level1").href, "mission1_level1.html");
@@ -765,21 +778,21 @@ test("all four mission artworks are local, valid and web-sized", () => {
     }
 });
 
-test("both homepage options keep distinct heroes and logos while linking the complete mission path", () => {
+test("both homepage options keep distinct light moods and one shared logo while linking the complete mission path", () => {
     const variants = [
         {
             page: "index-a.html",
             bodyClass: "home-path",
-            artwork: "python-path-hero.webp",
+            artwork: "agent-path-cyan-moon.webp",
             concept: /Vier Missionen\.|Jeder Auftrag bringt dir neue Werkzeuge bei\./,
-            brand: /aria-label="Agent PY – Startseite A"/
+            brand: /aria-label="Agent PY – Startseite"/
         },
         {
             page: "index-b.html",
             bodyClass: "home-agent-path",
-            artwork: "python-agent-path-hero.webp",
+            artwork: "agent-path-magenta-portal.webp",
             concept: /Entdecke,|Vier Missionen und dein Weg beginnt hier\./,
-            brand: /aria-label="agent\.py – Startseite B"/
+            brand: /aria-label="Agent PY – Startseite"/
         }
     ];
     const expectedMissionTargets = [
@@ -803,6 +816,8 @@ test("both homepage options keep distinct heroes and logos while linking the com
         assert.match(html, new RegExp(`assets/images/home/${variant.artwork.replace(".", "\\.")}`));
         assert.match(html, variant.concept);
         assert.match(html, variant.brand);
+        assert.match(html, /src="assets\/brand\/agent-py-logo\.svg"/);
+        assert.match(html, /href="index\.html" aria-label="Agent PY – Startseite"/);
         assert.deepEqual(missionTargets, expectedMissionTargets);
         assert.equal((html.match(/<main\b/gi) ?? []).length, 1);
         assert.equal((html.match(/<\/main>/gi) ?? []).length, 1);
@@ -821,10 +836,22 @@ test("both homepage options keep distinct heroes and logos while linking the com
     assert.notEqual(heroTexts[0], heroTexts[1], "A und B brauchen unterschiedliche Hero-Erzählungen");
 });
 
+test("the public index is the complete A homepage instead of a redirect", () => {
+    const root = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+    const optionA = readFileSync(new URL("../index-a.html", import.meta.url), "utf8");
+
+    assert.match(root, /<body class="course-home home-path"/);
+    assert.match(root, /Vier Missionen\./);
+    assert.match(root, /href="index-b\.html"/);
+    assert.match(root, /agent-path-cyan-moon\.webp/);
+    assert.doesNotMatch(root, /window\.location|http-equiv=["']refresh/i);
+    assert.equal(root, optionA);
+});
+
 test("both homepage hero renders are valid optimized WebP assets", () => {
     const artwork = [
-        "python-path-hero.webp",
-        "python-agent-path-hero.webp"
+        "agent-path-cyan-moon.webp",
+        "agent-path-magenta-portal.webp"
     ];
 
     for (const file of artwork) {
@@ -834,6 +861,17 @@ test("both homepage hero renders are valid optimized WebP assets", () => {
         assert.equal(bytes.subarray(8, 12).toString("ascii"), "WEBP", `${file} ist kein WebP`);
         assert.ok(bytes.length > 50_000, `${file} ist unerwartet leer oder zu klein`);
         assert.ok(statSync(url).size < 300_000, `${file} ist für den Hero zu groß`);
+    }
+});
+
+test("the Agent PY logo assets are local, scalable and script-free", () => {
+    for (const file of ["agent-py-logo.svg", "agent-py-symbol.svg"]) {
+        const svg = readFileSync(new URL(`../assets/brand/${file}`, import.meta.url), "utf8");
+        assert.match(svg, /^<svg[^>]+viewBox=/);
+        assert.match(svg, /#43f3ff/i);
+        assert.match(svg, /#ff3bd4/i);
+        assert.match(svg, /<title[^>]*>Agent PY<\/title>/);
+        assert.doesNotMatch(svg, /<script|javascript:|(?:href|src)=["']https?:\/\//i);
     }
 });
 

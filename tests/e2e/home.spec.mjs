@@ -4,19 +4,19 @@ const variants = [
     {
         path: "index-a.html",
         bodyClass: "home-path",
-        artwork: "python-path-hero.webp",
+        artwork: "agent-path-cyan-moon.webp",
         heroText: "Vier Missionen.",
         leadText: "Jeder Auftrag bringt dir neue Werkzeuge bei.",
-        brandLabel: "Agent PY – Startseite A",
+        brandLabel: "Agent PY – Startseite",
         currentVariant: "A"
     },
     {
         path: "index-b.html",
         bodyClass: "home-agent-path",
-        artwork: "python-agent-path-hero.webp",
+        artwork: "agent-path-magenta-portal.webp",
         heroText: "Entdecke,",
         leadText: "Vier Missionen und dein Weg beginnt hier.",
-        brandLabel: "agent.py – Startseite B",
+        brandLabel: "Agent PY – Startseite",
         currentVariant: "B"
     }
 ];
@@ -48,6 +48,20 @@ function durationInMilliseconds(value) {
     return Number.POSITIVE_INFINITY;
 }
 
+test("the public root is the complete A homepage and keeps B reachable", async ({ page }) => {
+    const pageErrors = capturePageErrors(page);
+    await page.goto("/");
+
+    await expect(page.locator("body")).toHaveClass(/home-path/);
+    await expect(page.locator("h1")).toContainText("Vier Missionen.");
+    await expect(page.locator('.variant-switch a[aria-current="page"]')).toHaveText("A");
+    await expect(page.locator('.variant-switch a[href="index-b.html"]')).toBeVisible();
+    await expect(page.locator(".course-brand")).toHaveAttribute("href", "index.html");
+    await expect(page.locator(".course-brand-logo")).toHaveAttribute("src", "assets/brand/agent-py-logo.svg");
+    expect(page.url()).not.toContain("mission1_start.html");
+    expect(pageErrors).toEqual([]);
+});
+
 for (const variant of variants) {
     test(`${variant.path} presents its approved hero and links all four missions`, async ({ page }) => {
         const pageErrors = capturePageErrors(page);
@@ -64,8 +78,9 @@ for (const variant of variants) {
         await expect(hero).toContainText(variant.leadText);
         await expect(hero).toBeVisible();
         await expect(hero).toHaveCSS("opacity", "1");
-        await expect(page.locator(".course-brand")).toHaveAttribute("href", variant.path);
+        await expect(page.locator(".course-brand")).toHaveAttribute("href", "index.html");
         await expect(page.locator(".course-brand")).toHaveAttribute("aria-label", variant.brandLabel);
+        await expect(page.locator(".course-brand-logo")).toHaveAttribute("src", "assets/brand/agent-py-logo.svg");
         await expect(primaryAction).toBeVisible();
         await expect(primaryAction).toHaveAttribute("href", "mission1_start.html");
         await expect(missionCards).toHaveCount(4);
@@ -111,11 +126,14 @@ for (const variant of variants) {
         const artworkResponse = await page.request.get(`/assets/images/home/${variant.artwork}`);
         expect(artworkResponse.ok()).toBe(true);
         expect(artworkResponse.headers()["content-type"]).toContain("image/webp");
+        const logoResponse = await page.request.get("/assets/brand/agent-py-logo.svg");
+        expect(logoResponse.ok()).toBe(true);
+        expect(logoResponse.headers()["content-type"]).toContain("image/svg+xml");
         expect(pageErrors).toEqual([]);
     });
 }
 
-test("the two home options share the mission structure but keep distinct branding and hero art", async ({ page }, testInfo) => {
+test("the two home options share one identity and mission structure but keep distinct hero art", async ({ page }, testInfo) => {
     const snapshots = [];
 
     for (const variant of variants) {
@@ -131,7 +149,7 @@ test("the two home options share the mission structure but keep distinct brandin
     }
 
     expect(snapshots[0].hero).not.toBe(snapshots[1].hero);
-    expect(snapshots[0].brand).not.toBe(snapshots[1].brand);
+    expect(snapshots[0].brand).toBe(snapshots[1].brand);
     expect(snapshots[0].artwork).not.toBe(snapshots[1].artwork);
     expect(snapshots[0].facts).toEqual(snapshots[1].facts);
     expect(snapshots[0].section).toBe(snapshots[1].section);
@@ -227,7 +245,7 @@ test("phone heroes keep the artwork visible through translucent cards and compac
         expect(style.backgroundImage).toContain("linear-gradient");
         expect(style.backdropFilter).toContain("blur(5px)");
         await expect(brand).toBeVisible();
-        await expect(brand).toHaveAttribute("href", variant.path);
+        await expect(brand).toHaveAttribute("href", "index.html");
 
         const headerBox = await header.boundingBox();
         const brandBox = await brand.boundingBox();

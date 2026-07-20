@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 72" role="img" aria-labelledby="title">
+  <title id="title">Agent PY</title>
+  <defs>
+    <linearGradient id="signal" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#43f3ff"/>
+      <stop offset="1" stop-color="#ff3bd4"/>
+    </linearGradient>
+  </defs>
+  <path fill="#43f3ff" d="M30 8 4 36l26 28h13L17 36 43 8Z"/>
+  <path fill="#ff3bd4" d="m66 8 26 28-26 28H53l26-28L53 8Z"/>
+  <path stroke="url(#signal)" stroke-width="2.5" stroke-linecap="round" d="M48 36h44"/>
+  <circle cx="48" cy="36" r="8" fill="#43f3ff"/>
+</svg>

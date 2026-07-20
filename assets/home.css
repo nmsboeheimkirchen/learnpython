@@ -5,17 +5,19 @@
     --home-amber-rgb: 255, 208, 132;
     --home-violet: #c69cff;
     --home-violet-rgb: 198, 156, 255;
+    --home-magenta: #ff3bd4;
+    --home-magenta-rgb: 255, 59, 212;
     min-height: 100%;
     background: #020711;
     color: #f5f9ff;
 }
 
 .course-home.home-path {
-    --home-image: url("images/home/python-path-hero.webp");
+    --home-image: url("images/home/agent-path-cyan-moon.webp");
 }
 
 .course-home.home-agent-path {
-    --home-image: url("images/home/python-agent-path-hero.webp");
+    --home-image: url("images/home/agent-path-magenta-portal.webp");
 }
 
 .course-home #home-main {
@@ -63,56 +65,19 @@
 .course-brand {
     width: max-content;
     min-height: 44px;
+    padding: 0 11px;
+    overflow: hidden;
+    border: 1px solid rgba(var(--home-cyan-rgb), 0.29);
+    border-radius: 15px;
+    background: linear-gradient(145deg, rgba(var(--home-cyan-rgb), 0.1), rgba(var(--home-magenta-rgb), 0.08));
+    box-shadow: inset 0 1px rgba(255, 255, 255, 0.1), 0 8px 24px rgba(var(--home-cyan-rgb), 0.09);
     text-decoration: none;
 }
 
-.course-brand-wordmark {
-    display: inline-flex;
-    gap: 7px;
-    align-items: baseline;
-    justify-content: center;
-    min-width: 86px;
-    min-height: 44px;
-    padding: 0 12px;
-    border: 1px solid rgba(var(--home-cyan-rgb), 0.34);
-    border-radius: 15px;
-    background: linear-gradient(145deg, rgba(var(--home-cyan-rgb), 0.18), rgba(var(--home-violet-rgb), 0.1));
-    box-shadow: inset 0 1px rgba(255, 255, 255, 0.12), 0 8px 24px rgba(var(--home-cyan-rgb), 0.12);
-    font-family: "SFMono-Regular", Consolas, monospace;
-}
-
-.course-brand-agent-py .course-brand-wordmark > span {
-    color: #c7d5e4;
-    font-size: 0.55rem;
-    font-weight: 760;
-    letter-spacing: 0.12em;
-}
-
-.course-brand-agent-py .course-brand-wordmark > strong {
-    color: var(--home-cyan);
-    font-size: 0.92rem;
-    font-weight: 880;
-    letter-spacing: -0.05em;
-}
-
-.course-brand-agent-file .course-brand-wordmark {
-    gap: 0;
-    border-color: rgba(var(--home-amber-rgb), 0.3);
-    background: linear-gradient(145deg, rgba(var(--home-amber-rgb), 0.11), rgba(var(--home-cyan-rgb), 0.1));
-}
-
-.course-brand-agent-file .course-brand-wordmark > strong {
-    color: #f5f9ff;
-    font-size: 0.83rem;
-    font-weight: 760;
-    letter-spacing: -0.04em;
-}
-
-.course-brand-agent-file .course-brand-wordmark > span {
-    color: var(--home-cyan);
-    font-size: 0.83rem;
-    font-weight: 850;
-    letter-spacing: -0.04em;
+.course-brand-logo {
+    display: block;
+    width: clamp(126px, 13vw, 158px);
+    height: auto;
 }
 
 .course-header-nav {
@@ -208,7 +173,7 @@
 .course-hero-shade {
     z-index: -1;
     background:
-        linear-gradient(90deg, rgba(1, 6, 14, 0.94) 0%, rgba(1, 6, 14, 0.76) 34%, rgba(1, 6, 14, 0.14) 72%, rgba(1, 6, 14, 0.38) 100%),
+        linear-gradient(90deg, rgba(1, 6, 14, 0.94) 0%, rgba(1, 6, 14, 0.76) 34%, rgba(1, 6, 14, 0.12) 70%, rgba(1, 6, 14, 0.08) 100%),
         linear-gradient(180deg, rgba(1, 5, 12, 0.22), rgba(1, 5, 12, 0.12) 68%, #030914 100%);
 }
 
@@ -722,16 +687,16 @@
     }
 
     .course-hero-art {
-        background-position: 72% center;
+        background-position: 82% center;
     }
 
     .home-agent-path .course-hero-art {
-        background-position: 69% center;
+        background-position: 82% center;
     }
 
     .course-hero-shade {
         background:
-            linear-gradient(90deg, rgba(1, 6, 14, 0.88), rgba(1, 6, 14, 0.35)),
+            linear-gradient(90deg, rgba(1, 6, 14, 0.86), rgba(1, 6, 14, 0.14)),
             linear-gradient(180deg, rgba(1, 5, 12, 0.08) 0%, rgba(1, 5, 12, 0.34) 46%, #030914 100%);
     }
 

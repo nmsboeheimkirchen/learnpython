@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 404 72" role="img" aria-labelledby="title desc">
+  <title id="title">Agent PY</title>
+  <desc id="desc">Cyanfarbenes und magentafarbenes Signalsymbol vor dem Schriftzug Agent PY.</desc>
+  <defs>
+    <linearGradient id="signal" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#43f3ff"/>
+      <stop offset="1" stop-color="#ff3bd4"/>
+    </linearGradient>
+  </defs>
+
+  <path fill="#43f3ff" d="M30 8 4 36l26 28h13L17 36 43 8Z"/>
+  <path fill="#ff3bd4" d="m66 8 26 28-26 28H53l26-28L53 8Z"/>
+  <path stroke="url(#signal)" stroke-width="2.5" stroke-linecap="round" d="M48 36h350"/>
+  <circle cx="48" cy="36" r="8" fill="#43f3ff"/>
+
+  <g fill="#f7fbff" transform="translate(8)">
+    <path fill-rule="evenodd" d="m108 54 13-36h10l18 36h-9l-4-9h-16l-3 9Zm15-17h10l-6-11Z"/>
+    <path d="M180 25h-18l-7 7v13l5 4h15l2-8h-12l2-7h21l-5 15-7 6h-20l-10-8V29l11-11h25Z"/>
+    <path d="m191 18-9 36h27l2-7h-19l2-8h16l2-7h-16l2-7h19l2-7Z"/>
+    <path d="m222 18-9 36h9l5-22 13 22h9l9-36h-9l-5 22-13-22Z"/>
+    <path d="M262 18h34l-2 8h-12l-7 28h-9l7-28h-13Z"/>
+  </g>
+
+  <g fill="#ff3bd4" transform="translate(8)">
+    <path fill-rule="evenodd" d="m306 18-9 36h9l3-12h13l10-8 3-10-7-6Zm5 17 3-10h11l2 2-2 5-4 3Z"/>
+    <path d="M337 18h10l7 13 13-13h11l-20 21-4 15h-9l4-15Z"/>
+  </g>
+</svg>

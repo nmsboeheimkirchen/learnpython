@@ -146,12 +146,32 @@ test("the navigation uses readable glass material and honors reduced motion", as
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto("/mission1_level1.html");
 
+    const dock = page.locator("#learning-nav-dock");
+    const home = page.locator("#agent-py-home");
     const menuButton = page.locator("#menu-btn");
     const drawer = page.locator("dialog#mySidebar");
     const surface = page.locator(".sidebar-surface");
+    const dockBox = await dock.boundingBox();
+    const homeBox = await home.boundingBox();
     const menuBox = await menuButton.boundingBox();
+    expect(dockBox).not.toBeNull();
+    expect(homeBox).not.toBeNull();
     expect(menuBox).not.toBeNull();
+    expect(dockBox.height).toBeGreaterThanOrEqual(44);
+    expect(homeBox.height).toBeGreaterThanOrEqual(44);
     expect(menuBox.height).toBeGreaterThanOrEqual(44);
+
+    const dockGlass = await dock.evaluate(element => {
+        const style = getComputedStyle(element);
+        return {
+            backdropFilter: style.backdropFilter || style.webkitBackdropFilter,
+            backgroundImage: style.backgroundImage,
+            borderColor: style.borderTopColor
+        };
+    });
+    expect(dockGlass.backdropFilter).toContain("blur(");
+    expect(dockGlass.backgroundImage).toContain("linear-gradient");
+    expect(dockGlass.borderColor).not.toBe("rgba(0, 0, 0, 0)");
 
     await menuButton.click();
     await expect(drawer).toBeVisible();

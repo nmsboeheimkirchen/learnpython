@@ -66,15 +66,63 @@ async function documentOverflow(page) {
     }));
 }
 
-test("the public root opens the redesigned first mission", async ({ page }) => {
+test("the public root opens the complete learning-path homepage", async ({ page }) => {
     const pageErrors = capturePageErrors(page);
     await page.goto("/");
 
-    await expect(page).toHaveURL(/\/mission1_start\.html$/);
-    await expect(page.locator("body")).toHaveClass(/mission-start-page/);
-    await expect(page.locator(".mission-hero-card")).toBeVisible();
-    await expect(page.locator(".mission-start-action")).toHaveAttribute("href", "mission1_level1.html");
+    await expect(page.locator("body")).toHaveClass(/home-path/);
+    await expect(page.locator("h1")).toContainText("Vier Missionen.");
+    await expect(page.locator(".course-primary-action")).toHaveAttribute("href", "mission1_start.html");
+    await expect(page.locator('.variant-switch a[href="index-b.html"]')).toBeVisible();
+    expect(page.url()).not.toContain("mission1_start.html");
     expect(pageErrors).toEqual([]);
+});
+
+test("every mission page exposes the shared Agent PY home button", async ({ page }) => {
+    const pageErrors = capturePageErrors(page);
+    const logoResponse = await page.request.get("/assets/brand/agent-py-logo.svg");
+    const symbolResponse = await page.request.get("/assets/brand/agent-py-symbol.svg");
+    expect(logoResponse.ok()).toBe(true);
+    expect(symbolResponse.ok()).toBe(true);
+
+    for (const missionPage of missionPages) {
+        await page.goto(`/${missionPage}`);
+        const dock = page.locator("#learning-nav-dock");
+        const home = page.locator("#agent-py-home");
+        const menu = page.locator("#menu-btn");
+        await expect(dock).toBeVisible();
+        await expect(home).toBeVisible();
+        await expect(home).toHaveAttribute("href", "index.html");
+        await expect(home).toHaveAttribute("aria-label", "Agent PY – zur Startseite");
+        await expect(home.locator('.mission-home-logo-full')).toHaveAttribute("src", "assets/brand/agent-py-logo.svg");
+        await expect(home.locator('.mission-home-logo-symbol')).toHaveAttribute("src", "assets/brand/agent-py-symbol.svg");
+        await expect(menu).toBeVisible();
+
+        const dockRect = await elementRect(dock);
+        const homeRect = await elementRect(home);
+        const menuRect = await elementRect(menu);
+        const viewport = page.viewportSize();
+        expect(dockRect.left).toBeGreaterThanOrEqual(0);
+        expect(dockRect.right).toBeLessThanOrEqual(viewport.width + 1);
+        expect(homeRect.right).toBeLessThanOrEqual(menuRect.left + 1);
+    }
+
+    expect(pageErrors).toEqual([]);
+});
+
+test("the mission home button uses its compact symbol on phones and returns to A", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/mission1_level1.html");
+
+    await expect(page.locator(".mission-home-logo-full")).toBeHidden();
+    await expect(page.locator(".mission-home-logo-symbol")).toBeVisible();
+    const dockRect = await elementRect(page.locator("#learning-nav-dock"));
+    expect(dockRect.left).toBeGreaterThanOrEqual(0);
+    expect(dockRect.right).toBeLessThanOrEqual(390);
+
+    await page.locator("#agent-py-home").click();
+    await expect(page.locator("body")).toHaveClass(/home-path/);
+    await expect(page.locator("h1")).toContainText("Vier Missionen.");
 });
 
 test("the learning-path drawer overlays the workspace without moving it", async ({ page }) => {
