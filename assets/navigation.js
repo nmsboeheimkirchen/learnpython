@@ -126,24 +126,15 @@ window.AgentNavigation = (() => {
         link.href = "index.html";
         link.setAttribute("aria-label", "Agent PY – zur Startseite");
 
-        const fullLogo = document.createElement("img");
-        fullLogo.className = "mission-home-logo mission-home-logo-full";
-        fullLogo.setAttribute("src", "assets/brand/agent-py-logo.svg");
-        fullLogo.setAttribute("alt", "");
-        fullLogo.setAttribute("width", "404");
-        fullLogo.setAttribute("height", "72");
-        fullLogo.setAttribute("aria-hidden", "true");
+        const logo = document.createElement("img");
+        logo.className = "mission-home-logo";
+        logo.setAttribute("src", "assets/brand/agent-py-logo.png");
+        logo.setAttribute("alt", "");
+        logo.setAttribute("width", "1600");
+        logo.setAttribute("height", "232");
+        logo.setAttribute("aria-hidden", "true");
 
-        const symbol = document.createElement("img");
-        symbol.className = "mission-home-logo mission-home-logo-symbol";
-        symbol.setAttribute("src", "assets/brand/agent-py-symbol.svg");
-        symbol.setAttribute("alt", "");
-        symbol.setAttribute("width", "96");
-        symbol.setAttribute("height", "72");
-        symbol.setAttribute("aria-hidden", "true");
-
-        link.appendChild(fullLogo);
-        link.appendChild(symbol);
+        link.appendChild(logo);
         return link;
     }
 

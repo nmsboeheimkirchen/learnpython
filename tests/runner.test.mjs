@@ -691,9 +691,10 @@ test("mission navigation is rendered from one central definition", () => {
     assert.equal(homeLink.tagName, "a");
     assert.equal(homeLink.href, "index.html");
     assert.equal(homeLink.getAttribute("aria-label"), "Agent PY – zur Startseite");
-    assert.equal(homeLink.children.length, 2);
-    assert.equal(homeLink.children[0].getAttribute("src"), "assets/brand/agent-py-logo.svg");
-    assert.equal(homeLink.children[1].getAttribute("src"), "assets/brand/agent-py-symbol.svg");
+    assert.equal(homeLink.children.length, 1);
+    assert.equal(homeLink.children[0].getAttribute("src"), "assets/brand/agent-py-logo.png");
+    assert.equal(homeLink.children[0].getAttribute("width"), "1600");
+    assert.equal(homeLink.children[0].getAttribute("height"), "232");
 
     assert.equal(elementsById.get("link-level1").className.includes("locked"), false);
     assert.equal(elementsById.get("link-level1").href, "mission1_level1.html");
@@ -784,7 +785,7 @@ test("both homepage options keep distinct light moods and one shared logo while 
             page: "index-a.html",
             bodyClass: "home-path",
             artwork: "agent-path-cyan-moon.webp",
-            concept: /Vier Missionen\.|Jeder Auftrag bringt dir neue Werkzeuge bei\./,
+            concept: /Entdecke,|Vier Missionen und dein Weg beginnt hier\./,
             brand: /aria-label="Agent PY – Startseite"/
         },
         {
@@ -816,7 +817,7 @@ test("both homepage options keep distinct light moods and one shared logo while 
         assert.match(html, new RegExp(`assets/images/home/${variant.artwork.replace(".", "\\.")}`));
         assert.match(html, variant.concept);
         assert.match(html, variant.brand);
-        assert.match(html, /src="assets\/brand\/agent-py-logo\.svg"/);
+        assert.match(html, /src="assets\/brand\/agent-py-logo\.png"/);
         assert.match(html, /href="index\.html" aria-label="Agent PY – Startseite"/);
         assert.deepEqual(missionTargets, expectedMissionTargets);
         assert.equal((html.match(/<main\b/gi) ?? []).length, 1);
@@ -833,7 +834,7 @@ test("both homepage options keep distinct light moods and one shared logo while 
         heroTexts.push(hero);
     }
 
-    assert.notEqual(heroTexts[0], heroTexts[1], "A und B brauchen unterschiedliche Hero-Erzählungen");
+    assert.equal(heroTexts[0], heroTexts[1], "A und B sollen dieselbe Hero-Erzählung verwenden");
 });
 
 test("the public index is the complete A homepage instead of a redirect", () => {
@@ -841,7 +842,7 @@ test("the public index is the complete A homepage instead of a redirect", () => 
     const optionA = readFileSync(new URL("../index-a.html", import.meta.url), "utf8");
 
     assert.match(root, /<body class="course-home home-path"/);
-    assert.match(root, /Vier Missionen\./);
+    assert.match(root, /Entdecke,/);
     assert.match(root, /href="index-b\.html"/);
     assert.match(root, /agent-path-cyan-moon\.webp/);
     assert.doesNotMatch(root, /window\.location|http-equiv=["']refresh/i);
@@ -864,22 +865,16 @@ test("both homepage hero renders are valid optimized WebP assets", () => {
     }
 });
 
-test("the Agent PY logo assets are local, scalable and script-free", () => {
-    for (const file of ["agent-py-logo.svg", "agent-py-symbol.svg"]) {
-        const svg = readFileSync(new URL(`../assets/brand/${file}`, import.meta.url), "utf8");
-        assert.match(svg, /^<svg[^>]+viewBox=/);
-        assert.match(svg, /#6ddde4/i);
-        assert.match(svg, /#e7c56f/i);
-        assert.match(svg, /id="signal-shot"/);
-        assert.match(svg, /<title[^>]*>Agent PY<\/title>/);
-        assert.doesNotMatch(svg, /<script|javascript:|(?:href|src)=["']https?:\/\//i);
-    }
+test("the supplied transparent Agent PY PNG is the shared optimized logo asset", () => {
+    const logoUrl = new URL("../assets/brand/agent-py-logo.png", import.meta.url);
+    const logo = readFileSync(logoUrl);
 
-    const fullLogo = readFileSync(new URL("../assets/brand/agent-py-logo.svg", import.meta.url), "utf8");
-    assert.ok(
-        fullLogo.indexOf('id="signal-shot"') > fullLogo.lastIndexOf("</g>"),
-        "Die Signallinie muss sichtbar vor dem Schriftzug liegen"
-    );
+    assert.equal(logo.subarray(0, 8).toString("hex"), "89504e470d0a1a0a");
+    assert.equal(logo.subarray(12, 16).toString("ascii"), "IHDR");
+    assert.equal(logo.readUInt32BE(16), 1600);
+    assert.equal(logo.readUInt32BE(20), 232);
+    assert.equal(logo[25], 6, "Das Logo muss einen echten Alphakanal behalten");
+    assert.ok(statSync(logoUrl).size < 200_000, "Das transparente Logo ist unerwartet groß");
 });
 
 test("CodeMirror is initialized from one central editor module", () => {

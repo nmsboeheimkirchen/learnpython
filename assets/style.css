@@ -676,16 +676,8 @@ button:disabled {
 
 .mission-home-logo {
     display: block;
+    width: 174px;
     height: auto;
-}
-
-.mission-home-logo-full {
-    width: 142px;
-}
-
-.mission-home-logo-symbol {
-    display: none;
-    width: 40px;
 }
 
 .menu-btn {
@@ -949,12 +941,8 @@ body.navigation-open {
         padding-inline: 4px;
     }
 
-    .mission-home-logo-full {
-        display: none;
-    }
-
-    .mission-home-logo-symbol {
-        display: block;
+    .mission-home-logo {
+        width: 96px;
     }
 }
 

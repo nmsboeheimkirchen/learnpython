@@ -5,8 +5,8 @@ const variants = [
         path: "index-a.html",
         bodyClass: "home-path",
         artwork: "agent-path-cyan-moon.webp",
-        heroText: "Vier Missionen.",
-        leadText: "Jeder Auftrag bringt dir neue Werkzeuge bei.",
+        heroText: "Entdecke,",
+        leadText: "Vier Missionen und dein Weg beginnt hier.",
         brandLabel: "Agent PY – Startseite",
         currentVariant: "A"
     },
@@ -53,11 +53,11 @@ test("the public root is the complete A homepage and keeps B reachable", async (
     await page.goto("/");
 
     await expect(page.locator("body")).toHaveClass(/home-path/);
-    await expect(page.locator("h1")).toContainText("Vier Missionen.");
+    await expect(page.locator("h1")).toContainText("Entdecke,");
     await expect(page.locator('.variant-switch a[aria-current="page"]')).toHaveText("A");
     await expect(page.locator('.variant-switch a[href="index-b.html"]')).toBeVisible();
     await expect(page.locator(".course-brand")).toHaveAttribute("href", "index.html");
-    await expect(page.locator(".course-brand-logo")).toHaveAttribute("src", "assets/brand/agent-py-logo.svg");
+    await expect(page.locator(".course-brand-logo")).toHaveAttribute("src", "assets/brand/agent-py-logo.png");
     expect(page.url()).not.toContain("mission1_start.html");
     expect(pageErrors).toEqual([]);
 });
@@ -80,7 +80,7 @@ for (const variant of variants) {
         await expect(hero).toHaveCSS("opacity", "1");
         await expect(page.locator(".course-brand")).toHaveAttribute("href", "index.html");
         await expect(page.locator(".course-brand")).toHaveAttribute("aria-label", variant.brandLabel);
-        await expect(page.locator(".course-brand-logo")).toHaveAttribute("src", "assets/brand/agent-py-logo.svg");
+        await expect(page.locator(".course-brand-logo")).toHaveAttribute("src", "assets/brand/agent-py-logo.png");
         await expect(primaryAction).toBeVisible();
         await expect(primaryAction).toHaveAttribute("href", "mission1_start.html");
         await expect(missionCards).toHaveCount(4);
@@ -126,20 +126,21 @@ for (const variant of variants) {
         const artworkResponse = await page.request.get(`/assets/images/home/${variant.artwork}`);
         expect(artworkResponse.ok()).toBe(true);
         expect(artworkResponse.headers()["content-type"]).toContain("image/webp");
-        const logoResponse = await page.request.get("/assets/brand/agent-py-logo.svg");
+        const logoResponse = await page.request.get("/assets/brand/agent-py-logo.png");
         expect(logoResponse.ok()).toBe(true);
-        expect(logoResponse.headers()["content-type"]).toContain("image/svg+xml");
+        expect(logoResponse.headers()["content-type"]).toContain("image/png");
         expect(pageErrors).toEqual([]);
     });
 }
 
-test("the two home options share one identity and mission structure but keep distinct hero art", async ({ page }, testInfo) => {
+test("the two home options share one identity, content and mission structure but keep distinct hero art", async ({ page }, testInfo) => {
     const snapshots = [];
 
     for (const variant of variants) {
         await page.goto(`/${variant.path}`);
         snapshots.push(await page.evaluate(() => ({
             hero: document.querySelector("h1")?.textContent.trim(),
+            main: document.querySelector("#home-main")?.innerText.replace(/\s+/g, " ").trim(),
             brand: document.querySelector(".course-brand")?.getAttribute("aria-label"),
             facts: [...document.querySelectorAll(".course-facts dt")].map(node => node.textContent.trim()),
             section: document.querySelector("#missions-title")?.textContent.trim(),
@@ -148,7 +149,8 @@ test("the two home options share one identity and mission structure but keep dis
         })));
     }
 
-    expect(snapshots[0].hero).not.toBe(snapshots[1].hero);
+    expect(snapshots[0].hero).toBe(snapshots[1].hero);
+    expect(snapshots[0].main).toBe(snapshots[1].main);
     expect(snapshots[0].brand).toBe(snapshots[1].brand);
     expect(snapshots[0].artwork).not.toBe(snapshots[1].artwork);
     expect(snapshots[0].facts).toEqual(snapshots[1].facts);
@@ -239,6 +241,14 @@ test("phone heroes keep the artwork visible through translucent cards and compac
                 backdropFilter: computed.backdropFilter || computed.webkitBackdropFilter
             };
         });
+        const brandMaterial = await brand.evaluate(element => {
+            const computed = getComputedStyle(element);
+            return {
+                backgroundImage: computed.backgroundImage,
+                borderTopWidth: computed.borderTopWidth,
+                boxShadow: computed.boxShadow
+            };
+        });
         const alpha = Number.parseFloat(style.backgroundColor.match(/[\d.]+(?=\))/g)?.at(-1) ?? "1");
 
         expect(alpha).toBeLessThanOrEqual(0.22);
@@ -246,6 +256,9 @@ test("phone heroes keep the artwork visible through translucent cards and compac
         expect(style.backdropFilter).toContain("blur(5px)");
         await expect(brand).toBeVisible();
         await expect(brand).toHaveAttribute("href", "index.html");
+        expect(brandMaterial.backgroundImage).toBe("none");
+        expect(brandMaterial.borderTopWidth).toBe("0px");
+        expect(brandMaterial.boxShadow).toBe("none");
 
         const headerBox = await header.boundingBox();
         const brandBox = await brand.boundingBox();

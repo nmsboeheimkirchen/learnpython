@@ -71,7 +71,7 @@ test("the public root opens the complete learning-path homepage", async ({ page 
     await page.goto("/");
 
     await expect(page.locator("body")).toHaveClass(/home-path/);
-    await expect(page.locator("h1")).toContainText("Vier Missionen.");
+    await expect(page.locator("h1")).toContainText("Entdecke,");
     await expect(page.locator(".course-primary-action")).toHaveAttribute("href", "mission1_start.html");
     await expect(page.locator('.variant-switch a[href="index-b.html"]')).toBeVisible();
     expect(page.url()).not.toContain("mission1_start.html");
@@ -80,10 +80,9 @@ test("the public root opens the complete learning-path homepage", async ({ page 
 
 test("every mission page exposes the shared Agent PY home button", async ({ page }) => {
     const pageErrors = capturePageErrors(page);
-    const logoResponse = await page.request.get("/assets/brand/agent-py-logo.svg");
-    const symbolResponse = await page.request.get("/assets/brand/agent-py-symbol.svg");
+    const logoResponse = await page.request.get("/assets/brand/agent-py-logo.png");
     expect(logoResponse.ok()).toBe(true);
-    expect(symbolResponse.ok()).toBe(true);
+    expect(logoResponse.headers()["content-type"]).toContain("image/png");
 
     for (const missionPage of missionPages) {
         await page.goto(`/${missionPage}`);
@@ -94,8 +93,7 @@ test("every mission page exposes the shared Agent PY home button", async ({ page
         await expect(home).toBeVisible();
         await expect(home).toHaveAttribute("href", "index.html");
         await expect(home).toHaveAttribute("aria-label", "Agent PY – zur Startseite");
-        await expect(home.locator('.mission-home-logo-full')).toHaveAttribute("src", "assets/brand/agent-py-logo.svg");
-        await expect(home.locator('.mission-home-logo-symbol')).toHaveAttribute("src", "assets/brand/agent-py-symbol.svg");
+        await expect(home.locator('.mission-home-logo')).toHaveAttribute("src", "assets/brand/agent-py-logo.png");
         await expect(menu).toBeVisible();
 
         const dockRect = await elementRect(dock);
@@ -110,19 +108,20 @@ test("every mission page exposes the shared Agent PY home button", async ({ page
     expect(pageErrors).toEqual([]);
 });
 
-test("the mission home button uses its compact symbol on phones and returns to A", async ({ page }) => {
+test("the mission home button uses the supplied logo compactly on phones and returns to A", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/mission1_level1.html");
 
-    await expect(page.locator(".mission-home-logo-full")).toBeHidden();
-    await expect(page.locator(".mission-home-logo-symbol")).toBeVisible();
+    await expect(page.locator(".mission-home-logo")).toBeVisible();
+    const logoRect = await elementRect(page.locator(".mission-home-logo"));
+    expect(logoRect.width).toBeLessThanOrEqual(96.5);
     const dockRect = await elementRect(page.locator("#learning-nav-dock"));
     expect(dockRect.left).toBeGreaterThanOrEqual(0);
     expect(dockRect.right).toBeLessThanOrEqual(390);
 
     await page.locator("#agent-py-home").click();
     await expect(page.locator("body")).toHaveClass(/home-path/);
-    await expect(page.locator("h1")).toContainText("Vier Missionen.");
+    await expect(page.locator("h1")).toContainText("Entdecke,");
 });
 
 test("the learning-path drawer overlays the workspace without moving it", async ({ page }) => {
