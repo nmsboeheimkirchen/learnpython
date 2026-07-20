@@ -2,16 +2,14 @@
   <title id="title">Agent PY</title>
   <desc id="desc">Cyanfarbenes und magentafarbenes Signalsymbol vor dem Schriftzug Agent PY.</desc>
   <defs>
-    <linearGradient id="signal" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#43f3ff"/>
-      <stop offset="1" stop-color="#ff3bd4"/>
+    <linearGradient id="signal" x1="48" y1="36" x2="398" y2="36" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#6ddde4"/>
+      <stop offset="1" stop-color="#e7c56f"/>
     </linearGradient>
   </defs>
 
-  <path fill="#43f3ff" d="M30 8 4 36l26 28h13L17 36 43 8Z"/>
-  <path fill="#ff3bd4" d="m66 8 26 28-26 28H53l26-28L53 8Z"/>
-  <path stroke="url(#signal)" stroke-width="2.5" stroke-linecap="round" d="M48 36h350"/>
-  <circle cx="48" cy="36" r="8" fill="#43f3ff"/>
+  <path fill="#6ddde4" d="M30 8 4 36l26 28h13L17 36 43 8Z"/>
+  <path fill="#e7c56f" d="m66 8 26 28-26 28H53l26-28L53 8Z"/>
 
   <g fill="#f7fbff" transform="translate(8)">
     <path fill-rule="evenodd" d="m108 54 13-36h10l18 36h-9l-4-9h-16l-3 9Zm15-17h10l-6-11Z"/>
@@ -21,8 +19,11 @@
     <path d="M262 18h34l-2 8h-12l-7 28h-9l7-28h-13Z"/>
   </g>
 
-  <g fill="#ff3bd4" transform="translate(8)">
+  <g fill="#e7c56f" transform="translate(8)">
     <path fill-rule="evenodd" d="m306 18-9 36h9l3-12h13l10-8 3-10-7-6Zm5 17 3-10h11l2 2-2 5-4 3Z"/>
     <path d="M337 18h10l7 13 13-13h11l-20 21-4 15h-9l4-15Z"/>
   </g>
+
+  <path id="signal-shot" stroke="url(#signal)" stroke-width="2.2" stroke-linecap="round" opacity="0.82" d="M48 36h350"/>
+  <circle cx="48" cy="36" r="8" fill="#6ddde4"/>
 </svg>

@@ -868,11 +868,18 @@ test("the Agent PY logo assets are local, scalable and script-free", () => {
     for (const file of ["agent-py-logo.svg", "agent-py-symbol.svg"]) {
         const svg = readFileSync(new URL(`../assets/brand/${file}`, import.meta.url), "utf8");
         assert.match(svg, /^<svg[^>]+viewBox=/);
-        assert.match(svg, /#43f3ff/i);
-        assert.match(svg, /#ff3bd4/i);
+        assert.match(svg, /#6ddde4/i);
+        assert.match(svg, /#e7c56f/i);
+        assert.match(svg, /id="signal-shot"/);
         assert.match(svg, /<title[^>]*>Agent PY<\/title>/);
         assert.doesNotMatch(svg, /<script|javascript:|(?:href|src)=["']https?:\/\//i);
     }
+
+    const fullLogo = readFileSync(new URL("../assets/brand/agent-py-logo.svg", import.meta.url), "utf8");
+    assert.ok(
+        fullLogo.indexOf('id="signal-shot"') > fullLogo.lastIndexOf("</g>"),
+        "Die Signallinie muss sichtbar vor dem Schriftzug liegen"
+    );
 });
 
 test("CodeMirror is initialized from one central editor module", () => {
