@@ -765,6 +765,70 @@ test("all four mission artworks are local, valid and web-sized", () => {
     }
 });
 
+test("both homepage concepts are distinct, local and link the complete first mission path", () => {
+    const variants = [
+        {
+            page: "index-a.html",
+            bodyClass: "home-path",
+            artwork: "python-path-hero.webp",
+            concept: /Checkpoints|Route/
+        },
+        {
+            page: "index-b.html",
+            bodyClass: "home-observatory",
+            artwork: "python-observatory-hero.webp",
+            concept: /Observatorium|Werkzeuge/
+        }
+    ];
+    const expectedMissionTargets = [
+        "mission1_start.html",
+        "mission2_start.html",
+        "mission3_start.html",
+        "mission4_start.html"
+    ];
+    const heroTexts = [];
+
+    for (const variant of variants) {
+        const html = readFileSync(new URL(`../${variant.page}`, import.meta.url), "utf8");
+        const missionTargets = [...html.matchAll(/<a class="course-mission-card[^>]*href="([^"]+)"/g)]
+            .map(match => match[1]);
+        const hero = html.match(/<h1 id="home-title">([\s\S]*?)<\/h1>/)?.[1]
+            .replace(/<[^>]+>/g, "")
+            .replace(/\s+/g, " ")
+            .trim();
+
+        assert.match(html, new RegExp(`<body class="course-home ${variant.bodyClass}"`));
+        assert.match(html, new RegExp(`assets/images/home/${variant.artwork.replace(".", "\\.")}`));
+        assert.match(html, variant.concept);
+        assert.deepEqual(missionTargets, expectedMissionTargets);
+        assert.equal((html.match(/<main\b/gi) ?? []).length, 1);
+        assert.equal((html.match(/<\/main>/gi) ?? []).length, 1);
+        assert.match(html, /<main id="home-main">/);
+        assert.doesNotMatch(html, /href="[^"]*(?:prototypes\/|finale)/i);
+        assert.doesNotMatch(html, /https?:\/\//i);
+        assert.ok(hero, `${variant.page} braucht einen Hero-Titel`);
+        heroTexts.push(hero);
+    }
+
+    assert.notEqual(heroTexts[0], heroTexts[1], "A und B brauchen unterschiedliche Hero-Erzählungen");
+});
+
+test("both homepage hero renders are valid optimized WebP assets", () => {
+    const artwork = [
+        "python-path-hero.webp",
+        "python-observatory-hero.webp"
+    ];
+
+    for (const file of artwork) {
+        const url = new URL(`../assets/images/home/${file}`, import.meta.url);
+        const bytes = readFileSync(url);
+        assert.equal(bytes.subarray(0, 4).toString("ascii"), "RIFF", `${file} ist kein RIFF-WebP`);
+        assert.equal(bytes.subarray(8, 12).toString("ascii"), "WEBP", `${file} ist kein WebP`);
+        assert.ok(bytes.length > 50_000, `${file} ist unerwartet leer oder zu klein`);
+        assert.ok(statSync(url).size < 300_000, `${file} ist für den Hero zu groß`);
+    }
+});
+
 test("CodeMirror is initialized from one central editor module", () => {
     const textarea = { id: "python-editor" };
     const createdEditor = { name: "editor" };
