@@ -576,7 +576,7 @@ const teacherSolutionExpectations = new Map([
     ["mission4_level1", /for buchstabe in nachricht:/],
     ["mission4_level2", /ord\(buchstabe\)/],
     ["mission4_level3", /geheimtext = geheimtext \+ chr\(zahl\)/],
-    ["agent_training_level1", /agent\.goto\(160, 80\)/]
+    ["agent_training_level1", /agent\.speed\(2\)[\s\S]*agent\.goto\(160, 80\)/]
 ]);
 
 test("teacher solutions are centralized and available for every level", () => {
@@ -858,9 +858,20 @@ test("mission 4 hands off to the shared Agent training without exposing later pr
     assert.match(mission4Finale, /id="next-level-btn"[^>]+agent_training_start\.html/);
     assert.match(trainingStart, /href="agent_training_level1\.html"/);
     assert.match(trainingStart, /Gemeinsame Vorbereitung · Große Mission/);
+    assert.match(trainingStart, /markierst wichtige Orte und untersuchst Fundstücke\./);
+    assert.doesNotMatch(trainingStart, /später echte Suchergebnisse/);
     assert.match(trainingLevel, /agent\.goto\(160, 80\)/);
-    assert.match(trainingLevel, /agent\.dot\(18, &quot;#ffd479&quot;\)|agent\.dot\(18, "#ffd479"\)/);
+    assert.match(trainingLevel, /agent\.dot\(18, &quot;#7df2a9&quot;\)|agent\.dot\(18, "#7df2a9"\)/);
     assert.match(trainingLevel, /agent\.position\(\)/);
+    const starter = trainingLevel.match(/<textarea id="python-editor"[^>]*>([\s\S]*?)<\/textarea>/)?.[1] ?? "";
+    assert.match(starter, /agent\.speed\(2\)\s*\nagent\.penup\(\)/);
+    assert.doesNotMatch(starter, /agent\.speed\(4\)/);
+    assert.match(trainingLevel, /id="training-marks-layer" class="training-marks-layer"/);
+    assert.match(trainingLevel, /<code>penup\(\)<\/code>: Bewegung ohne Spur\./);
+
+    const trainingCss = readFileSync(new URL("../assets/agent-training.css", import.meta.url), "utf8");
+    assert.match(trainingCss, /\.training-live-dot\s*\{[\s\S]*animation:\s*none;/);
+    assert.doesNotMatch(trainingCss, /\.training-complete\s+\.training-target-halo/);
     assert.doesNotMatch(trainingStart + trainingLevel, /pico_finale|pixelmuseum_finale/);
 });
 

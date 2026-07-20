@@ -269,6 +269,24 @@
     pointer-events: none;
 }
 
+.training-marks-layer {
+    position: absolute;
+    z-index: 3;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+}
+
+.training-live-dot {
+    stroke: rgba(232, 255, 241, 0.92);
+    stroke-width: 2;
+    vector-effect: non-scaling-stroke;
+    filter: drop-shadow(0 0 7px rgba(125, 242, 169, 0.92));
+    animation: none;
+}
+
 .training-turtle-layer canvas {
     position: absolute !important;
     inset: 0 !important;
@@ -327,11 +345,6 @@
 
 .training-stage-message[hidden] {
     display: none;
-}
-
-.training-complete .training-target-halo {
-    fill: rgba(125, 242, 169, 0.18);
-    stroke: rgba(125, 242, 169, 0.9);
 }
 
 .training-legend {

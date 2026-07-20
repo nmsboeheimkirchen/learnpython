@@ -16,7 +16,7 @@ window.TeacherSolutions = (() => {
         mission4_level1: "bmFjaHJpY2h0ID0gIkdFSEVJTSIKZm9yIGJ1Y2hzdGFiZSBpbiBuYWNocmljaHQ6CiAgICBwcmludChidWNoc3RhYmUp",
         mission4_level2: "bmFjaHJpY2h0ID0gIkdFSEVJTSIKZm9yIGJ1Y2hzdGFiZSBpbiBuYWNocmljaHQ6CiAgICBwcmludChvcmQoYnVjaHN0YWJlKSk=",
         mission4_level3: "bmFjaHJpY2h0ID0gIkdFSEVJTSIKZ2VoZWltdGV4dCA9ICIiCmZvciBidWNoc3RhYmUgaW4gbmFjaHJpY2h0OgogICAgemFobCA9IG9yZChidWNoc3RhYmUpICsgMwogICAgZ2VoZWltdGV4dCA9IGdlaGVpbXRleHQgKyBjaHIoemFobCkKcHJpbnQoZ2VoZWltdGV4dCk=",
-        agent_training_level1: "aW1wb3J0IHR1cnRsZQoKYWdlbnQgPSB0dXJ0bGUuVHVydGxlKCkKYWdlbnQuc2hhcGUoInRyaWFuZ2xlIikKYWdlbnQuY29sb3IoIiM3MWVkZjQiKQphZ2VudC5zcGVlZCg0KQphZ2VudC5wZW51cCgpCgphZ2VudC5nb3RvKDE2MCwgODApCmFnZW50LmRvdCgxOCwgIiNmZmQ0NzkiKQpwcmludCgiUG9zaXRpb246IiwgYWdlbnQucG9zaXRpb24oKSk="
+        agent_training_level1: "aW1wb3J0IHR1cnRsZQoKYWdlbnQgPSB0dXJ0bGUuVHVydGxlKCkKYWdlbnQuc2hhcGUoInRyaWFuZ2xlIikKYWdlbnQuY29sb3IoIiM3MWVkZjQiKQphZ2VudC5zcGVlZCgyKQphZ2VudC5wZW51cCgpCgphZ2VudC5nb3RvKDE2MCwgODApCmFnZW50LmRvdCgxOCwgIiM3ZGYyYTkiKQpwcmludCgiUG9zaXRpb246IiwgYWdlbnQucG9zaXRpb24oKSk="
     });
 
     function decodeSolution(encoded) {

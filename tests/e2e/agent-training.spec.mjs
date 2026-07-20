@@ -5,12 +5,13 @@ const passingCode = `import turtle
 agent = turtle.Turtle()
 agent.shape("triangle")
 agent.color("#71edf4")
-agent.speed(4)
+agent.speed(2)
 agent.penup()
 
 agent.goto(160, 80)
-agent.dot(18, "#ffd479")
-print("Position:", agent.position())`;
+agent.dot(18, "#7df2a9")
+print("Position:", agent.position())
+agent.goto(160, 180)`;
 
 function capturePageErrors(page) {
     const errors = [];
@@ -34,6 +35,15 @@ test("Agent training level 1 observes the real Turtle route, mark and position o
     await page.evaluate(code => window.editor.setValue(code), passingCode);
     await page.locator("#run-btn").click();
 
+    if (testInfo.project.name === "chromium-school-laptop") {
+        await page.waitForFunction(() => {
+            const state = window.AgentTrainingLevel?.getState?.();
+            return state?.running && state.marks.length === 1 && state.current.y > 90 && state.current.y < 175;
+        }, null, { timeout: 12_000 });
+        await expect(page.locator("#run-btn")).toHaveAttribute("aria-busy", "true");
+        await expect(page.locator("#training-marks-layer .training-live-dot")).toBeVisible();
+    }
+
     await expect(page.locator("#run-status")).toHaveText("Kalibriert", { timeout: 12_000 });
     await expect(page.locator("#training-stage-message")).toBeVisible();
     await expect(page.locator("#training-checks .is-passed")).toHaveCount(3);
@@ -43,8 +53,45 @@ test("Agent training level 1 observes the real Turtle route, mark and position o
     expect(state.visitedTarget).toBe(true);
     expect(state.markedAtTarget).toBe(true);
     expect(state.current.x).toBeCloseTo(160, 0);
-    expect(state.current.y).toBeCloseTo(80, 0);
+    expect(state.current.y).toBeCloseTo(180, 0);
     expect(state.marks).toHaveLength(1);
+
+    const liveDot = page.locator("#training-marks-layer .training-live-dot");
+    const targetCore = page.locator(".training-target-core");
+    const targetHalo = page.locator(".training-target-halo");
+    await expect(liveDot).toHaveCount(1);
+    await expect(liveDot).toBeVisible();
+    const markerVisual = await liveDot.evaluate(element => {
+        const style = getComputedStyle(element);
+        return {
+            fill: style.fill,
+            animation: style.animationName,
+            x: element.dataset.x,
+            y: element.dataset.y
+        };
+    });
+    expect(markerVisual.fill).toBe("rgb(125, 242, 169)");
+    expect(markerVisual.animation).toBe("none");
+    expect(markerVisual.x).toBe("160");
+    expect(markerVisual.y).toBe("80");
+
+    const targetVisual = await targetCore.evaluate(element => ({
+        fill: getComputedStyle(element).fill
+    }));
+    const haloVisual = await targetHalo.evaluate(element => ({
+        animation: getComputedStyle(element).animationName,
+        stroke: getComputedStyle(element).stroke
+    }));
+    expect(targetVisual.fill).toBe("rgb(241, 200, 255)");
+    expect(haloVisual.animation).toContain("training-target-pulse");
+    expect(haloVisual.stroke).toBe("rgba(225, 157, 255, 0.72)");
+
+    const dotBox = await liveDot.boundingBox();
+    const targetBox = await targetCore.boundingBox();
+    expect(dotBox).not.toBeNull();
+    expect(targetBox).not.toBeNull();
+    expect(Math.abs(dotBox.x + dotBox.width / 2 - (targetBox.x + targetBox.width / 2))).toBeLessThanOrEqual(2);
+    expect(Math.abs(dotBox.y + dotBox.height / 2 - (targetBox.y + targetBox.height / 2))).toBeLessThanOrEqual(2);
     const completedCode = await page.evaluate(() => JSON.parse(
         localStorage.getItem("completedLevelCode_v1") || "{}"
     ));
@@ -55,6 +102,7 @@ test("Agent training level 1 observes the real Turtle route, mark and position o
 
     await page.locator("#reset-btn").click();
     await expect(page.locator("#agent-training-turtle canvas")).toHaveCount(0);
+    await expect(page.locator("#training-marks-layer .training-live-dot")).toHaveCount(0);
     await expect(page.locator("#coordinate-x")).toHaveText("0");
     await expect(page.locator("#coordinate-y")).toHaveText("0");
     await expect(page.locator("#training-stage-message")).toBeHidden();

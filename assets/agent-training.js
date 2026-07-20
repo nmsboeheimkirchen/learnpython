@@ -4,6 +4,7 @@
     const core = window.AgentTrainingCore;
     const editor = window.editor;
     const turtleTarget = document.getElementById("agent-training-turtle");
+    const marksLayer = document.getElementById("training-marks-layer");
     const runButton = document.getElementById("run-btn");
     const resetButton = document.getElementById("reset-btn");
     const consoleOutput = document.getElementById("console-output");
@@ -17,7 +18,7 @@
     const stageMessage = document.getElementById("training-stage-message");
 
     if (
-        !core || !editor || !window.Sk || !turtleTarget || !runButton || !resetButton ||
+        !core || !editor || !window.Sk || !turtleTarget || !marksLayer || !runButton || !resetButton ||
         !consoleOutput || !runStatus || !statusText || !coordinateX || !coordinateY ||
         !feedbackTitle || !feedbackMessage || !checksList || !stageMessage
     ) {
@@ -92,6 +93,34 @@
         }
         activeTurtle = null;
         turtleTarget.replaceChildren();
+        marksLayer.replaceChildren();
+    }
+
+    function safeMarkerColor(value) {
+        const candidate = typeof value === "string" ? value.trim() : "";
+        if (!candidate || /url\s*\(/i.test(candidate)) return "#7df2a9";
+        return window.CSS?.supports?.("color", candidate) ? candidate : "#7df2a9";
+    }
+
+    function renderLiveMark(point, requestedSize, requestedColor) {
+        const x = Number(point?.x);
+        const y = Number(point?.y);
+        if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+
+        const rawSize = Number(requestedSize);
+        const diameter = Number.isFinite(rawSize)
+            ? Math.min(40, Math.max(8, Math.abs(rawSize)))
+            : 18;
+        const marker = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        marker.classList.add("training-live-dot");
+        marker.setAttribute("cx", String(400 + x));
+        marker.setAttribute("cy", String(225 - y));
+        marker.setAttribute("r", String(diameter / 2));
+        marker.setAttribute("fill", safeMarkerColor(requestedColor));
+        marker.dataset.x = String(Math.round(x * 100) / 100);
+        marker.dataset.y = String(Math.round(y * 100) / 100);
+        marker.dataset.size = String(diameter);
+        marksLayer.appendChild(marker);
     }
 
     function recordRawPosition(raw) {
@@ -119,11 +148,14 @@
         prototype.$dot = function (...args) {
             activeTurtle = this;
             const state = this.getState?.();
+            const point = state ? { x: state.x, y: state.y } : null;
+            const update = originalDot.apply(this, args);
             if (state) {
-                core.recordMark(runState, { x: state.x, y: state.y });
+                core.recordMark(runState, point);
+                renderLiveMark(point, args[0], args[1]);
                 document.body.classList.toggle("training-target-marked", runState.markedAtTarget);
             }
-            return originalDot.apply(this, args);
+            return update;
         };
 
         prototype.addUpdate = function (...args) {

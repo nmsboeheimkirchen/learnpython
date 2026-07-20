@@ -9,11 +9,11 @@
     <script src="assets/vendor/skulpt/1.2.0/skulpt.min.js"></script>
     <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
     <script src="assets/runner.js?v=20260720-3"></script>
-    <script src="assets/teacher-solutions.js?v=20260720-3"></script>
+    <script src="assets/teacher-solutions.js?v=20260720-4"></script>
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
     <link rel="stylesheet" href="assets/style.css?v=20260720-3">
-    <link rel="stylesheet" href="assets/agent-training.css?v=20260720-1">
+    <link rel="stylesheet" href="assets/agent-training.css?v=20260720-2">
 </head>
 <body class="agent-training-level">
     <a class="skip-link" href="#python-editor">Zum Python-Editor</a>
@@ -73,6 +73,7 @@
 
                         <span class="training-target-label"><span aria-hidden="true">✦</span> Ziel (160, 80)</span>
                         <span class="training-start-label">Start (0, 0)</span>
+                        <svg id="training-marks-layer" class="training-marks-layer" viewBox="0 0 800 450" preserveAspectRatio="none" aria-hidden="true"></svg>
                         <div id="agent-training-turtle" class="training-turtle-layer" aria-hidden="true"></div>
 
                         <div class="training-coordinate-hud" aria-label="Aktuelle Agentenposition">
@@ -85,7 +86,8 @@
                     <div class="training-legend" aria-label="Koordinatenhilfe">
                         <span><strong>X</strong> bewegt nach rechts oder links.</span>
                         <span><strong>Y</strong> bewegt nach oben oder unten.</span>
-                        <span><code>dot()</code> markiert den aktuellen Ort.</span>
+                        <span><code>penup()</code>: Bewegung ohne Spur.</span>
+                        <span><code>dot()</code>: ein sichtbarer Punkt bleibt zurück.</span>
                     </div>
 
                     <section class="training-feedback" aria-labelledby="training-feedback-title">
@@ -108,7 +110,7 @@
                         <p>Der Agent ist schon vorbereitet. Ergänze unter dem Kommentar genau diese drei neuen Schritte:</p>
                         <ol class="training-command-list">
                             <li><code>agent.goto(160, 80)</code></li>
-                            <li><code>agent.dot(18, "#ffd479")</code></li>
+                            <li><code>agent.dot(18, "#7df2a9")</code></li>
                             <li><code>print("Position:", agent.position())</code></li>
                         </ol>
                     </div>
@@ -122,7 +124,7 @@
 agent = turtle.Turtle()
 agent.shape("triangle")
 agent.color("#71edf4")
-agent.speed(4)
+agent.speed(2)
 agent.penup()
 
 # Ergänze hier deine drei Befehle:
@@ -144,6 +146,6 @@ agent.penup()
     <script src="assets/vendor/codemirror/5.65.2/python.min.js"></script>
     <script src="assets/editor.js"></script>
     <script src="assets/agent-training-core.js?v=20260720-1"></script>
-    <script src="assets/agent-training.js?v=20260720-1"></script>
+    <script src="assets/agent-training.js?v=20260720-2"></script>
 </body>
 </html>
