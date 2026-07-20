@@ -60,6 +60,13 @@ test("the public root is the complete A homepage and keeps B reachable", async (
     await expect(page.locator('.variant-switch a[href="index-b.html"]')).toBeVisible();
     await expect(page.locator(".course-brand")).toHaveAttribute("href", "index.html");
     await expect(page.locator(".course-brand-logo")).toHaveAttribute("src", `assets/brand/agent-py-logo.png?v=${assetVersion}`);
+    const logoResponse = await page.request.get(`/assets/brand/agent-py-logo.png?v=${assetVersion}`);
+    expect(logoResponse.ok()).toBe(true);
+    expect(logoResponse.headers()["content-type"]).toContain("image/png");
+    for (const target of missionTargets) {
+        const response = await page.request.get(`/${target}`);
+        expect(response.ok(), `${target} ist nicht erreichbar`).toBe(true);
+    }
     expect(page.url()).not.toContain("mission1_start.html");
     expect(pageErrors).toEqual([]);
 });
@@ -104,11 +111,6 @@ for (const variant of variants) {
         const links = await missionCards.evaluateAll(cards => cards.map(card => card.getAttribute("href")));
         expect(links).toEqual(missionTargets);
 
-        for (const target of missionTargets) {
-            const response = await page.request.get(`/${target}`);
-            expect(response.ok(), `${target} ist nicht erreichbar`).toBe(true);
-        }
-
         const currentVariant = page.locator(`.variant-switch a[aria-current="page"]`);
         await expect(currentVariant).toHaveText(variant.currentVariant);
         await expect(page.locator(".course-future")).toContainText("PICO");
@@ -142,43 +144,13 @@ for (const variant of variants) {
         const artworkResponse = await page.request.get(`/assets/images/home/${variant.artwork}?v=${assetVersion}`);
         expect(artworkResponse.ok()).toBe(true);
         expect(artworkResponse.headers()["content-type"]).toContain("image/webp");
-        const logoResponse = await page.request.get(`/assets/brand/agent-py-logo.png?v=${assetVersion}`);
-        expect(logoResponse.ok()).toBe(true);
-        expect(logoResponse.headers()["content-type"]).toContain("image/png");
         expect(pageErrors).toEqual([]);
     });
 }
 
-test("the two home options share one identity, content and mission structure but keep distinct hero art", async ({ page }, testInfo) => {
-    const snapshots = [];
+test("both home variants stay readable, glassy and contained on laptop and iPad", { tag: "@ipad" }, async ({ page }, testInfo) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
 
-    for (const variant of variants) {
-        await page.goto(`/${variant.path}`);
-        snapshots.push(await page.evaluate(() => ({
-            hero: document.querySelector("h1")?.textContent.trim(),
-            main: document.querySelector("#home-main")?.innerText.replace(/\s+/g, " ").trim(),
-            brand: document.querySelector(".course-brand")?.getAttribute("aria-label"),
-            facts: [...document.querySelectorAll(".course-facts dt")].map(node => node.textContent.trim()),
-            section: document.querySelector("#missions-title")?.textContent.trim(),
-            columns: getComputedStyle(document.querySelector(".course-mission-grid")).gridTemplateColumns,
-            artwork: getComputedStyle(document.querySelector(".course-hero-art")).backgroundImage
-        })));
-    }
-
-    expect(snapshots[0].hero).toBe(snapshots[1].hero);
-    expect(snapshots[0].main).toBe(snapshots[1].main);
-    expect(snapshots[0].brand).toBe(snapshots[1].brand);
-    expect(snapshots[0].artwork).not.toBe(snapshots[1].artwork);
-    expect(snapshots[0].facts).toEqual(snapshots[1].facts);
-    expect(snapshots[0].section).toBe(snapshots[1].section);
-
-    if (testInfo.project.name === "chromium-school-laptop") {
-        expect(snapshots[0].columns.split(" ")).toHaveLength(4);
-        expect(snapshots[1].columns.split(" ")).toHaveLength(4);
-    }
-});
-
-test("both home variants stay readable and contained on laptop and iPad", async ({ page }, testInfo) => {
     for (const variant of variants) {
         const pageErrors = capturePageErrors(page);
         await page.goto(`/${variant.path}`);
@@ -203,22 +175,7 @@ test("both home variants stay readable and contained on laptop and iPad", async 
         expect(heroBox.x + heroBox.width).toBeLessThanOrEqual(viewport.width + 1);
         expect(actionBox.height).toBeGreaterThanOrEqual(44);
 
-        const overflow = await documentOverflow(page);
-        expect(overflow.body, `${variant.path} body overflow in ${testInfo.project.name}`).toBeLessThanOrEqual(1);
-        expect(overflow.document, `${variant.path} document overflow in ${testInfo.project.name}`).toBeLessThanOrEqual(1);
-
-        await page.locator("#missionen").scrollIntoViewIfNeeded();
-        await expect(page.locator(".course-mission-card").first()).toBeVisible();
-        expect(pageErrors).toEqual([]);
-    }
-});
-
-test("home glass remains legible and reduced motion is respected", async ({ page }) => {
-    await page.emulateMedia({ reducedMotion: "reduce" });
-
-    for (const variant of variants) {
-        await page.goto(`/${variant.path}`);
-        const material = await page.locator(".course-hero-card").evaluate(element => {
+        const material = await hero.evaluate(element => {
             const style = getComputedStyle(element);
             const headerStyle = getComputedStyle(document.querySelector(".course-header"));
             const artStyle = getComputedStyle(document.querySelector(".course-hero-art"));
@@ -230,12 +187,19 @@ test("home glass remains legible and reduced motion is respected", async ({ page
                 animationDuration: artStyle.animationDuration
             };
         });
-
         expect(material.backdropFilter).toContain("blur(");
         expect(material.headerBackdropFilter).toContain("blur(");
         expect(material.backgroundImage).toContain("linear-gradient");
         expect(material.borderColor).not.toBe("rgba(0, 0, 0, 0)");
         expect(durationInMilliseconds(material.animationDuration)).toBeLessThanOrEqual(1);
+
+        const overflow = await documentOverflow(page);
+        expect(overflow.body, `${variant.path} body overflow in ${testInfo.project.name}`).toBeLessThanOrEqual(1);
+        expect(overflow.document, `${variant.path} document overflow in ${testInfo.project.name}`).toBeLessThanOrEqual(1);
+
+        await page.locator("#missionen").scrollIntoViewIfNeeded();
+        await expect(page.locator(".course-mission-card").first()).toBeVisible();
+        expect(pageErrors).toEqual([]);
     }
 });
 

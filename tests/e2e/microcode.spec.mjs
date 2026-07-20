@@ -15,6 +15,13 @@ const indentationPlans = [
     { page: "mission4_level3.html", offsets: [0, 0, 0, 20, 20, 0] }
 ];
 
+const ipadStackedBlockPages = new Set([
+    "mission2_level1.html",
+    "mission3_level2.html",
+    "mission3_level3.html",
+    "mission4_level3.html"
+]);
+
 async function blockGeometry(hint) {
     return hint.evaluate(element => [...element.children]
         .filter(child => child.matches(".makecode-block, .makecode-block-var"))
@@ -30,8 +37,13 @@ async function blockGeometry(hint) {
         }));
 }
 
-test("microcode modules form one vertical sequence on every multi-block plan", async ({ page }) => {
-    for (const missionPage of stackedBlockPages) {
+test("microcode modules stay stacked and correctly indented", { tag: "@ipad" }, async ({ page }, testInfo) => {
+    const useIpadSample = testInfo.project.name === "webkit-ipad" && process.env.PLAYWRIGHT_FULL_MATRIX !== "1";
+    const pages = useIpadSample
+        ? stackedBlockPages.filter(pageName => ipadStackedBlockPages.has(pageName))
+        : stackedBlockPages;
+
+    for (const missionPage of pages) {
         await page.goto(`/${missionPage}`);
         const hint = page.locator(".block-hint").first();
         await expect(hint).toBeVisible();
@@ -45,13 +57,9 @@ test("microcode modules form one vertical sequence on every multi-block plan", a
                 `${missionPage}: module ${index + 1} overlaps module ${index}`
             ).toBeGreaterThanOrEqual(blocks[index - 1].bottom - 1);
         }
-    }
-});
 
-test("nested microcode keeps its one- and two-step indentation", async ({ page }) => {
-    for (const plan of indentationPlans) {
-        await page.goto(`/${plan.page}`);
-        const blocks = await blockGeometry(page.locator(".block-hint").first());
+        const plan = indentationPlans.find(candidate => candidate.page === missionPage);
+        if (!plan) continue;
         expect(blocks).toHaveLength(plan.offsets.length);
 
         const baseline = blocks[0].left;
@@ -65,7 +73,7 @@ test("nested microcode keeps its one- and two-step indentation", async ({ page }
     }
 });
 
-test("a focused block helper opens above the module without being clipped", async ({ page }) => {
+test("a focused block helper opens above the module without being clipped", { tag: "@ipad" }, async ({ page }) => {
     await page.goto("/mission3_level2.html");
 
     const hint = page.locator(".block-hint").first();

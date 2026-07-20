@@ -47,11 +47,13 @@ test("all four mission starts expose their complete visual theme and working CTA
         await page.goto(`/${mission.page}`);
 
         const body = page.locator("body");
+        const landing = page.locator(".mission-landing");
         const hero = page.locator(".mission-hero-card");
         const action = page.locator(".mission-start-action");
         await expect(body).toHaveClass(/learning-page/);
         await expect(body).toHaveClass(/mission-start-page/);
         await expect(body).toHaveClass(new RegExp(`(?:^|\\s)${mission.bodyClass}(?:\\s|$)`));
+        await expect(landing).toBeVisible();
         await expect(hero).toBeVisible();
         await expect(action).toBeVisible();
         await expect(action).toHaveAttribute("href", mission.level);
@@ -77,8 +79,11 @@ test("all four mission starts expose their complete visual theme and working CTA
         expect(artworkResponse.headers()["content-type"]).toContain("image/webp");
 
         const actionBox = await action.boundingBox();
+        const landingBox = await landing.boundingBox();
         expect(actionBox).not.toBeNull();
+        expect(landingBox).not.toBeNull();
         expect(actionBox.height).toBeGreaterThanOrEqual(44);
+        expect(landingBox.height).toBeGreaterThan(180);
     }
 
     expect(pageErrors).toEqual([]);
@@ -115,7 +120,7 @@ test("level pages reuse the mission artwork as a dark blurred background", async
     expect(pageErrors).toEqual([]);
 });
 
-test("the workspace uses two columns on school laptops and one column on iPad", async ({ page }, testInfo) => {
+test("the workspace uses two columns on school laptops and one column on iPad", { tag: "@ipad" }, async ({ page }, testInfo) => {
     const pageErrors = capturePageErrors(page);
     await page.goto("/mission1_level1.html");
 
@@ -141,7 +146,7 @@ test("the workspace uses two columns on school laptops and one column on iPad", 
     expect(pageErrors).toEqual([]);
 });
 
-test("the navigation uses readable glass material and honors reduced motion", async ({ page }) => {
+test("the navigation uses readable glass material and honors reduced motion", { tag: "@ipad" }, async ({ page }) => {
     const pageErrors = capturePageErrors(page);
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto("/mission1_level1.html");

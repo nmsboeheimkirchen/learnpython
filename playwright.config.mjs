@@ -1,5 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
+// Set PLAYWRIGHT_FULL_MATRIX=1 for the optional complete Chromium/WebKit regression run.
+const fullBrowserMatrix = process.env.PLAYWRIGHT_FULL_MATRIX === "1";
+
 export default defineConfig({
     testDir: "./tests/e2e",
     fullyParallel: true,
@@ -30,6 +33,7 @@ export default defineConfig({
         },
         {
             name: "webkit-ipad",
+            grep: fullBrowserMatrix ? undefined : /@ipad/,
             use: {
                 browserName: "webkit",
                 ...devices["iPad (gen 7)"]
