@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Gemeinsame Fluchtmission A: Nach der Drohnensteuerung den Helikopter des bösen Lords hacken und startklar machen.">
+    <meta name="color-scheme" content="dark">
+    <title>Fluchtmission A – Der Helikopter des Lords</title>
+    <link rel="preload" href="assets/images/escape/helicopter-hangar-a.webp?v=20260721-1" as="image" type="image/webp">
+    <script src="assets/runner.js?v=20260721-7"></script>
+    <link rel="stylesheet" href="assets/style.css?v=20260721-4">
+    <link rel="stylesheet" href="assets/escape-landing.css?v=20260721-1">
+</head>
+<body class="escape-landing-page escape-variant-a">
+    <a class="skip-link" href="#escape-briefing">Zum Einsatzbriefing</a>
+    <div id="navigation-root"></div>
+    <script src="assets/navigation.js?v=20260721-4"></script>
+
+    <nav class="escape-variant-switch" aria-label="Varianten der Fluchtmission">
+        <span>Landingpage</span>
+        <a href="helikopter_flucht.html" aria-current="page" aria-label="Variante A">A</a>
+        <a href="helikopter_flucht-b.html" aria-label="Variante B">B</a>
+    </nav>
+
+    <main id="main-content" class="escape-main">
+        <img class="escape-art" src="assets/images/escape/helicopter-hangar-a.webp?v=20260721-1" alt="Der Helikopter des Lords wartet in einem violetten Felshangar hinter einem cyan leuchtenden Hack-Terminal." width="1717" height="916" fetchpriority="high">
+        <div class="escape-art-shade" aria-hidden="true"></div>
+
+        <section id="escape-briefing" class="escape-briefing" aria-labelledby="escape-title">
+            <p class="escape-kicker"><span aria-hidden="true">◇</span> Gemeinsame Fluchtmission · Variante A</p>
+            <h1 id="escape-title">Jetzt musst du selbst raus.</h1>
+            <p class="escape-lead">Die Drohnensteuerung war erfolgreich. Doch du – der echte Agent oder die echte Agentin – sitzt noch in der Basis des bösen Lords fest. Dein Fluchtfenster ist kurz.</p>
+            <p class="escape-order">Im Hangar wartet sein Helikopter. Hacke den Bordcomputer, entriegle die Systeme und mache die Maschine startklar, bevor die Basis abgeriegelt wird.</p>
+
+            <dl class="escape-status-grid" aria-label="Status der nächsten Mission">
+                <div><dt>Bordcomputer</dt><dd>gesperrt</dd></div>
+                <div><dt>Helikopter</dt><dd>offline</dd></div>
+                <div><dt>Fluchtfenster</dt><dd>kurz</dd></div>
+            </dl>
+
+            <div class="escape-action-row">
+                <span class="escape-coming-action" aria-disabled="true">Nächster Auftrag: Helikopter hacken</span>
+                <a class="escape-secondary-action" href="projektwahl.html">Zur Projektwahl</a>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

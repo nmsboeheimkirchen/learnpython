@@ -7,14 +7,14 @@
     const level = document.body.dataset.picoLevel || "1";
     const state = pathCore.createState();
     const byId = id => document.getElementById(id);
-    const nextContainer = byId("next-level-container");
+    const nextButton = byId("next-level-btn");
     const energyAdvice = byId("energy-advice");
     const energyCellReveal = byId("energy-cell-reveal");
     const directTask = byId("level1-direct-task");
     const cellTask = byId("level1-cell-task");
     const stageMessage = byId("stage-discovery-message");
     let level1Phase = "direct";
-    let finaleCompletionShown = false;
+    let completionShown = false;
 
     const LEVEL_SPECS = Object.freeze({
         "1": Object.freeze({
@@ -74,18 +74,18 @@
             ]
         }),
         "4": Object.freeze({
-            id: "pico_level4",
-            runningLabel: "PICO führt die Rettungsmission aus",
-            runLabel: "Finale starten",
-            readyLabel: "Bereit fürs Finale",
+            id: "pico_level4_memory",
+            runningLabel: "PICO sendet und löscht das Memory",
+            runLabel: "Rettung abschließen",
+            readyLabel: "Bereit zum Spurenlöschen",
             resetLabel: "↺ Missionscode laden",
-            resetOutput: "Die vollständige Rettungsmission ist startklar.",
-            initialMessage: "Führe Energieaufnahme und Rettungssignal in einem nachvollziehbaren Programm zusammen.",
+            resetOutput: "Sende zuerst das Rettungssignal und lösche danach das Memory.",
+            initialMessage: "Sende erfolgreich und setze erst danach DROHNE auf self-destroy und TRANSPONDER auf delete.",
             initialChecks: [
-                "Benannte Drohne steuern",
                 "Energiezelle real finden und laden",
                 "Funkbase erreichen und Signal senden",
-                "Optional: TRANSPONDER-Status fortschreiben"
+                "DROHNE danach auf self-destroy setzen",
+                "TRANSPONDER danach auf delete setzen"
             ]
         })
     });
@@ -96,7 +96,45 @@
         "2": Object.freeze(["link-pico-l2a", "link-pico-l3"]),
         "2a": Object.freeze(["link-pico-l3"]),
         "3": Object.freeze(["link-pico-l4"]),
-        "4": Object.freeze([])
+        "4": Object.freeze(["link-helicopter-escape"])
+    });
+
+    const LEVEL_COMPLETIONS = Object.freeze({
+        "1": Object.freeze({
+            rewardCount: 3,
+            title: "LEVEL 1 GESCHAFFT",
+            message: "Die Energiezelle ist erreicht. Jetzt kannst du sie untersuchen und aufladen.",
+            primaryHref: "pico_level2.html",
+            primaryLabel: "Weiter zu Level 2"
+        }),
+        "2": Object.freeze({
+            rewardCount: 3,
+            title: "LEVEL 2 GESCHAFFT",
+            message: "Die echte Energiezelle ist gefunden und sicher in deiner Ausrüstung.",
+            primaryHref: "pico_level2a.html",
+            primaryLabel: "Weiter zum Status-Cockpit"
+        }),
+        "2a": Object.freeze({
+            rewardCount: 1,
+            title: "STATUS-CHECK GESCHAFFT",
+            message: "Der TRANSPONDER zeigt jetzt den echten Ladezustand.",
+            primaryHref: "pico_level3.html",
+            primaryLabel: "Weiter zu Level 3"
+        }),
+        "3": Object.freeze({
+            rewardCount: 3,
+            title: "SIGNAL GESENDET",
+            message: "Die Funkbase hat das Rettungssignal bestätigt.",
+            primaryHref: "pico_level4.html",
+            primaryLabel: "Weiter zu Level 4"
+        }),
+        "4": Object.freeze({
+            rewardCount: 7,
+            title: "MEMORY GELÖSCHT",
+            message: "Signal zuerst, Löschstatus danach: PICO hinterlässt keine verwertbaren Spuren.",
+            primaryHref: "helikopter_flucht.html",
+            primaryLabel: "Zur Flucht mit dem Helikopter"
+        })
     });
 
     function setHidden(element, hidden) {
@@ -128,7 +166,7 @@
         const rescueMessage = byId("pico-result-message");
         if (rescueMessage) {
             if (snapshot.signalSent) {
-                rescueMessage.textContent = "Signal gesendet – gerettet!";
+                rescueMessage.textContent = "SIGNAL GESENDET";
             } else if (snapshot.signalAttempted) {
                 const messages = {
                     BEACON_OUT_OF_RANGE: "SIGNAL FEHLGESCHLAGEN – FUNKBASE AUSSER REICHWEITE",
@@ -311,31 +349,26 @@
 
     function level4Result() {
         const snapshot = state.snapshot();
+        const droneDeletedAfterSignal = state.statusReachedAfterSignal("DROHNE", "self-destroy") &&
+            snapshot.droneName === "self-destroy";
+        const transponderDeletedAfterSignal = state.statusReachedAfterSignal("TRANSPONDER", "delete") &&
+            snapshot.transponder === "delete";
         const checks = [
-            { label: "Benannte Drohne wird ausgeführt", passed: namedDrone(snapshot) },
             { label: "Energiezelle real gefunden und geladen", passed: snapshot.searchFound && snapshot.charged },
             { label: "Funkbase mit Restenergie erreicht", passed: snapshot.beaconReached && !snapshot.depleted && snapshot.energy > 0 },
             { label: "Rettungssignal bestätigt", passed: snapshot.signalSent },
-            {
-                label: "Optional: TRANSPONDER meldete „aufgeladen“",
-                passed: snapshot.transponderHistory.includes("aufgeladen"),
-                optional: true
-            },
-            {
-                label: "Optional: TRANSPONDER meldet „gesendet“",
-                passed: snapshot.transponder === "gesendet",
-                optional: true
-            }
+            { label: "DROHNE wurde erst danach auf „self-destroy“ gesetzt", passed: droneDeletedAfterSignal },
+            { label: "TRANSPONDER wurde erst danach auf „delete“ gesetzt", passed: transponderDeletedAfterSignal }
         ];
-        const passed = checks.filter(check => !check.optional).every(check => check.passed);
+        const passed = checks.every(check => check.passed);
         return {
             passed,
             levelComplete: passed,
-            title: passed ? "PICO ist gerettet" : "Rettungsmission noch unvollständig",
+            title: passed ? "Signal gesendet, Memory gelöscht" : "Reihenfolge noch nicht sicher",
             message: passed
-                ? "Die vollständige Laufzeitkette stimmt: finden, laden, fliegen und senden."
-                : "Die Pflichtchecks beobachten nur das echte Missionsverhalten; das Status-Cockpit bleibt freiwillig.",
-            status: passed ? "Mission erfüllt" : "Mission prüfen",
+                ? "Die Laufzeitkette stimmt: finden, laden, senden – und erst danach beide Löschwerte setzen."
+                : "Sende zuerst erfolgreich. Setze danach DROHNE auf self-destroy und TRANSPONDER auf delete.",
+            status: passed ? "Memory gelöscht" : "Reihenfolge prüfen",
             statusState: passed ? "success" : "warning",
             checks
         };
@@ -350,7 +383,16 @@
     }
 
     function showNext(visible) {
-        setHidden(nextContainer, !visible);
+        if (!nextButton) return;
+        nextButton.hidden = false;
+        nextButton.style.display = visible ? "inline-flex" : "none";
+        if (visible) {
+            const skipButton = document.querySelector(".pico-skip-top");
+            if (skipButton) {
+                skipButton.hidden = true;
+                skipButton.style.display = "none";
+            }
+        }
     }
 
     function onResult(result) {
@@ -376,13 +418,14 @@
         }
         showNext(Boolean(result.passed && result.levelComplete !== false));
 
-        if (level === "4" && result.passed && !result.restored && !finaleCompletionShown) {
-            finaleCompletionShown = true;
-            window.triggerSuccess?.(true, "PICO hat die Funkbase mit echter Energie erreicht und das Rettungssignal gesendet.", {
-                title: "PICO GERETTET",
-                statusLabel: "RETTUNGSMISSION ERFÜLLT!",
-                primaryHref: "projektwahl.html",
-                primaryLabel: "Zur Projektwahl"
+        if (result.passed && result.levelComplete !== false && !result.restored && !completionShown) {
+            completionShown = true;
+            const completion = LEVEL_COMPLETIONS[level];
+            window.triggerSuccess?.(level === "4", completion.message, {
+                ...completion,
+                celebration: "coins",
+                closeLabel: "Zurück zum Editor",
+                statusLabel: level === "4" ? "MEMORY GELÖSCHT!" : "LEVEL GESCHAFFT!"
             });
         }
     }
@@ -393,7 +436,7 @@
             "2": ["Energiezelle mit suche_hier() am Fundort gefunden", "Echten Fund ausgegeben", "Echten Fund aufgenommen und Energie geladen"],
             "2a": ["Energiezelle im selben Lauf geladen", "Drohnenname bleibt im Status erhalten", "TRANSPONDER wurde zur Laufzeit auf „aufgeladen“ gesetzt"],
             "3": ["Energie im selben Programmlauf geladen", "Funkbase mit Restenergie erreicht", "sende() bestätigt das Rettungssignal"],
-            "4": ["Benannte Drohne wird ausgeführt", "Energiezelle real gefunden und geladen", "Funkbase mit Restenergie erreicht", "Rettungssignal bestätigt"]
+            "4": ["Energiezelle real gefunden und geladen", "Rettungssignal bestätigt", "DROHNE wurde danach gelöscht", "TRANSPONDER wurde danach gelöscht"]
         };
         return {
             passed: true,
@@ -423,6 +466,7 @@
                 return item;
             },
             sende(context) {
+                state.recordStatus(context.getGlobal("status"));
                 const sent = state.send(context);
                 renderState();
                 return sent;
@@ -430,7 +474,7 @@
         },
         resetHud(options = {}) {
             state.reset();
-            finaleCompletionShown = false;
+            completionShown = false;
             if (level === "1" && ["initial", "manual"].includes(options.reason)) {
                 level1Phase = "direct";
             }
@@ -477,7 +521,7 @@
                 "2": { charged: true, status: { DROHNE: "PICO", TRANSPONDER: "suche" } },
                 "2a": { charged: true, status: { DROHNE: "PICO", TRANSPONDER: "aufgeladen" } },
                 "3": { signalSent: true, status: { DROHNE: "PICO", TRANSPONDER: "suche" } },
-                "4": { signalSent: true, status: { DROHNE: "PICO", TRANSPONDER: "gesendet" } }
+                "4": { signalSent: true, status: { DROHNE: "self-destroy", TRANSPONDER: "delete" } }
             };
             state.restore(checkpoints[level]);
             renderState();

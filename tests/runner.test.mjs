@@ -224,6 +224,23 @@ test("progress data is normalized and unknown levels are ignored", () => {
     );
 });
 
+test("an old PICO level 4 completion cannot bypass the new ordered memory task", () => {
+    const { context, storage } = createRunnerContext({
+        unlockedLevels_v2: JSON.stringify(["link-level1", "link-pico-l4"]),
+        completedLevelCode_v1: JSON.stringify({
+            pico_level4: '# Alter Abschluss ohne verbindliche Reihenfolge\nprint("fertig")'
+        })
+    });
+
+    vm.runInContext("applyUnlocks()", context);
+
+    const unlocked = JSON.parse(storage.get("unlockedLevels_v2"));
+    assert.equal(unlocked.includes("link-pico-l4"), true);
+    assert.equal(unlocked.includes("link-helicopter-escape"), false);
+    assert.equal(vm.runInContext('getCompletedLevelCode("pico_level4_memory")', context), null);
+    assert.equal(storage.get("completedLevelCode_v1"), "{}");
+});
+
 test("completed mission 4 restores the new Agent training unlock for existing learners", () => {
     const { context, storage } = createRunnerContext({
         unlockedLevels_v2: JSON.stringify(["link-level1", "link-m4-l3"]),
@@ -1237,11 +1254,13 @@ test("all progress link ids keep their established unlock routes", () => {
         "link-agent-training-l2": "agent_training_level2.html",
         "link-agent-training-l3": "agent_training_level3.html",
         "link-project-choice": "projektwahl.html",
+        "link-pico-title": "pico_level1.html",
         "link-pico-l1": "pico_level1.html",
         "link-pico-l2": "pico_level2.html",
         "link-pico-l2a": "pico_level2a.html",
         "link-pico-l3": "pico_level3.html",
-        "link-pico-l4": "pico_level4.html"
+        "link-pico-l4": "pico_level4.html",
+        "link-helicopter-escape": "helikopter_flucht.html"
     });
 });
 
@@ -1384,8 +1403,52 @@ test("the public PICO path shares one runtime and uses TRANSPONDER from level 1"
 
     const level2a = readFileSync(new URL("../pico_level2a.html", import.meta.url), "utf8");
     assert.match(level2a, /Optionales Level 2a/);
-    assert.match(level2a, /Level 2a überspringen/);
+    assert.match(level2a, /class="pico-skip-top"[^>]+href="pico_level3\.html"[^>]*>Überspringen<\/a>/);
     assert.match(level2a, /status\["TRANSPONDER"\] = "aufgeladen"/);
+});
+
+test("both helicopter escape landings use distinct optimized renders and a shared mission handoff", () => {
+    const variants = [
+        {
+            page: "helikopter_flucht.html",
+            artwork: "helicopter-hangar-a.webp",
+            heading: /Jetzt musst du selbst raus\./,
+            currentVariant: /href="helikopter_flucht\.html" aria-current="page"/
+        },
+        {
+            page: "helikopter_flucht-b.html",
+            artwork: "helicopter-rooftop-b.webp",
+            heading: /Der Lord kommt zurück\./,
+            currentVariant: /href="helikopter_flucht-b\.html" aria-current="page"/
+        }
+    ];
+    const hashes = [];
+
+    for (const variant of variants) {
+        const html = readFileSync(new URL(`../${variant.page}`, import.meta.url), "utf8");
+        const artworkUrl = new URL(`../assets/images/escape/${variant.artwork}`, import.meta.url);
+        const bytes = readFileSync(artworkUrl);
+
+        assert.match(html, variant.heading);
+        assert.match(html, variant.currentVariant);
+        assert.match(html, /echte Agent(?:in| oder die echte Agentin)/);
+        assert.match(html, /Basis des bösen Lords/);
+        assert.match(html, /Helikopter/);
+        assert.match(html, /(?:Hacke|Brich) /);
+        assert.match(html, new RegExp(`assets/images/escape/${variant.artwork.replace(".", "\\.")}`));
+        assert.doesNotMatch(html, /href="[^"]*(?:prototypes\/|finale)/i);
+        assert.equal(bytes.subarray(0, 4).toString("ascii"), "RIFF", `${variant.artwork} ist kein RIFF-WebP`);
+        assert.equal(bytes.subarray(8, 12).toString("ascii"), "WEBP", `${variant.artwork} ist kein WebP`);
+        assert.equal(bytes.subarray(12, 16).toString("ascii"), "VP8X", `${variant.artwork} braucht WebP-Metadaten`);
+        const width = bytes.readUIntLE(24, 3) + 1;
+        const height = bytes.readUIntLE(27, 3) + 1;
+        assert.match(html, new RegExp(`width="${width}" height="${height}"`));
+        assert.ok(bytes.length > 50_000, `${variant.artwork} ist unerwartet leer oder zu klein`);
+        assert.ok(statSync(artworkUrl).size < 300_000, `${variant.artwork} ist für die Landingpage zu groß`);
+        hashes.push(createHash("sha256").update(bytes).digest("hex"));
+    }
+
+    assert.notEqual(hashes[0], hashes[1], "A und B brauchen wirklich unterschiedliche Renderings");
 });
 
 test("all four mission artworks are local, valid and web-sized", () => {
@@ -1556,6 +1619,8 @@ test("finale prototypes stay unlinked, isolated and locally hosted", () => {
         "pico_level2a.html",
         "pico_level3.html",
         "pico_level4.html",
+        "helikopter_flucht.html",
+        "helikopter_flucht-b.html",
         ...missionPages
     ];
 

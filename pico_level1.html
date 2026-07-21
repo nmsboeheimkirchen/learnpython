@@ -8,23 +8,25 @@
     <title>PICO 1 – Reicht die Energie?</title>
     <script src="assets/vendor/skulpt/1.2.0/skulpt.min.js"></script>
     <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
-    <script src="assets/runner.js?v=20260721-6"></script>
+    <script src="assets/runner.js?v=20260721-7"></script>
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
-    <link rel="stylesheet" href="assets/style.css?v=20260720-3">
-    <link rel="stylesheet" href="assets/drone-mission.css?v=20260721-2">
+    <link rel="stylesheet" href="assets/style.css?v=20260721-4">
+    <link rel="stylesheet" href="assets/drone-mission.css?v=20260721-3">
 </head>
 <body class="drone-mission-page pico-mission-theme" data-mission-level="pico_level1_navigation" data-pico-level="1">
     <a class="skip-link" href="#python-editor">Zum Python-Editor</a>
 
-    <header class="drone-mission-header">
-        <a class="drone-mission-brand" href="index.html" aria-label="Agent PY – zur Startseite">
-            <img src="assets/brand/agent-py-logo.png?v=20260720-2" alt="" width="1600" height="232">
-        </a>
-        <a class="drone-mission-back" href="projektwahl.html"><span aria-hidden="true">←</span> Projektwahl</a>
-    </header>
+    <div id="navigation-root"></div>
+    <script src="assets/navigation.js?v=20260721-4"></script>
 
     <main id="main-content" class="drone-mission-main">
+        <div class="progress-container pico-progress">
+            <span class="level-badge">Level 1 von 4</span>
+            <div class="progress-bar-bg" aria-hidden="true"><div class="progress-bar-fill" id="progress-fill" style="width:25%"></div></div>
+            <span id="status-text" role="status">Warte auf deinen Code</span>
+            <a id="next-level-btn" class="next-level-btn pico-next-level-btn" href="pico_level2.html" style="display:none">Weiter zu Level 2</a>
+        </div>
         <section class="drone-mission-intro" aria-labelledby="mission-title">
             <div>
                 <p class="mission-kicker">PICO · Explorer-Level 1 von 4</p>
@@ -75,17 +77,17 @@
                     </div>
 
                     <div class="mission-energy-hud pico-mission-hud" aria-label="Drohnenstatus">
-                        <div class="pico-status-row">
-                            <span><small>DROHNE</small><strong id="drone-name">–</strong></span>
-                            <span><small>TRANSPONDER</small><strong id="transponder-state">–</strong></span>
-                        </div>
-                        <div class="mission-energy-label"><span>ENERGIE</span><strong id="energy-value">10 %</strong></div>
+                        <div class="pico-hud-grid">
+                            <small>DROHNE</small><small>TRANSPONDER</small><small>ENERGIE</small>
+                            <strong id="drone-name">–</strong><strong id="transponder-state">–</strong><strong id="energy-value">10 %</strong>
+                            <div class="mission-coordinate-hud" aria-label="Aktuelle Drohnenposition">
+                                <span>X <strong id="coordinate-x">−365</strong></span>
+                                <span>Y <strong id="coordinate-y">55</strong></span>
+                            </div>
+                            <span class="pico-hud-spacer" aria-hidden="true"></span>
                         <div id="energy-meter" class="mission-energy-track" role="progressbar" aria-label="Energie der Drohne" aria-valuemin="0" aria-valuemax="100" aria-valuenow="10">
                             <span id="energy-fill" style="width: 10%"></span>
                         </div>
-                        <div class="mission-coordinate-hud" aria-label="Aktuelle Drohnenposition">
-                            <span>X <strong id="coordinate-x">−365</strong></span>
-                            <span>Y <strong id="coordinate-y">55</strong></span>
                         </div>
                     </div>
                     <div id="pico-result-message" class="pico-result-message" role="status" aria-live="assertive"></div>
@@ -193,12 +195,6 @@ status["DROHNE"] = "PICO"
                     <pre id="console-output" aria-live="polite">Die Drohne wartet am Aufzug auf deinen Plan.</pre>
                 </div>
 
-                <div id="next-level-container" class="next-level-preview" hidden>
-                    <span>Nächster Schritt</span>
-                    <strong>Level 2 · Finden und aufladen</strong>
-                    <small>Die Energiezelle ist erreicht. Jetzt untersuchst du den echten Fund.</small>
-                    <a class="next-level-action" href="pico_level2.html">Weiter zu Level 2 <span aria-hidden="true">→</span></a>
-                </div>
             </section>
         </div>
     </main>
@@ -208,8 +204,8 @@ status["DROHNE"] = "PICO"
     <script src="assets/vendor/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="assets/vendor/codemirror/5.65.2/python.min.js"></script>
     <script src="assets/drone-mission-core.js?v=20260721-2"></script>
-    <script src="assets/pico-mission-core.js?v=20260721-1"></script>
-    <script src="assets/pico-mission.js?v=20260721-1"></script>
+    <script src="assets/pico-mission-core.js?v=20260721-2"></script>
+    <script src="assets/pico-mission.js?v=20260721-2"></script>
     <script src="assets/drone-mission.js?v=20260721-2"></script>
 </body>
 </html>

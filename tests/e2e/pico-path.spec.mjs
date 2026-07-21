@@ -52,6 +52,19 @@ if signal_erfolgreich:
     status["TRANSPONDER"] = "gesendet"
 `;
 
+const deleteBeforeSendCode = `${chargeCode}
+status["DROHNE"] = "self-destroy"
+status["TRANSPONDER"] = "delete"
+fahre_zu(340, 15)
+signal_erfolgreich = drohne.sende()
+`;
+
+const finalMemoryCode = `${sendCode}
+if signal_erfolgreich:
+    status["DROHNE"] = "self-destroy"
+    status["TRANSPONDER"] = "delete"
+`;
+
 function capturePageErrors(page) {
     const errors = [];
     page.on("pageerror", error => errors.push(String(error)));
@@ -68,6 +81,15 @@ async function runCode(page, code) {
         window.DroneMissionRuntime.editor.setValue(source);
         return window.DroneMissionRuntime.run();
     }, code);
+}
+
+async function expectReward(page, count, nextHref) {
+    await expect(page.locator("#success-overlay")).toBeVisible();
+    await expect(page.locator("#success-overlay .success-coin")).toHaveCount(count);
+    await expect(page.locator("#success-overlay .success-coins")).toHaveAttribute("data-reward-count", String(count));
+    await expect(page.locator("#success-overlay .success-btn")).toHaveAttribute("href", nextHref);
+    await expect(page.locator("#next-level-btn")).toBeVisible();
+    await expect(page.locator("#next-level-btn")).toHaveAttribute("href", nextHref);
 }
 
 test("@ipad PICO level 1 names the drone, reveals its clickable second phase and carries code forward", async ({ page }) => {
@@ -95,7 +117,8 @@ test("@ipad PICO level 1 names the drone, reveals its clickable second phase and
     await expect(page.locator("#transponder-state")).toHaveText("suche");
     await expect(page.locator("#energy-advice")).toBeVisible();
     await expect(page.locator("#energy-advice")).toHaveCSS("animation-name", "pico-discovery-pulse");
-    await expect(page.locator("#next-level-container")).toBeHidden();
+    await expect(page.locator("#success-overlay")).toBeHidden();
+    await expect(page.locator("#next-level-btn")).toBeHidden();
     expect(await page.evaluate(() => JSON.parse(
         localStorage.getItem("completedLevelCode_v1") || "{}"
     ).pico_level1_navigation)).toBeUndefined();
@@ -109,10 +132,12 @@ test("@ipad PICO level 1 names the drone, reveals its clickable second phase and
     expect(arrival.passed).toBe(true);
     expect(arrival.levelComplete).toBe(true);
     await expect(page.locator("#run-status")).toHaveText("Level 1 geschafft");
-    await expect(page.locator("#next-level-container")).toBeVisible();
-    await expect(page.locator("#next-level-container a")).toHaveAttribute("href", "pico_level2.html");
+    await expectReward(page, 3, "pico_level2.html");
 
-    await page.locator("#next-level-container a").click();
+    await page.getByRole("button", { name: "Zurück zum Editor" }).click();
+    await expect(page.locator("#success-overlay")).toBeHidden();
+    await expect(page.locator("#next-level-btn")).toBeVisible();
+    await page.locator("#next-level-btn").click();
     await expect(page).toHaveURL(/\/pico_level2\.html$/);
     await expect.poll(() => page.evaluate(() => Boolean(window.DroneMissionRuntime))).toBe(true);
     await expect.poll(() => page.evaluate(() => window.DroneMissionRuntime.editor.getValue())).toContain(
@@ -133,8 +158,8 @@ test("an independent learner can use search, charging and sending already in lev
     expect(state.charged).toBe(true);
     expect(state.signalSent).toBe(true);
     expect(state.transponderHistory).toEqual(["suche", "aufgeladen", "gesendet"]);
-    await expect(page.locator("#pico-result-message")).toContainText("gerettet");
-    await expect(page.locator("#next-level-container")).toBeVisible();
+    await expect(page.locator("#pico-result-message")).toHaveText("SIGNAL GESENDET");
+    await expectReward(page, 3, "pico_level2.html");
     expect(pageErrors).toEqual([]);
 });
 
@@ -152,6 +177,8 @@ ausruestung.append("Energiezelle")
     expect(state.searchFound).toBe(false);
     expect(state.charged).toBe(false);
     await expect(page.locator("#energy-meter")).toHaveAttribute("aria-valuenow", "0");
+    await expect(page.locator("#success-overlay")).toBeHidden();
+    await expect(page.locator("#next-level-btn")).toBeHidden();
 
     const charged = await runCode(page, chargeCode);
     expect(charged.passed).toBe(true);
@@ -159,28 +186,30 @@ ausruestung.append("Energiezelle")
     expect(state.searchFound).toBe(true);
     expect(state.charged).toBe(true);
     await expect(page.locator("#energy-meter")).toHaveAttribute("aria-valuenow", "100");
-    await expect(page.locator("#next-level-container")).toBeVisible();
+    await expectReward(page, 3, "pico_level2a.html");
     expect(pageErrors).toEqual([]);
 });
 
 test("optional level 2a reads an executed TRANSPONDER update and can be skipped", async ({ page }) => {
     const pageErrors = capturePageErrors(page);
     await openLevel(page, "/pico_level2a.html");
-    await expect(page.getByRole("link", { name: /Level 2a überspringen/ })).toHaveAttribute("href", "pico_level3.html");
+    await expect(page.getByRole("link", { name: "Überspringen" })).toHaveAttribute("href", "pico_level3.html");
 
     const printedClaim = await runCode(page, `${chargeCode}\nprint("TRANSPONDER: aufgeladen")\n`);
     expect(printedClaim.passed).toBe(false);
     await expect(page.locator("#transponder-state")).toHaveText("suche");
+    await expect(page.locator("#success-overlay")).toBeHidden();
 
     const actualUpdate = await runCode(page, `${chargeCode}\nstatus["TRANSPONDER"] = "aufgeladen"\n`);
     expect(actualUpdate.passed).toBe(true);
     await expect(page.locator("#transponder-state")).toHaveText("aufgeladen");
     await expect(page.locator("#checks-list .is-passed")).toHaveCount(3);
-    await expect(page.locator("#next-level-container")).toBeVisible();
+    await expectReward(page, 1, "pico_level3.html");
+    await expect(page.getByRole("link", { name: "Überspringen" })).toBeHidden();
     expect(pageErrors).toEqual([]);
 });
 
-test("levels 3 and 4 keep status optional while requiring the real rescue chain", async ({ page }) => {
+test("level 3 sends visibly and level 4 deletes memory only after that signal", async ({ page }) => {
     const pageErrors = capturePageErrors(page);
     await openLevel(page, "/pico_level3.html");
 
@@ -188,20 +217,52 @@ test("levels 3 and 4 keep status optional while requiring the real rescue chain"
     expect(level3.passed).toBe(true);
     await expect(page.locator("#transponder-state")).toHaveText("suche");
     await expect(page.locator("#checks-list .is-missing.is-optional")).toHaveCount(1);
-    await expect(page.locator("#next-level-container")).toBeVisible();
+    await expect(page.locator("#pico-result-message")).toHaveText("SIGNAL GESENDET");
+    await expect(page.locator("#pico-result-message")).toHaveCSS("color", "rgb(125, 242, 169)");
+    expect(await page.locator("#pico-result-message").evaluate(element => parseFloat(getComputedStyle(element).fontSize))).toBeGreaterThan(18);
+    await expectReward(page, 3, "pico_level4.html");
 
-    await page.locator("#next-level-container a").click();
+    await page.getByRole("button", { name: "Zurück zum Editor" }).click();
+    await page.locator("#next-level-btn").click();
     await expect(page).toHaveURL(/\/pico_level4\.html$/);
     await expect.poll(() => page.evaluate(() => Boolean(window.DroneMissionRuntime))).toBe(true);
     expect(await page.evaluate(() => window.DroneMissionRuntime.editor.getValue())).toContain(
         "signal_erfolgreich = drohne.sende()"
     );
 
-    const finale = await page.evaluate(() => window.DroneMissionRuntime.run());
+    const inheritedWithoutDeletion = await page.evaluate(() => window.DroneMissionRuntime.run());
+    expect(inheritedWithoutDeletion.passed).toBe(false);
+    await expect(page.locator("#success-overlay")).toBeHidden();
+
+    const wrongOrder = await runCode(page, deleteBeforeSendCode);
+    expect(wrongOrder.passed).toBe(false);
+    expect(wrongOrder.checks.filter(check => check.label.includes("danach") && !check.passed)).toHaveLength(2);
+    await expect(page.locator("#next-level-btn")).toBeHidden();
+
+    await page.setViewportSize({ width: 1024, height: 600 });
+    const finale = await runCode(page, finalMemoryCode);
     expect(finale.passed).toBe(true);
-    await expect(page.locator("#success-overlay")).toBeVisible();
-    await expect(page.locator("#success-overlay h1")).toHaveText("PICO GERETTET");
-    await expect(page.locator("#checks-list .is-passed")).toHaveCount(4);
-    await expect(page.locator("#checks-list .is-missing.is-optional")).toHaveCount(2);
+    expect(await page.evaluate(() => window.DroneMissionRuntime.getState().memoryDeletedAfterSignal)).toBe(true);
+    await expect(page.locator("#success-overlay h1")).toHaveText("MEMORY GELÖSCHT");
+    await expect(page.locator("#checks-list .is-passed")).toHaveCount(5);
+    await expectReward(page, 7, "helikopter_flucht.html");
+    const rewardPopup = await page.locator("#success-overlay .success-badge").evaluate(element => {
+        const rect = element.getBoundingClientRect();
+        return {
+            top: rect.top,
+            bottom: rect.bottom,
+            viewportHeight: window.innerHeight,
+            clientHeight: element.clientHeight,
+            scrollHeight: element.scrollHeight
+        };
+    });
+    expect(rewardPopup.top).toBeGreaterThanOrEqual(0);
+    expect(rewardPopup.bottom).toBeLessThanOrEqual(rewardPopup.viewportHeight);
+    expect(rewardPopup.clientHeight).toBeLessThanOrEqual(rewardPopup.viewportHeight - 40);
+    expect(rewardPopup.scrollHeight).toBeGreaterThan(0);
+
+    await page.locator("#success-overlay .success-btn").click();
+    await expect(page).toHaveURL(/\/helikopter_flucht\.html$/);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Jetzt musst du selbst raus.");
     expect(pageErrors).toEqual([]);
 });

@@ -26,11 +26,13 @@ const LEVEL_ROUTES = Object.freeze({
     "link-agent-training-l2": "agent_training_level2.html",
     "link-agent-training-l3": "agent_training_level3.html",
     "link-project-choice": "projektwahl.html",
+    "link-pico-title": "pico_level1.html",
     "link-pico-l1": "pico_level1.html",
     "link-pico-l2": "pico_level2.html",
     "link-pico-l2a": "pico_level2a.html",
     "link-pico-l3": "pico_level3.html",
-    "link-pico-l4": "pico_level4.html"
+    "link-pico-l4": "pico_level4.html",
+    "link-helicopter-escape": "helikopter_flucht.html"
 });
 
 function safeStorageGetItem(key) {
@@ -876,7 +878,7 @@ const LEVEL_OUTCOMES = {
         successMessage: "Eigene Drohnenfunktionen funktionieren."
     },
     agent_training_level3: {
-        unlocks: ["link-project-choice", "link-pico-l1"],
+        unlocks: ["link-project-choice", "link-pico-title", "link-pico-l1"],
         successMessage: "Dein Datenchip stammt aus einer Suche und liegt nachweislich im Inventar."
     },
     pico_level1_navigation: {
@@ -895,9 +897,9 @@ const LEVEL_OUTCOMES = {
         unlocks: ["link-pico-l4"],
         successMessage: "Das Rettungssignal wurde an der Funkbase bestätigt."
     },
-    pico_level4: {
-        unlocks: [],
-        successMessage: "PICO ist gerettet."
+    pico_level4_memory: {
+        unlocks: ["link-helicopter-escape"],
+        successMessage: "PICO hat gesendet und danach sein Memory gelöscht."
     }
 };
 
@@ -910,7 +912,7 @@ const LEVEL_CODE_INHERITANCE = Object.freeze({
     pico_level2: Object.freeze({ from: "pico_level1_navigation" }),
     pico_level2a: Object.freeze({ from: "pico_level2" }),
     pico_level3: Object.freeze({ from: Object.freeze(["pico_level2a", "pico_level2"]) }),
-    pico_level4: Object.freeze({ from: "pico_level3" })
+    pico_level4_memory: Object.freeze({ from: "pico_level3" })
 });
 
 function validateLevelSolution(levelId, code, output) {
@@ -1073,6 +1075,17 @@ function trainingAwardSvg(symbol) {
     return '<div class="trophy" aria-hidden="true">🏆</div>';
 }
 
+function successCoinsMarkup(rewardCount) {
+    const count = Math.max(0, Math.min(12, Number.parseInt(rewardCount, 10) || 0));
+    if (!count) return "";
+    const label = count === 1 ? "1 Goldmünze" : `${count} Goldmünzen`;
+    const coins = Array.from({ length: count }, (_entry, index) => `
+        <span class="success-coin" style="--coin-index:${index}" aria-hidden="true">
+            <span>★</span>
+        </span>`).join("");
+    return `<div class="success-coins" data-reward-count="${count}" role="img" aria-label="${label}">${coins}</div>`;
+}
+
 let successCelebrationTimeouts = [];
 let trainingFireworksInstance = null;
 
@@ -1173,13 +1186,16 @@ function triggerSuccess(isFinale = false, successMessage = "", options = {}) {
             ? options.symbol
             : "trophy";
         const closeLabel = options.closeLabel || "Weiterspielen / Editor ansehen";
+        const rewardCount = Math.max(0, Number.parseInt(options.rewardCount, 10) || 0);
         const completionClass = options.className === "training-completion"
             ? " training-completion"
             : "";
 
         overlay.innerHTML = `
-            <div class="success-badge${completionClass}">
-                <div class="success-symbol" data-success-symbol="${symbol}" aria-hidden="true">${trainingAwardSvg(symbol)}</div>
+            <div class="success-badge${completionClass}" data-reward-count="${rewardCount}">
+                ${rewardCount
+                    ? successCoinsMarkup(rewardCount)
+                    : `<div class="success-symbol" data-success-symbol="${symbol}" aria-hidden="true">${trainingAwardSvg(symbol)}</div>`}
                 <h1 id="success-overlay-title">${titleText}</h1>
                 <p>${subText}</p>
                 <div class="btn-container"></div>

@@ -356,31 +356,28 @@
 }
 
 .pico-mission-hud {
-    width: min(300px, calc(100% - 28px));
+    width: min(410px, calc(100% - 28px));
 }
 
-.pico-status-row {
+.pico-hud-grid {
     display: grid;
-    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
-    gap: 8px;
-    margin-bottom: 9px;
-    padding-bottom: 9px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.22fr) minmax(86px, 0.88fr);
+    gap: 5px 12px;
+    align-items: center;
 }
 
-.pico-status-row > span {
-    display: grid;
+.pico-hud-grid > * {
     min-width: 0;
 }
 
-.pico-status-row small {
+.pico-hud-grid > small {
     color: #8fa5b7;
     font-size: 0.54rem;
     font-weight: 840;
     letter-spacing: 0.1em;
 }
 
-.pico-status-row strong {
+.pico-hud-grid > strong {
     overflow: hidden;
     color: #e9fbff;
     font-family: "SFMono-Regular", Consolas, monospace;
@@ -388,6 +385,21 @@
     line-height: 1.5;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.pico-hud-grid > #energy-value {
+    color: var(--mission-gold);
+}
+
+.pico-hud-grid > .mission-coordinate-hud {
+    align-self: stretch;
+    margin-top: 2px;
+}
+
+.pico-hud-grid > .mission-energy-track {
+    align-self: center;
+    width: 100%;
+    margin: 5px 0 0;
 }
 
 #transponder-state {
@@ -473,8 +485,22 @@
 }
 
 .rescue-success .pico-result-message {
+    top: 50%;
+    right: auto;
+    bottom: auto;
+    left: 50%;
+    width: max-content;
+    max-width: calc(100% - 38px);
+    padding: clamp(13px, 2.2vw, 20px) clamp(18px, 3vw, 32px);
     border: 1px solid rgba(125, 242, 169, 0.58);
+    background: rgba(4, 45, 31, 0.92);
+    box-shadow: 0 0 42px rgba(125, 242, 169, 0.28), inset 0 1px rgba(255, 255, 255, 0.14);
     color: var(--mission-success);
+    font-size: clamp(1.15rem, 3vw, 2.3rem);
+    letter-spacing: 0.09em;
+    text-align: center;
+    text-shadow: 0 0 18px rgba(125, 242, 169, 0.5);
+    transform: translate(-50%, -50%);
 }
 
 .rescue-failed .pico-result-message {
@@ -573,6 +599,59 @@
     color: #b8c8d6;
     font-size: 0.84rem;
     line-height: 1.55;
+}
+
+.mission-touch-note {
+    margin: 12px 0 8px;
+    color: #a9bdcc;
+    font-size: 0.76rem;
+    line-height: 1.5;
+}
+
+.pico-code-blocks {
+    gap: 7px;
+    margin-block: 13px;
+}
+
+.pico-code-blocks .makecode-block {
+    max-width: 100%;
+}
+
+.pico-progress {
+    width: 100%;
+    margin-bottom: clamp(24px, 3vw, 38px);
+}
+
+.pico-next-level-btn,
+.pico-skip-top {
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 10px 15px;
+    border-radius: 13px;
+    font-size: 0.76rem;
+    font-weight: 830;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.pico-next-level-btn {
+    border: 1px solid rgba(var(--mission-accent-rgb), 0.62);
+    background: linear-gradient(130deg, rgba(95, 245, 255, 0.94), rgba(46, 189, 204, 0.94));
+    color: #031018;
+}
+
+.pico-progress-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.pico-skip-top {
+    display: inline-flex;
+    border: 1px solid rgba(255, 199, 112, 0.4);
+    background: rgba(255, 199, 112, 0.08);
+    color: #ffe4b0;
 }
 
 .mission-task-card code {
@@ -1041,6 +1120,11 @@
         flex-direction: column;
         gap: 12px;
     }
+
+    .pico-progress-actions {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
 }
 
 @media (max-width: 460px) {
@@ -1062,12 +1146,21 @@
     }
 
     .pico-mission-hud {
-        width: min(230px, calc(100% - 16px));
+        width: min(310px, calc(100% - 16px));
     }
 
-    .pico-status-row {
-        margin-bottom: 6px;
-        padding-bottom: 6px;
+    .pico-hud-grid {
+        grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.18fr) minmax(72px, 0.94fr);
+        gap: 4px 7px;
+    }
+
+    .pico-hud-grid > strong {
+        font-size: 0.62rem;
+    }
+
+    .pico-hud-grid .mission-coordinate-hud {
+        gap: 6px;
+        font-size: 0.55rem;
     }
 
     .mission-start-label {
@@ -1086,6 +1179,15 @@
 
     .mission-primary-action {
         grid-column: auto;
+    }
+
+    .pico-progress-actions {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
+
+    .pico-progress-actions > * {
+        flex: 1 1 auto;
     }
 
     .mission-editor-label {

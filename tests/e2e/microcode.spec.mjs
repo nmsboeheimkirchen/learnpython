@@ -8,7 +8,8 @@ const stackedBlockPages = [
     "mission4_level2.html",
     "mission4_level3.html",
     "agent_training_level2.html",
-    "agent_training_level3.html"
+    "agent_training_level3.html",
+    "pico_level2.html"
 ];
 
 const indentationPlans = [
@@ -25,7 +26,8 @@ const ipadStackedBlockPages = new Set([
     "mission3_level3.html",
     "mission4_level3.html",
     "agent_training_level2.html",
-    "agent_training_level3.html"
+    "agent_training_level3.html",
+    "pico_level2.html"
 ]);
 
 async function blockGeometry(hint) {
@@ -159,4 +161,25 @@ test("inline helpers use the same rounded glass language", async ({ page }) => {
     expect(design.borderRadius).toBeGreaterThanOrEqual(18);
     expect(design.backdropFilter).toContain("blur(");
     expect(design.backgroundImage).toContain("linear-gradient");
+});
+
+test("PICO level 2 presents three separate blocks instead of a copy-ready solution", async ({ page }) => {
+    await page.goto("/pico_level2.html?e2e");
+    await expect.poll(() => page.evaluate(() => Boolean(window.DroneMissionRuntime))).toBe(true);
+
+    const hint = page.locator(".pico-code-blocks");
+    const blocks = hint.locator(":scope > .block-tooltip");
+    await expect(blocks).toHaveCount(3);
+
+    for (let index = 0; index < 3; index += 1) {
+        const block = blocks.nth(index);
+        await block.focus();
+        await expect(block).toBeFocused();
+        await expect(block.locator(":scope > .tooltiptext")).toBeVisible();
+    }
+
+    const starter = await page.evaluate(() => window.DroneMissionRuntime.editor.getValue());
+    expect(starter).not.toContain("fund = drohne.suche_hier()");
+    expect(starter).not.toContain('print("Gefunden:", fund)');
+    expect(starter).not.toContain("ausruestung.append(fund)");
 });

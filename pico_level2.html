@@ -8,20 +8,24 @@
     <title>PICO 2 – Finden und aufladen</title>
     <script src="assets/vendor/skulpt/1.2.0/skulpt.min.js"></script>
     <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
-    <script src="assets/runner.js?v=20260721-6"></script>
+    <script src="assets/runner.js?v=20260721-7"></script>
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
-    <link rel="stylesheet" href="assets/style.css?v=20260720-3">
-    <link rel="stylesheet" href="assets/drone-mission.css?v=20260721-2">
+    <link rel="stylesheet" href="assets/style.css?v=20260721-4">
+    <link rel="stylesheet" href="assets/drone-mission.css?v=20260721-3">
 </head>
 <body class="drone-mission-page pico-mission-theme" data-mission-level="pico_level2" data-pico-level="2">
     <a class="skip-link" href="#python-editor">Zum Python-Editor</a>
-    <header class="drone-mission-header">
-        <a class="drone-mission-brand" href="index.html" aria-label="Agent PY – zur Startseite"><img src="assets/brand/agent-py-logo.png?v=20260720-2" alt="" width="1600" height="232"></a>
-        <a class="drone-mission-back" href="pico_level1.html"><span aria-hidden="true">←</span> Explorer-Level</a>
-    </header>
+    <div id="navigation-root"></div>
+    <script src="assets/navigation.js?v=20260721-4"></script>
 
     <main id="main-content" class="drone-mission-main">
+        <div class="progress-container pico-progress">
+            <span class="level-badge">Level 2 von 4</span>
+            <div class="progress-bar-bg" aria-hidden="true"><div class="progress-bar-fill" id="progress-fill" style="width:50%"></div></div>
+            <span id="status-text" role="status">Warte auf deinen Code</span>
+            <a id="next-level-btn" class="next-level-btn pico-next-level-btn" href="pico_level2a.html" style="display:none">Weiter zu Level 2a</a>
+        </div>
         <section class="drone-mission-intro" aria-labelledby="mission-title">
             <div>
                 <p class="mission-kicker">PICO · Level 2 von 4</p>
@@ -48,12 +52,7 @@
                     <div class="mission-stage-label mission-start-label"><span aria-hidden="true">⬒</span> Aufzug</div>
                     <div class="mission-stage-label mission-beacon-label"><span aria-hidden="true">◉</span> Funkbase (340, 15)</div>
                     <div id="energy-cell-reveal" class="energy-cell-reveal"><span id="pico-cell-label"><span aria-hidden="true">ϟ</span> Energiezelle (−380, −90)</span></div>
-                    <div class="mission-energy-hud pico-mission-hud" aria-label="Drohnenstatus">
-                        <div class="pico-status-row"><span><small>DROHNE</small><strong id="drone-name">–</strong></span><span><small>TRANSPONDER</small><strong id="transponder-state">–</strong></span></div>
-                        <div class="mission-energy-label"><span>ENERGIE</span><strong id="energy-value">10 %</strong></div>
-                        <div id="energy-meter" class="mission-energy-track" role="progressbar" aria-label="Energie der Drohne" aria-valuemin="0" aria-valuemax="100" aria-valuenow="10"><span id="energy-fill" style="width:10%"></span></div>
-                        <div class="mission-coordinate-hud"><span>X <strong id="coordinate-x">−365</strong></span><span>Y <strong id="coordinate-y">55</strong></span></div>
-                    </div>
+                    <div class="mission-energy-hud pico-mission-hud" aria-label="Drohnenstatus"><div class="pico-hud-grid"><small>DROHNE</small><small>TRANSPONDER</small><small>ENERGIE</small><strong id="drone-name">–</strong><strong id="transponder-state">–</strong><strong id="energy-value">10 %</strong><div class="mission-coordinate-hud" aria-label="Aktuelle Drohnenposition"><span>X <strong id="coordinate-x">−365</strong></span><span>Y <strong id="coordinate-y">55</strong></span></div><span class="pico-hud-spacer" aria-hidden="true"></span><div id="energy-meter" class="mission-energy-track" role="progressbar" aria-label="Energie der Drohne" aria-valuemin="0" aria-valuemax="100" aria-valuenow="10"><span id="energy-fill" style="width:10%"></span></div></div></div>
                     <div id="pico-result-message" class="pico-result-message" role="status" aria-live="assertive"></div>
                     <div id="stage-discovery-message" class="stage-discovery-message" role="status" hidden></div>
                 </div>
@@ -68,8 +67,13 @@
                 <div class="mission-section-heading"><div><span class="mission-eyebrow">Energie sichern</span><h2 id="code-title">Python-Kontrollraum</h2></div><span class="mission-save-note">Code wird übernommen</span></div>
                 <div class="mission-task-card">
                     <h2>Untersuche den Fund</h2>
-                    <p><code>suche_hier()</code> liefert am richtigen Ort die Energiezelle zurück. Speichere diesen Wert, gib ihn aus und hänge genau ihn an <code>ausruestung</code> an.</p>
-                    <div class="mission-code-hint"><span>finden, untersuchen, sichern</span><code>fund = drohne.suche_hier()<br>print("Gefunden:", fund)<br>ausruestung.append(fund)</code></div>
+                    <p><code>suche_hier()</code> liefert am richtigen Ort die Energiezelle zurück. Übersetze die drei Blöcke selbst in Python.</p>
+                    <p class="mission-touch-note">Tippe auf einen Block oder fahre mit der Maus darüber. In der Erklärblase siehst du jeweils nur den einzelnen Python-Schritt.</p>
+                    <div class="block-hint pico-code-blocks" aria-label="Drei getrennte Codehinweise">
+                        <div class="makecode-block block-tooltip" tabindex="0" aria-describedby="pico-l2-tip-search">setze <span class="makecode-var-pill">fund</span> auf <span class="makecode-input">drohne.suche_hier()</span><span class="tooltiptext" id="pico-l2-tip-search" role="tooltip">fund = drohne.suche_hier()</span></div>
+                        <div class="makecode-block block-tooltip" tabindex="0" aria-describedby="pico-l2-tip-print">zeige Text <span class="makecode-input">"Gefunden:"</span> und <span class="makecode-var-pill">fund</span><span class="tooltiptext" id="pico-l2-tip-print" role="tooltip">print("Gefunden:", fund)</span></div>
+                        <div class="makecode-block block-tooltip" tabindex="0" aria-describedby="pico-l2-tip-append">füge <span class="makecode-var-pill">fund</span> zu <span class="makecode-input">ausruestung</span> hinzu<span class="tooltiptext" id="pico-l2-tip-append" role="tooltip">ausruestung.append(fund)</span></div>
+                    </div>
                     <p class="mission-observation-note">Nur Text auszugeben oder eine erfundene Energiezelle anzuhängen lädt nicht.</p>
                 </div>
                 <label class="mission-editor-label" for="python-editor"><span>Python-Code für deine Drohne</span><small id="editor-shortcut-hint">Strg/⌘ + Enter startet</small></label>
@@ -105,10 +109,6 @@ fahre_zu(-380, -90)
                     <button id="presentation-btn" class="mission-secondary-action" type="button" aria-pressed="false">◫ Präsentieren</button>
                 </div>
                 <div class="mission-console-card"><div class="mission-console-title"><span>Fundprotokoll</span><span aria-hidden="true"></span></div><pre id="console-output" aria-live="polite">Die Energiezelle wartet auf ihre Untersuchung.</pre></div>
-                <div id="next-level-container" class="next-level-preview" hidden>
-                    <span>Deine Wahl</span><strong>Optionales Status-Cockpit oder direkt weiter</strong><small>Level 2a aktualisiert den TRANSPONDER. Die Rettungsmission funktioniert auch ohne diesen Zusatz.</small>
-                    <div class="next-level-actions"><a class="next-level-action" href="pico_level2a.html">Level 2a ausprobieren <span aria-hidden="true">→</span></a><a class="next-level-skip" href="pico_level3.html">Überspringen · zu Level 3</a></div>
-                </div>
             </section>
         </div>
     </main>
@@ -116,8 +116,8 @@ fahre_zu(-380, -90)
     <script src="assets/vendor/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="assets/vendor/codemirror/5.65.2/python.min.js"></script>
     <script src="assets/drone-mission-core.js?v=20260721-2"></script>
-    <script src="assets/pico-mission-core.js?v=20260721-1"></script>
-    <script src="assets/pico-mission.js?v=20260721-1"></script>
+    <script src="assets/pico-mission-core.js?v=20260721-2"></script>
+    <script src="assets/pico-mission.js?v=20260721-2"></script>
     <script src="assets/drone-mission.js?v=20260721-2"></script>
 </body>
 </html>

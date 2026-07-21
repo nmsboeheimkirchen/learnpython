@@ -42,6 +42,9 @@
         let transponder;
         let droneNameHistory;
         let transponderHistory;
+        let statusEvents;
+        let eventSequence;
+        let successfulSignalSequence;
 
         function reset() {
             energy = START_ENERGY;
@@ -62,17 +65,32 @@
             transponder = "";
             droneNameHistory = new Set();
             transponderHistory = new Set();
+            statusEvents = [];
+            eventSequence = 0;
+            successfulSignalSequence = null;
+        }
+
+        function recordStatusChange(key, previousValue, nextValue) {
+            if (previousValue === nextValue) return;
+            eventSequence += 1;
+            statusEvents.push({ key, value: nextValue, sequence: eventSequence });
         }
 
         function recordStatus(status) {
             if (!status || typeof status !== "object" || Array.isArray(status)) {
+                recordStatusChange("DROHNE", droneName, "");
+                recordStatusChange("TRANSPONDER", transponder, "");
                 droneName = "";
                 transponder = "";
                 return snapshot();
             }
 
-            droneName = cleanStatusValue(status.DROHNE);
-            transponder = cleanStatusValue(status.TRANSPONDER);
+            const nextDroneName = cleanStatusValue(status.DROHNE);
+            const nextTransponder = cleanStatusValue(status.TRANSPONDER);
+            recordStatusChange("DROHNE", droneName, nextDroneName);
+            recordStatusChange("TRANSPONDER", transponder, nextTransponder);
+            droneName = nextDroneName;
+            transponder = nextTransponder;
             if (droneName) droneNameHistory.add(droneName);
             if (transponder) transponderHistory.add(transponder);
             return snapshot();
@@ -161,13 +179,38 @@
 
         function send(point) {
             signalAttempted = true;
+            eventSequence += 1;
             const atBeacon = core.isNear(point, BEACON, BEACON_RADIUS);
             if (atBeacon) beaconReached = true;
-            signalSent = Boolean(atBeacon && charged && !depleted && energy > 0);
-            lastSignalFailure = signalSent
-                ? null
-                : (!atBeacon ? "BEACON_OUT_OF_RANGE" : (!charged ? "CELL_MISSING" : "ENERGY_EMPTY"));
-            return signalSent;
+            const attemptSucceeded = Boolean(atBeacon && charged && !depleted && energy > 0);
+            if (attemptSucceeded) {
+                signalSent = true;
+                if (successfulSignalSequence === null) successfulSignalSequence = eventSequence;
+                lastSignalFailure = null;
+            } else if (!signalSent) {
+                lastSignalFailure = !atBeacon
+                    ? "BEACON_OUT_OF_RANGE"
+                    : (!charged ? "CELL_MISSING" : "ENERGY_EMPTY");
+            }
+            return attemptSucceeded;
+        }
+
+        function statusReachedAfterSignal(key, value) {
+            if (!signalSent || successfulSignalSequence === null) return false;
+            return statusEvents.some(event => (
+                event.key === key &&
+                event.value === value &&
+                event.sequence > successfulSignalSequence
+            ));
+        }
+
+        function memoryDeletedAfterSignal() {
+            return Boolean(
+                droneName === "self-destroy" &&
+                transponder === "delete" &&
+                statusReachedAfterSignal("DROHNE", "self-destroy") &&
+                statusReachedAfterSignal("TRANSPONDER", "delete")
+            );
         }
 
         function restore(checkpoint = {}) {
@@ -198,6 +241,8 @@
             if (checkpoint.signalSent) {
                 signalAttempted = true;
                 signalSent = true;
+                eventSequence += 1;
+                successfulSignalSequence = eventSequence;
             }
             if (checkpoint.status) recordStatus(checkpoint.status);
             return snapshot();
@@ -220,7 +265,10 @@
                 droneName,
                 transponder,
                 droneNameHistory: [...droneNameHistory],
-                transponderHistory: [...transponderHistory]
+                transponderHistory: [...transponderHistory],
+                statusEvents: statusEvents.map(event => ({ ...event })),
+                successfulSignalSequence,
+                memoryDeletedAfterSignal: memoryDeletedAfterSignal()
             };
         }
 
@@ -234,6 +282,7 @@
             searchHere,
             send,
             snapshot,
+            statusReachedAfterSignal,
             syncEquipment
         });
     }

@@ -60,6 +60,30 @@ window.AgentNavigation = (() => {
                 { id: "link-agent-training-l2", href: "agent_training_level2.html", label: "Eigene Funktionen" },
                 { id: "link-agent-training-l3", href: "agent_training_level3.html", label: "Suchen und aufnehmen" }
             ]
+        },
+        {
+            number: "P",
+            title: "PICO: Rettungssignal",
+            titleId: "link-pico-title",
+            href: "pico_level1.html",
+            description: "Energie finden, die Funkbase erreichen und PICO ohne verwertbare Spuren zurücklassen.",
+            unitLabel: "Level",
+            levels: [
+                { id: "link-pico-l1", href: "pico_level1.html", number: "1", label: "Reicht die Energie?" },
+                { id: "link-pico-l2", href: "pico_level2.html", number: "2", label: "Finden und aufladen" },
+                { id: "link-pico-l2a", href: "pico_level2a.html", number: "2a", label: "Status-Cockpit" },
+                { id: "link-pico-l3", href: "pico_level3.html", number: "3", label: "Zur Funkbase" },
+                { id: "link-pico-l4", href: "pico_level4.html", number: "4", label: "Memory löschen" }
+            ]
+        },
+        {
+            number: "FL",
+            title: "Gemeinsame Flucht",
+            titleId: "link-helicopter-escape",
+            href: "helikopter_flucht.html",
+            description: "Den Helikopter des Lords hacken, startklar machen und die Basis verlassen.",
+            unitLabel: "Phase",
+            levels: []
         }
     ]);
 
@@ -68,7 +92,9 @@ window.AgentNavigation = (() => {
     }
 
     function currentMissionIndex(pageName = currentPageName()) {
-        if (/^agent_training_/.test(pageName)) return missions.length - 1;
+        if (/^helikopter_flucht/.test(pageName)) return missions.length - 1;
+        if (/^pico_level/.test(pageName)) return missions.length - 2;
+        if (/^agent_training_/.test(pageName)) return missions.length - 3;
         const match = pageName.match(/^mission([1-4])_/);
         return match ? Number(match[1]) - 1 : 0;
     }
@@ -78,9 +104,16 @@ window.AgentNavigation = (() => {
         if (!body?.classList) return;
         const missionIndex = currentMissionIndex(pageName);
         const isAgentTraining = /^agent_training_/.test(pageName);
-        body.classList.add("learning-page", isAgentTraining ? "agent-training" : `mission-${missionIndex + 1}`);
-        body.classList.add(pageName.includes("_start") ? "mission-start-page" : "mission-level-page");
-        body.dataset.mission = isAgentTraining ? "agent-training" : String(missionIndex + 1);
+        const isPico = /^pico_level/.test(pageName);
+        const isEscape = /^helikopter_flucht/.test(pageName);
+        const themeClass = isAgentTraining
+            ? "agent-training"
+            : (isPico ? "pico-project" : (isEscape ? "escape-project" : `mission-${missionIndex + 1}`));
+        body.classList.add("learning-page", themeClass);
+        body.classList.add(pageName.includes("_start") || isEscape ? "mission-start-page" : "mission-level-page");
+        body.dataset.mission = isAgentTraining
+            ? "agent-training"
+            : (isPico ? "pico" : (isEscape ? "escape" : String(missionIndex + 1)));
     }
 
     function createLockBadge() {
@@ -237,7 +270,7 @@ window.AgentNavigation = (() => {
             mission.levels.forEach((level, levelIndex) => {
                 levels.appendChild(createLink({
                     ...level,
-                    label: `${mission.unitLabel || "Level"} ${levelIndex + 1}: ${level.label}`,
+                    label: `${mission.unitLabel || "Level"} ${level.number || levelIndex + 1}: ${level.label}`,
                     locked: missionIndex > 0 || levelIndex > 0
                 }));
             });
