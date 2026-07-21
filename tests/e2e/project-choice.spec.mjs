@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("@ipad project choice opens PICO and keeps Pixelmuseum as the open-path preview", async ({ page }, testInfo) => {
+test("@ipad project choice opens PICO and the required Pixelmuseum briefing", async ({ page }, testInfo) => {
     const pageErrors = [];
     page.on("pageerror", error => pageErrors.push(String(error)));
     await page.goto("/projektwahl.html");
@@ -9,7 +9,8 @@ test("@ipad project choice opens PICO and keeps Pixelmuseum as the open-path pre
     await expect(page.getByRole("article", { name: "PICO Das letzte Rettungssignal" })).toBeVisible();
     await expect(page.getByRole("article", { name: "Pixelmuseum Das gestohlene Sternenfragment" })).toBeVisible();
     await expect(page.getByRole("link", { name: "PICO erkunden" })).toHaveAttribute("href", "pico_level1.html");
-    await expect(page.locator(".project-preview-action[aria-disabled='true']")).toHaveCount(1);
+    await expect(page.getByRole("link", { name: "Pixelmuseum-Briefing starten" })).toHaveAttribute("href", "pixelmuseum_briefing.html");
+    await expect(page.locator(".project-preview-action[aria-disabled='true']")).toHaveCount(0);
     await expect(page.locator('a[href*="prototypes/"]')).toHaveCount(0);
 
     const layout = await page.evaluate(() => {
@@ -39,6 +40,12 @@ test("@ipad project choice opens PICO and keeps Pixelmuseum as the open-path pre
     await page.getByRole("link", { name: "PICO erkunden" }).click();
     await expect(page).toHaveURL(/\/pico_level1\.html$/);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Reicht die Energie?");
+    await expect.poll(() => page.evaluate(() => Boolean(window.DroneMissionRuntime))).toBe(true);
+
+    await page.goto("/projektwahl.html");
+    await page.getByRole("link", { name: "Pixelmuseum-Briefing starten" }).click();
+    await expect(page).toHaveURL(/\/pixelmuseum_briefing\.html$/);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Zwei Funde. Eine echte Inventarkette.");
     await expect.poll(() => page.evaluate(() => Boolean(window.DroneMissionRuntime))).toBe(true);
     expect(pageErrors).toEqual([]);
 });

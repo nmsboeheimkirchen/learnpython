@@ -77,10 +77,22 @@ window.AgentNavigation = (() => {
             ]
         },
         {
+            number: "M",
+            title: "Pixelmuseum: Sternenfragment",
+            titleId: "link-museum-title",
+            href: "pixelmuseum_briefing.html",
+            description: "Eine offene Museumsmission planen, bei Bedarf die Zentrale fragen und mit dem Artefakt entkommen.",
+            unitLabel: "Phase",
+            levels: [
+                { id: "link-museum-briefing", href: "pixelmuseum_briefing.html", number: "1", label: "Briefing" },
+                { id: "link-museum-finale", href: "pixelmuseum_finale.html", number: "2", label: "Finale" }
+            ]
+        },
+        {
             number: "FL",
             title: "Gemeinsame Flucht",
             titleId: "link-helicopter-escape",
-            href: "helikopter_flucht.html",
+            href: "helikopter_flucht-b.html",
             description: "Den Helikopter des Lords hacken, startklar machen und die Basis verlassen.",
             unitLabel: "Phase",
             levels: []
@@ -92,11 +104,15 @@ window.AgentNavigation = (() => {
     }
 
     function currentMissionIndex(pageName = currentPageName()) {
-        if (/^helikopter_flucht/.test(pageName)) return missions.length - 1;
-        if (/^pico_level/.test(pageName)) return missions.length - 2;
-        if (/^agent_training_/.test(pageName)) return missions.length - 3;
-        const match = pageName.match(/^mission([1-4])_/);
-        return match ? Number(match[1]) - 1 : 0;
+        if (/^mission1_/.test(pageName)) return 0;
+        if (/^mission2_/.test(pageName)) return 1;
+        if (/^mission3_/.test(pageName)) return 2;
+        if (/^mission4_/.test(pageName)) return 3;
+        if (/^agent_training_/.test(pageName)) return 4;
+        if (/^pico_level/.test(pageName)) return 5;
+        if (/^pixelmuseum_(?:briefing|finale)\.html$/.test(pageName)) return 6;
+        if (/^helikopter_flucht/.test(pageName)) return 7;
+        return 0;
     }
 
     function applyPageTheme(pageName = currentPageName()) {
@@ -105,15 +121,18 @@ window.AgentNavigation = (() => {
         const missionIndex = currentMissionIndex(pageName);
         const isAgentTraining = /^agent_training_/.test(pageName);
         const isPico = /^pico_level/.test(pageName);
+        const isMuseum = /^pixelmuseum_(?:briefing|finale)\.html$/.test(pageName);
         const isEscape = /^helikopter_flucht/.test(pageName);
         const themeClass = isAgentTraining
             ? "agent-training"
-            : (isPico ? "pico-project" : (isEscape ? "escape-project" : `mission-${missionIndex + 1}`));
+            : (isPico
+                ? "pico-project"
+                : (isMuseum ? "museum-project" : (isEscape ? "escape-project" : `mission-${missionIndex + 1}`)));
         body.classList.add("learning-page", themeClass);
         body.classList.add(pageName.includes("_start") || isEscape ? "mission-start-page" : "mission-level-page");
         body.dataset.mission = isAgentTraining
             ? "agent-training"
-            : (isPico ? "pico" : (isEscape ? "escape" : String(missionIndex + 1)));
+            : (isPico ? "pico" : (isMuseum ? "museum" : (isEscape ? "escape" : String(missionIndex + 1))));
     }
 
     function createLockBadge() {

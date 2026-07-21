@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Pixelmuseum-Briefing: Verkette zwei echte Fundstücke und plane deine freie Alarmstrategie.">
+    <meta name="color-scheme" content="dark">
+    <title>Pixelmuseum – Einsatzbriefing</title>
+    <script src="assets/vendor/skulpt/1.2.0/skulpt.min.js"></script>
+    <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
+    <script src="assets/runner.js?v=20260721-8"></script>
+    <script src="assets/teacher-solutions.js?v=20260721-6"></script>
+    <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
+    <link rel="stylesheet" href="assets/style.css?v=20260721-5">
+    <link rel="stylesheet" href="assets/drone-mission.css?v=20260721-5">
+    <link rel="stylesheet" href="assets/pixelmuseum.css?v=20260721-1">
+</head>
+<body class="drone-mission-page pixelmuseum-mission-theme" data-mission-level="pixelmuseum_briefing" data-pixelmuseum-stage="briefing">
+    <a class="skip-link" href="#python-editor">Zum Python-Editor</a>
+    <div id="navigation-root"></div>
+    <script src="assets/navigation.js?v=20260721-6"></script>
+
+    <main id="main-content" class="drone-mission-main">
+        <div class="progress-container museum-progress">
+            <span class="level-badge">Pixelmuseum · Phase 1 von 2</span>
+            <div class="progress-bar-bg" aria-hidden="true"><div class="progress-bar-fill" id="progress-fill" style="width:50%"></div></div>
+            <span id="status-text" role="status">Bereit für das Briefing</span>
+            <a id="next-level-btn" class="next-level-btn museum-next-level-btn" href="pixelmuseum_finale.html" style="display:none">Weiter zum Finale</a>
+        </div>
+
+        <section class="drone-mission-intro museum-briefing-intro" aria-labelledby="mission-title">
+            <div>
+                <p class="mission-kicker">Pixelmuseum · Pflichtbriefing</p>
+                <h1 id="mission-title">Zwei Funde. Eine echte Inventarkette.</h1>
+                <p>Im Museum hängt alles zusammen: Erst die Zugangskarte öffnet den Weg zum Fragment. Übe diese Reihenfolge ohne Alarm – deine Route und dein Python-Code bleiben frei.</p>
+            </div>
+            <ul class="mission-concepts" aria-label="Werkzeuge dieses Briefings"><li>suche_hier()</li><li>append()</li><li>Inventarliste</li></ul>
+        </section>
+
+        <div class="drone-mission-workspace">
+            <section class="mission-stage-panel" aria-labelledby="stage-title">
+                <div class="mission-section-heading">
+                    <div><span class="mission-eyebrow">Live-Übungsansicht</span><h2 id="stage-title">Archiv-Vorraum</h2></div>
+                    <span id="run-status" class="mission-run-status is-ready" role="status">Bereit zum Planen</span>
+                </div>
+
+                <div class="mission-stage museum-briefing-stage" aria-label="Archiv-Vorraum mit Zugangskarte und Testfragment.">
+                    <img class="mission-scene" src="assets/images/finales/pixel-museum.webp" alt="" width="1536" height="1024" fetchpriority="high">
+                    <div class="mission-scene-shade" aria-hidden="true"></div>
+                    <svg class="mission-stage-overlay" viewBox="0 0 960 540" preserveAspectRatio="none" aria-hidden="true">
+                        <path class="museum-training-route" d="M730 430 C620 300 390 165 230 205 S260 360 410 365"></path>
+                        <circle class="mission-target-pulse museum-card-pulse" cx="230" cy="205" r="32"></circle>
+                        <circle class="mission-target-pulse museum-fragment-pulse" cx="410" cy="365" r="32"></circle>
+                    </svg>
+                    <div id="museum-briefing-turtle" class="mission-turtle-target" aria-hidden="true"></div>
+                    <div class="mission-stage-label museum-briefing-start"><span aria-hidden="true">⬒</span> Start (260, −170)</div>
+                    <div id="briefing-card-label" class="mission-stage-label museum-briefing-card"><span aria-hidden="true">▣</span> Zugangskarte (−230, 70)</div>
+                    <div id="briefing-fragment-label" class="mission-stage-label museum-briefing-fragment"><span aria-hidden="true">✦</span> Testfragment (−70, −75)</div>
+
+                    <div class="museum-briefing-hud" aria-label="Briefingstatus">
+                        <small>REIHENFOLGE</small>
+                        <strong id="briefing-order-state">Karte → Fragment</strong>
+                        <small>INVENTAR</small>
+                        <div id="briefing-inventory" class="briefing-inventory"><span>leer</span></div>
+                    </div>
+                    <div id="briefing-stage-message" class="pico-result-message" role="status" aria-live="assertive"></div>
+                </div>
+
+                <div class="mission-target-legend museum-briefing-legend">
+                    <span><strong>1</strong> Zugangskarte (−230, 70)</span>
+                    <span><strong>2</strong> Testfragment (−70, −75)</span>
+                    <span><strong>Regel</strong> Nur echte Suchfunde zählen</span>
+                </div>
+
+                <section class="mission-feedback" aria-labelledby="validation-title">
+                    <div><span class="mission-eyebrow">Laufzeit-Feedback</span><h2 id="validation-title">Noch nicht ausgeführt</h2><p id="validation-message">Finde beide Gegenstände in der richtigen Reihenfolge und gib dein echtes Inventar aus.</p></div>
+                    <ul id="checks-list" class="mission-checks" aria-label="Prüfergebnisse"></ul>
+                </section>
+            </section>
+
+            <section class="mission-code-panel" id="editor-panel" aria-labelledby="code-title">
+                <div class="mission-section-heading"><div><span class="mission-eyebrow">Offene Vorbereitung</span><h2 id="code-title">Python-Einsatzzentrale</h2></div><span class="mission-save-note">Erfolg wird gespeichert</span></div>
+
+                <div class="mission-task-card museum-mission-plan">
+                    <h2>Verkette die beiden Funde</h2>
+                    <p>Die Schritte sind klar, den Weg programmierst du selbst. Jeder Inventareintrag muss durch eine echte Suche am richtigen Ort freigeschaltet werden.</p>
+                    <ol class="museum-plan-steps">
+                        <li><span>01</span><div><strong>Zugangskarte sichern</strong><p>Hinsteuern, suchen und den Fund ins Inventar aufnehmen.</p></div></li>
+                        <li><span>02</span><div><strong>Testfragment sichern</strong><p>Erst mit echter Zugangskarte wird der zweite Fund freigegeben.</p></div></li>
+                        <li><span>03</span><div><strong>Inventar melden</strong><p>Gib exakt <code>BRIEFING-INVENTAR: Zugangskarte,Testfragment</code> aus – aus deiner Liste erzeugt.</p></div></li>
+                    </ol>
+                    <div class="block-hint museum-briefing-blocks" aria-label="Konzeptblöcke ohne fertige Route">
+                        <div class="makecode-block block-tooltip" tabindex="0" aria-describedby="museum-tip-search">setze <span class="makecode-var-pill">fund</span> auf <span class="makecode-input">Drohne untersucht hier</span><span class="tooltiptext" id="museum-tip-search" role="tooltip">Speichere den Rückgabewert von drohne.suche_hier().</span></div>
+                        <div class="makecode-block block-tooltip" tabindex="0" aria-describedby="museum-tip-append">füge <span class="makecode-var-pill">fund</span> zu <span class="makecode-input">inventar</span> hinzu<span class="tooltiptext" id="museum-tip-append" role="tooltip">Nimm genau den eben gefundenen Wert in die Liste auf.</span></div>
+                    </div>
+                </div>
+
+                <aside class="museum-alarm-preview" aria-labelledby="alarm-preview-title">
+                    <span class="museum-alarm-icon" aria-hidden="true">◈</span>
+                    <div><span class="mission-eyebrow">Vorschau aufs Finale</span><h2 id="alarm-preview-title">Das echte Artefakt startet den Alarm.</h2><p>Dort entscheidest du selbst: Alarmkonsole rechtzeitig hacken oder vor der ersten Verriegelung zum Portal fliegen. Beide Strategien sind gültig.</p></div>
+                </aside>
+
+                <label class="mission-editor-label" for="python-editor"><span>Python-Code für deine Drohne</span><small id="editor-shortcut-hint">Strg/⌘ + Enter startet</small></label>
+                <textarea id="python-editor" spellcheck="false">import turtle
+
+drohne = turtle.Turtle()
+drohne.shape("triangle")
+drohne.color("#ff78f3")
+drohne.speed(0)
+drohne.hideturtle()
+drohne.penup()
+drohne.goto(260, -170)
+drohne.speed(4)
+drohne.showturtle()
+drohne.pendown()
+turtle.Screen().delay(30)
+
+inventar = []
+
+def gehe_zu(x, y):
+    drohne.goto(x, y)
+
+# Dein Plan beginnt hier.
+# 1. Zugangskarte bei (-230, 70)
+# 2. Testfragment bei (-70, -75)
+# 3. Melde dein echtes BRIEFING-INVENTAR.
+</textarea>
+                <div class="mission-control-bar">
+                    <button id="run-btn" class="mission-primary-action" type="button"><span aria-hidden="true">▶</span> Briefing testen</button>
+                    <button id="reset-btn" class="mission-secondary-action" type="button">↺ Briefing-Code laden</button>
+                    <button id="presentation-btn" class="mission-secondary-action" type="button" aria-pressed="false">◫ Präsentieren</button>
+                </div>
+                <button class="test-btn" type="button" data-teacher-solution="pixelmuseum_briefing">Musterlösung (Für Lehrer)</button>
+                <div class="mission-console-card"><div class="mission-console-title"><span>Briefingprotokoll</span><span aria-hidden="true"></span></div><pre id="console-output" aria-live="polite">Der Archiv-Vorraum wartet auf deine Drohne.</pre></div>
+            </section>
+        </div>
+    </main>
+
+    <button id="exit-presentation-btn" class="exit-presentation" type="button">Editor anzeigen</button>
+    <script src="assets/vendor/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="assets/vendor/codemirror/5.65.2/python.min.js"></script>
+    <script src="assets/drone-mission-core.js?v=20260721-2"></script>
+    <script src="assets/pixelmuseum-briefing-core.js?v=20260721-1"></script>
+    <script src="assets/pixelmuseum-briefing.js?v=20260721-1"></script>
+    <script src="assets/drone-mission.js?v=20260721-4"></script>
+</body>
+</html>

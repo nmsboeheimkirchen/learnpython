@@ -32,8 +32,17 @@ const LEVEL_ROUTES = Object.freeze({
     "link-pico-l2a": "pico_level2a.html",
     "link-pico-l3": "pico_level3.html",
     "link-pico-l4": "pico_level4.html",
-    "link-helicopter-escape": "helikopter_flucht.html"
+    "link-museum-title": "pixelmuseum_briefing.html",
+    "link-museum-briefing": "pixelmuseum_briefing.html",
+    "link-museum-finale": "pixelmuseum_finale.html",
+    "link-helicopter-escape": "helikopter_flucht-b.html"
 });
+
+function canonicalPageHref(href) {
+    return href === "helikopter_flucht.html"
+        ? LEVEL_ROUTES["link-helicopter-escape"]
+        : href;
+}
 
 function safeStorageGetItem(key) {
     try {
@@ -230,6 +239,7 @@ function clearProgress() {
     safeStorageRemoveItem(PROGRESS_STORAGE_KEY);
     safeStorageRemoveItem(COMPLETED_CODE_STORAGE_KEY);
     safeStorageRemoveItem(TEACHER_MODE_STORAGE_KEY);
+    safeStorageRemoveItem("pixelmuseumHelp_v1");
     safeStorageRemoveItem("sidebarState");
 }
 
@@ -355,6 +365,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     applyUnlocks();
+    const nextLevelButton = document.getElementById("next-level-btn");
+    const nextLevelHref = nextLevelButton?.getAttribute?.("href");
+    if (nextLevelHref) nextLevelButton.href = canonicalPageHref(nextLevelHref);
     if(window.location.hash === '#l') {
         document.querySelectorAll('.next-level-btn').forEach(btn => btn.style.display = 'block');
     }
@@ -878,7 +891,13 @@ const LEVEL_OUTCOMES = {
         successMessage: "Eigene Drohnenfunktionen funktionieren."
     },
     agent_training_level3: {
-        unlocks: ["link-project-choice", "link-pico-title", "link-pico-l1"],
+        unlocks: [
+            "link-project-choice",
+            "link-pico-title",
+            "link-pico-l1",
+            "link-museum-title",
+            "link-museum-briefing"
+        ],
         successMessage: "Dein Datenchip stammt aus einer Suche und liegt nachweislich im Inventar."
     },
     pico_level1_navigation: {
@@ -900,6 +919,14 @@ const LEVEL_OUTCOMES = {
     pico_level4_memory: {
         unlocks: ["link-helicopter-escape"],
         successMessage: "PICO hat gesendet und danach sein Memory gelöscht."
+    },
+    pixelmuseum_briefing: {
+        unlocks: ["link-museum-finale"],
+        successMessage: "Das Briefing ist abgeschlossen. Das Pixelmuseum ist bereit."
+    },
+    pixelmuseum_finale: {
+        unlocks: ["link-helicopter-escape"],
+        successMessage: "Das Sternenfragment ist gesichert und die Flucht aus dem Museum gelungen."
     }
 };
 
@@ -1208,7 +1235,7 @@ function triggerSuccess(isFinale = false, successMessage = "", options = {}) {
         const nextBtnSource = document.getElementById("next-level-btn");
         if (options.primaryHref) {
             const primaryLink = document.createElement("a");
-            primaryLink.href = options.primaryHref;
+            primaryLink.href = canonicalPageHref(options.primaryHref);
             primaryLink.className = "success-btn";
             primaryLink.textContent = options.primaryLabel || "Weiter";
             overlay.querySelector(".btn-container").appendChild(primaryLink);
@@ -1245,7 +1272,11 @@ function triggerSuccess(isFinale = false, successMessage = "", options = {}) {
     const fill = document.getElementById("progress-fill");
     if(fill) fill.style.width = "100%";
     const nextBtnTop = document.getElementById("next-level-btn");
-    if(nextBtnTop) nextBtnTop.style.display = "block"; // Auch den kleinen Button oben zeigen
+    if(nextBtnTop) {
+        const nextHref = nextBtnTop.getAttribute?.("href");
+        if (nextHref) nextBtnTop.href = canonicalPageHref(nextHref);
+        nextBtnTop.style.display = "block"; // Auch den kleinen Button oben zeigen
+    }
 
     // Zeige fettes Overlay
     overlay.style.display = "flex";

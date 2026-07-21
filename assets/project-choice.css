@@ -353,6 +353,13 @@
     background: rgba(var(--choice-magenta-rgb), 0.055);
 }
 
+.project-card-museum .project-start-action {
+    border-color: rgba(var(--choice-magenta-rgb), 0.62);
+    background: linear-gradient(130deg, rgba(var(--choice-magenta-rgb), 0.22), rgba(var(--choice-magenta-rgb), 0.08));
+    box-shadow: 0 12px 30px rgba(var(--choice-magenta-rgb), 0.12);
+    color: #ffe3fc;
+}
+
 .project-choice-note {
     display: flex;
     gap: 11px;
@@ -385,6 +392,11 @@
     background: linear-gradient(130deg, rgba(var(--choice-cyan-rgb), 0.3), rgba(var(--choice-cyan-rgb), 0.12));
     color: #fff;
     transform: translateY(-1px);
+}
+
+.project-card-museum .project-start-action:hover {
+    border-color: var(--choice-magenta);
+    background: linear-gradient(130deg, rgba(var(--choice-magenta-rgb), 0.32), rgba(var(--choice-magenta-rgb), 0.13));
 }
 
 .project-start-action:hover span {

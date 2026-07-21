@@ -42,6 +42,7 @@
             "Cmd-Enter": () => runProgram()
         }
     });
+    window.editor = editor;
 
     const editorInput = editor.getInputField?.();
     if (editorInput) {
@@ -59,6 +60,16 @@
     let activeTurtle = null;
     let automaticStopRendered = false;
     let cancelRequested = false;
+    let hasRun = false;
+    let lastRunCode = null;
+    let lastErrorMessage = null;
+    let lastResult = null;
+
+    function emitFinaleEvent(name, detail) {
+        const EventConstructor = window.CustomEvent;
+        if (typeof document.dispatchEvent !== "function" || typeof EventConstructor !== "function") return;
+        document.dispatchEvent(new EventConstructor(name, { detail }));
+    }
 
     function revealLiveCockpit() {
         const cockpit = document.querySelector(".game-column");
@@ -94,7 +105,8 @@
             : '<span aria-hidden="true">▶</span> ' + (document.body.classList.contains("museum-theme") ? "Flucht starten" : "Mission starten");
         resetButton.textContent = nextRunning
             ? (cancelRequested ? "Wird gestoppt …" : "■ Mission stoppen")
-            : "↺ Beispiel laden";
+            : (config.resetLabel || "↺ Beispiel laden");
+        emitFinaleEvent("finale:running", { running: nextRunning });
     }
 
     function appendOutput(text) {
@@ -319,6 +331,7 @@
     }
 
     function renderChecks(result) {
+        lastResult = result;
         checksList.textContent = "";
         result.checks.forEach(check => {
             const item = document.createElement("li");
@@ -340,6 +353,11 @@
         validationTitle.textContent = result.passed ? "Bereit zur Präsentation" : "Noch nicht ganz bereit";
         validationMessage.textContent = result.message;
         document.body.classList.toggle("validation-passed", result.passed);
+        config.onResult?.(result, {
+            code: lastRunCode || editor.getValue(),
+            output: outputText,
+            dirty: hasRun && editor.getValue() !== lastRunCode
+        });
     }
 
     function renderPendingChecks(label = "Prüfung läuft …") {
@@ -396,6 +414,10 @@
         const generation = ++runGeneration;
         cancelRequested = false;
         const code = editor.getValue();
+        hasRun = true;
+        lastRunCode = code;
+        lastErrorMessage = null;
+        lastResult = null;
         outputText = "";
         automaticStopRendered = false;
         consoleOutput.textContent = "";
@@ -441,6 +463,7 @@
                 console.error("Finale-Zustand konnte nach dem Programmfehler nicht gestoppt werden", cleanupError);
             }
             const message = friendlyError(error);
+            lastErrorMessage = message;
             consoleOutput.textContent = "FEHLER: " + message;
             consoleOutput.classList.add("is-error");
             validationTitle.textContent = "Programm gestoppt";
@@ -472,17 +495,22 @@
         editor.setValue(config.defaultCode);
         editor.clearHistory();
         outputText = "";
+        hasRun = false;
+        lastRunCode = null;
+        lastErrorMessage = null;
+        lastResult = null;
         automaticStopRendered = false;
         consoleOutput.textContent = document.body.classList.contains("museum-theme")
             ? "Das Museum wartet auf deinen Fluchtplan."
             : "Bereit für PICOs Rettungsmission.";
         consoleOutput.classList.remove("is-error");
         checksList.innerHTML = "<li class=\"check-item\">Noch keine Prüfung</li>";
-        validationTitle.textContent = "Beispiel wiederhergestellt";
-        validationMessage.textContent = "Du kannst den Code direkt starten oder kreativ verändern.";
+        validationTitle.textContent = config.resetTitle || "Beispiel wiederhergestellt";
+        validationMessage.textContent = config.resetMessage || "Du kannst den Code direkt starten oder kreativ verändern.";
         config.resetHud?.();
         clearTurtle();
         setStatus("Bereit", "ready");
+        emitFinaleEvent("finale:reset", {});
         editor.focus();
     }
 
@@ -504,10 +532,26 @@
             setPresentationMode(false);
         }
     });
+    editor.on?.("change", () => {
+        emitFinaleEvent("finale:codechange", {
+            dirty: hasRun && editor.getValue() !== lastRunCode
+        });
+    });
 
     config.resetHud?.();
     setStatus("Bereit", "ready");
-    window.finalePrototype = { editor, run: runProgram, reset: resetPrototype, refresh: refreshValidation };
+    window.finalePrototype = {
+        editor,
+        run: runProgram,
+        reset: resetPrototype,
+        refresh: refreshValidation,
+        getOutput: () => outputText,
+        getLastError: () => lastErrorMessage,
+        getLastResult: () => lastResult,
+        hasRun: () => hasRun,
+        isRunning: () => running,
+        isCodeDirty: () => hasRun && editor.getValue() !== lastRunCode
+    };
 
     if (autoRunTest) {
         window.setTimeout(runProgram, 60);

@@ -1003,7 +1003,8 @@ const teacherSolutionExpectations = new Map([
     ["pico_level2", /fund = drohne\.suche_hier\(\)[\s\S]*ausruestung\.append\(fund\)/],
     ["pico_level2a", /status\["TRANSPONDER"\] = "aufgeladen"/],
     ["pico_level3", /signal_erfolgreich = drohne\.sende\(\)/],
-    ["pico_level4", /if signal_erfolgreich:[\s\S]*status\["DROHNE"\] = "self-destroy"[\s\S]*status\["TRANSPONDER"\] = "delete"/]
+    ["pico_level4", /if signal_erfolgreich:[\s\S]*status\["DROHNE"\] = "self-destroy"[\s\S]*status\["TRANSPONDER"\] = "delete"/],
+    ["pixelmuseum_briefing", /gehe_zu\(-230, 70\)[\s\S]*inventar\.append\(fund\)[\s\S]*gehe_zu\(-70, -75\)/]
 ]);
 
 test("teacher solutions are centralized and available for every level", () => {
@@ -1228,6 +1229,10 @@ test("mission navigation is rendered from one central definition", () => {
         "link-agent-training-l1",
         "link-agent-training-l2",
         "link-agent-training-l3",
+        "link-museum-title",
+        "link-museum-briefing",
+        "link-museum-finale",
+        "link-helicopter-escape",
         "reset-progress-btn"
     ];
     for (const id of expectedNavigationIds) {
@@ -1266,7 +1271,7 @@ test("mission navigation is rendered from one central definition", () => {
     for (const page of missionPages) {
         const html = readFileSync(new URL(`../${page}`, import.meta.url), "utf8");
         assert.match(html, /<div id="navigation-root"><\/div>/);
-        assert.match(html, /<script src="assets\/navigation\.js\?v=20260721-5"><\/script>/);
+        assert.match(html, /<script src="assets\/navigation\.js\?v=20260721-6"><\/script>/);
         assert.match(html, /<link rel="stylesheet" href="assets\/style\.css\?v=20260720-[23]">/);
         assert.doesNotMatch(html, /id="mySidebar"/);
     }
@@ -1304,7 +1309,10 @@ test("all progress link ids keep their established unlock routes", () => {
         "link-pico-l2a": "pico_level2a.html",
         "link-pico-l3": "pico_level3.html",
         "link-pico-l4": "pico_level4.html",
-        "link-helicopter-escape": "helikopter_flucht.html"
+        "link-museum-title": "pixelmuseum_briefing.html",
+        "link-museum-briefing": "pixelmuseum_briefing.html",
+        "link-museum-finale": "pixelmuseum_finale.html",
+        "link-helicopter-escape": "helikopter_flucht-b.html"
     });
 });
 
@@ -1397,7 +1405,7 @@ test("mission 4 hands off to the shared Agent training without exposing later pr
     assert.doesNotMatch(trainingStart + trainingLevel1 + trainingLevel2 + trainingLevel3, /pico_finale|pixelmuseum_finale/);
 });
 
-test("project choice opens PICO level 1 while keeping Pixelmuseum as a neutral preview", () => {
+test("project choice opens PICO and the required Pixelmuseum briefing", () => {
     const projectChoice = readFileSync(new URL("../projektwahl.html", import.meta.url), "utf8");
     const projectChoiceCss = readFileSync(new URL("../assets/project-choice.css", import.meta.url), "utf8");
 
@@ -1410,8 +1418,10 @@ test("project choice opens PICO level 1 while keeping Pixelmuseum as a neutral p
     assert.match(projectChoice, /Begleitete Projektmission/);
     assert.match(projectChoice, /Offene Projektmission/);
     assert.equal((projectChoice.match(/class="project-card /g) || []).length, 2);
-    assert.equal((projectChoice.match(/aria-disabled="true"/g) || []).length, 1);
+    assert.equal((projectChoice.match(/aria-disabled="true"/g) || []).length, 0);
     assert.match(projectChoice, /id="link-pico-l1"[^>]+href="pico_level1\.html"/);
+    assert.match(projectChoice, /id="link-museum-briefing"[^>]+href="pixelmuseum_briefing\.html"/);
+    assert.match(projectChoice, /Gezielte Zentralenhilfe nur auf deinen Wunsch/);
     assert.doesNotMatch(projectChoice, /href="[^"]*prototypes\//);
     assert.doesNotMatch(projectChoice, /für Schnelle|für Langsame|leichter|schwerer/i);
     assert.match(projectChoiceCss, /grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
@@ -1657,7 +1667,7 @@ test("CodeMirror is initialized from one central editor module", () => {
     }
 });
 
-test("finale prototypes stay unlinked, isolated and locally hosted", () => {
+test("finale prototypes stay isolated while the production Pixelmuseum path is public", () => {
     const prototypes = [
         "pico_finale.html",
         "pixelmuseum_finale.html"
@@ -1682,8 +1692,11 @@ test("finale prototypes stay unlinked, isolated and locally hosted", () => {
         assert.doesNotMatch(html, /(?:pico|pixelmuseum)_finale\.html/);
     }
 
+    assert.doesNotMatch(navigation, /prototypes\//);
+    assert.doesNotMatch(navigation, /pico_finale\.html/);
+    assert.match(navigation, /href: "pixelmuseum_finale\.html"/);
+
     for (const page of prototypes) {
-        assert.doesNotMatch(navigation, new RegExp(page.replace(".", "\\.")));
 
         const html = readFileSync(new URL(`../prototypes/${page}`, import.meta.url), "utf8");
         assert.doesNotMatch(html, /https?:\/\//);
@@ -1704,6 +1717,17 @@ test("finale prototypes stay unlinked, isolated and locally hosted", () => {
         assert.match(html, /assets\/vendor\/codemirror\/5\.65\.2\/codemirror\.min\.js/);
         assert.doesNotMatch(html, /\.speed\(9\)/);
     }
+
+    const productionBriefing = readFileSync(new URL("../pixelmuseum_briefing.html", import.meta.url), "utf8");
+    const productionFinale = readFileSync(new URL("../pixelmuseum_finale.html", import.meta.url), "utf8");
+    assert.match(productionBriefing, /data-mission-level="pixelmuseum_briefing"/);
+    assert.match(productionBriefing, /pixelmuseum-briefing-core\.js/);
+    assert.match(productionBriefing, /BRIEFING-INVENTAR/);
+    assert.match(productionFinale, /data-mission-level="pixelmuseum_finale"/);
+    assert.match(productionFinale, /Fordere von deiner Zentrale Hilfe an/);
+    assert.match(productionFinale, /pixelmuseum-help-core\.js/);
+    assert.match(productionFinale, /helikopter_flucht-b\.html/);
+    assert.doesNotMatch(productionFinale, /analysis\.hasIf/);
 
     const pico = readFileSync(new URL("../prototypes/pico_finale.html", import.meta.url), "utf8");
     assert.match(pico, /drohne\.goto\(-365, 55\)/);

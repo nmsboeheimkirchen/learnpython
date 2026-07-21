@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="color-scheme" content="dark">
+    <meta name="description" content="Offene Pixelmuseum-Mission: Sichere das Sternenfragment und entkomme mit deiner eigenen Drohnenstrategie.">
+    <title>Pixelmuseum – Das gestohlene Sternenfragment</title>
+    <script src="assets/runner.js?v=20260721-8"></script>
+    <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
+    <link rel="stylesheet" href="assets/style.css?v=20260721-5">
+    <link rel="stylesheet" href="prototypes/finale.css?v=cockpit-scroll-v2">
+    <link rel="stylesheet" href="assets/pixelmuseum.css?v=20260721-1">
+</head>
+<body class="prototype-page museum-theme museum-path-page" data-mission-level="pixelmuseum_finale" data-pixelmuseum-stage="finale">
+    <a class="skip-link" href="#editor-panel">Zum Python-Editor</a>
+
+    <div id="navigation-root"></div>
+    <script src="assets/navigation.js?v=20260721-6"></script>
+
+    <div class="progress-container museum-progress">
+        <span class="level-badge">Pixelmuseum · Phase 2 von 2</span>
+        <div class="progress-bar-bg" aria-hidden="true"><div class="progress-bar-fill" id="progress-fill" style="width:100%"></div></div>
+        <span id="status-text" role="status">Bereit für deine Strategie</span>
+        <a id="next-level-btn" class="next-level-btn museum-next-level-btn" href="helikopter_flucht-b.html" style="display:none">Weiter zur Helikopterflucht</a>
+    </div>
+
+    <header class="prototype-header">
+        <div>
+            <span class="prototype-kicker">Pixelmuseum · Offenes Finale</span>
+            <h1>Pixelmuseum: Das gestohlene Sternenfragment</h1>
+            <p>Sichere das geraubte Artefakt der Seruianer und entkomme mit deiner eigenen Strategie durch das Portal.</p>
+        </div>
+        <div class="path-badge" aria-label="Lernpfad Pixelmuseum">
+            <span class="path-badge-dot" aria-hidden="true"></span>
+            Offener Pfad
+        </div>
+    </header>
+
+    <main id="main-content" class="prototype-main">
+        <section class="briefing-card" aria-labelledby="museum-briefing-title">
+            <div>
+                <span class="eyebrow">Finale · Galerie nach Mitternacht</span>
+                <h2 id="museum-briefing-title">Der böse Lord darf das Artefakt nicht behalten.</h2>
+                <p>Plane den Weg, fülle dein echtes Inventar und entscheide selbst: Alarm hacken oder schnell genug entkommen.</p>
+                <ol class="museum-final-plan" aria-label="Vier Missionsziele">
+                    <li><strong>01 · Schlüsselkarte</strong>Echt suchen und aufnehmen.</li>
+                    <li><strong>02 · Artefakt</strong>Erst danach sicherstellen.</li>
+                    <li><strong>03 · Strategie</strong>Hacken oder rechtzeitig fliehen.</li>
+                    <li><strong>04 · Bericht</strong>Echtes Inventar ausgeben.</li>
+                </ol>
+            </div>
+            <ul class="concept-strip" aria-label="Python-Ziele">
+                <li>Inventarliste</li>
+                <li>Entscheidungen</li>
+                <li>Alarm-Timing</li>
+                <li>Funktion · vorbereitet</li>
+            </ul>
+        </section>
+
+        <div class="workspace-grid">
+            <section class="game-column" aria-labelledby="museum-stage-title">
+                <div class="section-heading">
+                    <div>
+                        <span class="eyebrow">Live-Missionsansicht</span>
+                        <h2 id="museum-stage-title">Neon-Galerie</h2>
+                    </div>
+                    <span id="run-status" class="run-status is-ready" role="status">Bereit</span>
+                </div>
+
+                <div class="game-shell">
+                    <div class="game-stage" id="game-stage" aria-label="Nächtliches Pixelmuseum mit gestohlenem Artefakt, Alarmstation und leuchtendem Ausgang">
+                        <div id="museum-system-log" data-alarm-code="SERU-7" hidden></div>
+                        <img class="scene-image museum-scene-intact" src="assets/images/finales/pixel-museum.webp" alt="" fetchpriority="high">
+                        <img class="scene-image museum-scene-recovered" src="assets/images/finales/pixel-museum-recovered.webp" alt="">
+                        <div class="scene-shade" aria-hidden="true"></div>
+                        <div class="alarm-flash" aria-hidden="true"></div>
+
+                        <svg class="stage-overlay museum-overlay" viewBox="0 0 960 540" preserveAspectRatio="none" aria-hidden="true">
+                            <defs>
+                                <filter id="museum-glow" x="-60%" y="-60%" width="220%" height="220%">
+                                    <feGaussianBlur stdDeviation="5" result="blur"></feGaussianBlur>
+                                    <feMerge><feMergeNode in="blur"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
+                                </filter>
+                            </defs>
+                            <g class="laser-grid" filter="url(#museum-glow)">
+                                <path d="M390 390 L570 390"></path>
+                                <path d="M405 374 L555 374"></path>
+                                <path d="M420 358 L540 358"></path>
+                            </g>
+                            <g class="route-nodes">
+                                <circle cx="230" cy="210" r="18"></circle>
+                                <circle cx="90" cy="225" r="18"></circle>
+                                <circle cx="730" cy="330" r="18"></circle>
+                                <circle cx="480" cy="155" r="24"></circle>
+                            </g>
+                            <g class="portal-gate" transform="translate(480 155)">
+                                <circle class="portal-seal" cx="0" cy="0" r="43"></circle>
+                                <path d="M-28 -34 V34 M-14 -40 V40 M0 -42 V42 M14 -40 V40 M28 -34 V34"></path>
+                            </g>
+                        </svg>
+
+                        <div id="museum-turtle" class="turtle-target" aria-hidden="true"></div>
+
+                        <div id="keycard-label" class="stage-label keycard-label"><span aria-hidden="true">▣</span> Schlüsselkarte</div>
+                        <div id="artifact-label" class="stage-label artifact-label"><span aria-hidden="true">✦</span> Gestohlenes Artefakt</div>
+                        <div id="alarm-console-label" class="stage-label alarm-console-label"><span aria-hidden="true">◈</span> Alarm ausschalten</div>
+                        <div id="portal-label" class="stage-label portal-label"><span aria-hidden="true">⬡</span> Ausgang offen</div>
+                        <div id="museum-warning" class="museum-warning" role="status" aria-live="assertive"></div>
+                        <div id="museum-success" class="museum-success" role="status" aria-live="polite"></div>
+
+                        <div class="stage-hud museum-hud" aria-label="Museumsstatus">
+                            <div class="alarm-block" role="status" aria-live="polite" aria-atomic="true"><small>Alarm</small><strong id="alarm-value">0</strong><div class="alarm-dots" id="alarm-dots" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+                            <div class="inventory-block" role="status" aria-live="polite" aria-atomic="true"><small>Inventar</small><div id="inventory-items" class="inventory-items"><span>leer</span></div></div>
+                            <div class="exit-block" role="status" aria-live="polite" aria-atomic="true"><small>Ausgang</small><strong id="exit-state">offen</strong></div>
+                        </div>
+                    </div>
+                </div>
+
+                <ul class="mobile-target-legend" aria-label="Ziele im Pixelmuseum">
+                    <li>Schlüsselkarte <span>(−250, 60)</span></li>
+                    <li>Artefakt <span>(−390, 45)</span></li>
+                    <li>Alarmkonsole <span>(250, −60)</span></li>
+                    <li>Portal <span>(0, 115)</span></li>
+                </ul>
+
+                <div class="result-panel" role="status" aria-live="polite">
+                    <div>
+                        <span class="eyebrow">Technische Abnahme</span>
+                        <h3 id="validation-title">Noch nicht ausgeführt</h3>
+                        <p id="validation-message">Der Beispielweg ist nur eine Möglichkeit. Baue deinen eigenen.</p>
+                    </div>
+                    <ul id="checks-list" class="checks-list" aria-label="Prüfergebnisse">
+                        <li><span aria-hidden="true">○</span> Schlüsselkarte aufnehmen</li>
+                        <li><span aria-hidden="true">○</span> Artefakt sichern</li>
+                        <li><span aria-hidden="true">○</span> Echte Alarmstrategie ausführen</li>
+                        <li><span aria-hidden="true">○</span> Echtes Inventar ausgeben</li>
+                        <li><span aria-hidden="true">○</span> Gültiger Fluchtweg</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section class="code-column" id="editor-panel" aria-labelledby="museum-code-title">
+                <div class="section-heading">
+                    <div>
+                        <span class="eyebrow">Dein eigener Einsatzplan</span>
+                        <h2 id="museum-code-title">Python-Einsatzzentrale</h2>
+                    </div>
+                    <span class="autosave-note">Erfolg wird gespeichert</span>
+                </div>
+
+                <aside class="museum-help-card" aria-labelledby="museum-help-heading">
+                    <div class="museum-help-heading">
+                        <div><span class="eyebrow">Deine Zentrale</span><h3 id="museum-help-heading">Du entscheidest, wann du Hilfe brauchst.</h3></div>
+                        <span id="museum-help-count" class="museum-help-count">Zentrale kontaktiert: 0-mal</span>
+                    </div>
+                    <button id="museum-help-btn" class="secondary-action museum-help-action" type="button" aria-controls="museum-help-panel" aria-expanded="false">Fordere von deiner Zentrale Hilfe an</button>
+                    <div id="museum-help-panel" class="museum-help-panel" role="status" aria-live="polite" data-help-issue="" hidden>
+                        <div class="museum-help-panel-header"><h3 id="museum-help-title">Hinweis der Zentrale</h3><span id="museum-help-level" class="museum-help-level"></span></div>
+                        <p id="museum-help-message"></p>
+                        <small id="museum-help-detail" class="museum-help-detail" hidden></small>
+                    </div>
+                    <p class="museum-help-footnote">Gezählt werden nur neu aufgedeckte Hinweise. Die Zahl beeinflusst weder Erfolg noch Goldmünzen.</p>
+                </aside>
+
+                <div class="editor-card">
+                    <label class="sr-only" for="python-editor">Python-Code für das Pixelmuseum</label>
+                    <span id="editor-shortcut-hint" class="sr-only">Mit Steuerung und Enter startest du das Programm.</span>
+                    <textarea id="python-editor" spellcheck="false">import turtle
+
+drohne = turtle.Turtle()
+drohne.shape("triangle")
+drohne.color("#ff78f3")
+drohne.pensize(5)
+drohne.speed(0)
+drohne.hideturtle()
+drohne.penup()
+drohne.goto(0, -210)
+drohne.speed(4)
+drohne.showturtle()
+drohne.pendown()
+turtle.Screen().delay(30)
+
+inventar = []
+
+def gehe_zu(x, y):
+    drohne.goto(x, y)
+
+def markiere():
+    drohne.dot(18, "#ff78f3")
+
+def alarm_hacken(code):
+    # Das Museum prüft Code, Ort und Zeitpunkt automatisch.
+    print("ALARM_HACK|" + code)
+
+# Dein Fluchtplan beginnt hier.
+# Ziele und Koordinaten stehen in der Live-Missionsansicht.
+# Sichere echte Funde in inventar und gib die echte INVENTARLISTE aus.
+</textarea>
+
+                    <div class="control-bar" aria-label="Programmaktionen">
+                        <button id="run-btn" class="primary-action" type="button"><span aria-hidden="true">▶</span> Flucht starten</button>
+                        <button id="reset-btn" class="secondary-action" type="button">↺ Startcode laden</button>
+                        <button id="presentation-btn" class="secondary-action" type="button">◫ Präsentieren</button>
+                    </div>
+                </div>
+
+                <div class="console-card">
+                    <div class="console-title"><span>Missionsbericht</span><span class="console-light" aria-hidden="true"></span></div>
+                    <pre id="console-output" aria-live="polite">Das Museum wartet auf deinen Fluchtplan.</pre>
+                </div>
+
+                <aside class="creative-card museum-creative">
+                    <span aria-hidden="true">✦</span>
+                    <div><strong>Du steuerst die Drohne – das Museum reagiert.</strong><p>Schlüsselkarte und Artefakt müssen in dein Inventar. Für die Hackstrategie kannst du den Museum-Quelltext direkt hier untersuchen.</p></div>
+                </aside>
+
+                <details class="museum-source-inspector">
+                    <summary>Museum-Quelltext untersuchen</summary>
+                    <p>Finde im Ausschnitt die Information, die zur Alarmkonsole gehört.</p>
+                    <pre><code>&lt;section data-gallery="seruianer"&gt;
+  &lt;div class="security-grid" data-mode="armed"&gt;&lt;/div&gt;
+  &lt;div id="museum-system-log" data-alarm-code="SERU-7" hidden&gt;&lt;/div&gt;
+  &lt;div class="portal" data-state="open"&gt;&lt;/div&gt;
+&lt;/section&gt;</code></pre>
+                </details>
+            </section>
+        </div>
+    </main>
+
+    <button id="exit-presentation-btn" class="exit-presentation" type="button">Editor anzeigen</button>
+
+    <script src="assets/vendor/skulpt/1.2.0/skulpt.min.js"></script>
+    <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
+    <script src="assets/vendor/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="assets/vendor/codemirror/5.65.2/python.min.js"></script>
+    <script>
+        window.FINALE_CONFIG = {
+            targetId: "museum-turtle",
+            runningLabel: "Drohne unterwegs",
+            resetLabel: "↺ Startcode laden",
+            resetTitle: "Startcode wiederhergestellt",
+            resetMessage: "Die Missionswerkzeuge sind bereit. Route, Fundkette und Strategie programmierst du selbst.",
+            defaultCode: document.getElementById("python-editor").value,
+            getTurtleSpeedMultiplier(speed) {
+                // Speed 8 ist die bewusst schnelle Alternativstrategie. Der deutliche Faktor
+                // hält sie auch bei langsameren iPad-Frames sicher vor dem ersten Alarmtick.
+                return Number(speed) >= 8 ? 12 : 1;
+            },
+            onRunStart() {
+                this.prepareAudio();
+            },
+            prepareAudio() {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return;
+                try {
+                    if (!this.audioContext) this.audioContext = new AudioContext();
+                    if (this.audioContext.state === "suspended") {
+                        this.audioContext.resume().catch(() => {});
+                    }
+                } catch (_error) {
+                    // Das Spiel bleibt auch in Browsern ohne Web-Audio vollständig nutzbar.
+                }
+            },
+            playOneShotSound(kind) {
+                const flag = kind === "alarm" ? "alarmSoundPlayed" : "trappedSoundPlayed";
+                if (this[flag]) return;
+                this[flag] = true;
+                document.body.classList.add(kind === "alarm" ? "alarm-sound-played" : "trapped-sound-played");
+                this.prepareAudio();
+
+                const context = this.audioContext;
+                if (!context) return;
+                const play = () => {
+                    if (context.state !== "running") return;
+                    const oscillator = context.createOscillator();
+                    const gain = context.createGain();
+                    const now = context.currentTime;
+                    oscillator.type = kind === "alarm" ? "sawtooth" : "square";
+                    oscillator.frequency.setValueAtTime(kind === "alarm" ? 720 : 190, now);
+                    gain.gain.setValueAtTime(0.0001, now);
+                    gain.gain.exponentialRampToValueAtTime(0.045, now + 0.025);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.32);
+                    oscillator.connect(gain);
+                    gain.connect(context.destination);
+                    oscillator.start(now);
+                    oscillator.stop(now + 0.34);
+                };
+
+                if (context.state === "suspended") {
+                    context.resume().then(play).catch(() => {});
+                } else {
+                    play();
+                }
+            },
+            distanceTo(point, target) {
+                return Math.hypot(point.x - target.x, point.y - target.y);
+            },
+            countItem(items, item) {
+                return Array.isArray(items) ? items.filter(entry => entry === item).length : 0;
+            },
+            agentApi: {
+                suche_hier(context) {
+                    const keycard = { x: -250, y: 60 };
+                    const artifact = { x: -390, y: 45 };
+                    let item = null;
+
+                    if (this.distanceTo(context, keycard) <= 12 && !this.runtimeInventory.includes("Schlüsselkarte")) {
+                        item = "Schlüsselkarte";
+                    } else if (this.distanceTo(context, artifact) <= 12 && !this.artifactSecured) {
+                        this.artifactSearchAttempted = true;
+                        if (this.runtimeInventory.includes("Schlüsselkarte")) {
+                            item = "Artefakt";
+                        } else {
+                            this.lastSearchFailure = "KEYCARD_REQUIRED";
+                            document.getElementById("artifact-label").innerHTML = '<span aria-hidden="true">⌧</span> Schlüsselkarte fehlt';
+                        }
+                    }
+
+                    if (!item) {
+                        this.pendingFind = null;
+                        if (!(this.distanceTo(context, artifact) <= 12 && !this.artifactSecured && !this.runtimeInventory.includes("Schlüsselkarte"))) {
+                            this.lastSearchFailure = "WRONG_PLACE";
+                        }
+                        return null;
+                    }
+
+                    this.lastSearchFailure = null;
+                    const inventory = context.getGlobal("inventar");
+                    this.pendingFind = {
+                        item,
+                        x: context.x,
+                        y: context.y,
+                        baselineCount: this.countItem(inventory, item)
+                    };
+                    return item;
+                }
+            },
+            syncPythonState(context) {
+                if (!this.pendingFind) return null;
+                const inventory = context.getGlobal("inventar");
+                const currentCount = this.countItem(inventory, this.pendingFind.item);
+                if (currentCount <= this.pendingFind.baselineCount) return null;
+
+                const item = this.pendingFind.item;
+                this.pendingFind = null;
+                if (item === "Artefakt" && !this.runtimeInventory.includes("Schlüsselkarte")) {
+                    return null;
+                }
+                this.collectItem(item);
+                return { inventoryChanged: true };
+            },
+            onOutput(chunk) {
+                const hack = chunk.match(/ALARM_HACK\|([^\r\n]+)/);
+                if (hack) this.requestAlarmHack(hack[1].trim());
+            },
+            renderAlarm(level) {
+                const alarm = Number.isFinite(level) ? Math.max(0, Math.min(this.alarmMax, level)) : 0;
+                this.alarmLevel = alarm;
+                document.getElementById("alarm-value").textContent = String(alarm);
+                [...document.querySelectorAll("#alarm-dots i")].forEach((dot, index) => {
+                    dot.classList.toggle("is-active", index < alarm);
+                });
+                document.body.classList.toggle("alarm-active", alarm > 0 && !this.alarmDisabled);
+            },
+            renderInventory() {
+                const inventory = document.getElementById("inventory-items");
+                inventory.textContent = "";
+                (this.runtimeInventory.length ? this.runtimeInventory : ["leer"]).forEach(item => {
+                    const chip = document.createElement("span");
+                    chip.textContent = item;
+                    inventory.appendChild(chip);
+                });
+            },
+            stopMissionTimers() {
+                window.clearInterval(this.alarmTimer);
+                window.clearTimeout(this.hackFinishTimer);
+                window.clearTimeout(this.portalWarningTimer);
+                window.clearTimeout(this.validationRefreshTimer);
+                this.alarmTimer = null;
+                this.hackFinishTimer = null;
+                this.portalWarningTimer = null;
+                this.validationRefreshTimer = null;
+            },
+            invalidateMissionTimers() {
+                this.stopMissionTimers();
+                this.missionGeneration = (this.missionGeneration || 0) + 1;
+            },
+            clearPortalWarning() {
+                window.clearTimeout(this.portalWarningTimer);
+                this.portalWarningTimer = null;
+                this.portalTrapped = false;
+                document.getElementById("museum-warning").textContent = "";
+                document.body.classList.remove("portal-trapped");
+            },
+            scheduleValidationRefresh() {
+                const generation = this.missionGeneration;
+                this.validationRefreshTimer = window.setTimeout(() => {
+                    if (generation !== this.missionGeneration) return;
+                    this.validationRefreshTimer = null;
+                    window.finalePrototype?.refresh?.();
+                }, 0);
+            },
+            onRunError() {
+                this.invalidateMissionTimers();
+                this.clearPortalWarning();
+                document.body.classList.remove("alarm-active");
+            },
+            resetHud() {
+                this.invalidateMissionTimers();
+                this.alarmMax = 8;
+                this.alarmLevel = 0;
+                this.alarmStarted = false;
+                this.alarmDisabled = false;
+                this.alarmFailed = false;
+                this.hackRequested = false;
+                this.hackCodeCorrect = false;
+                this.hackCompleted = false;
+                this.lastHackFailure = null;
+                this.lastSearchFailure = null;
+                this.artifactSearchAttempted = false;
+                this.alarmSoundPlayed = false;
+                this.trappedSoundPlayed = false;
+                this.pendingFind = null;
+                this.runtimeInventory = [];
+                this.artifactSecured = false;
+                this.atAlarmConsole = false;
+                this.portalReached = false;
+                this.atPortal = false;
+                this.portalOpen = true;
+                this.portalTrapped = false;
+                this.exitUnlocked = false;
+                this.escaped = false;
+                this.inventoryOutputPassed = false;
+                this.completedStrategy = null;
+                this.lastValidationPassed = false;
+                this.currentPoint = null;
+                this.renderAlarm(0);
+                this.renderInventory();
+                document.getElementById("keycard-label").innerHTML = '<span aria-hidden="true">▣</span> Schlüsselkarte';
+                document.getElementById("artifact-label").innerHTML = '<span aria-hidden="true">✦</span> Gestohlenes Artefakt';
+                document.getElementById("alarm-console-label").innerHTML = '<span aria-hidden="true">◈</span> Alarm ausschalten';
+                document.getElementById("museum-warning").textContent = "";
+                document.getElementById("museum-success").textContent = "";
+                document.body.classList.remove(
+                    "mission-complete", "artifact-secured", "alarm-active", "alarm-disabled", "alarm-failed",
+                    "portal-locked", "portal-trapped", "escape-success", "alarm-sound-played", "trapped-sound-played"
+                );
+                document.body.classList.add("portal-open");
+                this.updateExitState();
+            },
+            collectItem(item) {
+                if (this.runtimeInventory.includes(item)) return;
+                this.runtimeInventory.push(item);
+                this.renderInventory();
+
+                if (item === "Schlüsselkarte") {
+                    document.getElementById("keycard-label").innerHTML = '<span aria-hidden="true">✓</span> Schlüsselkarte genommen';
+                    return;
+                }
+
+                this.artifactSecured = true;
+                this.portalReached = false;
+                this.atPortal = false;
+                document.body.classList.add("artifact-secured");
+                document.getElementById("artifact-label").innerHTML = '<span aria-hidden="true">✓</span> Artefakt sichergestellt';
+                this.updateExitState();
+                this.startAlarm();
+            },
+            startAlarm() {
+                if (this.alarmStarted) return;
+                this.alarmStarted = true;
+                this.renderAlarm(0);
+                this.updateExitState();
+                this.playOneShotSound("alarm");
+                const generation = this.missionGeneration;
+                this.alarmTimer = window.setInterval(() => {
+                    if (generation !== this.missionGeneration) return;
+                    if (this.alarmDisabled || this.alarmFailed) return;
+                    const nextLevel = this.alarmLevel + 1;
+                    this.renderAlarm(nextLevel);
+                    this.updateExitState();
+
+                    if (nextLevel >= this.alarmMax) {
+                        this.failAlarm();
+                    }
+                }, 1000);
+            },
+            requestAlarmHack(code) {
+                const label = document.getElementById("alarm-console-label");
+                const expectedCode = document.getElementById("museum-system-log")?.dataset.alarmCode || "";
+                if (!this.alarmStarted) {
+                    this.lastHackFailure = "TOO_EARLY";
+                    label.innerHTML = '<span aria-hidden="true">!</span> Noch kein Alarm ausgelöst – Hack nicht möglich!';
+                    return;
+                }
+                if (code !== expectedCode) {
+                    this.lastHackFailure = "WRONG_CODE";
+                    label.innerHTML = '<span aria-hidden="true">×</span> Hackcode falsch';
+                    return;
+                }
+                if (this.alarmFailed) {
+                    this.lastHackFailure = "TOO_LATE";
+                    label.innerHTML = '<span aria-hidden="true">×</span> Hack zu spät';
+                    return;
+                }
+                if (!this.atAlarmConsole) {
+                    this.lastHackFailure = "WRONG_PLACE";
+                    label.innerHTML = '<span aria-hidden="true">!</span> Hack nicht möglich';
+                    return;
+                }
+
+                this.lastHackFailure = null;
+                this.hackCodeCorrect = true;
+                this.hackRequested = true;
+                label.innerHTML = '<span aria-hidden="true">⌁</span> Hack läuft …';
+                this.scheduleHackCompletion();
+            },
+            scheduleHackCompletion() {
+                if (this.hackFinishTimer || this.alarmDisabled || this.alarmFailed) return;
+                const generation = this.missionGeneration;
+                this.hackFinishTimer = window.setTimeout(() => {
+                    if (generation !== this.missionGeneration) return;
+                    this.finishAlarmHack();
+                }, 1000);
+            },
+            finishAlarmHack() {
+                if (this.alarmFailed) return;
+                this.invalidateMissionTimers();
+                this.clearPortalWarning();
+                this.alarmDisabled = true;
+                this.hackCompleted = true;
+                this.renderAlarm(0);
+                document.body.classList.add("alarm-disabled");
+                document.getElementById("alarm-console-label").innerHTML = '<span aria-hidden="true">✓</span> Alarm gehackt';
+                this.updateExitState();
+                this.scheduleValidationRefresh();
+            },
+            failAlarm() {
+                this.invalidateMissionTimers();
+                this.alarmFailed = true;
+                if (this.hackRequested) this.lastHackFailure = "TOO_LATE";
+                document.body.classList.add("alarm-failed");
+                document.getElementById("alarm-console-label").innerHTML = '<span aria-hidden="true">×</span> Alarm ausgelöst';
+                this.updateExitState();
+                this.scheduleValidationRefresh();
+            },
+            renderPortal() {
+                this.portalOpen = !this.artifactSecured || this.alarmLevel < 1 || this.alarmDisabled;
+                document.body.classList.toggle("portal-open", this.portalOpen);
+                document.body.classList.toggle("portal-locked", !this.portalOpen);
+                document.getElementById("exit-state").textContent = this.exitUnlocked
+                    ? "entkommen"
+                    : (this.portalOpen ? "offen" : "gesperrt");
+                document.getElementById("portal-label").innerHTML = this.portalOpen
+                    ? '<span aria-hidden="true">⬡</span> Ausgang offen'
+                    : '<span aria-hidden="true">▥</span> Portal verriegelt';
+            },
+            showTrappedWarning() {
+                const warning = document.getElementById("museum-warning");
+                this.portalTrapped = true;
+                warning.textContent = "DU BIST GEFANGEN!";
+                document.body.classList.add("portal-trapped");
+                this.playOneShotSound("trapped");
+                window.clearTimeout(this.portalWarningTimer);
+                const generation = this.missionGeneration;
+                this.portalWarningTimer = window.setTimeout(() => {
+                    if (generation !== this.missionGeneration) return;
+                    this.portalWarningTimer = null;
+                    document.body.classList.remove("portal-trapped");
+                    warning.textContent = "";
+                }, 2200);
+            },
+            showEscapeSuccess() {
+                this.invalidateMissionTimers();
+                this.clearPortalWarning();
+                this.portalTrapped = false;
+                const success = document.getElementById("museum-success");
+                success.textContent = "MISSION ERFOLGREICH – DU BIST ENTKOMMEN!";
+                document.body.classList.remove("portal-trapped");
+                document.body.classList.add("escape-success");
+            },
+            updateExitState() {
+                this.exitUnlocked = this.escaped;
+                this.renderPortal();
+                document.body.classList.toggle("mission-complete", this.exitUnlocked);
+            },
+            onTurtleFrame(point) {
+                const alarmConsole = { x: 250, y: -60 };
+                const portal = { x: 0, y: 115 };
+                const distance = target => Math.hypot(point.x - target.x, point.y - target.y);
+                this.currentPoint = { ...point };
+                this.atAlarmConsole = distance(alarmConsole) <= 22;
+
+                if (this.pendingFind && this.distanceTo(point, this.pendingFind) > 14) {
+                    this.pendingFind = null;
+                    this.lastSearchFailure = "PENDING_EXPIRED";
+                }
+
+                const atPortal = distance(portal) <= 28;
+                if (atPortal && !this.atPortal && this.artifactSecured) {
+                    this.portalReached = true;
+                    if (this.portalOpen) {
+                        this.escaped = true;
+                        this.showEscapeSuccess();
+                    } else {
+                        this.showTrappedWarning();
+                    }
+                    this.updateExitState();
+                }
+                this.atPortal = atPortal;
+
+                if (this.alarmFailed) return { stop: true, reason: "MUSEUM_ALARM_TRIGGERED" };
+            },
+            getAutomaticStop() {
+                if (!this.alarmFailed) return null;
+                let message = "Kein gültiger Hack wurde gestartet. Hacke an der Alarmkonsole oder nutze einen schnelleren Fluchtweg.";
+                if (this.hackRequested) {
+                    message = "Der richtige Hack wurde gestartet, kam aber zu spät. Erreiche die Alarmkonsole früher.";
+                } else if (this.lastHackFailure === "WRONG_CODE") {
+                    message = "Der Hackcode war falsch. Suche die Spur im HTML-Quelltext und versuche es erneut.";
+                } else if (this.lastHackFailure === "WRONG_PLACE") {
+                    message = "Der Hack wurde nicht an der Alarmkonsole gestartet. Prüfe Ort und Route.";
+                } else if (this.lastHackFailure === "TOO_EARLY") {
+                    message = "Der Hack wurde vor dem Alarm versucht. Starte ihn nach der Artefaktaufnahme erneut.";
+                }
+                return {
+                    title: "Alarm ausgelöst",
+                    status: "Mission gestoppt",
+                    message,
+                    output: "Alarmstufe 8: Das Museum stoppt die Mission."
+                };
+            },
+            validate(_code, output = "") {
+                const strategy = this.alarmDisabled
+                    ? "hack"
+                    : (this.escaped && this.alarmLevel < 1 ? "sprint" : null);
+                const securityStrategyPassed = Boolean(this.escaped && strategy);
+                const expectedInventoryOutput = "INVENTARLISTE: " + this.runtimeInventory.join(",");
+                const inventoryOutputPassed = String(output).split(/\r?\n/).some(line => line.trim() === expectedInventoryOutput);
+                this.inventoryOutputPassed = inventoryOutputPassed;
+                this.completedStrategy = strategy;
+                const checks = [
+                    { label: "Schlüsselkarte selbst aufgenommen", passed: this.runtimeInventory.includes("Schlüsselkarte") },
+                    { label: "Gestohlenes Artefakt gesichert", passed: this.artifactSecured },
+                    {
+                        label: strategy === "hack" ? "Alarm an der Konsole gehackt" : "Portal rechtzeitig vor Alarmstufe 1 erreicht",
+                        passed: securityStrategyPassed
+                    },
+                    { label: "Echte Inventarliste korrekt ausgegeben", passed: inventoryOutputPassed },
+                    { label: "Gültiger Fluchtweg", passed: this.exitUnlocked }
+                ];
+                const passed = checks.every(check => check.passed);
+                this.lastValidationPassed = passed;
+                return {
+                    passed,
+                    checks,
+                    strategy,
+                    message: passed
+                        ? "Mission bestätigt: Deine selbst gewählte Strategie hat die Drohne sicher aus dem Museum gebracht."
+                        : "Mindestens ein echter Laufzeitbaustein fehlt noch in deinem Fluchtplan."
+                };
+            }
+        };
+    </script>
+    <script src="prototypes/finale.js?v=cockpit-scroll-v2"></script>
+    <script src="assets/pixelmuseum-help-core.js?v=20260721-1"></script>
+    <script src="assets/pixelmuseum-path.js?v=20260721-1"></script>
+</body>
+</html>
