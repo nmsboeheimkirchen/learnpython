@@ -75,7 +75,8 @@ Alternativ kann jeder andere statische Webserver verwendet werden.
 ├── tests/
 │   ├── all.test.mjs           # Einstiegspunkt für die Unit-Tests
 │   ├── runner.test.mjs        # Tests der Lernpfad- und Fortschrittslogik
-│   └── drone-mission-core.test.mjs
+│   ├── drone-mission-core.test.mjs
+│   └── pico-mission-core.test.mjs
 │                              # Tests der gemeinsamen Drohnen-Laufzeitlogik
 └── .github/workflows/pages.yml
                                # Veröffentlichung über GitHub Pages

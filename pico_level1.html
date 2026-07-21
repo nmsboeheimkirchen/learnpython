@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="description" content="PICO Explorer-Level 1: Teste den direkten Flug zur Funkbase und entdecke das echte Energielimit der Drohne.">
+    <meta name="description" content="PICO Explorer-Level 1: Benenne deine Drohne, teste den Direktflug und navigiere anschließend zur Energiezelle.">
     <meta name="color-scheme" content="dark">
     <title>PICO 1 – Reicht die Energie?</title>
     <script src="assets/vendor/skulpt/1.2.0/skulpt.min.js"></script>
     <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
-    <script src="assets/runner.js?v=20260721-5"></script>
+    <script src="assets/runner.js?v=20260721-6"></script>
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
     <link rel="stylesheet" href="assets/style.css?v=20260720-3">
-    <link rel="stylesheet" href="assets/drone-mission.css?v=20260721-1">
+    <link rel="stylesheet" href="assets/drone-mission.css?v=20260721-2">
 </head>
-<body class="drone-mission-page pico-mission-theme" data-mission-level="pico_level1">
+<body class="drone-mission-page pico-mission-theme" data-mission-level="pico_level1_navigation" data-pico-level="1">
     <a class="skip-link" href="#python-editor">Zum Python-Editor</a>
 
     <header class="drone-mission-header">
@@ -29,12 +29,12 @@
             <div>
                 <p class="mission-kicker">PICO · Explorer-Level 1 von 4</p>
                 <h1 id="mission-title">Reicht die Energie?</h1>
-                <p>Du hast eine klare erste Idee: direkt vom Aufzug zur Funkbase. Programmiere diesen Flug und beobachte, was die Drohne tatsächlich schafft.</p>
+                <p>Du hast eine klare erste Idee: direkt vom Aufzug zur Funkbase. Gib deiner Drohne einen Namen und programmiere diesen Flug.</p>
             </div>
             <ul class="mission-concepts" aria-label="Werkzeuge dieses Levels">
+                <li>status</li>
                 <li>fahre_zu(x, y)</li>
                 <li>Live-Energie</li>
-                <li>Beobachten</li>
             </ul>
         </section>
 
@@ -48,7 +48,7 @@
                     <span id="run-status" class="mission-run-status is-ready" role="status">Bereit für deine Idee</span>
                 </div>
 
-                <div class="mission-stage" aria-label="Forschungsstation. PICO startet am Aufzug bei minus 365, 55. Die Funkbase liegt bei 340, 15.">
+                <div class="mission-stage" aria-label="Forschungsstation. Die Drohne startet am Aufzug bei minus 365, 55. Die Funkbase liegt bei 340, 15.">
                     <img class="mission-scene" src="assets/images/finales/pico-rescue-station.webp" alt="" width="1536" height="1024" fetchpriority="high">
                     <div class="mission-scene-shade" aria-hidden="true"></div>
                     <svg class="mission-stage-overlay" viewBox="0 0 960 540" preserveAspectRatio="none" aria-hidden="true">
@@ -67,17 +67,20 @@
                         <circle class="mission-target-pulse mission-target-beacon" cx="824" cy="256" r="34" filter="url(#pico-target-glow)"></circle>
                     </svg>
 
-                    <div id="pico-explorer-turtle" class="mission-turtle-target" aria-hidden="true"></div>
+                    <div id="pico-mission-turtle" class="mission-turtle-target" aria-hidden="true"></div>
                     <div class="mission-stage-label mission-start-label"><span aria-hidden="true">⬒</span> Aufzug</div>
                     <div class="mission-stage-label mission-beacon-label"><span aria-hidden="true">◉</span> Funkbase (340, 15)</div>
                     <div id="energy-cell-reveal" class="energy-cell-reveal" hidden>
-                        <span aria-hidden="true">ϟ</span>
-                        Energiezelle (−380, −90)
+                        <span id="pico-cell-label"><span aria-hidden="true">ϟ</span> Energiezelle (−380, −90)</span>
                     </div>
 
-                    <div class="mission-energy-hud" aria-label="PICO Energie">
+                    <div class="mission-energy-hud pico-mission-hud" aria-label="Drohnenstatus">
+                        <div class="pico-status-row">
+                            <span><small>DROHNE</small><strong id="drone-name">–</strong></span>
+                            <span><small>TRANSPONDER</small><strong id="transponder-state">–</strong></span>
+                        </div>
                         <div class="mission-energy-label"><span>ENERGIE</span><strong id="energy-value">10 %</strong></div>
-                        <div id="energy-meter" class="mission-energy-track" role="progressbar" aria-label="PICO Energie" aria-valuemin="0" aria-valuemax="100" aria-valuenow="10">
+                        <div id="energy-meter" class="mission-energy-track" role="progressbar" aria-label="Energie der Drohne" aria-valuemin="0" aria-valuemax="100" aria-valuenow="10">
                             <span id="energy-fill" style="width: 10%"></span>
                         </div>
                         <div class="mission-coordinate-hud" aria-label="Aktuelle Drohnenposition">
@@ -85,6 +88,7 @@
                             <span>Y <strong id="coordinate-y">55</strong></span>
                         </div>
                     </div>
+                    <div id="pico-result-message" class="pico-result-message" role="status" aria-live="assertive"></div>
                     <div id="stage-discovery-message" class="stage-discovery-message" role="status" hidden>ENERGIEPROBLEM ERKANNT</div>
                 </div>
 
@@ -97,12 +101,9 @@
                     <div>
                         <span class="mission-eyebrow">Explorer-Feedback</span>
                         <h2 id="validation-title">Noch nicht ausgeführt</h2>
-                        <p id="validation-message">Steuere PICO direkt zur Funkbase. Der Kontrollraum verrät vorher nicht, ob die Energie reicht.</p>
+                        <p id="validation-message">Gib deiner Drohne einen Namen und teste zuerst deine eigene Route.</p>
                     </div>
-                    <ul id="checks-list" class="mission-checks" aria-label="Prüfergebnisse">
-                        <li class="mission-check is-missing"><span class="mission-check-icon" aria-hidden="true">○</span><span>Direkten Flug zur Funkbase starten</span></li>
-                        <li class="mission-check is-missing"><span class="mission-check-icon" aria-hidden="true">○</span><span>Energielimit selbst beobachten</span></li>
-                    </ul>
+                    <ul id="checks-list" class="mission-checks" aria-label="Prüfergebnisse"></ul>
                 </section>
             </section>
 
@@ -115,29 +116,47 @@
                     <span class="mission-save-note">Erfolg wird gespeichert</span>
                 </div>
 
-                <div class="mission-task-card">
+                <div id="level1-direct-task" class="mission-task-card">
+                    <h2>Gib deiner Drohne einen Namen</h2>
+                    <p>Ändere <code>PICO</code> gern in einen eigenen Namen. Der ausgeführte Status füllt das Cockpit.</p>
+                    <div class="mission-code-hint">
+                        <span>Drohnenname setzen</span>
+                        <code>status["DROHNE"] = "deinName"</code>
+                    </div>
                     <h2>Teste den direkten Weg</h2>
-                    <p>PICO ist startklar. Ergänze unter dem Kommentar genau einen Aufruf und steuere die Funkbase bei <strong>(340, 15)</strong> an.</p>
-                    <div class="mission-code-hint" aria-label="Codehinweis">
-                        <span>steuere zur Funkbase</span>
+                    <div class="mission-code-hint">
+                        <span>direkt zur Funkbase</span>
                         <code>fahre_zu(340, 15)</code>
                     </div>
-                    <p class="mission-observation-note">Ändere noch nichts an der Energie. Dieses Level beginnt mit deiner naheliegenden ersten Idee.</p>
+                    <p class="mission-observation-note">Die Simulation verrät vorher nicht, ob die Energie reicht.</p>
                 </div>
 
-                <div id="energy-advice" class="mission-advice" role="status" hidden>
-                    <span class="mission-advice-icon" aria-hidden="true">ϟ</span>
-                    <div>
-                        <strong>Gute Entdeckung: erst aufladen.</strong>
-                        <p>Der direkte Weg ist zu lang. Die Energiezelle liegt nahe beim Aufzug bei <code>(−380, −90)</code>. Im nächsten Level planst du diesen Zwischenstopp.</p>
+                <div id="level1-cell-task" class="mission-task-card" hidden>
+                    <h2>Teil 2 · Navigiere zur Energiezelle</h2>
+                    <p>Ersetze den Direktflug durch das nahe Ziel bei <strong>(−380, −90)</strong>. Dieses Level prüft nur die echte Ankunft – geladen wird danach.</p>
+                    <div class="mission-code-hint">
+                        <span>kurzer Weg zur Energiezelle</span>
+                        <code>fahre_zu(-380, -90)</code>
                     </div>
                 </div>
 
+                <button id="energy-advice" class="mission-advice mission-advice-action" type="button" aria-expanded="false" hidden>
+                    <span class="mission-advice-icon" aria-hidden="true">ϟ</span>
+                    <span>
+                        <strong>Gute Entdeckung: erst aufladen.</strong>
+                        <span>Der direkte Weg ist zu lang. Öffne Teil 2 und navigiere zur Energiezelle bei (−380, −90).</span>
+                    </span>
+                    <span class="mission-advice-arrow" aria-hidden="true">→</span>
+                </button>
+
                 <label class="mission-editor-label" for="python-editor">
-                    <span>Python-Code für PICO</span>
+                    <span>Python-Code für deine Drohne</span>
                     <small id="editor-shortcut-hint">Strg/⌘ + Enter startet</small>
                 </label>
                 <textarea id="python-editor" spellcheck="false">import turtle
+
+status = {"DROHNE": "PICO", "TRANSPONDER": "suche"}
+ausruestung = []
 
 drohne = turtle.Turtle()
 drohne.shape("turtle")
@@ -156,25 +175,29 @@ turtle.Screen().delay(35)
 def fahre_zu(x, y):
     drohne.goto(x, y)
 
+# Gib deiner Drohne einen Namen:
+status["DROHNE"] = "PICO"
+
 # Deine erste Idee: direkt zur Funkbase
 # Ergänze hier den Aufruf:
 </textarea>
 
                 <div class="mission-control-bar" aria-label="Programmaktionen">
-                    <button id="run-btn" class="mission-primary-action" type="button"><span aria-hidden="true">▶</span> Direktflug testen</button>
+                    <button id="run-btn" class="mission-primary-action" type="button"><span aria-hidden="true">▶</span> Idee testen</button>
                     <button id="reset-btn" class="mission-secondary-action" type="button">↺ Explorer-Code laden</button>
                     <button id="presentation-btn" class="mission-secondary-action" type="button" aria-pressed="false">◫ Präsentieren</button>
                 </div>
 
                 <div class="mission-console-card">
                     <div class="mission-console-title"><span>Beobachtungsprotokoll</span><span aria-hidden="true"></span></div>
-                    <pre id="console-output" aria-live="polite">PICO wartet am Aufzug auf deinen Direktflug.</pre>
+                    <pre id="console-output" aria-live="polite">Die Drohne wartet am Aufzug auf deinen Plan.</pre>
                 </div>
 
-                <div id="next-level-preview" class="next-level-preview" hidden>
+                <div id="next-level-container" class="next-level-preview" hidden>
                     <span>Nächster Schritt</span>
-                    <strong>Level 2 · Energie sichern</strong>
-                    <small>Die gemeinsame Grundlage ist vorbereitet; das nächste Level folgt im nächsten Ausbau.</small>
+                    <strong>Level 2 · Finden und aufladen</strong>
+                    <small>Die Energiezelle ist erreicht. Jetzt untersuchst du den echten Fund.</small>
+                    <a class="next-level-action" href="pico_level2.html">Weiter zu Level 2 <span aria-hidden="true">→</span></a>
                 </div>
             </section>
         </div>
@@ -184,8 +207,9 @@ def fahre_zu(x, y):
 
     <script src="assets/vendor/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="assets/vendor/codemirror/5.65.2/python.min.js"></script>
-    <script src="assets/drone-mission-core.js?v=20260721-1"></script>
-    <script src="assets/pico-explorer-level1.js?v=20260721-1"></script>
-    <script src="assets/drone-mission.js?v=20260721-1"></script>
+    <script src="assets/drone-mission-core.js?v=20260721-2"></script>
+    <script src="assets/pico-mission-core.js?v=20260721-1"></script>
+    <script src="assets/pico-mission.js?v=20260721-1"></script>
+    <script src="assets/drone-mission.js?v=20260721-2"></script>
 </body>
 </html>

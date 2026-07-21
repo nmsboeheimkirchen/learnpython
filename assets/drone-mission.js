@@ -52,6 +52,7 @@
     const testMode = searchParams.has("test") || searchParams.has("e2e");
     const autoRunTest = searchParams.has("test");
     const defaultCode = config.defaultCode ?? editor.getValue();
+    let resetCode = defaultCode;
     let outputText = "";
     let runGeneration = 0;
     let running = false;
@@ -321,7 +322,8 @@
             result.status || (result.passed ? "Checkpoint erreicht" : "Code prüfen"),
             result.statusState || (result.passed ? "success" : "warning")
         );
-        if (result.passed && config.levelId) {
+        const levelComplete = result.passed && result.levelComplete !== false;
+        if (levelComplete && config.levelId) {
             window.saveCompletedLevelCode?.(config.levelId, code);
             (result.unlocks || config.unlocks || []).forEach(id => window.unlockLevel?.(id));
         }
@@ -336,7 +338,7 @@
         consoleOutput.textContent = "";
         consoleOutput.classList.remove("is-error");
         document.body.classList.remove("mission-passed");
-        config.resetHud?.();
+        config.resetHud?.({ reason: "run" });
         renderChecks(initialResult("Simulation läuft – die Missionszustände werden live geprüft."));
         setRunning(true);
         setStatus(config.runningLabel || "Drohne unterwegs", "running");
@@ -380,13 +382,13 @@
             return;
         }
         runGeneration += 1;
-        editor.setValue(defaultCode);
+        editor.setValue(resetCode);
         editor.clearHistory?.();
         outputText = "";
         consoleOutput.textContent = config.resetOutput || "Bereit für deine Drohnenbefehle.";
         consoleOutput.classList.remove("is-error");
         document.body.classList.remove("mission-passed");
-        config.resetHud?.();
+        config.resetHud?.({ reason: "manual" });
         clearTurtle();
         renderChecks(initialResult());
         setStatus(config.readyLabel || "Bereit", "ready");
@@ -412,11 +414,14 @@
         }
     });
 
-    config.resetHud?.();
+    config.resetHud?.({ reason: "initial" });
     setStatus(config.readyLabel || "Bereit", "ready");
     renderChecks(initialResult());
 
     const restored = config.levelId && window.restoreCompletedLevelCode?.(config.levelId);
+    const inherited = !restored && config.inheritCode && config.levelId &&
+        window.restoreLevelCode?.(config.levelId);
+    if ((restored || inherited) && config.resetToLoadedCode) resetCode = editor.getValue();
     if (restored) {
         config.restoreCompletedState?.();
         const restoredResult = config.getRestoredResult?.();
@@ -429,6 +434,7 @@
     window.DroneMissionRuntime = Object.freeze({
         editor,
         getOutput: () => outputText,
+        getState: () => config.getState?.() || null,
         reset: resetMission,
         run: runProgram,
         refresh() {

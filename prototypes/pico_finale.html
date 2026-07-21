@@ -106,7 +106,7 @@
                                 <div class="meter-label"><span>Energie · automatisch</span><strong id="energy-value">10 %</strong></div>
                                 <div id="energy-meter" class="meter-track" role="progressbar" aria-label="PICO Energie" aria-valuemin="0" aria-valuemax="100" aria-valuenow="10"><span id="energy-fill" style="width: 10%"></span></div>
                             </div>
-                            <div class="signal-block"><small>FUNK</small><strong id="mission-state">–</strong></div>
+                            <div class="signal-block"><small>TRANSPONDER</small><strong id="mission-state">–</strong></div>
                         </div>
                     </div>
                 </div>
@@ -163,7 +163,7 @@ drohne.pendown()
 
 turtle.Screen().delay(35)
 
-status = {"DROHNE": "PICO", "FUNK": "suche"}
+status = {"DROHNE": "PICO", "TRANSPONDER": "suche"}
 ausruestung = []
 
 def fahre_zu(x, y):
@@ -185,9 +185,9 @@ markiere()
 signal_erfolgreich = drohne.sende()
 
 if signal_erfolgreich:
-    status.update({"FUNK": "gesendet"})
+    status.update({"TRANSPONDER": "gesendet"})
 else:
-    status.update({"FUNK": "fehlgeschlagen"})
+    status.update({"TRANSPONDER": "fehlgeschlagen"})
 
 if signal_erfolgreich:
     print("Signal gesendet - gerettet!")
@@ -220,7 +220,7 @@ else:
     <script src="../assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
     <script src="../assets/vendor/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="../assets/vendor/codemirror/5.65.2/python.min.js"></script>
-    <script src="finale-analysis.js?v=drone-status-v1"></script>
+    <script src="finale-analysis.js?v=drone-status-v2"></script>
     <script>
         window.FINALE_CONFIG = {
             targetId: "pico-turtle",
@@ -296,7 +296,7 @@ else:
             syncPythonState(context) {
                 const liveStatus = context.getGlobal("status");
                 if (liveStatus && typeof liveStatus === "object") {
-                    this.applyHud({ drohne: liveStatus.DROHNE, funk: liveStatus.FUNK });
+                    this.applyHud({ drohne: liveStatus.DROHNE, transponder: liveStatus.TRANSPONDER });
                     this.lastRuntimeStatusData = { ...this.lastStatusData };
                 }
                 if (!this.pendingFind || this.charged) return null;
@@ -387,11 +387,11 @@ else:
             },
             applyHud(data) {
                 const drohne = String(data?.drohne ?? "").trim() || "–";
-                const funk = String(data?.funk ?? "").trim() || "–";
-                this.lastStatusData = { drohne, funk };
+                const transponder = String(data?.transponder ?? "").trim() || "–";
+                this.lastStatusData = { drohne, transponder };
                 document.getElementById("agent-avatar").textContent = drohne === "–" ? "?" : drohne.charAt(0).toUpperCase();
                 document.getElementById("agent-name").textContent = drohne;
-                document.getElementById("mission-state").textContent = funk;
+                document.getElementById("mission-state").textContent = transponder;
                 document.body.classList.toggle("mission-complete", this.signalSent);
             },
             clearRescueResult() {
@@ -421,7 +421,7 @@ else:
                     analysis.calledFunctionNames.includes("markiere") && this.turtleMarks > 0;
                 const statusData = this.lastRuntimeStatusData;
                 const dictionaryHudPassed = Boolean(
-                    statusData?.drohne && statusData.drohne !== "–" && statusData.funk === "gesendet" &&
+                    statusData?.drohne && statusData.drohne !== "–" && statusData.transponder === "gesendet" &&
                     analysis.hasExactStatusDictionary
                 );
                 if (!this.signalSent) this.showRescueResult(false, this.getRescueFailureText());
@@ -429,7 +429,7 @@ else:
                     { label: "Drohne wird gesteuert", passed: analysis.importsTurtle && analysis.usesTurtleMovement },
                     { label: "Route verwendet eine Entscheidung", passed: analysis.hasIf },
                     { label: "Energiezelle gefunden und aufgenommen", passed: this.charged },
-                    { label: "Status-Dictionary füllt DROHNE und FUNK", passed: dictionaryHudPassed, optional: true },
+                    { label: "Status-Dictionary füllt DROHNE und TRANSPONDER", passed: dictionaryHudPassed, optional: true },
                     { label: "Eigene Funktion und markiere() werden verwendet", passed: ownFunctionUsed && markFunctionUsed },
                     { label: "Energie reicht bis zur Funkbase", passed: this.beaconReached && !this.depleted && this.energy > 0 },
                     { label: "Rettungssignal von der Funkbase bestätigt", passed: this.signalSent }

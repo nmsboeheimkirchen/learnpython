@@ -390,6 +390,43 @@ test("mission 4 carries successful code forward without discarding student lines
     );
 });
 
+test("PICO carries code through optional level 2a without making it a gate", () => {
+    const level2Code = '# Level 2\nstatus["TRANSPONDER"] = "suche"';
+    const level2aCode = '# Level 2a\nstatus["TRANSPONDER"] = "aufgeladen"';
+    const skipped = createRunnerContext({
+        completedLevelCode_v1: JSON.stringify({ pico_level2: level2Code })
+    });
+    const completed = createRunnerContext({
+        completedLevelCode_v1: JSON.stringify({
+            pico_level2: level2Code,
+            pico_level2a: level2aCode
+        })
+    });
+
+    assert.equal(
+        vm.runInContext('buildInheritedLevelCode("pico_level3")', skipped.context),
+        level2Code
+    );
+    assert.equal(
+        vm.runInContext('buildInheritedLevelCode("pico_level3")', completed.context),
+        level2aCode
+    );
+});
+
+test("the earlier PICO discovery checkpoint is not mistaken for the new navigation completion", () => {
+    const { context, storage } = createRunnerContext({
+        completedLevelCode_v1: JSON.stringify({
+            pico_level1: "fahre_zu(340, 15)"
+        })
+    });
+
+    assert.equal(
+        vm.runInContext('getCompletedLevelCode("pico_level1_navigation")', context),
+        null
+    );
+    assert.deepEqual(JSON.parse(storage.get("completedLevelCode_v1")), {});
+});
+
 test("a completed current level takes priority over inherited code", () => {
     const inheritedCode = 'nachricht = "GEHEIM"\nfor buchstabe in nachricht:\n    print(buchstabe)';
     const completedCurrentCode = '# Meine bestandene Variante\nnachricht = "GEHEIM"\nfor buchstabe in nachricht:\n    print(ord(buchstabe))';
@@ -1200,7 +1237,11 @@ test("all progress link ids keep their established unlock routes", () => {
         "link-agent-training-l2": "agent_training_level2.html",
         "link-agent-training-l3": "agent_training_level3.html",
         "link-project-choice": "projektwahl.html",
-        "link-pico-l1": "pico_level1.html"
+        "link-pico-l1": "pico_level1.html",
+        "link-pico-l2": "pico_level2.html",
+        "link-pico-l2a": "pico_level2a.html",
+        "link-pico-l3": "pico_level3.html",
+        "link-pico-l4": "pico_level4.html"
     });
 });
 
@@ -1314,6 +1355,37 @@ test("project choice opens PICO level 1 while keeping Pixelmuseum as a neutral p
     assert.match(projectChoiceCss, /@media \(max-width: 820px\)[\s\S]*grid-template-columns:\s*minmax\(0, 1fr\)/);
     assert.match(projectChoiceCss, /@media \(prefers-reduced-motion: reduce\)/);
     assert.match(projectChoiceCss, /@media \(forced-colors: active\)/);
+});
+
+test("the public PICO path shares one runtime and uses TRANSPONDER from level 1", () => {
+    const pages = [
+        "pico_level1.html",
+        "pico_level2.html",
+        "pico_level2a.html",
+        "pico_level3.html",
+        "pico_level4.html"
+    ];
+
+    for (const page of pages) {
+        const html = readFileSync(new URL(`../${page}`, import.meta.url), "utf8");
+        assert.match(html, /data-pico-level="(?:1|2|2a|3|4)"/);
+        assert.match(html, /assets\/pico-mission-core\.js/);
+        assert.match(html, /assets\/pico-mission\.js/);
+        assert.match(html, /<small>TRANSPONDER<\/small>/);
+        assert.doesNotMatch(html, /\bFUNK\b/);
+    }
+
+    const level1 = readFileSync(new URL("../pico_level1.html", import.meta.url), "utf8");
+    assert.match(level1, /Reicht die Energie\?/);
+    assert.match(level1, /Gib deiner Drohne einen Namen und programmiere diesen Flug\./);
+    assert.match(level1, /status = \{"DROHNE": "PICO", "TRANSPONDER": "suche"\}/);
+    assert.match(level1, /status\["DROHNE"\] = "PICO"/);
+    assert.match(level1, /id="energy-advice"[^>]+type="button"/);
+
+    const level2a = readFileSync(new URL("../pico_level2a.html", import.meta.url), "utf8");
+    assert.match(level2a, /Optionales Level 2a/);
+    assert.match(level2a, /Level 2a überspringen/);
+    assert.match(level2a, /status\["TRANSPONDER"\] = "aufgeladen"/);
 });
 
 test("all four mission artworks are local, valid and web-sized", () => {
@@ -1475,7 +1547,17 @@ test("finale prototypes stay unlinked, isolated and locally hosted", () => {
         "pixelmuseum_finale.html"
     ];
     const navigation = readFileSync(new URL("../assets/navigation.js", import.meta.url), "utf8");
-    const publicPages = ["index.html", "index-a.html", "index-b.html", ...missionPages];
+    const publicPages = [
+        "index.html",
+        "index-a.html",
+        "index-b.html",
+        "pico_level1.html",
+        "pico_level2.html",
+        "pico_level2a.html",
+        "pico_level3.html",
+        "pico_level4.html",
+        ...missionPages
+    ];
 
     for (const publicPage of publicPages) {
         const html = readFileSync(new URL(`../${publicPage}`, import.meta.url), "utf8");
@@ -1498,7 +1580,7 @@ test("finale prototypes stay unlinked, isolated and locally hosted", () => {
         assert.match(html, /class="turtle-target"/);
         assert.match(html, /window\.FINALE_CONFIG/);
         assert.match(html, /src="finale\.js\?v=p2-audit-v1"/);
-        assert.match(html, /src="finale-analysis\.js\?v=drone-status-v1"/);
+        assert.match(html, /src="finale-analysis\.js\?v=drone-status-v2"/);
         assert.match(html, /assets\/images\/finales\/.+\.webp/);
         assert.match(html, /assets\/vendor\/skulpt\/1\.2\.0\/skulpt\.min\.js/);
         assert.match(html, /assets\/vendor\/codemirror\/5\.65\.2\/codemirror\.min\.js/);
@@ -1523,24 +1605,24 @@ test("finale prototypes stay unlinked, isolated and locally hosted", () => {
     assert.match(pico, /ausruestung\.append\(fund\)/);
     assert.doesNotMatch(pico, /if fund == "Energiezelle":/);
     assert.match(pico, /signal_erfolgreich = drohne\.sende\(\)/);
-    assert.match(pico, /status\s*=\s*\{"DROHNE": "PICO", "FUNK": "suche"\}/);
-    assert.match(pico, /status\.update\(\{"FUNK": "gesendet"\}\)/);
-    assert.match(pico, /status\.update\(\{"FUNK": "fehlgeschlagen"\}\)/);
+    assert.match(pico, /status\s*=\s*\{"DROHNE": "PICO", "TRANSPONDER": "suche"\}/);
+    assert.match(pico, /status\.update\(\{"TRANSPONDER": "gesendet"\}\)/);
+    assert.match(pico, /status\.update\(\{"TRANSPONDER": "fehlgeschlagen"\}\)/);
     assert.doesNotMatch(picoCode, /PICO_STATUS\|/, "Die GUI liest das Dictionary direkt und braucht kein Ausgabeprotokoll");
     assert.match(pico, /Signal konnte nicht gesendet werden\./);
     assert.match(pico, /onTurtleFrame\(point\)/);
     assert.match(pico, /syncPythonState\(context\)/);
     assert.match(pico, /this\.signalSent = success/);
     assert.match(pico, /document\.getElementById\("agent-name"\)\.textContent = drohne/);
-    assert.match(pico, /document\.getElementById\("mission-state"\)\.textContent = funk/);
+    assert.match(pico, /document\.getElementById\("mission-state"\)\.textContent = transponder/);
     assert.match(pico, /liveStatus\.DROHNE/);
-    assert.match(pico, /liveStatus\.FUNK/);
+    assert.match(pico, /liveStatus\.TRANSPONDER/);
     assert.match(pico, /this\.lastRuntimeStatusData = \{ \.\.\.this\.lastStatusData \}/);
     assert.doesNotMatch(pico, /parseOutput\(output\)/);
     assert.doesNotMatch(pico, /onOutput\(_chunk/);
     assert.match(pico, /<small>DROHNE<\/small>/);
-    assert.match(pico, /<small>FUNK<\/small>/);
-    assert.match(pico, /Status-Dictionary füllt DROHNE und FUNK/);
+    assert.match(pico, /<small>TRANSPONDER<\/small>/);
+    assert.match(pico, /Status-Dictionary füllt DROHNE und TRANSPONDER/);
     assert.match(pico, /optional: true/);
     assert.match(pico, /checks\.filter\(check => !check\.optional\)\.every/);
     assert.match(pico, /Signal gesendet - gerettet!/);
@@ -1603,12 +1685,12 @@ test("finale prototypes stay unlinked, isolated and locally hosted", () => {
     assert.match(museum, /Alarm hacken oder umgehen/);
 });
 
-test("pico HUD mirrors the DROHNE/FUNK status dictionary during turtle movement", () => {
+test("pico HUD mirrors the DROHNE/TRANSPONDER status dictionary during turtle movement", () => {
     const { config, elements } = createPicoConfig();
     config.signalSent = false;
     config.syncPythonState({
         getGlobal(name) {
-            return name === "status" ? { DROHNE: "NOVA", FUNK: "suche" } : undefined;
+            return name === "status" ? { DROHNE: "NOVA", TRANSPONDER: "suche" } : undefined;
         }
     });
 
@@ -1617,7 +1699,7 @@ test("pico HUD mirrors the DROHNE/FUNK status dictionary during turtle movement"
     assert.equal(elements.get("mission-state").textContent, "suche");
 });
 
-test("pico dictionary check accepts the DROHNE/FUNK runtime dictionary", () => {
+test("pico dictionary check accepts the DROHNE/TRANSPONDER runtime dictionary", () => {
     const { config } = createPicoConfig();
     config.charged = true;
     config.beaconReached = true;
@@ -1626,7 +1708,7 @@ test("pico dictionary check accepts the DROHNE/FUNK runtime dictionary", () => {
     config.signalSent = true;
     config.syncPythonState({
         getGlobal(name) {
-            return name === "status" ? { DROHNE: "NOVA", FUNK: "gesendet" } : undefined;
+            return name === "status" ? { DROHNE: "NOVA", TRANSPONDER: "gesendet" } : undefined;
         }
     });
 
@@ -1639,11 +1721,12 @@ test("pico dictionary check accepts the DROHNE/FUNK runtime dictionary", () => {
 });
 
 test("pico rejects legacy or forged status data without failing the whole mission", () => {
-    for (const { runtimeStatus, expectedDrohne, expectedFunk } of [
+    for (const { runtimeStatus, expectedDrohne, expectedTransponder } of [
         { runtimeStatus: undefined },
-        { runtimeStatus: { name: "NOVA", signal: "gesendet" }, expectedDrohne: "–", expectedFunk: "–" },
-        { runtimeStatus: { AGENT: "NOVA", FUNK: "gesendet" }, expectedDrohne: "–", expectedFunk: "gesendet" },
-        { runtimeStatus: { DROHNE: "NOVA" }, expectedDrohne: "NOVA", expectedFunk: "–" }
+        { runtimeStatus: { name: "NOVA", signal: "gesendet" }, expectedDrohne: "–", expectedTransponder: "–" },
+        { runtimeStatus: { AGENT: "NOVA", TRANSPONDER: "gesendet" }, expectedDrohne: "–", expectedTransponder: "gesendet" },
+        { runtimeStatus: { DROHNE: "NOVA", FUNK: "gesendet" }, expectedDrohne: "NOVA", expectedTransponder: "–" },
+        { runtimeStatus: { DROHNE: "NOVA" }, expectedDrohne: "NOVA", expectedTransponder: "–" }
     ]) {
         const { config, elements } = createPicoConfig();
         config.charged = true;
@@ -1656,7 +1739,7 @@ test("pico rejects legacy or forged status data without failing the whole missio
                 getGlobal(name) { return name === "status" ? runtimeStatus : undefined; }
             });
             assert.equal(elements.get("agent-name").textContent, expectedDrohne);
-            assert.equal(elements.get("mission-state").textContent, expectedFunk);
+            assert.equal(elements.get("mission-state").textContent, expectedTransponder);
         }
 
         config.turtleMarks = 2;
@@ -1676,7 +1759,7 @@ test("pico only charges after a real search result is appended", () => {
         x,
         y,
         getGlobal(name) {
-            if (name === "status") return { DROHNE: "PICO", FUNK: "suche" };
+            if (name === "status") return { DROHNE: "PICO", TRANSPONDER: "suche" };
             if (name === "ausruestung") return equipment;
             return undefined;
         }
@@ -1778,7 +1861,7 @@ test("pico accepts a successful creative route without the sample midpoint", () 
     config.energy = 30;
     config.signalSent = true;
     config.turtleMarks = 2;
-    config.lastRuntimeStatusData = { drohne: "NOVA", funk: "gesendet" };
+    config.lastRuntimeStatusData = { drohne: "NOVA", transponder: "gesendet" };
     const creativeCode = config.defaultCode.replace("fahre_zu(0, -90)\n", "");
 
     const result = config.validate(creativeCode);
@@ -1795,7 +1878,7 @@ test("pico structure checks ignore comments, strings and unused functions", () =
         energy: 30,
         signalSent: true,
         turtleMarks: 1,
-        lastRuntimeStatusData: { drohne: "PICO", funk: "gesendet" }
+        lastRuntimeStatusData: { drohne: "PICO", transponder: "gesendet" }
     });
     const misleadingCode = `import turtle
 drohne = turtle.Turtle()
@@ -1811,7 +1894,7 @@ markiere()
 # dekorativ()
 # if signal_erfolgreich:
 text = "if signal_erfolgreich:"
-status = {"DROHNE": "PICO", "FUNK": "gesendet"}`;
+status = {"DROHNE": "PICO", "TRANSPONDER": "gesendet"}`;
 
     const result = config.validate(misleadingCode);
     assert.equal(result.checks.find(check => check.label.includes("Entscheidung")).passed, false);
@@ -1855,7 +1938,7 @@ test("pico clears a provisional energy warning when the cell is collected", () =
 
     const result = config.syncPythonState({
         getGlobal(name) {
-            if (name === "status") return { DROHNE: "PICO", FUNK: "suche" };
+            if (name === "status") return { DROHNE: "PICO", TRANSPONDER: "suche" };
             if (name === "ausruestung") return ["Energiezelle"];
             return undefined;
         }
@@ -1878,7 +1961,7 @@ test("pico expires a found energy cell after the drone leaves its position", () 
         y: -90,
         getGlobal(name) {
             if (name === "ausruestung") return equipment;
-            if (name === "status") return { DROHNE: "PICO", FUNK: "suche" };
+            if (name === "status") return { DROHNE: "PICO", TRANSPONDER: "suche" };
             return undefined;
         }
     };

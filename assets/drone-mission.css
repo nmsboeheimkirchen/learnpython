@@ -355,6 +355,45 @@
     backdrop-filter: blur(14px);
 }
 
+.pico-mission-hud {
+    width: min(300px, calc(100% - 28px));
+}
+
+.pico-status-row {
+    display: grid;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    gap: 8px;
+    margin-bottom: 9px;
+    padding-bottom: 9px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.pico-status-row > span {
+    display: grid;
+    min-width: 0;
+}
+
+.pico-status-row small {
+    color: #8fa5b7;
+    font-size: 0.54rem;
+    font-weight: 840;
+    letter-spacing: 0.1em;
+}
+
+.pico-status-row strong {
+    overflow: hidden;
+    color: #e9fbff;
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 0.72rem;
+    line-height: 1.5;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#transponder-state {
+    color: var(--mission-accent);
+}
+
 .mission-energy-label,
 .mission-coordinate-hud {
     display: flex;
@@ -412,6 +451,35 @@
     background: rgba(7, 36, 29, 0.86);
     color: var(--mission-success);
     letter-spacing: 0.08em;
+}
+
+.pico-result-message {
+    position: absolute;
+    z-index: 7;
+    left: 16px;
+    bottom: 16px;
+    max-width: calc(100% - 32px);
+    padding: 8px 11px;
+    border-radius: 10px;
+    background: rgba(3, 13, 24, 0.82);
+    color: #dceaf4;
+    font-size: 0.7rem;
+    font-weight: 850;
+    letter-spacing: 0.05em;
+}
+
+.pico-result-message:empty {
+    display: none;
+}
+
+.rescue-success .pico-result-message {
+    border: 1px solid rgba(125, 242, 169, 0.58);
+    color: var(--mission-success);
+}
+
+.rescue-failed .pico-result-message {
+    border: 1px solid rgba(255, 117, 107, 0.58);
+    color: #ffaaa3;
 }
 
 .mission-target-legend {
@@ -507,6 +575,15 @@
     line-height: 1.55;
 }
 
+.mission-task-card code {
+    color: #cbfbff;
+    font-family: "SFMono-Regular", Consolas, monospace;
+}
+
+.mission-task-card[hidden] {
+    display: none;
+}
+
 .mission-code-hint {
     display: grid;
     gap: 6px;
@@ -538,6 +615,58 @@
     gap: 12px;
     border-color: rgba(125, 242, 169, 0.34);
     background: rgba(125, 242, 169, 0.07);
+}
+
+.mission-advice-action {
+    position: relative;
+    width: 100%;
+    align-items: center;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    animation: pico-discovery-pulse 1.15s ease-in-out infinite alternate;
+}
+
+.mission-advice-action > span:nth-child(2) {
+    display: grid;
+    gap: 5px;
+    flex: 1;
+}
+
+.mission-advice-action > span:nth-child(2) > span {
+    color: #bcd7c7;
+    font-size: 0.79rem;
+    line-height: 1.5;
+}
+
+.mission-advice-arrow {
+    color: var(--mission-success);
+    font-size: 1.3rem;
+    transition: transform 180ms ease;
+}
+
+.mission-advice-action:hover .mission-advice-arrow,
+.mission-advice-action:focus-visible .mission-advice-arrow {
+    transform: translateX(4px);
+}
+
+.mission-advice-action.is-open {
+    animation: none;
+    border-color: rgba(var(--mission-accent-rgb), 0.4);
+    background: rgba(var(--mission-accent-rgb), 0.07);
+}
+
+@keyframes pico-discovery-pulse {
+    from {
+        border-color: rgba(125, 242, 169, 0.34);
+        box-shadow: 0 0 0 rgba(125, 242, 169, 0);
+    }
+    to {
+        border-color: rgba(125, 242, 169, 0.95);
+        background: rgba(125, 242, 169, 0.14);
+        box-shadow: 0 0 24px rgba(125, 242, 169, 0.28), inset 0 0 18px rgba(125, 242, 169, 0.06);
+    }
 }
 
 .mission-advice[hidden],
@@ -715,6 +844,80 @@
     line-height: 1.45;
 }
 
+.next-level-actions {
+    display: grid;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.next-level-action,
+.next-level-skip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 10px 13px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 820;
+    text-align: center;
+    text-decoration: none;
+}
+
+.next-level-action {
+    gap: 8px;
+    margin-top: 8px;
+    border: 1px solid rgba(var(--mission-accent-rgb), 0.58);
+    background: rgba(var(--mission-accent-rgb), 0.12);
+    color: #d9fdff;
+}
+
+.next-level-actions .next-level-action {
+    margin-top: 0;
+}
+
+.next-level-skip {
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.04);
+    color: #c2d0dc;
+}
+
+.next-level-action:hover,
+.next-level-skip:hover {
+    border-color: var(--mission-accent);
+    color: #fff;
+}
+
+.optional-level-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 22px;
+    margin: -6px 0 24px;
+    padding: 15px 18px;
+    border: 1px solid rgba(255, 199, 112, 0.35);
+    border-radius: 18px;
+    background: rgba(255, 199, 112, 0.065);
+}
+
+.optional-level-banner > div {
+    display: grid;
+    gap: 4px;
+}
+
+.optional-level-banner .mission-eyebrow {
+    color: var(--mission-gold);
+}
+
+.optional-level-banner strong {
+    color: #f5ead7;
+    font-size: 0.84rem;
+}
+
+.optional-level-banner .next-level-skip {
+    flex: 0 0 auto;
+}
+
 .exit-presentation {
     position: fixed;
     z-index: 80;
@@ -832,6 +1035,12 @@
     .mission-primary-action {
         grid-column: 1 / -1;
     }
+
+    .optional-level-banner {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 12px;
+    }
 }
 
 @media (max-width: 460px) {
@@ -850,6 +1059,15 @@
         left: 8px;
         width: 185px;
         padding: 8px 9px;
+    }
+
+    .pico-mission-hud {
+        width: min(230px, calc(100% - 16px));
+    }
+
+    .pico-status-row {
+        margin-bottom: 6px;
+        padding-bottom: 6px;
     }
 
     .mission-start-label {
@@ -884,6 +1102,12 @@
         scroll-behavior: auto !important;
         animation-duration: 0.01ms !important;
         transition-duration: 0.01ms !important;
+    }
+
+    .mission-advice-action {
+        animation: none;
+        border-color: rgba(125, 242, 169, 0.8);
+        box-shadow: 0 0 18px rgba(125, 242, 169, 0.2);
     }
 }
 

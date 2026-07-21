@@ -26,7 +26,11 @@ const LEVEL_ROUTES = Object.freeze({
     "link-agent-training-l2": "agent_training_level2.html",
     "link-agent-training-l3": "agent_training_level3.html",
     "link-project-choice": "projektwahl.html",
-    "link-pico-l1": "pico_level1.html"
+    "link-pico-l1": "pico_level1.html",
+    "link-pico-l2": "pico_level2.html",
+    "link-pico-l2a": "pico_level2a.html",
+    "link-pico-l3": "pico_level3.html",
+    "link-pico-l4": "pico_level4.html"
 });
 
 function safeStorageGetItem(key) {
@@ -187,7 +191,12 @@ function buildInheritedLevelCode(levelId) {
         return null;
     }
 
-    const previousCode = getCompletedLevelCode(inheritance.from);
+    const sourceLevels = Array.isArray(inheritance.from)
+        ? inheritance.from
+        : [inheritance.from];
+    const previousCode = sourceLevels
+        .map(getCompletedLevelCode)
+        .find(code => code !== null) ?? null;
     if (previousCode === null) {
         return null;
     }
@@ -870,9 +879,25 @@ const LEVEL_OUTCOMES = {
         unlocks: ["link-project-choice", "link-pico-l1"],
         successMessage: "Dein Datenchip stammt aus einer Suche und liegt nachweislich im Inventar."
     },
-    pico_level1: {
+    pico_level1_navigation: {
+        unlocks: ["link-pico-l2"],
+        successMessage: "Die Energiezelle ist erreicht."
+    },
+    pico_level2: {
+        unlocks: ["link-pico-l2a", "link-pico-l3"],
+        successMessage: "Die echte Energiezelle wurde gefunden und geladen."
+    },
+    pico_level2a: {
+        unlocks: ["link-pico-l3"],
+        successMessage: "Der TRANSPONDER meldet den echten Ladezustand."
+    },
+    pico_level3: {
+        unlocks: ["link-pico-l4"],
+        successMessage: "Das Rettungssignal wurde an der Funkbase bestätigt."
+    },
+    pico_level4: {
         unlocks: [],
-        successMessage: "PICO hat sein reales Energielimit entdeckt."
+        successMessage: "PICO ist gerettet."
     }
 };
 
@@ -881,7 +906,11 @@ const LEVEL_CODE_INHERITANCE = Object.freeze({
     mission4_level3: Object.freeze({
         from: "mission4_level2",
         prepare: addMission4FinaleBonuses
-    })
+    }),
+    pico_level2: Object.freeze({ from: "pico_level1_navigation" }),
+    pico_level2a: Object.freeze({ from: "pico_level2" }),
+    pico_level3: Object.freeze({ from: Object.freeze(["pico_level2a", "pico_level2"]) }),
+    pico_level4: Object.freeze({ from: "pico_level3" })
 });
 
 function validateLevelSolution(levelId, code, output) {
