@@ -147,27 +147,27 @@
                     <span id="editor-shortcut-hint" class="sr-only">Mit Steuerung und Enter startest du das Programm.</span>
                     <textarea id="python-editor" spellcheck="false">import turtle
 
-agent = turtle.Turtle()
-agent.shape("triangle")
-agent.color("#ff78f3")
-agent.pensize(5)
-agent.speed(0)
-agent.hideturtle()
-agent.penup()
-agent.goto(0, -210)
-agent.speed(4)  # gut sichtbar, trotz längerer Route
-agent.showturtle()
-agent.pendown()
+drohne = turtle.Turtle()
+drohne.shape("triangle")
+drohne.color("#ff78f3")
+drohne.pensize(5)
+drohne.speed(0)
+drohne.hideturtle()
+drohne.penup()
+drohne.goto(0, -210)
+drohne.speed(4)  # gut sichtbar, trotz längerer Route
+drohne.showturtle()
+drohne.pendown()
 
 turtle.Screen().delay(30)
 
 inventar = []
 
 def gehe_zu(x, y):
-    agent.goto(x, y)
+    drohne.goto(x, y)
 
 def markiere():
-    agent.dot(18, "#ff78f3")
+    drohne.dot(18, "#ff78f3")
 
 def alarm_hacken(code):
     # Das Museum prüft Code, Ort und Zeitpunkt automatisch.
@@ -175,7 +175,7 @@ def alarm_hacken(code):
 
 gehe_zu(-250, 60)
 markiere()
-fund = agent.suche_hier()
+fund = drohne.suche_hier()
 print("Gefunden: " + str(fund))
 
 if fund == "Schlüsselkarte":
@@ -186,7 +186,7 @@ else:
 
 gehe_zu(-390, 45)
 markiere()
-fund = agent.suche_hier()
+fund = drohne.suche_hier()
 print("Gefunden: " + str(fund))
 
 if fund == "Artefakt":
@@ -220,7 +220,7 @@ print("Fluchtweg programmiert.")</textarea>
 
                 <aside class="creative-card museum-creative">
                     <span aria-hidden="true">✦</span>
-                    <div><strong>Du steuerst den Agenten – das Museum reagiert.</strong><p>Schlüsselkarte und Artefakt müssen in dein Inventar. Der Alarmcode wurde im HTML-Quelltext des Museums versteckt.</p></div>
+                    <div><strong>Du steuerst die Drohne – das Museum reagiert.</strong><p>Schlüsselkarte und Artefakt müssen in dein Inventar. Der Alarmcode wurde im HTML-Quelltext des Museums versteckt.</p></div>
                 </aside>
             </section>
         </div>
@@ -232,11 +232,11 @@ print("Fluchtweg programmiert.")</textarea>
     <script src="../assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
     <script src="../assets/vendor/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="../assets/vendor/codemirror/5.65.2/python.min.js"></script>
-    <script src="finale-analysis.js?v=p2-audit-v1"></script>
+    <script src="finale-analysis.js?v=drone-status-v1"></script>
     <script>
         window.FINALE_CONFIG = {
             targetId: "museum-turtle",
-            runningLabel: "Agent unterwegs",
+            runningLabel: "Drohne unterwegs",
             defaultCode: document.getElementById("python-editor").value,
             getTurtleSpeedMultiplier(speed) {
                 // Speed 8 ist die bewusst schnelle Alternativstrategie. Der deutliche Faktor

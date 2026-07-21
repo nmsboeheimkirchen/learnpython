@@ -81,7 +81,7 @@
             functionNames,
             calledFunctionNames,
             topLevelCalledFunctionNames: calledFunctionNames,
-            hasExactStatusDictionary: statusKeys.length === 2 && statusKeys[0] === "AGENT" && statusKeys[1] === "FUNK"
+            hasExactStatusDictionary: statusKeys.length === 2 && statusKeys[0] === "DROHNE" && statusKeys[1] === "FUNK"
         };
     }
 
@@ -111,7 +111,7 @@
             const value = node.value;
             if (value?._astname !== "Dict" || value.keys?.length !== 2) return;
             const keys = value.keys.map(stringLiteral).filter(key => key !== null).sort();
-            hasExactStatusDictionary = keys.length === 2 && keys[0] === "AGENT" && keys[1] === "FUNK";
+            hasExactStatusDictionary = keys.length === 2 && keys[0] === "DROHNE" && keys[1] === "FUNK";
         }
 
         function visit(node, functionDepth = 0) {

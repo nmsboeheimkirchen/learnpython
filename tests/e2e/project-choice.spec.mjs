@@ -1,0 +1,35 @@
+import { expect, test } from "@playwright/test";
+
+test("@ipad project choice presents equal routes responsively without exposing finales", async ({ page }, testInfo) => {
+    await page.goto("/projektwahl.html");
+
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Welche Mission übernimmst du?");
+    await expect(page.getByRole("article", { name: "PICO Das letzte Rettungssignal" })).toBeVisible();
+    await expect(page.getByRole("article", { name: "Pixelmuseum Das gestohlene Sternenfragment" })).toBeVisible();
+    await expect(page.locator(".project-preview-action[aria-disabled='true']")).toHaveCount(2);
+    await expect(page.locator('a[href*="prototypes/"]')).toHaveCount(0);
+
+    const layout = await page.evaluate(() => {
+        const pico = document.querySelector(".project-card-pico").getBoundingClientRect();
+        const museum = document.querySelector(".project-card-museum").getBoundingClientRect();
+        return {
+            overflow: document.documentElement.scrollWidth - window.innerWidth,
+            pico: { x: pico.x, y: pico.y, width: pico.width, height: pico.height },
+            museum: { x: museum.x, y: museum.y, width: museum.width, height: museum.height }
+        };
+    });
+
+    expect(layout.overflow).toBeLessThanOrEqual(1);
+    expect(Math.abs(layout.pico.width - layout.museum.width)).toBeLessThanOrEqual(2);
+    if (testInfo.project.name === "webkit-ipad") {
+        expect(layout.museum.y).toBeGreaterThan(layout.pico.y + layout.pico.height - 2);
+    } else {
+        expect(Math.abs(layout.pico.y - layout.museum.y)).toBeLessThanOrEqual(2);
+        expect(layout.museum.x).toBeGreaterThan(layout.pico.x + layout.pico.width - 2);
+    }
+
+    const decisionText = await page.locator("#project-choice-main").innerText();
+    expect(decisionText).toMatch(/Begleitete Projektmission/i);
+    expect(decisionText).toMatch(/Offene Projektmission/i);
+    expect(decisionText).not.toMatch(/für Schnelle|für Langsame|leichter|schwerer/i);
+});

@@ -2,32 +2,32 @@ import { expect, test } from "@playwright/test";
 
 const passingCode = `import turtle
 
-agent = turtle.Turtle()
-agent.shape("triangle")
-agent.color("#71edf4")
-agent.speed(2)
-agent.penup()
+drohne = turtle.Turtle()
+drohne.shape("triangle")
+drohne.color("#71edf4")
+drohne.speed(2)
+drohne.penup()
 
-agent.pendown()
-agent.goto(160, 80)
-agent.penup()
-agent.dot(30, "#7df2a9")
-print("Position:", agent.position())
-agent.goto(160, 180)`;
+drohne.pendown()
+drohne.goto(160, 80)
+drohne.penup()
+drohne.dot(30, "#7df2a9")
+print("Position:", drohne.position())
+drohne.goto(160, 180)`;
 
 const level2PassingCode = `import turtle
 
-agent = turtle.Turtle()
-agent.shape("triangle")
-agent.color("#71edf4")
-agent.speed(2)
-agent.penup()
+drohne = turtle.Turtle()
+drohne.shape("triangle")
+drohne.color("#71edf4")
+drohne.speed(2)
+drohne.penup()
 
 def gehe_zu(x, y):
-    agent.goto(x, y)
+    drohne.goto(x, y)
 
 def markiere():
-    agent.dot(30, "#7df2a9")
+    drohne.dot(30, "#7df2a9")
 
 gehe_zu(-160, 40)
 markiere()
@@ -36,22 +36,22 @@ markiere()`;
 
 const level3GuardedCode = `import turtle
 
-agent = turtle.Turtle()
-agent.shape("triangle")
-agent.color("#71edf4")
-agent.speed(2)
-agent.penup()
+drohne = turtle.Turtle()
+drohne.shape("triangle")
+drohne.color("#71edf4")
+drohne.speed(2)
+drohne.penup()
 
 def gehe_zu(x, y):
-    agent.goto(x, y)
+    drohne.goto(x, y)
 
 def markiere():
-    agent.dot(30, "#7df2a9")
+    drohne.dot(30, "#7df2a9")
 
 inventar = []
 gehe_zu(-210, -65)
 markiere()
-fund = agent.suche_hier()
+fund = drohne.suche_hier()
 print("Gefunden:", fund)
 if fund == "Datenchip":
     inventar.append(fund)`;
@@ -175,7 +175,7 @@ test("Agent training level 1 observes the real Turtle route, mark and position o
     const completedCode = await page.evaluate(() => JSON.parse(
         localStorage.getItem("completedLevelCode_v1") || "{}"
     ));
-    expect(completedCode.agent_training_level1).toContain("agent.goto(160, 80)");
+    expect(completedCode.agent_training_level1).toContain("drohne.goto(160, 80)");
     const canvasCount = await page.locator("#agent-training-turtle canvas").count();
     expect(canvasCount).toBeGreaterThan(0);
     expect(canvasCount).toBeLessThanOrEqual(2);
@@ -194,14 +194,14 @@ test("Agent training level 1 observes the real Turtle route, mark and position o
 
     await page.goto("/agent_training_level1.html?e2e");
     await page.evaluate(() => window.editor.setValue(`import turtle
-agent = turtle.Turtle()
-agent.pendown()
-agent.goto(0, 10)
-agent.penup()
-agent.pendown()
-agent.goto(160, 80)
-agent.dot(30)
-print("Position:", agent.position())`));
+drohne = turtle.Turtle()
+drohne.pendown()
+drohne.goto(0, 10)
+drohne.penup()
+drohne.pendown()
+drohne.goto(160, 80)
+drohne.dot(30)
+print("Position:", drohne.position())`));
     await page.locator("#run-btn").click();
     await expect(page.locator("#run-status")).toHaveText("Code prüfen");
     await expect(page.locator("#training-checks .is-passed")).toHaveCount(2);
@@ -260,15 +260,20 @@ test("Agent training levels 2 and 3 validate reusable commands and a real found 
     await expect(finalCompletion).toBeVisible();
     await expect(finalCompletion.locator('[data-success-symbol="diploma"]')).toBeVisible();
     await expect(finalCompletion.locator("h1")).toHaveText("TRAININGSMISSION ABGESCHLOSSEN");
-    await expect(finalCompletion.locator(".success-btn")).toHaveText("Zur Trainingsübersicht");
-    const fireworkBursts = page.locator("#training-fireworks .training-firework");
-    await expect(fireworkBursts).toHaveCount(3);
-    const fireworkSparks = page.locator("#training-fireworks .training-firework-spark");
-    await expect(fireworkSparks).toHaveCount(54);
-    const firstSparkAnimation = await fireworkSparks.first().evaluate(
-        element => getComputedStyle(element).animationName
+    await expect(finalCompletion.locator("p")).toHaveText(
+        "Dein Datenchip stammt aus einer Suche und liegt nachweislich im Inventar."
     );
-    expect(firstSparkAnimation).toContain("training-firework-spark");
+    await expect(finalCompletion.locator(".success-btn")).toHaveText("Projekt wählen");
+    await expect(finalCompletion.locator(".success-btn")).toHaveAttribute("href", "projektwahl.html");
+    const fireworks = page.locator("#training-fireworks");
+    await expect(fireworks).toBeVisible();
+    await expect(fireworks.locator("canvas")).toHaveCount(1);
+    await page.waitForTimeout(1_100);
+    await expect(fireworks).toBeVisible();
+    const fireworksBox = await fireworks.boundingBox();
+    expect(fireworksBox).not.toBeNull();
+    expect(fireworksBox.width).toBeGreaterThanOrEqual(page.viewportSize().width - 2);
+    expect(fireworksBox.height).toBeGreaterThanOrEqual(page.viewportSize().height - 2);
     const level3State = await page.evaluate(() => window.AgentTrainingLevel.getState());
     expect(level3State.foundItem).toBe("Datenchip");
     expect(level3State.collectedRealFind).toBe(true);

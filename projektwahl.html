@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Wähle nach dem Drohnentraining deine große Agent-PY-Projektmission: PICO oder Pixelmuseum.">
+    <title>Agent PY – Projektmission wählen</title>
+    <link rel="preload" href="assets/images/home/agent-path-cyan-moon.webp?v=20260720-2" as="image" type="image/webp">
+    <link rel="stylesheet" href="assets/style.css?v=20260720-3">
+    <link rel="stylesheet" href="assets/project-choice.css?v=20260721-1">
+</head>
+<body class="project-choice-page">
+    <a class="skip-link" href="#project-choice-main">Zur Projektwahl</a>
+
+    <header class="project-choice-header">
+        <a class="project-choice-brand" href="index.html" aria-label="Agent PY – zur Startseite">
+            <img src="assets/brand/agent-py-logo.png?v=20260720-2" alt="" width="1600" height="232">
+        </a>
+        <a class="project-choice-back" href="agent_training_start.html">
+            <span aria-hidden="true">←</span> Drohnentraining
+        </a>
+    </header>
+
+    <main id="project-choice-main" class="project-choice-main">
+        <section class="project-choice-hero" aria-labelledby="project-choice-title">
+            <p class="project-choice-kicker">Drohnentraining abgeschlossen</p>
+            <h1 id="project-choice-title">Welche Mission übernimmst du?</h1>
+            <p class="project-choice-lead">Du kannst deine Drohne jetzt über Koordinaten steuern, Orte markieren und Fundstücke sichern. Ab hier entscheidest du, wie viel Führung du für dein Projekt möchtest.</p>
+            <ul class="project-choice-tools" aria-label="Eingeübte Python-Werkzeuge">
+                <li>drohne.goto()</li>
+                <li>drohne.dot()</li>
+                <li>drohne.suche_hier()</li>
+            </ul>
+        </section>
+
+        <section class="project-choice-grid" aria-label="Projektmissionen">
+            <article class="project-card project-card-pico" aria-labelledby="pico-project-title">
+                <div class="project-card-art" aria-hidden="true">
+                    <img src="assets/images/finales/pico-rescue-station.webp" alt="" width="1536" height="1024">
+                    <span class="project-route-mark">P</span>
+                </div>
+                <div class="project-card-body">
+                    <p class="project-card-type">Begleitete Projektmission</p>
+                    <h2 id="pico-project-title">PICO <span>Das letzte Rettungssignal</span></h2>
+                    <p>Bringe die Drohne PICO mit knapper Energie zur Funkbase. Eine klare Einsatzfolge begleitet dich – deine Route bleibt trotzdem deine Entscheidung.</p>
+                    <ul class="project-card-details">
+                        <li>Klare Etappen und direktes Feedback</li>
+                        <li>Kreative Routen zum Ziel</li>
+                        <li>Optionales Status-Cockpit für Erweiterungen</li>
+                    </ul>
+                    <span class="project-preview-action" aria-disabled="true">
+                        PICO-Pfad wird vorbereitet
+                    </span>
+                </div>
+            </article>
+
+            <article class="project-card project-card-museum" aria-labelledby="museum-project-title">
+                <div class="project-card-art" aria-hidden="true">
+                    <img src="assets/images/finales/pixel-museum.webp" alt="" width="1536" height="1024">
+                    <span class="project-route-mark">M</span>
+                </div>
+                <div class="project-card-body">
+                    <p class="project-card-type">Offene Projektmission</p>
+                    <h2 id="museum-project-title">Pixelmuseum <span>Das gestohlene Sternenfragment</span></h2>
+                    <p>Plane den Einbruch, sichere das Artefakt und entkomme durch das Portal. Weniger Vorgaben lassen mehr Raum für deine eigene Strategie.</p>
+                    <ul class="project-card-details">
+                        <li>Mehrere mögliche Lösungswege</li>
+                        <li>Freie Routen und eigene Funktionen</li>
+                        <li>Entscheidungen unter Zeitdruck</li>
+                    </ul>
+                    <span class="project-preview-action" aria-disabled="true">
+                        Museumspfad wird vorbereitet
+                    </span>
+                </div>
+            </article>
+        </section>
+
+        <p class="project-choice-note"><span aria-hidden="true">◇</span> Beide Projekte verwenden dieselben Werkzeuge aus dem Drohnentraining. Du wählst die Art der Mission – nicht die richtige oder falsche Route.</p>
+    </main>
+</body>
+</html>

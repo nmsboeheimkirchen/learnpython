@@ -295,6 +295,35 @@ test("the exact passing code is stored and restored per level", () => {
     });
 });
 
+test("stored Agent-training code migrates from agent to drohne when restored", () => {
+    const legacyCode = [
+        "agent = turtle.Turtle()",
+        "agent.pendown()",
+        "agent.goto(160, 80)",
+        'print("Position:", agent.position())'
+    ].join("\n");
+    const { context, storage } = createRunnerContext({
+        completedLevelCode_v1: JSON.stringify({ agent_training_level1: legacyCode })
+    });
+    const editor = {
+        value: "",
+        setValue(value) { this.value = value; }
+    };
+    context.window.editor = editor;
+
+    assert.equal(
+        vm.runInContext('restoreCompletedLevelCode("agent_training_level1")', context),
+        true
+    );
+    assert.match(editor.value, /drohne = turtle\.Turtle\(\)/);
+    assert.match(editor.value, /drohne\.goto\(160, 80\)/);
+    assert.doesNotMatch(editor.value, /\bagent\b/);
+    assert.equal(
+        JSON.parse(storage.get("completedLevelCode_v1")).agent_training_level1,
+        editor.value
+    );
+});
+
 test("corrupted completed-code data is discarded safely", () => {
     const { context, storage } = createRunnerContext({
         completedLevelCode_v1: "not valid JSON"
@@ -462,16 +491,16 @@ const validSolutions = [
     },
     {
         level: "agent_training_level1",
-        code: 'agent.pendown()\nagent.goto(160, 80)\nagent.penup()\nagent.dot(30)\nprint("Position:", agent.position())',
+        code: 'drohne.pendown()\ndrohne.goto(160, 80)\ndrohne.penup()\ndrohne.dot(30)\nprint("Position:", drohne.position())',
         output: "Position: (160.00,80.00)\n"
     },
     {
         level: "agent_training_level2",
         code: [
             "def gehe_zu(x, y):",
-            "    agent.goto(x, y)",
+            "    drohne.goto(x, y)",
             "def markiere():",
-            "    agent.dot(30)",
+            "    drohne.dot(30)",
             "gehe_zu(-160, 40)",
             "markiere()",
             "gehe_zu(80, 130)",
@@ -482,7 +511,7 @@ const validSolutions = [
     {
         level: "agent_training_level3",
         code: [
-            "fund = agent.suche_hier()",
+            "fund = drohne.suche_hier()",
             'print("Gefunden:", fund)',
             'if fund == "Datenchip":',
             "    inventar.append(fund)"
@@ -556,13 +585,13 @@ test("mission 4 rejects Caesar steps outside the for loop", () => {
 test("Agent training position checks ignore comments and string literals", () => {
     const { context } = createRunnerContext();
     context.code = [
-        "agent.pendown()",
-        "agent.goto(160, 80)",
-        "agent.penup()",
-        "# print(agent.position())",
-        'print("agent.position()")'
+        "drohne.pendown()",
+        "drohne.goto(160, 80)",
+        "drohne.penup()",
+        "# print(drohne.position())",
+        'print("drohne.position()")'
     ].join("\n");
-    context.output = "agent.position()\n";
+    context.output = "drohne.position()\n";
 
     const result = vm.runInContext(
         'validateLevelSolution("agent_training_level1", code, output)',
@@ -570,14 +599,14 @@ test("Agent training position checks ignore comments and string literals", () =>
     );
 
     assert.equal(result.passed, false);
-    assert.match(result.message, /echte Drohnenposition/);
+    assert.match(result.message, /Drohnenposition/);
 
     context.code = [
-        "agent.pendown()",
-        "agent.goto(160, 80)",
-        "agent.penup()",
+        "drohne.pendown()",
+        "drohne.goto(160, 80)",
+        "drohne.penup()",
         "def nie_aufgerufen():",
-        "    print(agent.position())",
+        "    print(drohne.position())",
         'print("Position: (160, 80)")'
     ].join("\n");
     context.output = "Position: (160, 80)\n";
@@ -592,10 +621,10 @@ test("Agent training position checks ignore comments and string literals", () =>
 test("Agent training trail checks require real commands in their teaching order", () => {
     const { context } = createRunnerContext();
     context.code = [
-        "agent.penup()",
-        "agent.goto(160, 80)",
-        "agent.pendown()",
-        'print("Position:", agent.position())'
+        "drohne.penup()",
+        "drohne.goto(160, 80)",
+        "drohne.pendown()",
+        'print("Position:", drohne.position())'
     ].join("\n");
 
     let result = vm.runInContext(
@@ -606,10 +635,10 @@ test("Agent training trail checks require real commands in their teaching order"
     assert.match(result.message, /pendown/);
 
     context.code = [
-        "agent.pendown()",
-        "agent.goto(160, 80)",
-        "agent.penup()",
-        'print("Position:", agent.position())'
+        "drohne.pendown()",
+        "drohne.goto(160, 80)",
+        "drohne.penup()",
+        'print("Position:", drohne.position())'
     ].join("\n");
     result = vm.runInContext(
         'validateLevelSolution("agent_training_level1", code, "")',
@@ -618,17 +647,38 @@ test("Agent training trail checks require real commands in their teaching order"
     assert.equal(result.passed, true, result.message);
 });
 
+test("legacy agent variable is not accepted as a new training solution", () => {
+    const { context } = createRunnerContext();
+    context.code = [
+        "agent = turtle.Turtle()",
+        "agent.pendown()",
+        "agent.goto(160, 80)",
+        "agent.penup()",
+        "agent.dot(30)",
+        'print("Position:", agent.position())'
+    ].join("\n");
+
+    const result = vm.runInContext(
+        'validateLevelSolution("agent_training_level1", code, "Position: (160, 80)\\n")',
+        context
+    );
+
+    assert.equal(result.passed, false);
+    assert.equal(result.evidence.usesTrailControls, false);
+    assert.equal(result.evidence.printsRealPosition, false);
+});
+
 test("Agent training level 2 requires called functions instead of direct or unused code", () => {
     const { context } = createRunnerContext();
     const directRoute = [
         "def gehe_zu(x, y):",
-        "    agent.goto(x, y)",
+        "    drohne.goto(x, y)",
         "def markiere():",
-        "    agent.dot(30)",
-        "agent.goto(-160, 40)",
-        "agent.dot(30)",
-        "agent.goto(80, 130)",
-        "agent.dot(30)"
+        "    drohne.dot(30)",
+        "drohne.goto(-160, 40)",
+        "drohne.dot(30)",
+        "drohne.goto(80, 130)",
+        "drohne.dot(30)"
     ].join("\n");
     context.code = directRoute;
     let result = vm.runInContext(
@@ -640,9 +690,9 @@ test("Agent training level 2 requires called functions instead of direct or unus
 
     context.code = [
         "def route(a, b):",
-        "    agent.goto(a, b)",
+        "    drohne.goto(a, b)",
         "def punkt():",
-        "    agent.dot(30)",
+        "    drohne.dot(30)",
         "route(-160, 40)",
         "punkt()",
         "route(80, 130)",
@@ -658,11 +708,11 @@ test("Agent training level 2 requires called functions instead of direct or unus
 test("Agent training level 3 ignores fake search, print and append text", () => {
     const { context } = createRunnerContext();
     context.code = [
-        '# fund = agent.suche_hier()',
-        'print("fund = agent.suche_hier(); Gefunden: Datenchip")',
+        '# fund = drohne.suche_hier()',
+        'print("fund = drohne.suche_hier(); Gefunden: Datenchip")',
         '# if fund == "Datenchip": inventar.append(fund)'
     ].join("\n");
-    context.output = "fund = agent.suche_hier(); Gefunden: Datenchip\n";
+    context.output = "fund = drohne.suche_hier(); Gefunden: Datenchip\n";
 
     const result = vm.runInContext(
         'validateLevelSolution("agent_training_level3", code, output)',
@@ -672,7 +722,7 @@ test("Agent training level 3 ignores fake search, print and append text", () => 
     assert.match(result.message, /suche_hier/);
 
     context.code = [
-        "fund = agent.suche_hier()",
+        "fund = drohne.suche_hier()",
         'print("Datenchip")',
         "def nie_aufgerufen():",
         "    print(fund)",
@@ -687,7 +737,7 @@ test("Agent training level 3 ignores fake search, print and append text", () => 
     assert.match(deadPrintResult.message, /print\(fund\)/);
 
     context.code = [
-        "fund = agent.suche_hier()",
+        "fund = drohne.suche_hier()",
         "print(fund)",
         'if fund == "Datenchip":',
         "    pass",
@@ -702,7 +752,7 @@ test("Agent training level 3 ignores fake search, print and append text", () => 
     assert.equal(danglingGuard.evidence.hasFundGuard, true);
 
     context.code = [
-        "fund = agent.suche_hier()",
+        "fund = drohne.suche_hier()",
         "print(fund)",
         "def nie_aufgerufen():",
         '    if fund == "Datenchip":',
@@ -892,7 +942,7 @@ const teacherSolutionExpectations = new Map([
     ["mission4_level1", /for buchstabe in nachricht:/],
     ["mission4_level2", /ord\(buchstabe\)/],
     ["mission4_level3", /geheimtext = geheimtext \+ chr\(zahl\)/],
-    ["agent_training_level1", /agent\.pendown\(\)[\s\S]*agent\.goto\(160, 80\)[\s\S]*agent\.penup\(\)[\s\S]*agent\.dot\(30,/],
+    ["agent_training_level1", /drohne\.pendown\(\)[\s\S]*drohne\.goto\(160, 80\)[\s\S]*drohne\.penup\(\)[\s\S]*drohne\.dot\(30,/],
     ["agent_training_level2", /def markiere\(\):[\s\S]*gehe_zu\(80, 130\)/],
     ["agent_training_level3", /gehe_zu\(-210, -65\)[\s\S]*if fund == "Datenchip":[\s\S]*inventar\.append\(fund\)/]
 ]);
@@ -972,7 +1022,7 @@ test("browser dependencies are local and checksum-protected", () => {
         }
     }
 
-    assert.equal(referencedVendorFiles.size, 7);
+    assert.equal(referencedVendorFiles.size, 8);
 
     const checksumFile = readFileSync(new URL("../assets/vendor/SHA256SUMS", import.meta.url), "utf8");
     const expectedChecksums = new Map(
@@ -981,7 +1031,7 @@ test("browser dependencies are local and checksum-protected", () => {
             return [relativePath, hash];
         })
     );
-    assert.equal(expectedChecksums.size, 10);
+    assert.equal(expectedChecksums.size, 12);
 
     for (const [relativePath, expectedHash] of expectedChecksums) {
         const contents = readFileSync(new URL(`../${relativePath}`, import.meta.url));
@@ -1183,18 +1233,18 @@ test("mission 4 hands off to the shared Agent training without exposing later pr
     assert.match(trainingStart, /href="agent_training_level1\.html"/);
     assert.match(trainingStart, /Gemeinsame Vorbereitung · Große Mission/);
     assert.match(trainingStart, /Eine Python-Turtle ist so etwas wie eine Drohne/);
-    assert.match(trainingStart, /Im Code heißt deine Drohne <code>agent<\/code>/);
+    assert.doesNotMatch(trainingStart, /Im Code heißt deine Drohne/);
     assert.match(trainingStart, /3 kurze Trainingslevel/);
     assert.match(trainingStart, /markierst wichtige Orte und untersuchst Fundstücke\./);
     assert.doesNotMatch(trainingStart, /später echte Suchergebnisse/);
-    assert.match(trainingLevel1, /agent\.goto\(160, 80\)/);
-    assert.match(trainingLevel1, /agent\.pendown\(\)/);
-    assert.match(trainingLevel1, /agent\.penup\(\)/);
-    assert.match(trainingLevel1, /agent\.dot\(30, &quot;#7df2a9&quot;\)|agent\.dot\(30, "#7df2a9"\)/);
-    assert.match(trainingLevel1, /agent\.position\(\)/);
+    assert.match(trainingLevel1, /drohne\.goto\(160, 80\)/);
+    assert.match(trainingLevel1, /drohne\.pendown\(\)/);
+    assert.match(trainingLevel1, /drohne\.penup\(\)/);
+    assert.match(trainingLevel1, /drohne\.dot\(30, &quot;#7df2a9&quot;\)|drohne\.dot\(30, "#7df2a9"\)/);
+    assert.match(trainingLevel1, /drohne\.position\(\)/);
     const starter = trainingLevel1.match(/<textarea id="python-editor"[^>]*>([\s\S]*?)<\/textarea>/)?.[1] ?? "";
-    assert.match(starter, /agent\.speed\(2\)\s*\nagent\.penup\(\)/);
-    assert.doesNotMatch(starter, /agent\.speed\(4\)/);
+    assert.match(starter, /drohne\.speed\(2\)\s*\ndrohne\.penup\(\)/);
+    assert.doesNotMatch(starter, /drohne\.speed\(4\)/);
     assert.match(trainingLevel1, /id="training-marks-layer" class="training-marks-layer"/);
     assert.match(trainingLevel1, /<code>penup\(\)<\/code>: Spur ausschalten\./);
     assert.match(trainingLevel1, /Nächstes Level/);
@@ -1202,16 +1252,16 @@ test("mission 4 hands off to the shared Agent training without exposing later pr
     const level2Starter = trainingLevel2.match(/<textarea id="python-editor"[^>]*>([\s\S]*?)<\/textarea>/)?.[1] ?? "";
     assert.match(level2Starter, /def markiere\(\):\s*\n\s+pass/);
     assert.doesNotMatch(level2Starter, /gehe_zu\(80, 130\)\s*\nmarkiere\(\)/);
-    assert.match(trainingLevel2, /agent\.dot\(30, &quot;#7df2a9&quot;\)|agent\.dot\(30, "#7df2a9"\)/);
+    assert.match(trainingLevel2, /drohne\.dot\(30, &quot;#7df2a9&quot;\)|drohne\.dot\(30, "#7df2a9"\)/);
     assert.match(trainingLevel2, /class="block-hint"/);
     assert.match(trainingLevel2, /class="microcode-separator" aria-hidden="true"><span>•••<\/span>/);
     assert.match(trainingLevel2, /Deine erste Funktion ist vorbereitet\./);
     assert.match(trainingLevel2, /Danach ergänze die zwei Aufrufe für B\./);
 
     const level3Starter = trainingLevel3.match(/<textarea id="python-editor"[^>]*>([\s\S]*?)<\/textarea>/)?.[1] ?? "";
-    assert.doesNotMatch(level3Starter, /fund\s*=\s*agent\.suche_hier/);
+    assert.doesNotMatch(level3Starter, /fund\s*=\s*drohne\.suche_hier/);
     assert.match(level3Starter, /gehe_zu\(-210, -65\)/);
-    assert.match(trainingLevel3, /fund = agent\.suche_hier\(\)/);
+    assert.match(trainingLevel3, /fund = drohne\.suche_hier\(\)/);
     assert.match(trainingLevel3, /inventar\.append\(fund\)/);
     assert.match(trainingLevel3, /microcode-indent-1/);
     assert.match(trainingLevel3, /data-training-phase="guarded"/);
@@ -1220,19 +1270,44 @@ test("mission 4 hands off to the shared Agent training without exposing later pr
     assert.match(trainingLevel3, /ohne „<code>if<\/code>“/);
 
     const trainingRuntime = readFileSync(new URL("../assets/agent-training.js", import.meta.url), "utf8");
+    const trainingCore = readFileSync(new URL("../assets/agent-training-core.js", import.meta.url), "utf8");
     const runner = readFileSync(new URL("../assets/runner.js", import.meta.url), "utf8");
     const teacherSolutions = readFileSync(new URL("../assets/teacher-solutions.js", import.meta.url), "utf8");
     assert.match(trainingRuntime, /symbol: "graduation-cap"/);
     assert.match(trainingRuntime, /symbol: "diploma"/);
     assert.match(trainingRuntime, /celebration: "fireworks"/);
+    assert.match(trainingRuntime, /primaryHref: "projektwahl\.html"/);
+    assert.match(trainingCore, /Dein Datenchip stammt aus einer Suche und liegt nachweislich im Inventar\./);
+    assert.doesNotMatch(trainingCore, /Datenchip echt gefunden/);
     assert.match(runner, /function triggerTrainingFireworks\(\)/);
     assert.match(teacherSolutions, /agent_training_level3_direct:/);
 
     const trainingCss = readFileSync(new URL("../assets/agent-training.css", import.meta.url), "utf8");
-    assert.match(trainingCss, /\.training-firework-spark/);
+    assert.match(trainingCss, /\.training-fireworks canvas/);
+    assert.match(trainingLevel3, /assets\/vendor\/fireworks-js\/2\.10\.8\/index\.umd\.js/);
     assert.match(trainingCss, /\.training-live-dot\s*\{[\s\S]*animation:\s*none;/);
     assert.doesNotMatch(trainingCss, /\.training-complete\s+\.training-target-halo/);
     assert.doesNotMatch(trainingStart + trainingLevel1 + trainingLevel2 + trainingLevel3, /pico_finale|pixelmuseum_finale/);
+});
+
+test("project choice is a neutral responsive preview without direct finale links", () => {
+    const projectChoice = readFileSync(new URL("../projektwahl.html", import.meta.url), "utf8");
+    const projectChoiceCss = readFileSync(new URL("../assets/project-choice.css", import.meta.url), "utf8");
+
+    assert.match(projectChoice, /Welche Mission übernimmst du\?/);
+    assert.match(projectChoice, /drohne\.goto\(\)/);
+    assert.match(projectChoice, /drohne\.dot\(\)/);
+    assert.match(projectChoice, /drohne\.suche_hier\(\)/);
+    assert.match(projectChoice, /Begleitete Projektmission/);
+    assert.match(projectChoice, /Offene Projektmission/);
+    assert.equal((projectChoice.match(/class="project-card /g) || []).length, 2);
+    assert.equal((projectChoice.match(/aria-disabled="true"/g) || []).length, 2);
+    assert.doesNotMatch(projectChoice, /href="[^"]*prototypes\//);
+    assert.doesNotMatch(projectChoice, /für Schnelle|für Langsame|leichter|schwerer/i);
+    assert.match(projectChoiceCss, /grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
+    assert.match(projectChoiceCss, /@media \(max-width: 820px\)[\s\S]*grid-template-columns:\s*minmax\(0, 1fr\)/);
+    assert.match(projectChoiceCss, /@media \(prefers-reduced-motion: reduce\)/);
+    assert.match(projectChoiceCss, /@media \(forced-colors: active\)/);
 });
 
 test("all four mission artworks are local, valid and web-sized", () => {
@@ -1417,7 +1492,7 @@ test("finale prototypes stay unlinked, isolated and locally hosted", () => {
         assert.match(html, /class="turtle-target"/);
         assert.match(html, /window\.FINALE_CONFIG/);
         assert.match(html, /src="finale\.js\?v=p2-audit-v1"/);
-        assert.match(html, /src="finale-analysis\.js\?v=p2-audit-v1"/);
+        assert.match(html, /src="finale-analysis\.js\?v=drone-status-v1"/);
         assert.match(html, /assets\/images\/finales\/.+\.webp/);
         assert.match(html, /assets\/vendor\/skulpt\/1\.2\.0\/skulpt\.min\.js/);
         assert.match(html, /assets\/vendor\/codemirror\/5\.65\.2\/codemirror\.min\.js/);
@@ -1425,24 +1500,24 @@ test("finale prototypes stay unlinked, isolated and locally hosted", () => {
     }
 
     const pico = readFileSync(new URL("../prototypes/pico_finale.html", import.meta.url), "utf8");
-    assert.match(pico, /pico\.goto\(-365, 55\)/);
+    assert.match(pico, /drohne\.goto\(-365, 55\)/);
     assert.match(pico, /fahre_zu\(-380, -90\)/);
     assert.match(pico, /fahre_zu\(0, -90\)/);
     assert.match(pico, /Funkbase/);
     assert.doesNotMatch(pico, /for schritt in range\(4\)/);
     assert.match(pico, /def fahre_zu\(x, y\):/);
-    assert.match(pico, /def markiere\(\):\s*\n\s*pico\.dot\(18, "#55f6ff"\)/);
+    assert.match(pico, /def markiere\(\):\s*\n\s*drohne\.dot\(18, "#55f6ff"\)/);
     const picoCode = pico.match(/<textarea id="python-editor"[^>]*>([\s\S]*?)<\/textarea>/)?.[1] ?? "";
-    assert.equal((picoCode.match(/pico\.dot\(/g) || []).length, 1, "PICO-Punkte sollen nur in markiere() gezeichnet werden");
+    assert.equal((picoCode.match(/drohne\.dot\(/g) || []).length, 1, "PICO-Punkte sollen nur in markiere() gezeichnet werden");
     assert.equal((picoCode.match(/markiere\(\)/g) || []).length, 3, "PICO soll beide Ziele einheitlich markieren");
     assert.match(pico, /Eigene Funktion und markiere\(\) werden verwendet/);
     assert.match(pico, /id="energy-value">10 %/);
-    assert.match(pico, /fund = pico\.suche_hier\(\)/);
+    assert.match(pico, /fund = drohne\.suche_hier\(\)/);
     assert.match(pico, /print\("Gefunden: " \+ str\(fund\)\)/);
     assert.match(pico, /ausruestung\.append\(fund\)/);
     assert.doesNotMatch(pico, /if fund == "Energiezelle":/);
-    assert.match(pico, /signal_erfolgreich = pico\.sende\(\)/);
-    assert.match(pico, /status\s*=\s*\{"AGENT": "PICO", "FUNK": "suche"\}/);
+    assert.match(pico, /signal_erfolgreich = drohne\.sende\(\)/);
+    assert.match(pico, /status\s*=\s*\{"DROHNE": "PICO", "FUNK": "suche"\}/);
     assert.match(pico, /status\.update\(\{"FUNK": "gesendet"\}\)/);
     assert.match(pico, /status\.update\(\{"FUNK": "fehlgeschlagen"\}\)/);
     assert.doesNotMatch(picoCode, /PICO_STATUS\|/, "Die GUI liest das Dictionary direkt und braucht kein Ausgabeprotokoll");
@@ -1450,16 +1525,16 @@ test("finale prototypes stay unlinked, isolated and locally hosted", () => {
     assert.match(pico, /onTurtleFrame\(point\)/);
     assert.match(pico, /syncPythonState\(context\)/);
     assert.match(pico, /this\.signalSent = success/);
-    assert.match(pico, /document\.getElementById\("agent-name"\)\.textContent = agent/);
+    assert.match(pico, /document\.getElementById\("agent-name"\)\.textContent = drohne/);
     assert.match(pico, /document\.getElementById\("mission-state"\)\.textContent = funk/);
-    assert.match(pico, /liveStatus\.AGENT/);
+    assert.match(pico, /liveStatus\.DROHNE/);
     assert.match(pico, /liveStatus\.FUNK/);
     assert.match(pico, /this\.lastRuntimeStatusData = \{ \.\.\.this\.lastStatusData \}/);
     assert.doesNotMatch(pico, /parseOutput\(output\)/);
     assert.doesNotMatch(pico, /onOutput\(_chunk/);
-    assert.match(pico, /<small>AGENT<\/small>/);
+    assert.match(pico, /<small>DROHNE<\/small>/);
     assert.match(pico, /<small>FUNK<\/small>/);
-    assert.match(pico, /Status-Dictionary füllt AGENT und FUNK/);
+    assert.match(pico, /Status-Dictionary füllt DROHNE und FUNK/);
     assert.match(pico, /optional: true/);
     assert.match(pico, /checks\.filter\(check => !check\.optional\)\.every/);
     assert.match(pico, /Signal gesendet - gerettet!/);
@@ -1487,14 +1562,14 @@ test("finale prototypes stay unlinked, isolated and locally hosted", () => {
     assert.doesNotMatch(museum, /Seruianer-Artefakt/);
     assert.doesNotMatch(museum, /if "Schlüsselkarte" in inventar:/);
     assert.doesNotMatch(museum, /if "Artefakt" in inventar:/);
-    assert.match(museum, /fund = agent\.suche_hier\(\)/);
+    assert.match(museum, /fund = drohne\.suche_hier\(\)/);
     assert.match(museum, /Noch kein Alarm ausgelöst – Hack nicht möglich!/);
     assert.match(museum, /inventar\.append\(fund\)/);
     assert.match(museum, /baselineCount/);
     assert.doesNotMatch(museum, /PickupProgrammed/);
     assert.match(museum, /def alarm_hacken\(code\):/);
-    assert.match(museum, /def markiere\(\):\s*\n\s*agent\.dot\(18, "#ff78f3"\)/);
-    assert.equal((museum.match(/agent\.dot\(/g) || []).length, 1, "Museumspunkte sollen nur in markiere() gezeichnet werden");
+    assert.match(museum, /def markiere\(\):\s*\n\s*drohne\.dot\(18, "#ff78f3"\)/);
+    assert.equal((museum.match(/drohne\.dot\(/g) || []).length, 1, "Museumspunkte sollen nur in markiere() gezeichnet werden");
     assert.equal((museum.match(/markiere\(\)/g) || []).length, 5, "Alle Museumsziele sollen einheitlich markiert werden");
     assert.match(museum, /ALARM_HACK\|/);
     assert.match(museum, /this\.alarmMax = 8/);
@@ -1522,12 +1597,12 @@ test("finale prototypes stay unlinked, isolated and locally hosted", () => {
     assert.match(museum, /Alarm hacken oder umgehen/);
 });
 
-test("pico HUD mirrors the status dictionary during turtle movement", () => {
+test("pico HUD mirrors the DROHNE/FUNK status dictionary during turtle movement", () => {
     const { config, elements } = createPicoConfig();
     config.signalSent = false;
     config.syncPythonState({
         getGlobal(name) {
-            return name === "status" ? { AGENT: "NOVA", FUNK: "suche" } : undefined;
+            return name === "status" ? { DROHNE: "NOVA", FUNK: "suche" } : undefined;
         }
     });
 
@@ -1536,7 +1611,7 @@ test("pico HUD mirrors the status dictionary during turtle movement", () => {
     assert.equal(elements.get("mission-state").textContent, "suche");
 });
 
-test("pico dictionary check accepts the real AGENT/FUNK runtime dictionary", () => {
+test("pico dictionary check accepts the DROHNE/FUNK runtime dictionary", () => {
     const { config } = createPicoConfig();
     config.charged = true;
     config.beaconReached = true;
@@ -1545,7 +1620,7 @@ test("pico dictionary check accepts the real AGENT/FUNK runtime dictionary", () 
     config.signalSent = true;
     config.syncPythonState({
         getGlobal(name) {
-            return name === "status" ? { AGENT: "NOVA", FUNK: "gesendet" } : undefined;
+            return name === "status" ? { DROHNE: "NOVA", FUNK: "gesendet" } : undefined;
         }
     });
 
@@ -1558,10 +1633,11 @@ test("pico dictionary check accepts the real AGENT/FUNK runtime dictionary", () 
 });
 
 test("pico rejects legacy or forged status data without failing the whole mission", () => {
-    for (const { runtimeStatus, expectedAgent, expectedFunk } of [
+    for (const { runtimeStatus, expectedDrohne, expectedFunk } of [
         { runtimeStatus: undefined },
-        { runtimeStatus: { name: "NOVA", signal: "gesendet" }, expectedAgent: "–", expectedFunk: "–" },
-        { runtimeStatus: { AGENT: "NOVA" }, expectedAgent: "NOVA", expectedFunk: "–" }
+        { runtimeStatus: { name: "NOVA", signal: "gesendet" }, expectedDrohne: "–", expectedFunk: "–" },
+        { runtimeStatus: { AGENT: "NOVA", FUNK: "gesendet" }, expectedDrohne: "–", expectedFunk: "gesendet" },
+        { runtimeStatus: { DROHNE: "NOVA" }, expectedDrohne: "NOVA", expectedFunk: "–" }
     ]) {
         const { config, elements } = createPicoConfig();
         config.charged = true;
@@ -1573,7 +1649,7 @@ test("pico rejects legacy or forged status data without failing the whole missio
             config.syncPythonState({
                 getGlobal(name) { return name === "status" ? runtimeStatus : undefined; }
             });
-            assert.equal(elements.get("agent-name").textContent, expectedAgent);
+            assert.equal(elements.get("agent-name").textContent, expectedDrohne);
             assert.equal(elements.get("mission-state").textContent, expectedFunk);
         }
 
@@ -1594,7 +1670,7 @@ test("pico only charges after a real search result is appended", () => {
         x,
         y,
         getGlobal(name) {
-            if (name === "status") return { AGENT: "PICO", FUNK: "suche" };
+            if (name === "status") return { DROHNE: "PICO", FUNK: "suche" };
             if (name === "ausruestung") return equipment;
             return undefined;
         }
@@ -1696,7 +1772,7 @@ test("pico accepts a successful creative route without the sample midpoint", () 
     config.energy = 30;
     config.signalSent = true;
     config.turtleMarks = 2;
-    config.lastRuntimeStatusData = { agent: "NOVA", funk: "gesendet" };
+    config.lastRuntimeStatusData = { drohne: "NOVA", funk: "gesendet" };
     const creativeCode = config.defaultCode.replace("fahre_zu(0, -90)\n", "");
 
     const result = config.validate(creativeCode);
@@ -1713,23 +1789,23 @@ test("pico structure checks ignore comments, strings and unused functions", () =
         energy: 30,
         signalSent: true,
         turtleMarks: 1,
-        lastRuntimeStatusData: { agent: "PICO", funk: "gesendet" }
+        lastRuntimeStatusData: { drohne: "PICO", funk: "gesendet" }
     });
     const misleadingCode = `import turtle
-pico = turtle.Turtle()
-pico.goto(-380, -90)
+drohne = turtle.Turtle()
+drohne.goto(-380, -90)
 
 def dekorativ():
     pass
 
 def markiere():
-    pico.dot(18)
+    drohne.dot(18)
 
 markiere()
 # dekorativ()
 # if signal_erfolgreich:
 text = "if signal_erfolgreich:"
-status = {"AGENT": "PICO", "FUNK": "gesendet"}`;
+status = {"DROHNE": "PICO", "FUNK": "gesendet"}`;
 
     const result = config.validate(misleadingCode);
     assert.equal(result.checks.find(check => check.label.includes("Entscheidung")).passed, false);
@@ -1773,7 +1849,7 @@ test("pico clears a provisional energy warning when the cell is collected", () =
 
     const result = config.syncPythonState({
         getGlobal(name) {
-            if (name === "status") return { AGENT: "PICO", FUNK: "suche" };
+            if (name === "status") return { DROHNE: "PICO", FUNK: "suche" };
             if (name === "ausruestung") return ["Energiezelle"];
             return undefined;
         }
@@ -1787,7 +1863,7 @@ test("pico clears a provisional energy warning when the cell is collected", () =
     assert.equal(document.body.classList.contains("rescue-failed"), false);
 });
 
-test("pico expires a found energy cell after the agent leaves its position", () => {
+test("pico expires a found energy cell after the drone leaves its position", () => {
     const { config } = createPicoConfig();
     config.resetHud();
     const equipment = [];
@@ -1796,7 +1872,7 @@ test("pico expires a found energy cell after the agent leaves its position", () 
         y: -90,
         getGlobal(name) {
             if (name === "ausruestung") return equipment;
-            if (name === "status") return { AGENT: "PICO", FUNK: "suche" };
+            if (name === "status") return { DROHNE: "PICO", FUNK: "suche" };
             return undefined;
         }
     };
@@ -2048,8 +2124,8 @@ test("museum cannot escape through an open portal without the artifact", () => {
 
 test("museum accepts a speed-8 portal arrival before the first alarm tick", () => {
     const { config } = createMuseumConfig();
-    const fastCode = config.defaultCode.replace("agent.speed(4)", "agent.speed(8)");
-    assert.match(fastCode, /agent\.speed\(8\)/);
+    const fastCode = config.defaultCode.replace("drohne.speed(4)", "drohne.speed(8)");
+    assert.match(fastCode, /drohne\.speed\(8\)/);
     assert.equal(config.getTurtleSpeedMultiplier(8), 12);
     assert.equal(config.getTurtleSpeedMultiplier(4), 1);
 
@@ -2103,8 +2179,8 @@ test("museum decision check ignores comments and string literals", () => {
         exitUnlocked: true
     });
     const codeWithoutDecision = `import turtle
-agent = turtle.Turtle()
-agent.goto(0, 115)
+drohne = turtle.Turtle()
+drohne.goto(0, 115)
 # if fund == "Artefakt":
 hinweis = "if fund == 'Artefakt':"`;
 

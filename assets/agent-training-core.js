@@ -11,7 +11,7 @@
             checkLabels: Object.freeze([
                 "Ziel mit sichtbarer Spur erreicht",
                 "Punkt direkt am Ziel markiert",
-                "Echte Position mit print() ausgegeben"
+                "Aktuelle Position mit print() ausgegeben"
             ]),
             successTitle: "Signalpunkt kalibriert",
             successMessage: "Signalpunkt kalibriert. Deine Drohne ist bereit für das nächste Level.",
@@ -40,13 +40,13 @@
                 Object.freeze({ id: "datachip", x: -210, y: -65, item: "Datenchip" })
             ]),
             checkLabels: Object.freeze([
-                "Datenchip am echten Fundort gefunden",
-                "Echten Fund mit print() ausgegeben",
+                "Datenchip am Fundort gefunden",
+                "Gefundenes Ergebnis mit print() ausgegeben",
                 "Genau diesen Fund ins Inventar aufgenommen",
                 "Fund direkt ins Inventar aufnehmen"
             ]),
             successTitle: "Fundstück gesichert",
-            successMessage: "Der Datenchip stammt aus einer echten Suche und liegt jetzt nachweislich im Inventar.",
+            successMessage: "Dein Datenchip stammt aus einer Suche und liegt nachweislich im Inventar.",
             stageMessage: "DATENCHIP GESICHERT",
             unlockId: null
         })
@@ -204,9 +204,9 @@
         ) {
             message = "Das Ziel ist erreicht. Schalte vor goto() mit pendown() die Spur ein und danach mit penup() wieder aus.";
         } else if (!checks[1].passed) {
-            message = "Ziel erreicht – markiere genau diesen Ort jetzt mit agent.dot(...).";
+            message = "Ziel erreicht – markiere genau diesen Ort jetzt mit drohne.dot(...).";
         } else if (!checks[2].passed) {
-            message = "Die Markierung sitzt. Gib nun die echte Position mit print(\"Position:\", agent.position()) aus.";
+            message = "Die Markierung sitzt. Gib nun die aktuelle Position mit print(\"Position:\", drohne.position()) aus.";
         }
         return { passed: checks.every(check => check.passed), checks, message };
     }
@@ -232,7 +232,7 @@
         if (!checks[0].passed) {
             message = "Rufe gehe_zu(x, y) für beide Signalpunkte auf. Die Funktion steuert die Drohne mit goto().";
         } else if (!checks[1].passed) {
-            message = "Ersetze pass in markiere() eingerückt durch agent.dot(30, \"#7df2a9\").";
+            message = "Ersetze pass in markiere() eingerückt durch drohne.dot(30, \"#7df2a9\").";
         } else if (!checks[2].passed) {
             const missing = config.targets.find(target =>
                 !state.visitedTargetIds.includes(target.id) || !state.markedTargetIds.includes(target.id)
@@ -292,7 +292,7 @@
 
     function initialResult(
         levelId,
-        message = "Starte deinen Code. Die Prüfung beobachtet den echten Drohnenweg.",
+        message = "Starte deinen Code. Die Prüfung beobachtet den ausgeführten Drohnenweg.",
         options = {}
     ) {
         const config = getLevelConfig(levelId);

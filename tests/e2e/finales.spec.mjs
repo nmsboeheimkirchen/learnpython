@@ -129,12 +129,12 @@ test("finale mobile branding, target names and editor stay contained and accessi
 test("PICO clamps an oversized speed-0 move to the real energy range", async ({ page }) => {
     const pageErrors = await openFinale(page, "/prototypes/pico_finale.html?e2e");
     await runCode(page, `import turtle
-pico = turtle.Turtle()
-pico.speed(0)
-pico.penup()
-pico.goto(-365, 55)
-pico.goto(1000, 55)
-print("POSITION:" + str(pico.position()))`);
+drohne = turtle.Turtle()
+drohne.speed(0)
+drohne.penup()
+drohne.goto(-365, 55)
+drohne.goto(1000, 55)
+print("POSITION:" + str(drohne.position()))`);
 
     const output = await page.locator("#console-output").textContent();
     const x = Number(output.match(/POSITION:\(([-\d.]+),/)?.[1]);
@@ -211,7 +211,7 @@ test("Pixelmuseum completes the one-second source-code hack with truthful invent
 test("Pixelmuseum speed 8 escapes before the first animated alarm tick", { tag: "@ipad" }, async ({ page }) => {
     const pageErrors = await openFinale(page, "/prototypes/pixelmuseum_finale.html");
     const fastRoute = await page.evaluate(() => (
-        window.FINALE_CONFIG.defaultCode.replace("agent.speed(4)", "agent.speed(8)")
+        window.FINALE_CONFIG.defaultCode.replace("drohne.speed(4)", "drohne.speed(8)")
     ));
     await runCode(page, fastRoute);
 
@@ -224,15 +224,15 @@ test("Pixelmuseum speed 8 escapes before the first animated alarm tick", { tag: 
 test("Pixelmuseum renders terminal alarm state after Python has already ended", async ({ page }) => {
     const pageErrors = await openFinale(page, "/prototypes/pixelmuseum_finale.html?e2e");
     await runCode(page, `import turtle
-agent = turtle.Turtle()
-agent.speed(0)
-agent.penup()
+drohne = turtle.Turtle()
+drohne.speed(0)
+drohne.penup()
 inventar = []
-agent.goto(-250, 60)
-fund = agent.suche_hier()
+drohne.goto(-250, 60)
+fund = drohne.suche_hier()
 inventar.append(fund)
-agent.goto(-390, 45)
-fund = agent.suche_hier()
+drohne.goto(-390, 45)
+fund = drohne.suche_hier()
 inventar.append(fund)
 print("INVENTARLISTE: " + ",".join(inventar))`);
 

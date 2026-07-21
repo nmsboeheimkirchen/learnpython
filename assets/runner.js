@@ -151,7 +151,11 @@ function restoreCompletedLevelCode(levelId) {
         return false;
     }
 
-    window.editor.setValue(savedCode);
+    const migratedCode = /^agent_training_level[123]$/.test(levelId)
+        ? savedCode.replace(/\bagent\b/g, "drohne")
+        : savedCode;
+    if (migratedCode !== savedCode) saveCompletedLevelCode(levelId, migratedCode);
+    window.editor.setValue(migratedCode);
     return true;
 }
 
@@ -577,19 +581,19 @@ function pythonFunctionBlocks(statements) {
     return blocks;
 }
 
-function analyzeCalledFunctionForMethod(statements, methodName, minimumCalls = 1) {
+function analyzeCalledFunctionForMethod(statements, receiverName, methodName, minimumCalls = 1) {
     const blocks = pythonFunctionBlocks(statements);
     const isInsideFunction = statementIndex => blocks.some(block =>
         statementIndex > block.startIndex && statementIndex < block.endIndex
     );
     const hasDirectMethodCall = statements.some((statement, index) =>
-        !isInsideFunction(index) && statementContains(statement, [".", methodName, "("])
+        !isInsideFunction(index) && statementStartsWith(statement, [receiverName, ".", methodName, "("])
     );
     if (hasDirectMethodCall) return false;
 
     return blocks.some(block => {
         const containsMethod = block.body.some(statement =>
-            statementContains(statement, [".", methodName, "("])
+            statementContains(statement, [receiverName, ".", methodName, "("])
         );
         const callCount = statements.filter((statement, index) =>
             !isInsideFunction(index) && statementStartsWith(statement, [block.name, "("])
@@ -736,7 +740,7 @@ const LEVEL_VALIDATORS = {
         const topLevelStatements = statements.filter(statement => statement.indent === 0);
         const commandIndex = (methodName, startIndex = 0) => topLevelStatements.findIndex(
             (statement, index) => index >= startIndex &&
-                statementStartsWith(statement, ["agent", ".", methodName, "("])
+                statementStartsWith(statement, ["drohne", ".", methodName, "("])
         );
         const penDownIndex = commandIndex("pendown");
         const gotoIndex = commandIndex("goto", penDownIndex + 1);
@@ -744,20 +748,20 @@ const LEVEL_VALIDATORS = {
         const usesTrailControls = penDownIndex >= 0 && gotoIndex > penDownIndex && penUpIndex > gotoIndex;
         const printsRealPosition = topLevelStatements.some(statement =>
             statementStartsWith(statement, ["print", "("]) &&
-            statementContains(statement, [".", "position", "("])
+            statementContains(statement, ["drohne", ".", "position", "("])
         );
         const result = firstFailedRequirement([
             {
                 passed: usesTrailControls,
                 message: "Schalte vor goto() mit pendown() die Spur ein und danach mit penup() wieder aus."
             },
-            { passed: printsRealPosition, message: "Gib die echte Drohnenposition mit print(...position()) aus." }
+            { passed: printsRealPosition, message: "Gib die aktuelle Drohnenposition mit print(...position()) aus." }
         ]);
         return { ...result, evidence: { printsRealPosition, usesTrailControls } };
     },
     agent_training_level2({ statements }) {
-        const movementFunction = analyzeCalledFunctionForMethod(statements, "goto", 2);
-        const markerFunction = analyzeCalledFunctionForMethod(statements, "dot", 2);
+        const movementFunction = analyzeCalledFunctionForMethod(statements, "drohne", "goto", 2);
+        const markerFunction = analyzeCalledFunctionForMethod(statements, "drohne", "dot", 2);
         const result = firstFailedRequirement([
             {
                 passed: movementFunction,
@@ -774,7 +778,7 @@ const LEVEL_VALIDATORS = {
         const searchStatement = statements.find(statement =>
             statement.indent === 0 &&
             statementStartsWith(statement, [
-                "fund", "=", "agent", ".", "suche_hier", "(", ")"
+                "fund", "=", "drohne", ".", "suche_hier", "(", ")"
             ])
         );
         const printStatement = statements.find(statement =>
@@ -810,7 +814,7 @@ const LEVEL_VALIDATORS = {
         const result = firstFailedRequirement([
             {
                 passed: searchAssignment,
-                message: "Speichere das echte Ergebnis von agent.suche_hier() in fund."
+                message: "Speichere das Ergebnis von drohne.suche_hier() in fund."
             },
             {
                 passed: printsFund,
@@ -860,7 +864,10 @@ const LEVEL_OUTCOMES = {
         unlocks: ["link-agent-training-l3"],
         successMessage: "Eigene Drohnenfunktionen funktionieren."
     },
-    agent_training_level3: { unlocks: [], successMessage: "Datenchip echt gefunden und gesichert." }
+    agent_training_level3: {
+        unlocks: [],
+        successMessage: "Dein Datenchip stammt aus einer Suche und liegt nachweislich im Inventar."
+    }
 };
 
 const LEVEL_CODE_INHERITANCE = Object.freeze({
@@ -1013,57 +1020,102 @@ function trainingAwardSvg(symbol) {
     }
     if (symbol === "diploma") {
         return `
-            <svg viewBox="0 0 180 120" role="img" aria-label="Abschlussrolle">
-                <path class="award-glow" d="M31 24h118v72H31c13-10 13-62 0-72Z"></path>
-                <path d="M31 24c20 0 20 72 0 72M149 24c-17 0-17 72 0 72"></path>
-                <circle cx="112" cy="76" r="17"></circle>
-                <path d="m103 88-7 21 16-9 15 9-7-21"></path>
+            <svg viewBox="0 0 220 150" role="img" aria-label="Abschlussrolle mit Siegel">
+                <path class="diploma-shadow" d="M41 29h134c-9 17-9 75 0 92H41c12-20 12-72 0-92Z"></path>
+                <path class="diploma-paper" d="M43 24h132c-10 20-10 75 0 95H43c13-21 13-74 0-95Z"></path>
+                <path class="diploma-curl diploma-curl-left" d="M43 24c21 0 21 95 0 95-25 0-25-95 0-95Z"></path>
+                <path class="diploma-curl diploma-curl-right" d="M175 24c-18 0-18 95 0 95 23 0 23-95 0-95Z"></path>
+                <path class="diploma-fold" d="M43 37c10 0 10 69 0 69M175 37c-9 0-9 69 0 69"></path>
+                <path class="diploma-title-line" d="M76 47h66"></path>
+                <path class="diploma-copy-line" d="M72 64h75M76 78h45"></path>
+                <path class="diploma-ribbon diploma-ribbon-left" d="m122 101-10 37 20-12 12 18 7-39Z"></path>
+                <path class="diploma-ribbon diploma-ribbon-right" d="m153 102 8 38 13-16 19 10-14-39Z"></path>
+                <circle class="diploma-seal-edge" cx="151" cy="99" r="27"></circle>
+                <circle class="diploma-seal" cx="151" cy="99" r="20"></circle>
+                <path class="diploma-seal-mark" d="m151 87 3.8 7.7 8.5 1.2-6.1 6 1.4 8.5-7.6-4-7.6 4 1.4-8.5-6.1-6 8.5-1.2Z"></path>
             </svg>`;
     }
     return '<div class="trophy" aria-hidden="true">🏆</div>';
 }
 
 let successCelebrationTimeouts = [];
+let trainingFireworksInstance = null;
 
 function cancelSuccessCelebration() {
     successCelebrationTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
     successCelebrationTimeouts = [];
+    if (trainingFireworksInstance && typeof trainingFireworksInstance.stop === "function") {
+        trainingFireworksInstance.stop(true);
+    }
+    trainingFireworksInstance = null;
     document.getElementById("training-fireworks")?.remove();
 }
 
 function triggerTrainingFireworks() {
     cancelSuccessCelebration();
     const overlay = document.getElementById("success-overlay");
-    if (!overlay) return;
+    const prefersReducedMotion = typeof window.matchMedia === "function"
+        && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const FireworksConstructor = window.Fireworks?.default || window.Fireworks?.Fireworks;
+    if (!overlay || prefersReducedMotion || typeof FireworksConstructor !== "function") return;
 
-    const colors = ["#71edf4", "#d995ff", "#f1df9b", "#7df2a9"];
     const layer = document.createElement("div");
     layer.id = "training-fireworks";
     layer.className = "training-fireworks";
     layer.setAttribute("aria-hidden", "true");
-
-    const burst = (x, y, delay) => {
-        const firework = document.createElement("div");
-        firework.className = "training-firework";
-        firework.style.left = `${x * 100}%`;
-        firework.style.top = `${y * 100}%`;
-        firework.style.setProperty("--burst-delay", `${delay}ms`);
-        for (let index = 0; index < 18; index += 1) {
-            const spark = document.createElement("i");
-            spark.className = "training-firework-spark";
-            spark.style.setProperty("--spark-angle", `${index * 20}deg`);
-            spark.style.setProperty("--spark-distance", `-${82 + (index % 3) * 18}px`);
-            spark.style.setProperty("--spark-color", colors[index % colors.length]);
-            spark.style.setProperty("--spark-delay", `${delay}ms`);
-            firework.appendChild(spark);
-        }
-        layer.appendChild(firework);
-    };
-    burst(0.2, 0.34, 0);
-    burst(0.8, 0.32, 260);
-    burst(0.5, 0.16, 520);
     overlay.appendChild(layer);
-    successCelebrationTimeouts.push(setTimeout(() => layer.remove(), 1900));
+
+    trainingFireworksInstance = new FireworksConstructor(layer, {
+        autoresize: true,
+        acceleration: 1.028,
+        brightness: { min: 72, max: 94 },
+        boundaries: { x: 70, y: 125, debug: false },
+        decay: { min: 0.008, max: 0.014 },
+        delay: { min: 44, max: 70 },
+        explosion: 9,
+        flickering: 68,
+        friction: 0.96,
+        gravity: 1.12,
+        hue: { min: 184, max: 196 },
+        intensity: 18,
+        lineStyle: "round",
+        lineWidth: {
+            explosion: { min: 1.5, max: 3.4 },
+            trace: { min: 1.4, max: 2.7 }
+        },
+        mouse: { click: false, move: false, max: 0 },
+        opacity: 0.16,
+        particles: 68,
+        rocketsPoint: { min: 8, max: 92 },
+        sound: { enabled: false },
+        traceLength: 8,
+        traceSpeed: 3.6
+    });
+
+    const launchSalvo = (delay, count, hueMin, hueMax, pointMin, pointMax) => {
+        const timeoutId = setTimeout(() => {
+            if (!trainingFireworksInstance || !layer.isConnected) return;
+            trainingFireworksInstance.updateOptions({
+                hue: { min: hueMin, max: hueMax },
+                rocketsPoint: { min: pointMin, max: pointMax }
+            });
+            trainingFireworksInstance.launch(count);
+        }, delay);
+        successCelebrationTimeouts.push(timeoutId);
+    };
+
+    launchSalvo(100, 2, 184, 196, 7, 31);
+    launchSalvo(850, 2, 298, 320, 69, 93);
+    launchSalvo(1600, 2, 42, 54, 9, 91);
+    launchSalvo(2350, 2, 184, 320, 6, 94);
+
+    successCelebrationTimeouts.push(setTimeout(() => {
+        if (trainingFireworksInstance && typeof trainingFireworksInstance.stop === "function") {
+            trainingFireworksInstance.stop(true);
+        }
+        trainingFireworksInstance = null;
+        layer.remove();
+    }, 6800));
 }
 
 function triggerSuccess(isFinale = false, successMessage = "", options = {}) {

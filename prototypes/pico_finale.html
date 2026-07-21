@@ -39,7 +39,7 @@
         <section class="briefing-card" aria-labelledby="pico-briefing-title">
             <div>
                 <span class="eyebrow">Finale · Forschungsstation 07</span>
-                <h2 id="pico-briefing-title">Ein Programm. Ein Agent. Ein Signal.</h2>
+                <h2 id="pico-briefing-title">Ein Programm. Eine Drohne. Ein Signal.</h2>
                 <p>PICO startet fast leer. Erreiche zuerst die Energiezelle und sende danach das Rettungssignal.</p>
             </div>
             <ul class="concept-strip" aria-label="Python-Ziele">
@@ -100,7 +100,7 @@
                         <div class="stage-hud pico-hud" aria-label="PICO Status">
                             <div class="agent-id">
                                 <span id="agent-avatar" class="agent-avatar" aria-hidden="true">?</span>
-                                <div><small>AGENT</small><strong id="agent-name">–</strong></div>
+                                <div><small>DROHNE</small><strong id="agent-name">–</strong></div>
                             </div>
                             <div class="meter-block">
                                 <div class="meter-label"><span>Energie · automatisch</span><strong id="energy-value">10 %</strong></div>
@@ -124,8 +124,8 @@
                         <p id="validation-message">Starte den Beispielcode oder verändere PICOs Route.</p>
                     </div>
                     <ul id="checks-list" class="checks-list" aria-label="Prüfergebnisse">
-                        <li><span aria-hidden="true">○</span> Turtle-Agent steuern</li>
-                        <li><span aria-hidden="true">○</span> Echte Entscheidung</li>
+                        <li><span aria-hidden="true">○</span> Drohne steuern</li>
+                        <li><span aria-hidden="true">○</span> Entscheidung verwenden</li>
                         <li><span aria-hidden="true">○</span> Energiezelle aufnehmen</li>
                         <li><span aria-hidden="true">○</span> Status-Dictionary (Teilbereich)</li>
                         <li><span aria-hidden="true">○</span> Funktion und markiere()</li>
@@ -149,32 +149,32 @@
                     <span id="editor-shortcut-hint" class="sr-only">Mit Steuerung und Enter startest du das Programm.</span>
                     <textarea id="python-editor" spellcheck="false">import turtle
 
-pico = turtle.Turtle()
-pico.shape("turtle")
-pico.color("#55f6ff")
-pico.pensize(5)
-pico.speed(0)
-pico.hideturtle()
-pico.penup()
-pico.goto(-365, 55)
-pico.speed(3)  # langsam genug, damit du den Weg siehst
-pico.showturtle()
-pico.pendown()
+drohne = turtle.Turtle()
+drohne.shape("turtle")
+drohne.color("#55f6ff")
+drohne.pensize(5)
+drohne.speed(0)
+drohne.hideturtle()
+drohne.penup()
+drohne.goto(-365, 55)
+drohne.speed(3)  # langsam genug, damit du den Weg siehst
+drohne.showturtle()
+drohne.pendown()
 
 turtle.Screen().delay(35)
 
-status = {"AGENT": "PICO", "FUNK": "suche"}
+status = {"DROHNE": "PICO", "FUNK": "suche"}
 ausruestung = []
 
 def fahre_zu(x, y):
-    pico.goto(x, y)
+    drohne.goto(x, y)
 
 def markiere():
-    pico.dot(18, "#55f6ff")
+    drohne.dot(18, "#55f6ff")
 
 fahre_zu(-380, -90)
 markiere()
-fund = pico.suche_hier()
+fund = drohne.suche_hier()
 print("Gefunden: " + str(fund))
 ausruestung.append(fund)
 
@@ -182,7 +182,7 @@ fahre_zu(0, -90)
 fahre_zu(340, 15)
 markiere()
 
-signal_erfolgreich = pico.sende()
+signal_erfolgreich = drohne.sende()
 
 if signal_erfolgreich:
     status.update({"FUNK": "gesendet"})
@@ -220,7 +220,7 @@ else:
     <script src="../assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
     <script src="../assets/vendor/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="../assets/vendor/codemirror/5.65.2/python.min.js"></script>
-    <script src="finale-analysis.js?v=p2-audit-v1"></script>
+    <script src="finale-analysis.js?v=drone-status-v1"></script>
     <script>
         window.FINALE_CONFIG = {
             targetId: "pico-turtle",
@@ -296,7 +296,7 @@ else:
             syncPythonState(context) {
                 const liveStatus = context.getGlobal("status");
                 if (liveStatus && typeof liveStatus === "object") {
-                    this.applyHud({ agent: liveStatus.AGENT, funk: liveStatus.FUNK });
+                    this.applyHud({ drohne: liveStatus.DROHNE, funk: liveStatus.FUNK });
                     this.lastRuntimeStatusData = { ...this.lastStatusData };
                 }
                 if (!this.pendingFind || this.charged) return null;
@@ -386,11 +386,11 @@ else:
                 };
             },
             applyHud(data) {
-                const agent = String(data?.agent ?? "").trim() || "–";
+                const drohne = String(data?.drohne ?? "").trim() || "–";
                 const funk = String(data?.funk ?? "").trim() || "–";
-                this.lastStatusData = { agent, funk };
-                document.getElementById("agent-avatar").textContent = agent === "–" ? "?" : agent.charAt(0).toUpperCase();
-                document.getElementById("agent-name").textContent = agent;
+                this.lastStatusData = { drohne, funk };
+                document.getElementById("agent-avatar").textContent = drohne === "–" ? "?" : drohne.charAt(0).toUpperCase();
+                document.getElementById("agent-name").textContent = drohne;
                 document.getElementById("mission-state").textContent = funk;
                 document.body.classList.toggle("mission-complete", this.signalSent);
             },
@@ -421,15 +421,15 @@ else:
                     analysis.calledFunctionNames.includes("markiere") && this.turtleMarks > 0;
                 const statusData = this.lastRuntimeStatusData;
                 const dictionaryHudPassed = Boolean(
-                    statusData?.agent && statusData.funk === "gesendet" &&
+                    statusData?.drohne && statusData.drohne !== "–" && statusData.funk === "gesendet" &&
                     analysis.hasExactStatusDictionary
                 );
                 if (!this.signalSent) this.showRescueResult(false, this.getRescueFailureText());
                 const checks = [
-                    { label: "Turtle-Agent wird gesteuert", passed: analysis.importsTurtle && analysis.usesTurtleMovement },
-                    { label: "Route trifft eine echte Entscheidung", passed: analysis.hasIf },
+                    { label: "Drohne wird gesteuert", passed: analysis.importsTurtle && analysis.usesTurtleMovement },
+                    { label: "Route verwendet eine Entscheidung", passed: analysis.hasIf },
                     { label: "Energiezelle gefunden und aufgenommen", passed: this.charged },
-                    { label: "Status-Dictionary füllt AGENT und FUNK", passed: dictionaryHudPassed, optional: true },
+                    { label: "Status-Dictionary füllt DROHNE und FUNK", passed: dictionaryHudPassed, optional: true },
                     { label: "Eigene Funktion und markiere() werden verwendet", passed: ownFunctionUsed && markFunctionUsed },
                     { label: "Energie reicht bis zur Funkbase", passed: this.beaconReached && !this.depleted && this.energy > 0 },
                     { label: "Rettungssignal von der Funkbase bestätigt", passed: this.signalSent }

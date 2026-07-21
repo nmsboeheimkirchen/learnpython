@@ -387,7 +387,7 @@
     function initialResult(message) {
         return core.initialResult(
             levelId,
-            message || "Starte deinen Code. Die Prüfung beobachtet den echten Drohnenweg.",
+            message || "Starte deinen Code. Die Prüfung beobachtet den ausgeführten Drohnenweg.",
             { level3Phase }
         );
     }
@@ -406,8 +406,8 @@
                 statusLabel: "TRAINING ABGESCHLOSSEN!",
                 symbol: "diploma",
                 celebration: "fireworks",
-                primaryHref: "agent_training_start.html",
-                primaryLabel: "Zur Trainingsübersicht"
+                primaryHref: "projektwahl.html",
+                primaryLabel: "Projekt wählen"
             });
             return;
         }

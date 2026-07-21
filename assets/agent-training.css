@@ -540,53 +540,13 @@
     pointer-events: none;
 }
 
-.training-firework {
+.training-fireworks canvas {
     position: absolute;
-    width: 1px;
-    height: 1px;
-}
-
-.training-firework::after {
-    position: absolute;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: #f8ffff;
-    box-shadow: 0 0 28px 10px rgba(113, 237, 244, 0.56);
-    content: "";
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.2);
-    animation: training-firework-flash 720ms ease-out var(--burst-delay) both;
-}
-
-.training-firework-spark {
-    position: absolute;
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--spark-color);
-    box-shadow: 0 0 12px 3px color-mix(in srgb, var(--spark-color) 72%, transparent);
-    opacity: 0;
-    animation: training-firework-spark 980ms cubic-bezier(0.12, 0.68, 0.2, 1) var(--spark-delay) both;
-}
-
-@keyframes training-firework-flash {
-    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.15); }
-    16% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-    100% { opacity: 0; transform: translate(-50%, -50%) scale(2.4); }
-}
-
-@keyframes training-firework-spark {
-    0% {
-        opacity: 0;
-        transform: rotate(var(--spark-angle)) translateY(0) scale(0.25);
-    }
-    14% { opacity: 1; }
-    76% { opacity: 0.92; }
-    100% {
-        opacity: 0;
-        transform: rotate(var(--spark-angle)) translateY(var(--spark-distance)) scale(0.12);
-    }
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    mix-blend-mode: screen;
+    pointer-events: none;
 }
 
 .training-completion.success-badge::before {
@@ -610,8 +570,10 @@
 }
 
 .training-completion .success-symbol[data-success-symbol="diploma"] {
+    width: clamp(132px, 30vw, 186px);
+    aspect-ratio: 1.47;
     color: #f6d780;
-    filter: drop-shadow(0 0 19px rgba(246, 215, 128, 0.3));
+    filter: drop-shadow(0 13px 17px rgba(0, 0, 0, 0.38)) drop-shadow(0 0 20px rgba(246, 215, 128, 0.24));
 }
 
 .training-completion .success-symbol svg {
@@ -632,6 +594,65 @@
 .training-completion .success-symbol svg .award-glow {
     fill: rgba(var(--mission-accent-rgb), 0.11);
     stroke-width: 6;
+}
+
+.training-completion .success-symbol svg .diploma-shadow {
+    fill: rgba(0, 0, 0, 0.34);
+    stroke: none;
+    transform: translateY(7px);
+}
+
+.training-completion .success-symbol svg .diploma-paper {
+    fill: rgba(246, 215, 128, 0.13);
+    stroke: #f6d780;
+    stroke-width: 4;
+}
+
+.training-completion .success-symbol svg .diploma-curl {
+    fill: rgba(246, 215, 128, 0.22);
+    stroke: #ffe7a6;
+    stroke-width: 4;
+}
+
+.training-completion .success-symbol svg .diploma-fold {
+    fill: none;
+    stroke: rgba(255, 242, 194, 0.56);
+    stroke-width: 2.2;
+}
+
+.training-completion .success-symbol svg .diploma-title-line,
+.training-completion .success-symbol svg .diploma-copy-line {
+    fill: none;
+    stroke: rgba(255, 239, 183, 0.78);
+    stroke-width: 3.3;
+}
+
+.training-completion .success-symbol svg .diploma-copy-line {
+    stroke-width: 2.4;
+}
+
+.training-completion .success-symbol svg .diploma-ribbon {
+    fill: rgba(var(--mission-secondary-rgb), 0.28);
+    stroke: var(--mission-secondary);
+    stroke-width: 3.2;
+}
+
+.training-completion .success-symbol svg .diploma-seal-edge {
+    fill: #190f32;
+    stroke: #ffb0fa;
+    stroke-width: 4;
+}
+
+.training-completion .success-symbol svg .diploma-seal {
+    fill: #b950d4;
+    stroke: #ffd7fb;
+    stroke-width: 2.5;
+}
+
+.training-completion .success-symbol svg .diploma-seal-mark {
+    fill: #fff0b7;
+    stroke: #fff7dc;
+    stroke-width: 1.5;
 }
 
 .training-completion .success-symbol .symbol-accent {
@@ -925,7 +946,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .training-firework {
+    .training-fireworks {
         display: none;
     }
 }

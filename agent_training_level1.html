@@ -8,12 +8,12 @@
     <title>Drohnensteuerung 1 – Zielpunkt erfassen</title>
     <script src="assets/vendor/skulpt/1.2.0/skulpt.min.js"></script>
     <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
-    <script src="assets/runner.js?v=20260721-3"></script>
-    <script src="assets/teacher-solutions.js?v=20260721-3"></script>
+    <script src="assets/runner.js?v=20260721-4"></script>
+    <script src="assets/teacher-solutions.js?v=20260721-4"></script>
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
     <link rel="stylesheet" href="assets/style.css?v=20260720-3">
-    <link rel="stylesheet" href="assets/agent-training.css?v=20260721-3">
+    <link rel="stylesheet" href="assets/agent-training.css?v=20260721-4">
 </head>
 <body class="agent-training-level" data-training-level="agent_training_level1">
     <a class="skip-link" href="#python-editor">Zum Python-Editor</a>
@@ -98,12 +98,12 @@
                         <div>
                             <span class="training-eyebrow">Live-Feedback</span>
                             <h2 id="training-feedback-title">Noch nicht ausgeführt</h2>
-                            <p id="training-feedback-message">Starte deinen Code. Die Prüfung beobachtet den echten Drohnenweg.</p>
+                            <p id="training-feedback-message">Starte deinen Code. Die Prüfung beobachtet den ausgeführten Drohnenweg.</p>
                         </div>
                         <ul id="training-checks" class="training-checks" aria-label="Prüfergebnisse">
                             <li class="training-check is-missing"><span class="training-check-icon" aria-hidden="true">○</span><span>Ziel mit sichtbarer Spur erreicht</span></li>
                             <li class="training-check is-missing"><span class="training-check-icon" aria-hidden="true">○</span><span>Punkt direkt am Ziel markiert</span></li>
-                            <li class="training-check is-missing"><span class="training-check-icon" aria-hidden="true">○</span><span>Echte Position mit print() ausgegeben</span></li>
+                            <li class="training-check is-missing"><span class="training-check-icon" aria-hidden="true">○</span><span>Aktuelle Position mit print() ausgegeben</span></li>
                         </ul>
                     </section>
                 </section>
@@ -113,11 +113,11 @@
                         <h2>Dein Auftrag</h2>
                         <p>Die Drohne ist vorbereitet. Ergänze diese fünf Befehle und beobachte, wie <code>pendown()</code> und <code>penup()</code> die Spur ein- und ausschalten:</p>
                         <ol class="training-command-list">
-                            <li><code>agent.pendown()</code></li>
-                            <li><code>agent.goto(160, 80)</code></li>
-                            <li><code>agent.penup()</code></li>
-                            <li><code>agent.dot(30, "#7df2a9")</code></li>
-                            <li><code>print("Position:", agent.position())</code></li>
+                            <li><code>drohne.pendown()</code></li>
+                            <li><code>drohne.goto(160, 80)</code></li>
+                            <li><code>drohne.penup()</code></li>
+                            <li><code>drohne.dot(30, "#7df2a9")</code></li>
+                            <li><code>print("Position:", drohne.position())</code></li>
                         </ol>
                     </div>
 
@@ -127,11 +127,11 @@
                     </label>
                     <textarea id="python-editor" spellcheck="false">import turtle
 
-agent = turtle.Turtle()
-agent.shape("triangle")
-agent.color("#71edf4")
-agent.speed(2)
-agent.penup()
+drohne = turtle.Turtle()
+drohne.shape("triangle")
+drohne.color("#71edf4")
+drohne.speed(2)
+drohne.penup()
 
 # Ergänze hier deine fünf Befehle:
 </textarea>
@@ -151,7 +151,7 @@ agent.penup()
     <script src="assets/vendor/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="assets/vendor/codemirror/5.65.2/python.min.js"></script>
     <script src="assets/editor.js"></script>
-    <script src="assets/agent-training-core.js?v=20260721-3"></script>
-    <script src="assets/agent-training.js?v=20260721-3"></script>
+    <script src="assets/agent-training-core.js?v=20260721-4"></script>
+    <script src="assets/agent-training.js?v=20260721-4"></script>
 </body>
 </html>
