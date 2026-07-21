@@ -22,7 +22,9 @@ const LEVEL_ROUTES = Object.freeze({
     "link-m4-l2": "mission4_level2.html",
     "link-m4-l3": "mission4_level3.html",
     "link-agent-training-title": "agent_training_start.html",
-    "link-agent-training-l1": "agent_training_level1.html"
+    "link-agent-training-l1": "agent_training_level1.html",
+    "link-agent-training-l2": "agent_training_level2.html",
+    "link-agent-training-l3": "agent_training_level3.html"
 });
 
 function safeStorageGetItem(key) {
@@ -553,6 +555,49 @@ function hasNestedStatement(statements, parentPattern, childPattern) {
     return false;
 }
 
+function pythonFunctionBlocks(statements) {
+    const blocks = [];
+    statements.forEach((statement, index) => {
+        if (!statementStartsWith(statement, ["def"]) || statement.tokens[1]?.type !== "name") return;
+        let endIndex = statements.length;
+        for (let cursor = index + 1; cursor < statements.length; cursor += 1) {
+            if (statements[cursor].indent <= statement.indent) {
+                endIndex = cursor;
+                break;
+            }
+        }
+        blocks.push({
+            name: statement.tokens[1].value,
+            startIndex: index,
+            endIndex,
+            statement,
+            body: statements.slice(index + 1, endIndex)
+        });
+    });
+    return blocks;
+}
+
+function analyzeCalledFunctionForMethod(statements, methodName, minimumCalls = 1) {
+    const blocks = pythonFunctionBlocks(statements);
+    const isInsideFunction = statementIndex => blocks.some(block =>
+        statementIndex > block.startIndex && statementIndex < block.endIndex
+    );
+    const hasDirectMethodCall = statements.some((statement, index) =>
+        !isInsideFunction(index) && statementContains(statement, [".", methodName, "("])
+    );
+    if (hasDirectMethodCall) return false;
+
+    return blocks.some(block => {
+        const containsMethod = block.body.some(statement =>
+            statementContains(statement, [".", methodName, "("])
+        );
+        const callCount = statements.filter((statement, index) =>
+            !isInsideFunction(index) && statementStartsWith(statement, [block.name, "("])
+        ).length;
+        return containsMethod && callCount >= minimumCalls;
+    });
+}
+
 function firstFailedRequirement(requirements) {
     const failed = requirements.find((requirement) => !requirement.passed);
     return failed || { passed: true, message: "" };
@@ -692,9 +737,63 @@ const LEVEL_VALIDATORS = {
             statementStartsWith(statement, ["print", "("]) &&
             statementContains(statement, [".", "position", "("])
         );
-        return firstFailedRequirement([
+        const result = firstFailedRequirement([
             { passed: printsRealPosition, message: "Gib die echte Agentenposition mit print(...position()) aus." }
         ]);
+        return { ...result, evidence: { printsRealPosition } };
+    },
+    agent_training_level2({ statements }) {
+        const movementFunction = analyzeCalledFunctionForMethod(statements, "goto", 2);
+        const markerFunction = analyzeCalledFunctionForMethod(statements, "dot", 2);
+        const result = firstFailedRequirement([
+            {
+                passed: movementFunction,
+                message: "Bewege den Agenten in einer eigenen, mindestens zweimal aufgerufenen Funktion mit goto(...)."
+            },
+            {
+                passed: markerFunction,
+                message: "Setze den Punkt in einer eigenen, mindestens zweimal aufgerufenen Funktion mit dot(...)."
+            }
+        ]);
+        return { ...result, evidence: { movementFunction, markerFunction } };
+    },
+    agent_training_level3({ statements }) {
+        const searchStatement = findStatement(statements, [
+            "fund", "=", "agent", ".", "suche_hier", "(", ")"
+        ]);
+        const printStatement = statements.find(statement =>
+            statementStartsWith(statement, ["print", "("]) &&
+            statementContains(statement, ["fund"])
+        );
+        const ifPattern = ["if", "fund", "==", stringToken("Datenchip"), ":"];
+        const ifStatement = findStatement(statements, ifPattern);
+        const searchAssignment = Boolean(searchStatement);
+        const printsFund = Boolean(
+            printStatement && searchStatement && printStatement.line > searchStatement.line
+        );
+        const guardedAppend = Boolean(
+            ifStatement && printStatement && ifStatement.line > printStatement.line &&
+            hasNestedStatement(
+                statements,
+                ifPattern,
+                ["inventar", ".", "append", "(", "fund", ")"]
+            )
+        );
+        const result = firstFailedRequirement([
+            {
+                passed: searchAssignment,
+                message: "Speichere das echte Ergebnis von agent.suche_hier() in fund."
+            },
+            {
+                passed: printsFund,
+                message: "Gib fund nach der Suche mit print(\"Gefunden:\", fund) aus."
+            },
+            {
+                passed: guardedAppend,
+                message: "Prüfe fund mit if und hänge eingerückt genau fund an inventar an."
+            }
+        ]);
+        return { ...result, evidence: { searchAssignment, printsFund, guardedAppend } };
     }
 };
 
@@ -716,7 +815,15 @@ const LEVEL_OUTCOMES = {
         finale: true,
         successMessage: "Nachricht verschlüsselt! Die Agentensteuerung ist freigeschaltet."
     },
-    agent_training_level1: { unlocks: [], successMessage: "Signalpunkt erfasst und markiert." }
+    agent_training_level1: {
+        unlocks: ["link-agent-training-l2"],
+        successMessage: "Signalpunkt erfasst und markiert."
+    },
+    agent_training_level2: {
+        unlocks: ["link-agent-training-l3"],
+        successMessage: "Eigene Agentenbefehle funktionieren."
+    },
+    agent_training_level3: { unlocks: [], successMessage: "Datenchip echt gefunden und gesichert." }
 };
 
 const LEVEL_CODE_INHERITANCE = Object.freeze({

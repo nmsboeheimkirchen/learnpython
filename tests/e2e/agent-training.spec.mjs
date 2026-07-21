@@ -9,9 +9,57 @@ agent.speed(2)
 agent.penup()
 
 agent.goto(160, 80)
-agent.dot(18, "#7df2a9")
+agent.dot(30, "#7df2a9")
 print("Position:", agent.position())
 agent.goto(160, 180)`;
+
+const level2PassingCode = `import turtle
+
+agent = turtle.Turtle()
+agent.shape("triangle")
+agent.color("#71edf4")
+agent.speed(2)
+agent.penup()
+
+def gehe_zu(x, y):
+    agent.goto(x, y)
+
+def markiere():
+    agent.dot(30, "#7df2a9")
+
+gehe_zu(-160, 40)
+markiere()
+gehe_zu(80, 130)
+markiere()`;
+
+const level3PassingCode = `import turtle
+
+agent = turtle.Turtle()
+agent.shape("triangle")
+agent.color("#71edf4")
+agent.speed(2)
+agent.penup()
+
+def gehe_zu(x, y):
+    agent.goto(x, y)
+
+def markiere():
+    agent.dot(30, "#7df2a9")
+
+inventar = []
+gehe_zu(-210, 65)
+markiere()
+fund = agent.suche_hier()
+print("Gefunden:", fund)
+if fund == "Datenchip":
+    inventar.append(fund)`;
+
+const level3InventedItemCode = level3PassingCode.replace(
+    "    inventar.append(fund)",
+    `    if False:
+        inventar.append(fund)
+    inventar.append("Datenchip")`
+);
 
 function capturePageErrors(page) {
     const errors = [];
@@ -44,7 +92,7 @@ test("Agent training level 1 observes the real Turtle route, mark and position o
         await expect(page.locator("#training-marks-layer .training-live-dot")).toBeVisible();
     }
 
-    await expect(page.locator("#run-status")).toHaveText("Kalibriert", { timeout: 12_000 });
+    await expect(page.locator("#run-status")).toHaveText("Geschafft", { timeout: 12_000 });
     await expect(page.locator("#training-stage-message")).toBeVisible();
     await expect(page.locator("#training-checks .is-passed")).toHaveCount(3);
     await expect(page.locator("#console-output")).toContainText("Position:");
@@ -74,6 +122,7 @@ test("Agent training level 1 observes the real Turtle route, mark and position o
     expect(markerVisual.animation).toBe("none");
     expect(markerVisual.x).toBe("160");
     expect(markerVisual.y).toBe("80");
+    await expect(liveDot).toHaveAttribute("data-size", "30");
 
     const targetVisual = await targetCore.evaluate(element => ({
         fill: getComputedStyle(element).fill
@@ -112,12 +161,59 @@ test("Agent training level 1 observes the real Turtle route, mark and position o
 agent = turtle.Turtle()
 agent.penup()
 agent.goto(80, 160)
-agent.dot(18)
+agent.dot(30)
 print("Position: (160, 80)")`));
     await page.locator("#run-btn").click();
     await expect(page.locator("#run-status")).toHaveText("Code prüfen");
     await expect(page.locator("#training-checks .is-passed")).toHaveCount(0);
     await expect(page.locator("#training-feedback-message")).toContainText("(80, 160)");
+    expect(pageErrors).toEqual([]);
+});
+
+test("Agent training levels 2 and 3 validate reusable commands and a real found item", async ({ page }) => {
+    const pageErrors = capturePageErrors(page);
+
+    await page.goto("/agent_training_level2.html?e2e");
+    await page.evaluate(code => window.editor.setValue(code), level2PassingCode);
+    await page.locator("#run-btn").click();
+
+    await expect(page.locator("#run-status")).toHaveText("Geschafft", { timeout: 12_000 });
+    await expect(page.locator("#training-checks .is-passed")).toHaveCount(3);
+    await expect(page.locator("#training-marks-layer .training-live-dot")).toHaveCount(2);
+    const level2State = await page.evaluate(() => window.AgentTrainingLevel.getState());
+    expect(level2State.visitedTargetIds.sort()).toEqual(["alpha", "beta"]);
+    expect(level2State.markedTargetIds.sort()).toEqual(["alpha", "beta"]);
+    const markerSizes = await page.locator("#training-marks-layer .training-live-dot").evaluateAll(
+        markers => markers.map(marker => marker.dataset.size)
+    );
+    expect(markerSizes).toEqual(["30", "30"]);
+    await expect(page.locator("#next-level-btn")).toBeVisible();
+
+    await page.goto("/agent_training_level3.html?e2e");
+    await page.evaluate(code => window.editor.setValue(code), level3PassingCode);
+    await page.locator("#run-btn").click();
+
+    await expect(page.locator("#run-status")).toHaveText("Geschafft", { timeout: 12_000 });
+    await expect(page.locator("#training-checks .is-passed")).toHaveCount(3);
+    await expect(page.locator("#console-output")).toContainText("Gefunden: Datenchip");
+    await expect(page.locator("#training-inventory-items")).toHaveText("Datenchip");
+    const level3State = await page.evaluate(() => window.AgentTrainingLevel.getState());
+    expect(level3State.foundItem).toBe("Datenchip");
+    expect(level3State.collectedRealFind).toBe(true);
+
+    await page.locator("#reset-btn").click();
+    await expect(page.locator("#training-inventory-items")).toHaveText("leer");
+    await expect(page.locator("#training-marks-layer .training-live-dot")).toHaveCount(0);
+
+    await page.evaluate(code => window.editor.setValue(code), level3InventedItemCode);
+    await page.locator("#run-btn").click();
+    await expect(page.locator("#run-status")).toHaveText(/Code pr/);
+    await expect(page.locator("#training-checks .is-passed")).toHaveCount(2);
+    await expect(page.locator("#training-inventory-items")).toHaveText("Datenchip");
+    const inventedState = await page.evaluate(() => window.AgentTrainingLevel.getState());
+    expect(inventedState.foundItem).toBe("Datenchip");
+    expect(inventedState.collectedRealFind).toBe(false);
+    await expect(page.locator("body")).not.toHaveClass(/training-complete/);
     expect(pageErrors).toEqual([]);
 });
 
@@ -129,48 +225,77 @@ test("Agent training keeps its glass workspace contained on laptop and iPad", { 
     await expect(page.locator("body")).toHaveClass(/mission-start-page/);
     await expect(page.locator("#mission-start-action")).toHaveAttribute("href", "agent_training_level1.html");
 
-    await page.goto("/agent_training_level1.html?e2e");
+    for (const levelPage of [
+        "agent_training_level1.html",
+        "agent_training_level2.html",
+        "agent_training_level3.html"
+    ]) {
+        await page.goto(`/${levelPage}?e2e`);
 
-    const stagePanel = page.locator(".training-stage-panel");
-    const codePanel = page.locator(".training-code-panel");
-    const stage = page.locator(".training-stage");
-    await expect(stagePanel).toBeVisible();
-    await expect(codePanel).toBeVisible();
-    await expect(stage).toBeVisible();
-    await expect(page.locator("#learning-nav-dock")).toBeVisible();
+        const stagePanel = page.locator(".training-stage-panel");
+        const codePanel = page.locator(".training-code-panel");
+        const stage = page.locator(".training-stage");
+        await expect(stagePanel).toBeVisible();
+        await expect(codePanel).toBeVisible();
+        await expect(stage).toBeVisible();
+        await expect(page.locator("#learning-nav-dock")).toBeVisible();
 
-    const stageBox = await stagePanel.boundingBox();
-    const codeBox = await codePanel.boundingBox();
-    expect(stageBox).not.toBeNull();
-    expect(codeBox).not.toBeNull();
-    if (testInfo.project.name === "chromium-school-laptop") {
-        expect(Math.abs(stageBox.y - codeBox.y)).toBeLessThanOrEqual(2);
-        expect(stageBox.x + stageBox.width).toBeLessThanOrEqual(codeBox.x + 2);
-    } else {
-        expect(codeBox.y).toBeGreaterThanOrEqual(stageBox.y + stageBox.height - 1);
-        expect(Math.abs(stageBox.x - codeBox.x)).toBeLessThanOrEqual(2);
+        const stageBox = await stagePanel.boundingBox();
+        const codeBox = await codePanel.boundingBox();
+        expect(stageBox).not.toBeNull();
+        expect(codeBox).not.toBeNull();
+        if (testInfo.project.name === "chromium-school-laptop") {
+            expect(Math.abs(stageBox.y - codeBox.y)).toBeLessThanOrEqual(2);
+            expect(stageBox.x + stageBox.width).toBeLessThanOrEqual(codeBox.x + 2);
+        } else {
+            expect(codeBox.y).toBeGreaterThanOrEqual(stageBox.y + stageBox.height - 1);
+            expect(Math.abs(stageBox.x - codeBox.x)).toBeLessThanOrEqual(2);
+        }
+
+        const visual = await stagePanel.evaluate(element => {
+            const style = getComputedStyle(element);
+            return {
+                backdrop: style.backdropFilter || style.webkitBackdropFilter,
+                border: style.borderTopColor,
+                background: style.backgroundImage
+            };
+        });
+        expect(visual.backdrop).toContain("blur(");
+        expect(visual.border).not.toBe("rgba(0, 0, 0, 0)");
+        expect(visual.background).toContain("linear-gradient");
+
+        for (const selector of ["#run-btn", "#reset-btn", "#menu-btn"]) {
+            const box = await page.locator(selector).boundingBox();
+            expect(box).not.toBeNull();
+            expect(box.height).toBeGreaterThanOrEqual(44);
+        }
+
+        if (levelPage !== "agent_training_level1.html") {
+            const hint = page.locator(".training-task-card .block-hint");
+            const bubbleId = levelPage === "agent_training_level2.html"
+                ? "training-l2-tip-def"
+                : "training-l3-tip-search";
+            const block = hint.locator(`[aria-describedby="${bubbleId}"]`);
+            const bubble = block.locator(":scope > .tooltiptext");
+            if (testInfo.project.name === "webkit-ipad") {
+                await block.tap();
+            } else {
+                await block.hover();
+            }
+            await expect(bubble).toBeVisible();
+            const [blockBox, bubbleBox] = await Promise.all([block.boundingBox(), bubble.boundingBox()]);
+            expect(blockBox).not.toBeNull();
+            expect(bubbleBox).not.toBeNull();
+            expect(bubbleBox.y + bubbleBox.height).toBeLessThanOrEqual(blockBox.y + 1);
+            expect(bubbleBox.y).toBeGreaterThanOrEqual(0);
+            expect(bubbleBox.x).toBeGreaterThanOrEqual(0);
+            expect(bubbleBox.x + bubbleBox.width).toBeLessThanOrEqual(page.viewportSize().width + 1);
+            await expect(codePanel).toHaveCSS("overflow", "visible");
+        }
+
+        const overflow = await documentOverflow(page);
+        expect(overflow.body).toBeLessThanOrEqual(1);
+        expect(overflow.document).toBeLessThanOrEqual(1);
     }
-
-    const visual = await stagePanel.evaluate(element => {
-        const style = getComputedStyle(element);
-        return {
-            backdrop: style.backdropFilter || style.webkitBackdropFilter,
-            border: style.borderTopColor,
-            background: style.backgroundImage
-        };
-    });
-    expect(visual.backdrop).toContain("blur(");
-    expect(visual.border).not.toBe("rgba(0, 0, 0, 0)");
-    expect(visual.background).toContain("linear-gradient");
-
-    for (const selector of ["#run-btn", "#reset-btn", "#menu-btn"]) {
-        const box = await page.locator(selector).boundingBox();
-        expect(box).not.toBeNull();
-        expect(box.height).toBeGreaterThanOrEqual(44);
-    }
-
-    const overflow = await documentOverflow(page);
-    expect(overflow.body).toBeLessThanOrEqual(1);
-    expect(overflow.document).toBeLessThanOrEqual(1);
     expect(pageErrors).toEqual([]);
 });

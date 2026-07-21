@@ -1,8 +1,61 @@
 (() => {
     "use strict";
 
-    const TARGET = Object.freeze({ x: 160, y: 80 });
     const TARGET_RADIUS = 22;
+    const LEVEL_CONFIGS = Object.freeze({
+        agent_training_level1: Object.freeze({
+            id: "agent_training_level1",
+            targets: Object.freeze([
+                Object.freeze({ id: "signal", x: 160, y: 80 })
+            ]),
+            checkLabels: Object.freeze([
+                "Zielpunkt wirklich erreicht",
+                "Punkt direkt am Ziel markiert",
+                "Echte Position mit print() ausgegeben"
+            ]),
+            successTitle: "Signalpunkt kalibriert",
+            successMessage: "Signalpunkt kalibriert. Dein Agent ist bereit für den nächsten Trainingsschritt.",
+            stageMessage: "SIGNALPUNKT KALIBRIERT",
+            unlockId: "link-agent-training-l2"
+        }),
+        agent_training_level2: Object.freeze({
+            id: "agent_training_level2",
+            targets: Object.freeze([
+                Object.freeze({ id: "alpha", x: -160, y: 40 }),
+                Object.freeze({ id: "beta", x: 80, y: 130 })
+            ]),
+            checkLabels: Object.freeze([
+                "Eigene Funktion bewegt den Agenten",
+                "Eigene Funktion setzt Markierungen",
+                "Beide Signalpunkte erreicht und markiert"
+            ]),
+            successTitle: "Agentenbefehle einsatzbereit",
+            successMessage: "Beide eigenen Befehle funktionieren. Du kannst Routen nun kurz und lesbar bauen.",
+            stageMessage: "BEIDE SIGNALE MARKIERT",
+            unlockId: "link-agent-training-l3"
+        }),
+        agent_training_level3: Object.freeze({
+            id: "agent_training_level3",
+            targets: Object.freeze([
+                Object.freeze({ id: "datachip", x: -210, y: 65, item: "Datenchip" })
+            ]),
+            checkLabels: Object.freeze([
+                "Datenchip am echten Fundort gefunden",
+                "Echten Fund mit print() ausgegeben",
+                "Genau diesen Fund ins Inventar aufgenommen"
+            ]),
+            successTitle: "Fundstück gesichert",
+            successMessage: "Der Datenchip stammt aus einer echten Suche und liegt jetzt nachweislich im Inventar.",
+            stageMessage: "DATENCHIP GESICHERT",
+            unlockId: null
+        })
+    });
+
+    const TARGET = LEVEL_CONFIGS.agent_training_level1.targets[0];
+
+    function getLevelConfig(levelId) {
+        return LEVEL_CONFIGS[levelId] || LEVEL_CONFIGS.agent_training_level1;
+    }
 
     function finitePoint(point) {
         const x = Number(point?.x);
@@ -10,38 +63,82 @@
         return Number.isFinite(x) && Number.isFinite(y) ? { x, y } : null;
     }
 
-    function distanceToTarget(point) {
+    function distance(point, target) {
         const validPoint = finitePoint(point);
-        if (!validPoint) return Number.POSITIVE_INFINITY;
-        return Math.hypot(validPoint.x - TARGET.x, validPoint.y - TARGET.y);
+        if (!validPoint || !target) return Number.POSITIVE_INFINITY;
+        return Math.hypot(validPoint.x - target.x, validPoint.y - target.y);
     }
 
-    function isAtTarget(point) {
-        return distanceToTarget(point) <= TARGET_RADIUS;
+    function distanceToTarget(point) {
+        return distance(point, TARGET);
     }
 
-    function createState() {
+    function isAtTarget(point, target = TARGET) {
+        return distance(point, target) <= TARGET_RADIUS;
+    }
+
+    function addUnique(list, value) {
+        if (!list.includes(value)) list.push(value);
+    }
+
+    function createState(levelId = "agent_training_level1") {
         return {
+            levelId: getLevelConfig(levelId).id,
             current: { x: 0, y: 0 },
             visitedTarget: false,
             markedAtTarget: false,
-            marks: []
+            visitedTargetIds: [],
+            markedTargetIds: [],
+            marks: [],
+            searches: [],
+            foundItem: null,
+            collectedRealFind: false
         };
     }
 
     function recordPosition(state, point) {
         const validPoint = finitePoint(point);
         if (!state || !validPoint) return false;
+
         state.current = validPoint;
-        if (isAtTarget(validPoint)) state.visitedTarget = true;
+        const config = getLevelConfig(state.levelId);
+        config.targets.forEach(target => {
+            if (isAtTarget(validPoint, target)) addUnique(state.visitedTargetIds, target.id);
+        });
+        state.visitedTarget = state.visitedTargetIds.includes(config.targets[0]?.id);
         return true;
     }
 
     function recordMark(state, point) {
         const validPoint = finitePoint(point);
         if (!state || !validPoint) return false;
+
         state.marks.push(validPoint);
-        if (isAtTarget(validPoint)) state.markedAtTarget = true;
+        const config = getLevelConfig(state.levelId);
+        config.targets.forEach(target => {
+            if (isAtTarget(validPoint, target)) addUnique(state.markedTargetIds, target.id);
+        });
+        state.markedAtTarget = state.markedTargetIds.includes(config.targets[0]?.id);
+        return true;
+    }
+
+    function searchHere(state, point) {
+        const validPoint = finitePoint(point);
+        if (!state || !validPoint) return null;
+
+        recordPosition(state, validPoint);
+        const target = getLevelConfig(state.levelId).targets.find(candidate =>
+            candidate.item && isAtTarget(validPoint, candidate)
+        );
+        const item = target?.item || null;
+        state.searches.push({ point: validPoint, item });
+        if (item) state.foundItem = item;
+        return item;
+    }
+
+    function recordCollection(state, collectedRealFind) {
+        if (!state) return false;
+        state.collectedRealFind = Boolean(collectedRealFind);
         return true;
     }
 
@@ -60,23 +157,33 @@
         });
     }
 
+    function outputContainsFoundItem(output, item = "Datenchip") {
+        return String(output).split(/\r?\n/).some(line =>
+            line.includes("Gefunden:") && line.includes(item)
+        );
+    }
+
     function formatPoint(point) {
         const validPoint = finitePoint(point) || { x: 0, y: 0 };
         return `(${Math.round(validPoint.x)}, ${Math.round(validPoint.y)})`;
     }
 
-    function validate(state, output, structurePassed = true) {
+    function structureEvidence(structure, name) {
+        if (structure === true) return true;
+        return Boolean(structure?.evidence?.[name]);
+    }
+
+    function validateLevel1(state, output, structure) {
+        const config = getLevelConfig(state?.levelId);
         const checks = [
-            { label: "Zielpunkt wirklich erreicht", passed: Boolean(state?.visitedTarget) },
-            { label: "Punkt direkt am Ziel markiert", passed: Boolean(state?.markedAtTarget) },
+            { label: config.checkLabels[0], passed: Boolean(state?.visitedTarget) },
+            { label: config.checkLabels[1], passed: Boolean(state?.markedAtTarget) },
             {
-                label: "Echte Position mit print() ausgegeben",
-                passed: Boolean(structurePassed) && outputContainsTargetPosition(output)
+                label: config.checkLabels[2],
+                passed: structureEvidence(structure, "printsRealPosition") && outputContainsTargetPosition(output)
             }
         ];
-        const passed = checks.every(check => check.passed);
-        let message = "Signalpunkt kalibriert. Dein Agent ist bereit für den nächsten Trainingsschritt.";
-
+        let message = config.successMessage;
         if (!checks[0].passed) {
             message = `Dein Agent steht bei ${formatPoint(state?.current)}. Das Ziel liegt bei (${TARGET.x}, ${TARGET.y}).`;
         } else if (!checks[1].passed) {
@@ -84,20 +191,95 @@
         } else if (!checks[2].passed) {
             message = "Die Markierung sitzt. Gib nun die echte Position mit print(\"Position:\", agent.position()) aus.";
         }
+        return { passed: checks.every(check => check.passed), checks, message };
+    }
 
-        return { passed, checks, message };
+    function validateLevel2(state, structure) {
+        const config = getLevelConfig(state?.levelId);
+        const reachedAny = Boolean(state?.visitedTargetIds?.length);
+        const markedAny = Boolean(state?.markedTargetIds?.length);
+        const reachedAll = config.targets.every(target => state?.visitedTargetIds?.includes(target.id));
+        const markedAll = config.targets.every(target => state?.markedTargetIds?.includes(target.id));
+        const checks = [
+            {
+                label: config.checkLabels[0],
+                passed: structureEvidence(structure, "movementFunction") && reachedAny
+            },
+            {
+                label: config.checkLabels[1],
+                passed: structureEvidence(structure, "markerFunction") && markedAny
+            },
+            { label: config.checkLabels[2], passed: reachedAll && markedAll }
+        ];
+        let message = config.successMessage;
+        if (!checks[0].passed) {
+            message = "Rufe gehe_zu(x, y) für beide Signalpunkte auf. Die Funktion steuert den Agenten mit goto().";
+        } else if (!checks[1].passed) {
+            message = "Ersetze pass in markiere() eingerückt durch agent.dot(30, \"#7df2a9\").";
+        } else if (!checks[2].passed) {
+            const missing = config.targets.find(target =>
+                !state.visitedTargetIds.includes(target.id) || !state.markedTargetIds.includes(target.id)
+            );
+            message = `Der Signalpunkt ${formatPoint(missing)} fehlt noch. Rufe beide eigenen Funktionen dort auf.`;
+        }
+        return { passed: checks.every(check => check.passed), checks, message };
+    }
+
+    function validateLevel3(state, output, structure) {
+        const config = getLevelConfig(state?.levelId);
+        const searchedCorrectly = state?.foundItem === "Datenchip" &&
+            structureEvidence(structure, "searchAssignment");
+        const printedRealVariable = outputContainsFoundItem(output) &&
+            structureEvidence(structure, "printsFund");
+        const collected = Boolean(state?.collectedRealFind) &&
+            structureEvidence(structure, "guardedAppend");
+        const checks = [
+            { label: config.checkLabels[0], passed: searchedCorrectly },
+            { label: config.checkLabels[1], passed: printedRealVariable },
+            { label: config.checkLabels[2], passed: collected }
+        ];
+        let message = config.successMessage;
+        if (!checks[0].passed) {
+            message = "Suche am markierten Fundort und speichere den Rückgabewert in fund.";
+        } else if (!checks[1].passed) {
+            message = "Der Datenchip wurde gefunden. Untersuche fund jetzt mit print(\"Gefunden:\", fund).";
+        } else if (!checks[2].passed) {
+            message = "Gefunden, aber noch nicht gesichert: Hänge genau fund mit inventar.append(fund) an.";
+        }
+        return { passed: checks.every(check => check.passed), checks, message };
+    }
+
+    function validate(state, output = "", structure = true) {
+        if (state?.levelId === "agent_training_level2") return validateLevel2(state, structure);
+        if (state?.levelId === "agent_training_level3") return validateLevel3(state, output, structure);
+        return validateLevel1(state, output, structure);
+    }
+
+    function initialResult(levelId, message = "Starte deinen Code. Die Prüfung beobachtet den echten Agentenweg.") {
+        const config = getLevelConfig(levelId);
+        return {
+            passed: false,
+            message,
+            checks: config.checkLabels.map(label => ({ label, passed: false }))
+        };
     }
 
     window.AgentTrainingCore = Object.freeze({
+        LEVEL_CONFIGS,
         TARGET,
         TARGET_RADIUS,
         createState,
         distanceToTarget,
         formatPoint,
+        getLevelConfig,
+        initialResult,
         isAtTarget,
+        outputContainsFoundItem,
         outputContainsTargetPosition,
+        recordCollection,
         recordMark,
         recordPosition,
+        searchHere,
         validate
     });
 })();

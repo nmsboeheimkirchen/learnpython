@@ -6,20 +6,26 @@ const stackedBlockPages = [
     "mission3_level3.html",
     "mission4_level1.html",
     "mission4_level2.html",
-    "mission4_level3.html"
+    "mission4_level3.html",
+    "agent_training_level2.html",
+    "agent_training_level3.html"
 ];
 
 const indentationPlans = [
     { page: "mission3_level2.html", offsets: [0, 0, 20, 0, 20] },
     { page: "mission3_level3.html", offsets: [0, 0, 0, 0, 20, 20, 40, 20, 40, 0] },
-    { page: "mission4_level3.html", offsets: [0, 0, 0, 20, 20, 0] }
+    { page: "mission4_level3.html", offsets: [0, 0, 0, 20, 20, 0] },
+    { page: "agent_training_level2.html", offsets: [0, 20, 0, 0] },
+    { page: "agent_training_level3.html", offsets: [0, 0, 0, 20] }
 ];
 
 const ipadStackedBlockPages = new Set([
     "mission2_level1.html",
     "mission3_level2.html",
     "mission3_level3.html",
-    "mission4_level3.html"
+    "mission4_level3.html",
+    "agent_training_level2.html",
+    "agent_training_level3.html"
 ]);
 
 async function blockGeometry(hint) {

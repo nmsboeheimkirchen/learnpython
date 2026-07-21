@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="description" content="Agentensteuerung Level 1: Einen Turtle-Agenten mit goto bewegen, mit dot markieren und seine Position ausgeben.">
+    <meta name="description" content="Agentensteuerung Level 3: Ein Fundstück mit suche_hier finden, mit print untersuchen und echt ins Inventar aufnehmen.">
     <meta name="color-scheme" content="dark">
-    <title>Agentensteuerung 1 – Zielpunkt erfassen</title>
+    <title>Agentensteuerung 3 – Fundstück untersuchen</title>
     <script src="assets/vendor/skulpt/1.2.0/skulpt.min.js"></script>
     <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
     <script src="assets/runner.js?v=20260721-1"></script>
@@ -15,32 +15,31 @@
     <link rel="stylesheet" href="assets/style.css?v=20260720-3">
     <link rel="stylesheet" href="assets/agent-training.css?v=20260721-1">
 </head>
-<body class="agent-training-level" data-training-level="agent_training_level1">
+<body class="agent-training-level" data-training-level="agent_training_level3">
     <a class="skip-link" href="#python-editor">Zum Python-Editor</a>
     <div id="navigation-root"></div>
     <script src="assets/navigation.js?v=20260721-1"></script>
 
     <main id="main-content">
         <div class="progress-container training-progress">
-            <span class="level-badge">Schritt 1 von 3</span>
+            <span class="level-badge">Schritt 3 von 3</span>
             <div class="progress-bar-bg" aria-hidden="true">
-                <div class="progress-bar-fill" id="progress-fill" style="width: 33.333%;"></div>
+                <div class="progress-bar-fill" id="progress-fill" style="width: 100%;"></div>
             </div>
             <span id="status-text" role="status">Warte auf deinen Code</span>
-            <button id="next-level-btn" class="next-level-btn" style="display:none" onclick="window.location.href='agent_training_level2.html'">Schritt 2</button>
         </div>
 
         <div class="training-shell">
             <section class="training-briefing" aria-labelledby="training-level-title">
                 <div>
-                    <span class="training-eyebrow">Agentensteuerung · Koordinatenlabor</span>
-                    <h1 id="training-level-title">Zielpunkt erfassen</h1>
-                    <p>Bringe deinen Agenten zum Signalpunkt <strong>(160, 80)</strong>, markiere den Ort und mache seine echte Position im Terminal sichtbar.</p>
+                    <span class="training-eyebrow">Agentensteuerung · Analysezone</span>
+                    <h1 id="training-level-title">Fundstück untersuchen</h1>
+                    <p>Ein Fund wird erst nützlich, wenn du den Rückgabewert untersuchst und genau dieses Ergebnis in einer Liste sicherst.</p>
                 </div>
-                <ul class="training-concept-row" aria-label="Neue Turtle-Befehle">
-                    <li>goto(x, y)</li>
-                    <li>dot(größe, farbe)</li>
-                    <li>position()</li>
+                <ul class="training-concept-row" aria-label="Neue Agenten- und Python-Bausteine">
+                    <li>suche_hier()</li>
+                    <li>Rückgabewert</li>
+                    <li>append()</li>
                 </ul>
             </section>
 
@@ -49,12 +48,12 @@
                     <div class="training-section-heading">
                         <div>
                             <span class="training-eyebrow">Live-Simulation</span>
-                            <h2 id="simulation-title">Holo-Koordinatenkarte</h2>
+                            <h2 id="simulation-title">Fundort und Inventar</h2>
                         </div>
                         <span id="run-status" class="training-run-status is-ready" role="status">Bereit</span>
                     </div>
 
-                    <div class="training-stage" aria-label="Koordinatenkarte. Start bei 0, 0. Signalpunkt bei 160, 80.">
+                    <div class="training-stage" aria-label="Koordinatenkarte. Der Datenchip liegt bei minus 210, 65.">
                         <svg class="training-grid" viewBox="0 0 800 450" preserveAspectRatio="none" aria-hidden="true">
                             <defs>
                                 <pattern id="training-minor-grid" width="50" height="50" patternUnits="userSpaceOnUse">
@@ -66,41 +65,44 @@
                             <line class="training-axis" x1="400" y1="0" x2="400" y2="450"></line>
                             <text class="training-axis-label" x="772" y="216">+X</text>
                             <text class="training-axis-label" x="408" y="18">+Y</text>
-                            <text class="training-grid-label" x="554" y="129">(160, 80)</text>
-                            <circle class="training-target-halo" cx="560" cy="145" r="25"></circle>
-                            <circle class="training-target-core" cx="560" cy="145" r="5"></circle>
+                            <text class="training-grid-label" x="202" y="151">(-210, 65)</text>
+                            <circle class="training-target-halo training-search-halo" cx="190" cy="160" r="28"></circle>
+                            <rect class="training-search-core" x="184" y="154" width="12" height="12" rx="2" transform="rotate(45 190 160)"></rect>
                             <circle class="training-start-marker" cx="400" cy="225" r="8"></circle>
                         </svg>
 
-                        <span class="training-target-label"><span aria-hidden="true">✦</span> Ziel (160, 80)</span>
+                        <span class="training-target-label training-fund-label"><span aria-hidden="true">◆</span> Fundstelle (-210, 65)</span>
                         <span class="training-start-label">Start (0, 0)</span>
                         <svg id="training-marks-layer" class="training-marks-layer" viewBox="0 0 800 450" preserveAspectRatio="none" aria-hidden="true"></svg>
                         <div id="agent-training-turtle" class="training-turtle-layer" aria-hidden="true"></div>
 
+                        <div class="training-inventory-hud" aria-label="Echter Inhalt der Python-Inventarliste">
+                            <span>INVENTAR</span>
+                            <strong id="training-inventory-items">leer</strong>
+                        </div>
                         <div class="training-coordinate-hud" aria-label="Aktuelle Agentenposition">
                             <span>X <strong id="coordinate-x">0</strong></span>
                             <span>Y <strong id="coordinate-y">0</strong></span>
                         </div>
-                        <div id="training-stage-message" class="training-stage-message" role="status" hidden>SIGNALPUNKT KALIBRIERT</div>
+                        <div id="training-stage-message" class="training-stage-message" role="status" hidden>DATENCHIP GESICHERT</div>
                     </div>
 
-                    <div class="training-legend" aria-label="Koordinatenhilfe">
-                        <span><strong>X</strong> bewegt nach rechts oder links.</span>
-                        <span><strong>Y</strong> bewegt nach oben oder unten.</span>
-                        <span><code>penup()</code>: Bewegung ohne Spur.</span>
-                        <span><code>dot()</code>: ein sichtbarer Punkt bleibt zurück.</span>
+                    <div class="training-legend" aria-label="Suchhilfe">
+                        <span><code>suche_hier()</code> ist ein Agent-PY-Zusatzbefehl.</span>
+                        <span>Am falschen Ort liefert die Suche <code>None</code>.</span>
+                        <span><code>append()</code> hängt einen Wert an eine Liste an.</span>
                     </div>
 
                     <section class="training-feedback" aria-labelledby="training-feedback-title">
                         <div>
                             <span class="training-eyebrow">Live-Feedback</span>
                             <h2 id="training-feedback-title">Noch nicht ausgeführt</h2>
-                            <p id="training-feedback-message">Starte deinen Code. Die Prüfung beobachtet den echten Agentenweg.</p>
+                            <p id="training-feedback-message">Starte deinen Code. Fund, Ausgabe und Inventar werden als echte Kette geprüft.</p>
                         </div>
                         <ul id="training-checks" class="training-checks" aria-label="Prüfergebnisse">
-                            <li class="training-check is-missing"><span class="training-check-icon" aria-hidden="true">○</span><span>Zielpunkt wirklich erreicht</span></li>
-                            <li class="training-check is-missing"><span class="training-check-icon" aria-hidden="true">○</span><span>Punkt direkt am Ziel markiert</span></li>
-                            <li class="training-check is-missing"><span class="training-check-icon" aria-hidden="true">○</span><span>Echte Position mit print() ausgegeben</span></li>
+                            <li class="training-check is-missing"><span class="training-check-icon" aria-hidden="true">○</span><span>Datenchip am echten Fundort gefunden</span></li>
+                            <li class="training-check is-missing"><span class="training-check-icon" aria-hidden="true">○</span><span>Echten Fund mit print() ausgegeben</span></li>
+                            <li class="training-check is-missing"><span class="training-check-icon" aria-hidden="true">○</span><span>Genau diesen Fund ins Inventar aufgenommen</span></li>
                         </ul>
                     </section>
                 </section>
@@ -108,12 +110,27 @@
                 <section class="training-code-panel" aria-labelledby="training-code-title">
                     <div class="training-task-card">
                         <h2>Dein Auftrag</h2>
-                        <p>Der Agent ist schon vorbereitet. Ergänze unter dem Kommentar genau diese drei neuen Schritte:</p>
-                        <ol class="training-command-list">
-                            <li><code>agent.goto(160, 80)</code></li>
-                            <li><code>agent.dot(30, "#7df2a9")</code></li>
-                            <li><code>print("Position:", agent.position())</code></li>
-                        </ol>
+                        <p>Der Agent steht gleich am Fundort. Tippe die vier Zeilen aus den Blöcken unter den letzten Kommentar.</p>
+                        <p class="training-touch-note">Tippe auf jeden Block oder fahre mit der Maus darüber. Jede Hilfsblase verrät nur eine Python-Zeile.</p>
+
+                        <div class="block-hint" aria-label="Vier getrennte Codehinweise">
+                            <div class="makecode-block block-tooltip" aria-describedby="training-l3-tip-search">
+                                suche hier und speichere als <span class="makecode-var-pill">fund</span>
+                                <span class="tooltiptext" id="training-l3-tip-search" role="tooltip">fund = agent.suche_hier()</span>
+                            </div>
+                            <div class="makecode-block block-tooltip" aria-describedby="training-l3-tip-print">
+                                zeige Text <span class="makecode-input">"Gefunden:", fund</span>
+                                <span class="tooltiptext" id="training-l3-tip-print" role="tooltip">print("Gefunden:", fund)</span>
+                            </div>
+                            <div class="makecode-block-var block-tooltip microcode-group-gap" aria-describedby="training-l3-tip-if">
+                                wenn <span class="makecode-input">fund = "Datenchip"</span> dann
+                                <span class="tooltiptext" id="training-l3-tip-if" role="tooltip">if fund == "Datenchip":</span>
+                            </div>
+                            <div class="makecode-block block-tooltip microcode-indent-1" aria-describedby="training-l3-tip-append">
+                                hänge <span class="makecode-var-pill">fund</span> an <span class="makecode-var-pill">inventar</span>
+                                <span class="tooltiptext" id="training-l3-tip-append" role="tooltip">    inventar.append(fund)</span>
+                            </div>
+                        </div>
                     </div>
 
                     <label class="training-editor-label" for="python-editor">
@@ -128,16 +145,27 @@ agent.color("#71edf4")
 agent.speed(2)
 agent.penup()
 
-# Ergänze hier deine drei Befehle:
+def gehe_zu(x, y):
+    agent.goto(x, y)
+
+def markiere():
+    agent.dot(30, "#7df2a9")
+
+inventar = []
+
+gehe_zu(-210, 65)
+markiere()
+
+# Untersuche und sichere das Fundstück:
 </textarea>
 
                     <div class="training-controls" aria-label="Programmaktionen">
                         <button id="run-btn" type="button"><span aria-hidden="true">▶</span> Training starten</button>
                         <button id="reset-btn" class="secondary-action" type="button">↺ Startcode laden</button>
                     </div>
-                    <button class="test-btn" type="button" data-teacher-solution="agent_training_level1">Musterlösung (Für Lehrer)</button>
+                    <button class="test-btn" type="button" data-teacher-solution="agent_training_level3">Musterlösung (Für Lehrer)</button>
 
-                    <pre id="console-output" aria-live="polite">Bereit für deine ersten Turtle-Befehle.</pre>
+                    <pre id="console-output" aria-live="polite">Bereit zum Untersuchen des Fundstücks.</pre>
                 </section>
             </div>
         </div>

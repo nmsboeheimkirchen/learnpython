@@ -3,10 +3,13 @@
 
     const core = window.AgentTrainingCore;
     const editor = window.editor;
+    const levelId = document.body.dataset.trainingLevel || "agent_training_level1";
+    const levelConfig = core?.getLevelConfig(levelId);
     const turtleTarget = document.getElementById("agent-training-turtle");
     const marksLayer = document.getElementById("training-marks-layer");
     const runButton = document.getElementById("run-btn");
     const resetButton = document.getElementById("reset-btn");
+    const nextButton = document.getElementById("next-level-btn");
     const consoleOutput = document.getElementById("console-output");
     const runStatus = document.getElementById("run-status");
     const statusText = document.getElementById("status-text");
@@ -16,11 +19,13 @@
     const feedbackMessage = document.getElementById("training-feedback-message");
     const checksList = document.getElementById("training-checks");
     const stageMessage = document.getElementById("training-stage-message");
+    const inventoryItems = document.getElementById("training-inventory-items");
 
     if (
-        !core || !editor || !window.Sk || !turtleTarget || !marksLayer || !runButton || !resetButton ||
-        !consoleOutput || !runStatus || !statusText || !coordinateX || !coordinateY ||
-        !feedbackTitle || !feedbackMessage || !checksList || !stageMessage
+        !core || !levelConfig || !editor || !window.Sk || !turtleTarget || !marksLayer ||
+        !runButton || !resetButton || !consoleOutput || !runStatus || !statusText ||
+        !coordinateX || !coordinateY || !feedbackTitle || !feedbackMessage ||
+        !checksList || !stageMessage
     ) {
         throw new Error("Das Agenten-Training ist unvollständig aufgebaut.");
     }
@@ -30,12 +35,14 @@
     const fastMode = searchParams.has("e2e") || searchParams.has("test");
     const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false;
 
-    let runState = core.createState();
+    let runState = core.createState(levelId);
     let outputText = "";
     let activeTurtle = null;
     let runGeneration = 0;
     let running = false;
     let cancelRequested = false;
+    let issuedFindTokens = new Set();
+    let inventoryAppendEvents = [];
 
     function builtinRead(path) {
         const file = Sk.builtinFiles?.files?.[path];
@@ -97,7 +104,8 @@
     }
 
     function safeMarkerColor(value) {
-        const candidate = typeof value === "string" ? value.trim() : "";
+        const remapped = value && typeof value === "object" && "v" in value ? value.v : value;
+        const candidate = typeof remapped === "string" ? remapped.trim() : "";
         if (!candidate || /url\s*\(/i.test(candidate)) return "#7df2a9";
         return window.CSS?.supports?.("color", candidate) ? candidate : "#7df2a9";
     }
@@ -107,10 +115,10 @@
         const y = Number(point?.y);
         if (!Number.isFinite(x) || !Number.isFinite(y)) return;
 
-        const rawSize = Number(requestedSize);
+        const rawSize = Number(requestedSize?.v ?? requestedSize);
         const diameter = Number.isFinite(rawSize)
-            ? Math.min(40, Math.max(8, Math.abs(rawSize)))
-            : 18;
+            ? Math.min(48, Math.max(8, Math.abs(rawSize)))
+            : 30;
         const marker = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         marker.classList.add("training-live-dot");
         marker.setAttribute("cx", String(400 + x));
@@ -128,7 +136,7 @@
         if (!state) return;
         core.recordPosition(runState, { x: state.x, y: state.y });
         updateCoordinates(runState.current);
-        document.body.classList.toggle("training-target-visited", runState.visitedTarget);
+        document.body.classList.toggle("training-target-visited", runState.visitedTargetIds.length > 0);
     }
 
     function installTurtleObserver() {
@@ -153,7 +161,7 @@
             if (state) {
                 core.recordMark(runState, point);
                 renderLiveMark(point, args[0], args[1]);
-                document.body.classList.toggle("training-target-marked", runState.markedAtTarget);
+                document.body.classList.toggle("training-target-marked", runState.markedTargetIds.length > 0);
             }
             return update;
         };
@@ -172,8 +180,100 @@
         };
     }
 
+    function installTurtleAgentApi() {
+        if (levelId !== "agent_training_level3") return;
+        const TurtleClass = Sk.TurtleGraphics?.module?.Turtle;
+        if (!TurtleClass || TurtleClass.prototype.__agentTrainingApiInstalled) return;
+
+        function uniqueStringToken(value) {
+            // Skulpt interns equal strings. Clone the Python string so runtime
+            // provenance cannot be forged with a separately typed literal.
+            const canonical = new Sk.builtin.str(value);
+            return Object.create(
+                Object.getPrototypeOf(canonical),
+                Object.getOwnPropertyDescriptors(canonical)
+            );
+        }
+
+        const implementation = function (self) {
+            const raw = self?.instance;
+            activeTurtle = raw || activeTurtle;
+            const turtleState = raw?.getState?.();
+            const point = { x: Number(turtleState?.x ?? 0), y: Number(turtleState?.y ?? 0) };
+            const item = core.searchHere(runState, point);
+            updateCoordinates(point);
+            document.body.classList.toggle("training-search-found", Boolean(item));
+
+            if (!item) return Sk.builtin.none.none$;
+            const token = uniqueStringToken(item);
+            issuedFindTokens.add(token);
+            return token;
+        };
+        implementation.co_name = new Sk.builtin.str("suche_hier");
+        implementation.co_varnames = ["self"];
+        Sk.abstr.sattr(
+            TurtleClass,
+            new Sk.builtin.str("suche_hier"),
+            new Sk.builtin.func(implementation)
+        );
+        Object.defineProperty(TurtleClass.prototype, "__agentTrainingApiInstalled", {
+            value: true,
+            configurable: false
+        });
+    }
+
+    function updateInventoryHud(inventory = Sk.globals?.inventar) {
+        if (!inventoryItems) return;
+        const values = inventory instanceof Sk.builtin.list ? inventory.v : [];
+        const labels = values.map(item => String(Sk.ffi.remapToJs(item)));
+        inventoryItems.textContent = labels.length ? labels.join(", ") : "leer";
+        inventoryItems.closest(".training-inventory-hud")?.classList.toggle("has-item", labels.length > 0);
+    }
+
+    function observeInventoryAppend(list, item) {
+        if (levelId !== "agent_training_level3" || !issuedFindTokens.has(item)) return;
+        inventoryAppendEvents.push({ list, item });
+        if (list === Sk.globals?.inventar) updateInventoryHud(list);
+    }
+
+    function installListAppendObserver() {
+        const descriptor = Sk.builtin.list?.prototype?.append;
+        const definition = descriptor?.d$def;
+        if (!descriptor || !definition || typeof definition.$meth !== "function") return;
+
+        if (!descriptor.__agentTrainingAppendWrapped) {
+            const originalAppend = definition.$meth;
+            const wrappedAppend = function (item) {
+                const result = originalAppend.call(this, item);
+                descriptor.__agentTrainingAppendObserver?.(this, item);
+                return result;
+            };
+            definition.$meth = wrappedAppend;
+            descriptor.$meth = wrappedAppend;
+            Object.defineProperty(descriptor, "__agentTrainingAppendWrapped", {
+                value: true,
+                configurable: false
+            });
+        }
+        descriptor.__agentTrainingAppendObserver = observeInventoryAppend;
+    }
+
+    function syncInventoryEvidence() {
+        if (levelId !== "agent_training_level3") return;
+        const inventory = Sk.globals?.inventar;
+        const values = inventory instanceof Sk.builtin.list ? inventory.v : [];
+        const validAppend = inventoryAppendEvents.some(event =>
+            event.list === inventory &&
+            issuedFindTokens.has(event.item) &&
+            values.includes(event.item)
+        );
+        core.recordCollection(runState, validAppend);
+        updateInventoryHud(inventory);
+    }
+
     function configureSkulpt() {
         clearTurtle();
+        installListAppendObserver();
         Sk.TurtleGraphics = Sk.TurtleGraphics || {};
         Object.assign(Sk.TurtleGraphics, {
             target: "agent-training-turtle",
@@ -196,7 +296,9 @@
             __future__: Sk.python3
         });
         Sk.onAfterImport = moduleName => {
-            if (moduleName === "turtle") installTurtleObserver();
+            if (moduleName !== "turtle") return;
+            installTurtleObserver();
+            installTurtleAgentApi();
         };
     }
 
@@ -217,36 +319,34 @@
             checksList.appendChild(item);
         });
 
-        feedbackTitle.textContent = result.passed ? "Signalpunkt kalibriert" : "Nächster sinnvoller Schritt";
+        feedbackTitle.textContent = result.passed ? levelConfig.successTitle : "Nächster sinnvoller Schritt";
         feedbackMessage.textContent = result.message;
         stageMessage.hidden = !result.passed;
         document.body.classList.toggle("training-complete", result.passed);
     }
 
-    function initialResult(message = "Starte deinen Code. Die Prüfung beobachtet den echten Agentenweg.") {
-        return {
-            passed: false,
-            message,
-            checks: [
-                { label: "Zielpunkt wirklich erreicht", passed: false },
-                { label: "Punkt direkt am Ziel markiert", passed: false },
-                { label: "Echte Position mit print() ausgegeben", passed: false }
-            ]
-        };
+    function initialResult(message) {
+        return core.initialResult(
+            levelId,
+            message || "Starte deinen Code. Die Prüfung beobachtet den echten Agentenweg."
+        );
     }
 
     function validateRun(code) {
         recordRawPosition(activeTurtle);
+        syncInventoryEvidence();
         const structure = typeof window.validateLevelSolution === "function"
-            ? window.validateLevelSolution("agent_training_level1", code, outputText)
-            : { passed: true };
-        const result = core.validate(runState, outputText, structure.passed);
+            ? window.validateLevelSolution(levelId, code, outputText)
+            : true;
+        const result = core.validate(runState, outputText, structure);
         renderChecks(result);
 
         if (result.passed) {
-            window.saveCompletedLevelCode?.("agent_training_level1", code);
-            setStatus("Kalibriert", "success");
-            setTopStatus("Level 1 geschafft – bitte Umgebung testen", "success");
+            window.saveCompletedLevelCode?.(levelId, code);
+            if (levelConfig.unlockId) window.unlockLevel?.(levelConfig.unlockId);
+            if (nextButton) nextButton.style.display = "block";
+            setStatus("Geschafft", "success");
+            setTopStatus(levelConfig.successTitle, "success");
         } else {
             setStatus("Code prüfen", "warning");
             setTopStatus("Noch nicht ganz – lies den nächsten Hinweis", "warning");
@@ -267,18 +367,22 @@
 
         const generation = ++runGeneration;
         cancelRequested = false;
-        runState = core.createState();
+        runState = core.createState(levelId);
         outputText = "";
+        issuedFindTokens = new Set();
+        inventoryAppendEvents = [];
         consoleOutput.textContent = "";
         consoleOutput.classList.remove("is-error");
         document.body.classList.remove(
             "training-complete",
             "training-target-visited",
-            "training-target-marked"
+            "training-target-marked",
+            "training-search-found"
         );
         stageMessage.hidden = true;
+        updateInventoryHud(null);
         updateCoordinates();
-        renderChecks(initialResult("Simulation läuft – Ziel, Markierung und Ausgabe werden live geprüft."));
+        renderChecks(initialResult("Simulation läuft – die drei Lernziele werden live geprüft."));
         setRunning(true);
         setStatus("Agent unterwegs", "running");
         setTopStatus("Simulation läuft …", "running");
@@ -324,17 +428,21 @@
         runGeneration += 1;
         editor.setValue(defaultCode);
         editor.clearHistory?.();
-        runState = core.createState();
+        runState = core.createState(levelId);
         outputText = "";
-        consoleOutput.textContent = "Bereit für deine ersten Turtle-Befehle.";
+        issuedFindTokens = new Set();
+        inventoryAppendEvents = [];
+        consoleOutput.textContent = "Bereit für deinen nächsten Agentenbefehl.";
         consoleOutput.classList.remove("is-error");
         document.body.classList.remove(
             "training-complete",
             "training-target-visited",
-            "training-target-marked"
+            "training-target-marked",
+            "training-search-found"
         );
         stageMessage.hidden = true;
         clearTurtle();
+        updateInventoryHud(null);
         updateCoordinates();
         renderChecks(initialResult());
         setStatus("Bereit", "ready");
@@ -349,8 +457,11 @@
         "Cmd-Enter": runProgram
     });
 
-    window.restoreCompletedLevelCode?.("agent_training_level1");
+    const restoredCompletedCode = window.restoreCompletedLevelCode?.(levelId);
+    if (restoredCompletedCode && nextButton) nextButton.style.display = "block";
+    stageMessage.textContent = levelConfig.stageMessage;
     renderChecks(initialResult());
+    updateInventoryHud(null);
     updateCoordinates();
     setStatus("Bereit", "ready");
     setTopStatus("Warte auf deinen Code", "ready");
@@ -361,6 +472,12 @@
                 ...runState,
                 current: { ...runState.current },
                 marks: runState.marks.map(mark => ({ ...mark })),
+                searches: runState.searches.map(search => ({
+                    ...search,
+                    point: { ...search.point }
+                })),
+                visitedTargetIds: [...runState.visitedTargetIds],
+                markedTargetIds: [...runState.markedTargetIds],
                 output: outputText,
                 running
             };

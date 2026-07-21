@@ -111,16 +111,19 @@
 .training-stage-panel,
 .training-code-panel {
     min-width: 0;
-    overflow: hidden;
     border-radius: 28px;
 }
 
 .training-stage-panel {
+    overflow: hidden;
     padding: clamp(18px, 2vw, 26px);
     border-top-color: rgba(var(--mission-accent-rgb), 0.38);
 }
 
 .training-code-panel {
+    position: relative;
+    z-index: 9;
+    overflow: visible;
     padding: clamp(18px, 2vw, 26px);
     border-top-color: rgba(var(--mission-secondary-rgb), 0.38);
 }
@@ -255,6 +258,21 @@
     border-color: rgba(225, 157, 255, 0.28);
 }
 
+.training-target-alpha {
+    top: 31%;
+    left: 13%;
+}
+
+.training-target-beta {
+    top: 10%;
+    left: 63%;
+}
+
+.training-fund-label {
+    top: 25%;
+    left: 10%;
+}
+
 .training-start-label {
     top: 53%;
     left: 51%;
@@ -378,6 +396,76 @@
     margin: 0;
     font-size: 0.9rem;
     line-height: 1.5;
+}
+
+.training-task-card .training-touch-note {
+    margin-top: 10px;
+    color: var(--ink-muted);
+    font-size: 0.8rem;
+}
+
+.training-task-card .block-hint {
+    margin: 18px 0 1px;
+    padding: 14px;
+}
+
+.training-task-card .block-tooltip .tooltiptext {
+    max-width: min(360px, calc(100vw - 64px));
+}
+
+.training-target-halo-secondary {
+    animation-delay: 0.55s;
+}
+
+.training-search-core {
+    fill: #f1c8ff;
+    stroke: rgba(255, 255, 255, 0.75);
+    stroke-width: 1.5;
+    filter: drop-shadow(0 0 9px rgba(226, 145, 255, 0.9));
+    transition: fill 180ms ease, filter 180ms ease;
+}
+
+.training-search-found .training-search-core {
+    fill: #7df2a9;
+    filter: drop-shadow(0 0 11px rgba(125, 242, 169, 0.95));
+}
+
+.training-inventory-hud {
+    position: absolute;
+    z-index: 7;
+    bottom: 12px;
+    left: 12px;
+    display: grid;
+    gap: 2px;
+    min-width: 132px;
+    padding: 8px 11px;
+    border: 1px solid rgba(235, 248, 255, 0.17);
+    border-radius: 15px;
+    background: rgba(3, 11, 21, 0.72);
+    box-shadow: inset 0 1px rgba(255, 255, 255, 0.08);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+}
+
+.training-inventory-hud span {
+    color: var(--ink-soft);
+    font-size: 0.59rem;
+    font-weight: 850;
+    letter-spacing: 0.13em;
+}
+
+.training-inventory-hud strong {
+    color: var(--ink-muted);
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 0.73rem;
+}
+
+.training-inventory-hud.has-item {
+    border-color: rgba(125, 242, 169, 0.35);
+}
+
+.training-inventory-hud.has-item strong {
+    color: var(--success);
 }
 
 .training-command-list {
@@ -601,6 +689,23 @@
         right: 7px;
     }
 
+    .training-target-alpha {
+        top: 33%;
+        right: auto;
+        left: 6px;
+    }
+
+    .training-target-beta {
+        top: 7%;
+        right: 6px;
+    }
+
+    .training-fund-label {
+        top: 22%;
+        right: auto;
+        left: 6px;
+    }
+
     .training-start-label {
         top: 54%;
         left: 51%;
@@ -609,6 +714,11 @@
     .training-coordinate-hud {
         right: 7px;
         bottom: 7px;
+    }
+
+    .training-inventory-hud {
+        bottom: 7px;
+        left: 7px;
     }
 
     .training-coordinate-hud span {

@@ -57,8 +57,8 @@ window.AgentNavigation = (() => {
             unitLabel: "Schritt",
             levels: [
                 { id: "link-agent-training-l1", href: "agent_training_level1.html", label: "Zielpunkt erfassen" },
-                { id: "link-agent-training-l2", label: "Eigene Agentenbefehle" },
-                { id: "link-agent-training-l3", label: "Suchen und aufnehmen" }
+                { id: "link-agent-training-l2", href: "agent_training_level2.html", label: "Eigene Agentenbefehle" },
+                { id: "link-agent-training-l3", href: "agent_training_level3.html", label: "Suchen und aufnehmen" }
             ]
         }
     ]);
