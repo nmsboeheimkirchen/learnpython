@@ -76,6 +76,17 @@ test("microcode modules stay stacked and correctly indented", { tag: "@ipad" }, 
             if (plan.offsets[index] === 20) expect(block.classes).toContain("microcode-indent-1");
             if (plan.offsets[index] === 40) expect(block.classes).toContain("microcode-indent-2");
         });
+
+        if (missionPage === "agent_training_level2.html") {
+            const separator = hint.locator(".microcode-separator");
+            await expect(separator).toBeVisible();
+            await expect(separator).toHaveAttribute("aria-hidden", "true");
+            await expect(separator).toHaveText("•••");
+            const separatorBox = await separator.boundingBox();
+            expect(separatorBox).not.toBeNull();
+            expect(separatorBox.y).toBeGreaterThanOrEqual(blocks[1].bottom - 1);
+            expect(separatorBox.y + separatorBox.height).toBeLessThanOrEqual(blocks[2].top + 1);
+        }
     }
 });
 

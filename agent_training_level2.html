@@ -3,39 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="description" content="Agentensteuerung Level 2: Eigene Python-Funktionen für Bewegung und Markierungen schreiben und wiederverwenden.">
+    <meta name="description" content="Drohnensteuerung Level 2: Eigene Python-Funktionen für Bewegung und Markierungen schreiben und wiederverwenden.">
     <meta name="color-scheme" content="dark">
-    <title>Agentensteuerung 2 – Eigene Agentenbefehle</title>
+    <title>Drohnensteuerung 2 – Eigene Funktionen</title>
     <script src="assets/vendor/skulpt/1.2.0/skulpt.min.js"></script>
     <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
-    <script src="assets/runner.js?v=20260721-1"></script>
-    <script src="assets/teacher-solutions.js?v=20260721-1"></script>
+    <script src="assets/runner.js?v=20260721-3"></script>
+    <script src="assets/teacher-solutions.js?v=20260721-3"></script>
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
     <link rel="stylesheet" href="assets/style.css?v=20260720-3">
-    <link rel="stylesheet" href="assets/agent-training.css?v=20260721-1">
+    <link rel="stylesheet" href="assets/agent-training.css?v=20260721-3">
 </head>
 <body class="agent-training-level" data-training-level="agent_training_level2">
     <a class="skip-link" href="#python-editor">Zum Python-Editor</a>
     <div id="navigation-root"></div>
-    <script src="assets/navigation.js?v=20260721-1"></script>
+    <script src="assets/navigation.js?v=20260721-3"></script>
 
     <main id="main-content">
         <div class="progress-container training-progress">
-            <span class="level-badge">Schritt 2 von 3</span>
+            <span class="level-badge">Level 2 von 3</span>
             <div class="progress-bar-bg" aria-hidden="true">
                 <div class="progress-bar-fill" id="progress-fill" style="width: 66.666%;"></div>
             </div>
             <span id="status-text" role="status">Warte auf deinen Code</span>
-            <button id="next-level-btn" class="next-level-btn" style="display:none" onclick="window.location.href='agent_training_level3.html'">Schritt 3</button>
+            <button id="next-level-btn" class="next-level-btn" style="display:none" onclick="window.location.href='agent_training_level3.html'">Nächstes Level</button>
         </div>
 
         <div class="training-shell">
             <section class="training-briefing" aria-labelledby="training-level-title">
                 <div>
-                    <span class="training-eyebrow">Agentensteuerung · Funktionslabor</span>
-                    <h1 id="training-level-title">Eigene Agentenbefehle</h1>
-                    <p>Baue aus bekannten Turtle-Befehlen deine eigenen Befehle. Danach kannst du dieselbe Bewegungsidee an mehreren Signalpunkten wiederverwenden.</p>
+                    <span class="training-eyebrow">Drohnensteuerung · Funktionslabor</span>
+                    <h1 id="training-level-title">Eigene Funktionen</h1>
+                    <p>Baue aus bekannten Turtle-Befehlen eigene Python-Funktionen. Danach kannst du dieselbe Bewegungsidee an mehreren Signalpunkten wiederverwenden.</p>
                 </div>
                 <ul class="training-concept-row" aria-label="Neue Python-Bausteine">
                     <li>def</li>
@@ -81,7 +81,7 @@
                         <svg id="training-marks-layer" class="training-marks-layer" viewBox="0 0 800 450" preserveAspectRatio="none" aria-hidden="true"></svg>
                         <div id="agent-training-turtle" class="training-turtle-layer" aria-hidden="true"></div>
 
-                        <div class="training-coordinate-hud" aria-label="Aktuelle Agentenposition">
+                        <div class="training-coordinate-hud" aria-label="Aktuelle Drohnenposition">
                             <span>X <strong id="coordinate-x">0</strong></span>
                             <span>Y <strong id="coordinate-y">0</strong></span>
                         </div>
@@ -89,7 +89,7 @@
                     </div>
 
                     <div class="training-legend" aria-label="Funktionshilfe">
-                        <span><code>def</code> baut einen eigenen Befehl.</span>
+                        <span><code>def</code> baut eine eigene Funktion.</span>
                         <span><strong>x, y</strong> werden beim Aufruf eingesetzt.</span>
                         <span><code>pass</code> ist nur ein Platzhalter.</span>
                     </div>
@@ -101,7 +101,7 @@
                             <p id="training-feedback-message">Starte deinen Code. Die Prüfung beobachtet beide Funktionsaufrufe.</p>
                         </div>
                         <ul id="training-checks" class="training-checks" aria-label="Prüfergebnisse">
-                            <li class="training-check is-missing"><span class="training-check-icon" aria-hidden="true">○</span><span>Eigene Funktion bewegt den Agenten</span></li>
+                            <li class="training-check is-missing"><span class="training-check-icon" aria-hidden="true">○</span><span>Eigene Funktion bewegt die Drohne</span></li>
                             <li class="training-check is-missing"><span class="training-check-icon" aria-hidden="true">○</span><span>Eigene Funktion setzt Markierungen</span></li>
                             <li class="training-check is-missing"><span class="training-check-icon" aria-hidden="true">○</span><span>Beide Signalpunkte erreicht und markiert</span></li>
                         </ul>
@@ -111,7 +111,8 @@
                 <section class="training-code-panel" aria-labelledby="training-code-title">
                     <div class="training-task-card">
                         <h2>Dein Auftrag</h2>
-                        <p>Die erste Route ist vorbereitet. Ersetze <code>pass</code> und ergänze darunter die zwei Aufrufe für Signal B.</p>
+                        <p>Deine erste Funktion ist vorbereitet. Ersetze <code>pass</code> in dem Funktionsblock, der mit <code>def</code> beginnt.</p>
+                        <p class="training-task-followup">Danach ergänze die zwei Aufrufe für B.</p>
                         <p class="training-touch-note">Tippe auf einen Block oder fahre mit der Maus darüber. Der Python-Code erscheint darüber – tippe ihn anschließend selbst in den Editor.</p>
 
                         <div class="block-hint" aria-label="Vier getrennte Codehinweise">
@@ -123,7 +124,8 @@
                                 setze grünen Punkt <span class="makecode-input">Größe 30</span>
                                 <span class="tooltiptext" id="training-l2-tip-dot" role="tooltip">    agent.dot(30, "#7df2a9")</span>
                             </div>
-                            <div class="makecode-block block-tooltip microcode-group-gap" aria-describedby="training-l2-tip-goto">
+                            <div class="microcode-separator" aria-hidden="true"><span>•••</span></div>
+                            <div class="makecode-block block-tooltip" aria-describedby="training-l2-tip-goto">
                                 steuere Signal B an <span class="makecode-input">80, 130</span>
                                 <span class="tooltiptext" id="training-l2-tip-goto" role="tooltip">gehe_zu(80, 130)</span>
                             </div>
@@ -165,7 +167,7 @@ markiere()
                     </div>
                     <button class="test-btn" type="button" data-teacher-solution="agent_training_level2">Musterlösung (Für Lehrer)</button>
 
-                    <pre id="console-output" aria-live="polite">Bereit für deine eigenen Agentenbefehle.</pre>
+                    <pre id="console-output" aria-live="polite">Bereit für deine eigenen Funktionen.</pre>
                 </section>
             </div>
         </div>
@@ -174,7 +176,7 @@ markiere()
     <script src="assets/vendor/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="assets/vendor/codemirror/5.65.2/python.min.js"></script>
     <script src="assets/editor.js"></script>
-    <script src="assets/agent-training-core.js?v=20260721-1"></script>
-    <script src="assets/agent-training.js?v=20260721-1"></script>
+    <script src="assets/agent-training-core.js?v=20260721-3"></script>
+    <script src="assets/agent-training.js?v=20260721-3"></script>
 </body>
 </html>

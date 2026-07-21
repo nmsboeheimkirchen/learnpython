@@ -462,7 +462,7 @@ const validSolutions = [
     },
     {
         level: "agent_training_level1",
-        code: 'agent.goto(160, 80)\nagent.dot(30)\nprint("Position:", agent.position())',
+        code: 'agent.pendown()\nagent.goto(160, 80)\nagent.penup()\nagent.dot(30)\nprint("Position:", agent.position())',
         output: "Position: (160.00,80.00)\n"
     },
     {
@@ -556,6 +556,9 @@ test("mission 4 rejects Caesar steps outside the for loop", () => {
 test("Agent training position checks ignore comments and string literals", () => {
     const { context } = createRunnerContext();
     context.code = [
+        "agent.pendown()",
+        "agent.goto(160, 80)",
+        "agent.penup()",
         "# print(agent.position())",
         'print("agent.position()")'
     ].join("\n");
@@ -567,7 +570,52 @@ test("Agent training position checks ignore comments and string literals", () =>
     );
 
     assert.equal(result.passed, false);
-    assert.match(result.message, /echte Agentenposition/);
+    assert.match(result.message, /echte Drohnenposition/);
+
+    context.code = [
+        "agent.pendown()",
+        "agent.goto(160, 80)",
+        "agent.penup()",
+        "def nie_aufgerufen():",
+        "    print(agent.position())",
+        'print("Position: (160, 80)")'
+    ].join("\n");
+    context.output = "Position: (160, 80)\n";
+    const deadPositionPrint = vm.runInContext(
+        'validateLevelSolution("agent_training_level1", code, output)',
+        context
+    );
+    assert.equal(deadPositionPrint.passed, false);
+    assert.equal(deadPositionPrint.evidence.printsRealPosition, false);
+});
+
+test("Agent training trail checks require real commands in their teaching order", () => {
+    const { context } = createRunnerContext();
+    context.code = [
+        "agent.penup()",
+        "agent.goto(160, 80)",
+        "agent.pendown()",
+        'print("Position:", agent.position())'
+    ].join("\n");
+
+    let result = vm.runInContext(
+        'validateLevelSolution("agent_training_level1", code, "")',
+        context
+    );
+    assert.equal(result.passed, false);
+    assert.match(result.message, /pendown/);
+
+    context.code = [
+        "agent.pendown()",
+        "agent.goto(160, 80)",
+        "agent.penup()",
+        'print("Position:", agent.position())'
+    ].join("\n");
+    result = vm.runInContext(
+        'validateLevelSolution("agent_training_level1", code, "")',
+        context
+    );
+    assert.equal(result.passed, true, result.message);
 });
 
 test("Agent training level 2 requires called functions instead of direct or unused code", () => {
@@ -622,6 +670,52 @@ test("Agent training level 3 ignores fake search, print and append text", () => 
     );
     assert.equal(result.passed, false);
     assert.match(result.message, /suche_hier/);
+
+    context.code = [
+        "fund = agent.suche_hier()",
+        'print("Datenchip")',
+        "def nie_aufgerufen():",
+        "    print(fund)",
+        "inventar.append(fund)"
+    ].join("\n");
+    const deadPrintResult = vm.runInContext(
+        'validateLevelSolution("agent_training_level3", code, "Datenchip\\n")',
+        context
+    );
+    assert.equal(deadPrintResult.passed, false);
+    assert.equal(deadPrintResult.evidence.printsFund, false);
+    assert.match(deadPrintResult.message, /print\(fund\)/);
+
+    context.code = [
+        "fund = agent.suche_hier()",
+        "print(fund)",
+        'if fund == "Datenchip":',
+        "    pass",
+        "inventar.append(fund)"
+    ].join("\n");
+    const danglingGuard = vm.runInContext(
+        'validateLevelSolution("agent_training_level3", code, "Datenchip\\n")',
+        context
+    );
+    assert.equal(danglingGuard.evidence.directAppend, true);
+    assert.equal(danglingGuard.evidence.guardedAppend, false);
+    assert.equal(danglingGuard.evidence.hasFundGuard, true);
+
+    context.code = [
+        "fund = agent.suche_hier()",
+        "print(fund)",
+        "def nie_aufgerufen():",
+        '    if fund == "Datenchip":',
+        "        inventar.append(fund)",
+        "inventar.append(fund)"
+    ].join("\n");
+    const deadGuard = vm.runInContext(
+        'validateLevelSolution("agent_training_level3", code, "Datenchip\\n")',
+        context
+    );
+    assert.equal(deadGuard.evidence.guardedAppend, false);
+    assert.equal(deadGuard.evidence.directAppend, true);
+    assert.equal(deadGuard.evidence.hasFundGuard, true);
 });
 
 test("Agent training validates real target, mark and position output as one runtime chain", () => {
@@ -633,11 +727,11 @@ test("Agent training validates real target, mark and position output as one runt
     assert.equal(core.validate(wrongTarget, "Position: (160, 80)", true).passed, false);
 
     const missingMark = core.createState();
-    core.recordPosition(missingMark, core.TARGET);
+    core.recordPosition(missingMark, core.TARGET, { trailDown: true });
     assert.equal(core.validate(missingMark, "Position: (160, 80)", true).passed, false);
 
     const hardcodedWithoutPositionCall = core.createState();
-    core.recordPosition(hardcodedWithoutPositionCall, core.TARGET);
+    core.recordPosition(hardcodedWithoutPositionCall, core.TARGET, { trailDown: true });
     core.recordMark(hardcodedWithoutPositionCall, core.TARGET);
     assert.equal(
         core.validate(hardcodedWithoutPositionCall, "Position: (160, 80)", false).passed,
@@ -645,11 +739,38 @@ test("Agent training validates real target, mark and position output as one runt
     );
 
     const valid = core.createState();
-    core.recordPosition(valid, core.TARGET);
+    core.recordPosition(valid, core.TARGET, { trailDown: true });
+    core.recordPosition(valid, core.TARGET, { trailDown: false });
     core.recordMark(valid, { x: 161, y: 79 });
     const result = core.validate(valid, "Position: (160.00,80.00)\n", true);
     assert.equal(result.passed, true);
     assert.equal(result.checks.every(check => check.passed), true);
+
+    const targetReachedAfterTrailWasDisabled = core.createState();
+    core.recordPosition(targetReachedAfterTrailWasDisabled, { x: 10, y: 10 }, { trailDown: true });
+    core.recordPosition(targetReachedAfterTrailWasDisabled, core.TARGET, { trailDown: false });
+    core.recordMark(targetReachedAfterTrailWasDisabled, core.TARGET);
+    assert.equal(
+        core.validate(
+            targetReachedAfterTrailWasDisabled,
+            "Position: (160, 80)",
+            { evidence: { printsRealPosition: true, usesTrailControls: true } }
+        ).passed,
+        false
+    );
+
+    const trailLeftOnAtTarget = core.createState();
+    core.recordPosition(trailLeftOnAtTarget, { x: 0, y: 0 }, { trailDown: true });
+    core.recordPosition(trailLeftOnAtTarget, core.TARGET, { trailDown: true });
+    core.recordMark(trailLeftOnAtTarget, core.TARGET);
+    assert.equal(
+        core.validate(
+            trailLeftOnAtTarget,
+            "Position: (160, 80)",
+            { evidence: { printsRealPosition: true, usesTrailControls: true } }
+        ).passed,
+        false
+    );
 
     const reset = core.createState();
     assert.equal(core.validate(reset, "", true).passed, false);
@@ -683,23 +804,78 @@ test("Agent training level 2 validates both real targets together with function 
 
 test("Agent training level 3 needs a real search and provenance-backed collection", () => {
     const core = createAgentTrainingCore();
-    const structure = {
-        evidence: { searchAssignment: true, printsFund: true, guardedAppend: true }
+    const guardedStructure = {
+        evidence: {
+            searchAssignment: true,
+            printsFund: true,
+            guardedAppend: true,
+            hasFundGuard: true
+        }
     };
     const state = core.createState("agent_training_level3");
 
     assert.equal(core.searchHere(state, { x: 0, y: 0 }), null);
+    assert.equal(core.searchHere(state, { x: -210, y: 65 }), null);
     core.recordCollection(state, true);
-    assert.equal(core.validate(state, "Gefunden: Datenchip\n", structure).passed, false);
+    assert.equal(
+        core.validate(state, "Datenchip\n", guardedStructure, { level3Phase: "guarded" }).passed,
+        false
+    );
 
-    assert.equal(core.searchHere(state, { x: -210, y: 65 }), "Datenchip");
+    assert.equal(core.searchHere(state, { x: -210, y: -65 }), "Datenchip");
     core.recordCollection(state, false);
-    assert.equal(core.validate(state, "Gefunden: Datenchip\n", structure).passed, false);
+    assert.equal(
+        core.validate(state, "Datenchip\n", guardedStructure, { level3Phase: "guarded" }).passed,
+        false
+    );
 
     core.recordCollection(state, true);
-    const result = core.validate(state, "Gefunden: Datenchip\n", structure);
-    assert.equal(result.passed, true);
-    assert.equal(result.checks.every(check => check.passed), true);
+    const guardedResult = core.validate(
+        state,
+        "Datenchip\n",
+        guardedStructure,
+        { level3Phase: "guarded" }
+    );
+    assert.equal(guardedResult.passed, false);
+    assert.equal(guardedResult.phaseComplete, true);
+    assert.deepEqual(Array.from(guardedResult.checks, check => check.passed), [true, true, true, false]);
+
+    const mixedGuardedResult = core.validate(
+        state,
+        "Datenchip\n",
+        { evidence: { ...guardedStructure.evidence, directAppend: true } },
+        { level3Phase: "guarded" }
+    );
+    assert.equal(mixedGuardedResult.phaseComplete, false);
+    assert.equal(mixedGuardedResult.checks[2].passed, false);
+
+    const directStructure = {
+        evidence: {
+            searchAssignment: true,
+            printsFund: true,
+            guardedAppend: false,
+            directAppend: true,
+            hasFundGuard: false
+        }
+    };
+    const directResult = core.validate(
+        state,
+        "Datenchip\n",
+        directStructure,
+        { level3Phase: "direct" }
+    );
+    assert.equal(directResult.passed, true);
+    assert.equal(directResult.checks.every(check => check.passed), true);
+
+    const mixedResult = core.validate(
+        state,
+        "Datenchip\n",
+        { evidence: { ...directStructure.evidence, guardedAppend: true, hasFundGuard: true } },
+        { level3Phase: "direct" }
+    );
+    assert.equal(mixedResult.passed, false);
+    assert.equal(mixedResult.checks[2].passed, true);
+    assert.equal(mixedResult.checks[3].passed, false);
 });
 
 const teacherSolutionExpectations = new Map([
@@ -716,9 +892,9 @@ const teacherSolutionExpectations = new Map([
     ["mission4_level1", /for buchstabe in nachricht:/],
     ["mission4_level2", /ord\(buchstabe\)/],
     ["mission4_level3", /geheimtext = geheimtext \+ chr\(zahl\)/],
-    ["agent_training_level1", /agent\.speed\(2\)[\s\S]*agent\.dot\(30,/],
+    ["agent_training_level1", /agent\.pendown\(\)[\s\S]*agent\.goto\(160, 80\)[\s\S]*agent\.penup\(\)[\s\S]*agent\.dot\(30,/],
     ["agent_training_level2", /def markiere\(\):[\s\S]*gehe_zu\(80, 130\)/],
-    ["agent_training_level3", /fund = agent\.suche_hier\(\)[\s\S]*inventar\.append\(fund\)/]
+    ["agent_training_level3", /gehe_zu\(-210, -65\)[\s\S]*if fund == "Datenchip":[\s\S]*inventar\.append\(fund\)/]
 ]);
 
 test("teacher solutions are centralized and available for every level", () => {
@@ -942,7 +1118,7 @@ test("mission navigation is rendered from one central definition", () => {
     for (const page of missionPages) {
         const html = readFileSync(new URL(`../${page}`, import.meta.url), "utf8");
         assert.match(html, /<div id="navigation-root"><\/div>/);
-        assert.match(html, /<script src="assets\/navigation\.js\?v=202607(?:20-[23]|21-1)"><\/script>/);
+        assert.match(html, /<script src="assets\/navigation\.js\?v=202607(?:20-[23]|21-[13])"><\/script>/);
         assert.match(html, /<link rel="stylesheet" href="assets\/style\.css\?v=20260720-[23]">/);
         assert.doesNotMatch(html, /id="mySidebar"/);
     }
@@ -1006,30 +1182,54 @@ test("mission 4 hands off to the shared Agent training without exposing later pr
     assert.match(mission4Finale, /id="next-level-btn"[^>]+agent_training_start\.html/);
     assert.match(trainingStart, /href="agent_training_level1\.html"/);
     assert.match(trainingStart, /Gemeinsame Vorbereitung · Große Mission/);
+    assert.match(trainingStart, /Eine Python-Turtle ist so etwas wie eine Drohne/);
+    assert.match(trainingStart, /Im Code heißt deine Drohne <code>agent<\/code>/);
+    assert.match(trainingStart, /3 kurze Trainingslevel/);
     assert.match(trainingStart, /markierst wichtige Orte und untersuchst Fundstücke\./);
     assert.doesNotMatch(trainingStart, /später echte Suchergebnisse/);
     assert.match(trainingLevel1, /agent\.goto\(160, 80\)/);
+    assert.match(trainingLevel1, /agent\.pendown\(\)/);
+    assert.match(trainingLevel1, /agent\.penup\(\)/);
     assert.match(trainingLevel1, /agent\.dot\(30, &quot;#7df2a9&quot;\)|agent\.dot\(30, "#7df2a9"\)/);
     assert.match(trainingLevel1, /agent\.position\(\)/);
     const starter = trainingLevel1.match(/<textarea id="python-editor"[^>]*>([\s\S]*?)<\/textarea>/)?.[1] ?? "";
     assert.match(starter, /agent\.speed\(2\)\s*\nagent\.penup\(\)/);
     assert.doesNotMatch(starter, /agent\.speed\(4\)/);
     assert.match(trainingLevel1, /id="training-marks-layer" class="training-marks-layer"/);
-    assert.match(trainingLevel1, /<code>penup\(\)<\/code>: Bewegung ohne Spur\./);
+    assert.match(trainingLevel1, /<code>penup\(\)<\/code>: Spur ausschalten\./);
+    assert.match(trainingLevel1, /Nächstes Level/);
 
     const level2Starter = trainingLevel2.match(/<textarea id="python-editor"[^>]*>([\s\S]*?)<\/textarea>/)?.[1] ?? "";
     assert.match(level2Starter, /def markiere\(\):\s*\n\s+pass/);
     assert.doesNotMatch(level2Starter, /gehe_zu\(80, 130\)\s*\nmarkiere\(\)/);
     assert.match(trainingLevel2, /agent\.dot\(30, &quot;#7df2a9&quot;\)|agent\.dot\(30, "#7df2a9"\)/);
     assert.match(trainingLevel2, /class="block-hint"/);
+    assert.match(trainingLevel2, /class="microcode-separator" aria-hidden="true"><span>•••<\/span>/);
+    assert.match(trainingLevel2, /Deine erste Funktion ist vorbereitet\./);
+    assert.match(trainingLevel2, /Danach ergänze die zwei Aufrufe für B\./);
 
     const level3Starter = trainingLevel3.match(/<textarea id="python-editor"[^>]*>([\s\S]*?)<\/textarea>/)?.[1] ?? "";
     assert.doesNotMatch(level3Starter, /fund\s*=\s*agent\.suche_hier/);
+    assert.match(level3Starter, /gehe_zu\(-210, -65\)/);
     assert.match(trainingLevel3, /fund = agent\.suche_hier\(\)/);
     assert.match(trainingLevel3, /inventar\.append\(fund\)/);
     assert.match(trainingLevel3, /microcode-indent-1/);
+    assert.match(trainingLevel3, /data-training-phase="guarded"/);
+    assert.match(trainingLevel3, /data-training-phase="direct" hidden/);
+    assert.match(trainingLevel3, /Fund direkt ins Inventar aufnehmen/);
+    assert.match(trainingLevel3, /ohne „<code>if<\/code>“/);
+
+    const trainingRuntime = readFileSync(new URL("../assets/agent-training.js", import.meta.url), "utf8");
+    const runner = readFileSync(new URL("../assets/runner.js", import.meta.url), "utf8");
+    const teacherSolutions = readFileSync(new URL("../assets/teacher-solutions.js", import.meta.url), "utf8");
+    assert.match(trainingRuntime, /symbol: "graduation-cap"/);
+    assert.match(trainingRuntime, /symbol: "diploma"/);
+    assert.match(trainingRuntime, /celebration: "fireworks"/);
+    assert.match(runner, /function triggerTrainingFireworks\(\)/);
+    assert.match(teacherSolutions, /agent_training_level3_direct:/);
 
     const trainingCss = readFileSync(new URL("../assets/agent-training.css", import.meta.url), "utf8");
+    assert.match(trainingCss, /\.training-firework-spark/);
     assert.match(trainingCss, /\.training-live-dot\s*\{[\s\S]*animation:\s*none;/);
     assert.doesNotMatch(trainingCss, /\.training-complete\s+\.training-target-halo/);
     assert.doesNotMatch(trainingStart + trainingLevel1 + trainingLevel2 + trainingLevel3, /pico_finale|pixelmuseum_finale/);

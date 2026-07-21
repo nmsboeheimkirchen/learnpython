@@ -3,26 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="description" content="Agentensteuerung Level 3: Ein Fundstück mit suche_hier finden, mit print untersuchen und echt ins Inventar aufnehmen.">
+    <meta name="description" content="Drohnensteuerung Level 3: Ein Fundstück mit suche_hier finden, mit print untersuchen und echt ins Inventar aufnehmen.">
     <meta name="color-scheme" content="dark">
-    <title>Agentensteuerung 3 – Fundstück untersuchen</title>
+    <title>Drohnensteuerung 3 – Fundstück untersuchen</title>
     <script src="assets/vendor/skulpt/1.2.0/skulpt.min.js"></script>
     <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
-    <script src="assets/runner.js?v=20260721-1"></script>
-    <script src="assets/teacher-solutions.js?v=20260721-1"></script>
+    <script src="assets/runner.js?v=20260721-3"></script>
+    <script src="assets/teacher-solutions.js?v=20260721-3"></script>
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
     <link rel="stylesheet" href="assets/style.css?v=20260720-3">
-    <link rel="stylesheet" href="assets/agent-training.css?v=20260721-1">
+    <link rel="stylesheet" href="assets/agent-training.css?v=20260721-3">
 </head>
 <body class="agent-training-level" data-training-level="agent_training_level3">
     <a class="skip-link" href="#python-editor">Zum Python-Editor</a>
     <div id="navigation-root"></div>
-    <script src="assets/navigation.js?v=20260721-1"></script>
+    <script src="assets/navigation.js?v=20260721-3"></script>
 
     <main id="main-content">
         <div class="progress-container training-progress">
-            <span class="level-badge">Schritt 3 von 3</span>
+            <span class="level-badge">Level 3 von 3</span>
             <div class="progress-bar-bg" aria-hidden="true">
                 <div class="progress-bar-fill" id="progress-fill" style="width: 100%;"></div>
             </div>
@@ -32,11 +32,11 @@
         <div class="training-shell">
             <section class="training-briefing" aria-labelledby="training-level-title">
                 <div>
-                    <span class="training-eyebrow">Agentensteuerung · Analysezone</span>
+                    <span class="training-eyebrow">Drohnensteuerung · Analysezone</span>
                     <h1 id="training-level-title">Fundstück untersuchen</h1>
                     <p>Ein Fund wird erst nützlich, wenn du den Rückgabewert untersuchst und genau dieses Ergebnis in einer Liste sicherst.</p>
                 </div>
-                <ul class="training-concept-row" aria-label="Neue Agenten- und Python-Bausteine">
+                <ul class="training-concept-row" aria-label="Neue Drohnen- und Python-Bausteine">
                     <li>suche_hier()</li>
                     <li>Rückgabewert</li>
                     <li>append()</li>
@@ -53,7 +53,7 @@
                         <span id="run-status" class="training-run-status is-ready" role="status">Bereit</span>
                     </div>
 
-                    <div class="training-stage" aria-label="Koordinatenkarte. Der Datenchip liegt bei minus 210, 65.">
+                    <div class="training-stage" aria-label="Koordinatenkarte. Der Datenchip liegt bei minus 210, minus 65.">
                         <svg class="training-grid" viewBox="0 0 800 450" preserveAspectRatio="none" aria-hidden="true">
                             <defs>
                                 <pattern id="training-minor-grid" width="50" height="50" patternUnits="userSpaceOnUse">
@@ -65,13 +65,13 @@
                             <line class="training-axis" x1="400" y1="0" x2="400" y2="450"></line>
                             <text class="training-axis-label" x="772" y="216">+X</text>
                             <text class="training-axis-label" x="408" y="18">+Y</text>
-                            <text class="training-grid-label" x="202" y="151">(-210, 65)</text>
-                            <circle class="training-target-halo training-search-halo" cx="190" cy="160" r="28"></circle>
-                            <rect class="training-search-core" x="184" y="154" width="12" height="12" rx="2" transform="rotate(45 190 160)"></rect>
+                            <text class="training-grid-label" x="202" y="281">(-210, -65)</text>
+                            <circle class="training-target-halo training-search-halo" cx="190" cy="290" r="28"></circle>
+                            <rect class="training-search-core" x="184" y="284" width="12" height="12" rx="2" transform="rotate(45 190 290)"></rect>
                             <circle class="training-start-marker" cx="400" cy="225" r="8"></circle>
                         </svg>
 
-                        <span class="training-target-label training-fund-label"><span aria-hidden="true">◆</span> Fundstelle (-210, 65)</span>
+                        <span class="training-target-label training-fund-label"><span aria-hidden="true">◆</span> Fundstelle (-210, -65)</span>
                         <span class="training-start-label">Start (0, 0)</span>
                         <svg id="training-marks-layer" class="training-marks-layer" viewBox="0 0 800 450" preserveAspectRatio="none" aria-hidden="true"></svg>
                         <div id="agent-training-turtle" class="training-turtle-layer" aria-hidden="true"></div>
@@ -80,7 +80,7 @@
                             <span>INVENTAR</span>
                             <strong id="training-inventory-items">leer</strong>
                         </div>
-                        <div class="training-coordinate-hud" aria-label="Aktuelle Agentenposition">
+                        <div class="training-coordinate-hud" aria-label="Aktuelle Drohnenposition">
                             <span>X <strong id="coordinate-x">0</strong></span>
                             <span>Y <strong id="coordinate-y">0</strong></span>
                         </div>
@@ -103,32 +103,56 @@
                             <li class="training-check is-missing"><span class="training-check-icon" aria-hidden="true">○</span><span>Datenchip am echten Fundort gefunden</span></li>
                             <li class="training-check is-missing"><span class="training-check-icon" aria-hidden="true">○</span><span>Echten Fund mit print() ausgegeben</span></li>
                             <li class="training-check is-missing"><span class="training-check-icon" aria-hidden="true">○</span><span>Genau diesen Fund ins Inventar aufgenommen</span></li>
+                            <li class="training-check is-missing"><span class="training-check-icon" aria-hidden="true">○</span><span>Fund direkt ins Inventar aufnehmen</span></li>
                         </ul>
                     </section>
                 </section>
 
                 <section class="training-code-panel" aria-labelledby="training-code-title">
                     <div class="training-task-card">
-                        <h2>Dein Auftrag</h2>
-                        <p>Der Agent steht gleich am Fundort. Tippe die vier Zeilen aus den Blöcken unter den letzten Kommentar.</p>
-                        <p class="training-touch-note">Tippe auf jeden Block oder fahre mit der Maus darüber. Jede Hilfsblase verrät nur eine Python-Zeile.</p>
+                        <div data-training-phase="guarded">
+                            <h2>Dein Auftrag</h2>
+                            <p>Die Drohne steht gleich am bekannten Fundort. Finde den Datenchip, kontrolliere den Rückgabewert mit <code>print()</code> und sichere ihn zunächst mit einer <code>if</code>-Prüfung.</p>
+                            <p class="training-touch-note">Tippe auf jeden Block oder fahre mit der Maus darüber. Jede Hilfsblase verrät nur eine Python-Zeile.</p>
 
-                        <div class="block-hint" aria-label="Vier getrennte Codehinweise">
-                            <div class="makecode-block block-tooltip" aria-describedby="training-l3-tip-search">
-                                suche hier und speichere als <span class="makecode-var-pill">fund</span>
-                                <span class="tooltiptext" id="training-l3-tip-search" role="tooltip">fund = agent.suche_hier()</span>
+                            <div class="block-hint" aria-label="Vier getrennte Codehinweise">
+                                <div class="makecode-block block-tooltip" aria-describedby="training-l3-tip-search">
+                                    suche hier und speichere als <span class="makecode-var-pill">fund</span>
+                                    <span class="tooltiptext" id="training-l3-tip-search" role="tooltip">fund = agent.suche_hier()</span>
+                                </div>
+                                <div class="makecode-block block-tooltip" aria-describedby="training-l3-tip-print">
+                                    zeige Text <span class="makecode-input">"Gefunden:", fund</span>
+                                    <span class="tooltiptext" id="training-l3-tip-print" role="tooltip">print("Gefunden:", fund)</span>
+                                </div>
+                                <div class="makecode-block-var block-tooltip microcode-group-gap" aria-describedby="training-l3-tip-if">
+                                    wenn <span class="makecode-input">fund = "Datenchip"</span> dann
+                                    <span class="tooltiptext" id="training-l3-tip-if" role="tooltip">if fund == "Datenchip":</span>
+                                </div>
+                                <div class="makecode-block block-tooltip microcode-indent-1" aria-describedby="training-l3-tip-append">
+                                    hänge <span class="makecode-var-pill">fund</span> an <span class="makecode-var-pill">inventar</span>
+                                    <span class="tooltiptext" id="training-l3-tip-append" role="tooltip">    inventar.append(fund)</span>
+                                </div>
                             </div>
-                            <div class="makecode-block block-tooltip" aria-describedby="training-l3-tip-print">
-                                zeige Text <span class="makecode-input">"Gefunden:", fund</span>
-                                <span class="tooltiptext" id="training-l3-tip-print" role="tooltip">print("Gefunden:", fund)</span>
-                            </div>
-                            <div class="makecode-block-var block-tooltip microcode-group-gap" aria-describedby="training-l3-tip-if">
-                                wenn <span class="makecode-input">fund = "Datenchip"</span> dann
-                                <span class="tooltiptext" id="training-l3-tip-if" role="tooltip">if fund == "Datenchip":</span>
-                            </div>
-                            <div class="makecode-block block-tooltip microcode-indent-1" aria-describedby="training-l3-tip-append">
-                                hänge <span class="makecode-var-pill">fund</span> an <span class="makecode-var-pill">inventar</span>
-                                <span class="tooltiptext" id="training-l3-tip-append" role="tooltip">    inventar.append(fund)</span>
+                        </div>
+
+                        <div data-training-phase="direct" hidden>
+                            <h2>Vereinfache deinen Code</h2>
+                            <p>Am richtigen Fundort kannst du auch ohne „<code>if</code>“ den Fund ins Inventar aufnehmen.</p>
+                            <p class="training-touch-note">Lösche die <code>if</code>-Zeile und rücke <code>inventar.append(fund)</code> ganz nach links. Suche und <code>print()</code> bleiben als echte Kontrolle erhalten.</p>
+
+                            <div class="block-hint" aria-label="Drei direkte Codehinweise">
+                                <div class="makecode-block block-tooltip" aria-describedby="training-l3-direct-tip-search">
+                                    suche hier und speichere als <span class="makecode-var-pill">fund</span>
+                                    <span class="tooltiptext" id="training-l3-direct-tip-search" role="tooltip">fund = agent.suche_hier()</span>
+                                </div>
+                                <div class="makecode-block block-tooltip" aria-describedby="training-l3-direct-tip-print">
+                                    zeige <span class="makecode-var-pill">fund</span>
+                                    <span class="tooltiptext" id="training-l3-direct-tip-print" role="tooltip">print(fund)</span>
+                                </div>
+                                <div class="makecode-block block-tooltip microcode-group-gap" aria-describedby="training-l3-direct-tip-append">
+                                    hänge <span class="makecode-var-pill">fund</span> direkt an <span class="makecode-var-pill">inventar</span>
+                                    <span class="tooltiptext" id="training-l3-direct-tip-append" role="tooltip">inventar.append(fund)</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -153,7 +177,7 @@ def markiere():
 
 inventar = []
 
-gehe_zu(-210, 65)
+gehe_zu(-210, -65)
 markiere()
 
 # Untersuche und sichere das Fundstück:
@@ -174,7 +198,7 @@ markiere()
     <script src="assets/vendor/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="assets/vendor/codemirror/5.65.2/python.min.js"></script>
     <script src="assets/editor.js"></script>
-    <script src="assets/agent-training-core.js?v=20260721-1"></script>
-    <script src="assets/agent-training.js?v=20260721-1"></script>
+    <script src="assets/agent-training-core.js?v=20260721-3"></script>
+    <script src="assets/agent-training.js?v=20260721-3"></script>
 </body>
 </html>

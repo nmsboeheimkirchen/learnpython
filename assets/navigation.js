@@ -50,14 +50,14 @@ window.AgentNavigation = (() => {
         },
         {
             number: "AG",
-            title: "Agentensteuerung",
+            title: "Drohnensteuerung",
             titleId: "link-agent-training-title",
             href: "agent_training_start.html",
-            description: "Turtle-Agenten über Koordinaten steuern, Orte markieren und echte Rückgaben untersuchen.",
-            unitLabel: "Schritt",
+            description: "Eine Python-Turtle wie eine Drohne über Koordinaten steuern, Orte markieren und Fundstücke untersuchen.",
+            unitLabel: "Level",
             levels: [
                 { id: "link-agent-training-l1", href: "agent_training_level1.html", label: "Zielpunkt erfassen" },
-                { id: "link-agent-training-l2", href: "agent_training_level2.html", label: "Eigene Agentenbefehle" },
+                { id: "link-agent-training-l2", href: "agent_training_level2.html", label: "Eigene Funktionen" },
                 { id: "link-agent-training-l3", href: "agent_training_level3.html", label: "Suchen und aufnehmen" }
             ]
         }
@@ -184,7 +184,7 @@ window.AgentNavigation = (() => {
         brand.className = "sidebar-brand";
         const eyebrow = document.createElement("span");
         eyebrow.className = "sidebar-eyebrow";
-        eyebrow.textContent = "Python Agenten-Training";
+        eyebrow.textContent = "Python Lernpfad";
         const title = document.createElement("h2");
         title.id = "sidebar-title";
         title.textContent = "Dein Lernpfad";
@@ -203,7 +203,7 @@ window.AgentNavigation = (() => {
 
         const nav = document.createElement("nav");
         nav.className = "mission-navigation";
-        nav.setAttribute("aria-label", "Missionen und Trainingsschritte");
+        nav.setAttribute("aria-label", "Missionen und Trainingslevel");
 
         missions.forEach((mission, missionIndex) => {
             const locked = missionIndex > 0;

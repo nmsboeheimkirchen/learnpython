@@ -3,43 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="description" content="Agentensteuerung Level 1: Einen Turtle-Agenten mit goto bewegen, mit dot markieren und seine Position ausgeben.">
+    <meta name="description" content="Drohnensteuerung Level 1: Eine Python-Turtle mit sichtbarer Spur bewegen, markieren und ihre Position ausgeben.">
     <meta name="color-scheme" content="dark">
-    <title>Agentensteuerung 1 – Zielpunkt erfassen</title>
+    <title>Drohnensteuerung 1 – Zielpunkt erfassen</title>
     <script src="assets/vendor/skulpt/1.2.0/skulpt.min.js"></script>
     <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
-    <script src="assets/runner.js?v=20260721-1"></script>
-    <script src="assets/teacher-solutions.js?v=20260721-1"></script>
+    <script src="assets/runner.js?v=20260721-3"></script>
+    <script src="assets/teacher-solutions.js?v=20260721-3"></script>
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
     <link rel="stylesheet" href="assets/style.css?v=20260720-3">
-    <link rel="stylesheet" href="assets/agent-training.css?v=20260721-1">
+    <link rel="stylesheet" href="assets/agent-training.css?v=20260721-3">
 </head>
 <body class="agent-training-level" data-training-level="agent_training_level1">
     <a class="skip-link" href="#python-editor">Zum Python-Editor</a>
     <div id="navigation-root"></div>
-    <script src="assets/navigation.js?v=20260721-1"></script>
+    <script src="assets/navigation.js?v=20260721-3"></script>
 
     <main id="main-content">
         <div class="progress-container training-progress">
-            <span class="level-badge">Schritt 1 von 3</span>
+            <span class="level-badge">Level 1 von 3</span>
             <div class="progress-bar-bg" aria-hidden="true">
                 <div class="progress-bar-fill" id="progress-fill" style="width: 33.333%;"></div>
             </div>
             <span id="status-text" role="status">Warte auf deinen Code</span>
-            <button id="next-level-btn" class="next-level-btn" style="display:none" onclick="window.location.href='agent_training_level2.html'">Schritt 2</button>
+            <button id="next-level-btn" class="next-level-btn" style="display:none" onclick="window.location.href='agent_training_level2.html'">Nächstes Level</button>
         </div>
 
         <div class="training-shell">
             <section class="training-briefing" aria-labelledby="training-level-title">
                 <div>
-                    <span class="training-eyebrow">Agentensteuerung · Koordinatenlabor</span>
+                    <span class="training-eyebrow">Drohnensteuerung · Koordinatenlabor</span>
                     <h1 id="training-level-title">Zielpunkt erfassen</h1>
-                    <p>Bringe deinen Agenten zum Signalpunkt <strong>(160, 80)</strong>, markiere den Ort und mache seine echte Position im Terminal sichtbar.</p>
+                    <p>Schalte die Spur deiner Python-Turtle ein, fliege zum Signalpunkt <strong>(160, 80)</strong>, markiere den Ort und schalte die Spur danach wieder aus.</p>
                 </div>
                 <ul class="training-concept-row" aria-label="Neue Turtle-Befehle">
+                    <li>pendown()</li>
                     <li>goto(x, y)</li>
                     <li>dot(größe, farbe)</li>
+                    <li>penup()</li>
                     <li>position()</li>
                 </ul>
             </section>
@@ -77,7 +79,7 @@
                         <svg id="training-marks-layer" class="training-marks-layer" viewBox="0 0 800 450" preserveAspectRatio="none" aria-hidden="true"></svg>
                         <div id="agent-training-turtle" class="training-turtle-layer" aria-hidden="true"></div>
 
-                        <div class="training-coordinate-hud" aria-label="Aktuelle Agentenposition">
+                        <div class="training-coordinate-hud" aria-label="Aktuelle Drohnenposition">
                             <span>X <strong id="coordinate-x">0</strong></span>
                             <span>Y <strong id="coordinate-y">0</strong></span>
                         </div>
@@ -87,7 +89,8 @@
                     <div class="training-legend" aria-label="Koordinatenhilfe">
                         <span><strong>X</strong> bewegt nach rechts oder links.</span>
                         <span><strong>Y</strong> bewegt nach oben oder unten.</span>
-                        <span><code>penup()</code>: Bewegung ohne Spur.</span>
+                        <span><code>pendown()</code>: Spur einschalten.</span>
+                        <span><code>penup()</code>: Spur ausschalten.</span>
                         <span><code>dot()</code>: ein sichtbarer Punkt bleibt zurück.</span>
                     </div>
 
@@ -95,10 +98,10 @@
                         <div>
                             <span class="training-eyebrow">Live-Feedback</span>
                             <h2 id="training-feedback-title">Noch nicht ausgeführt</h2>
-                            <p id="training-feedback-message">Starte deinen Code. Die Prüfung beobachtet den echten Agentenweg.</p>
+                            <p id="training-feedback-message">Starte deinen Code. Die Prüfung beobachtet den echten Drohnenweg.</p>
                         </div>
                         <ul id="training-checks" class="training-checks" aria-label="Prüfergebnisse">
-                            <li class="training-check is-missing"><span class="training-check-icon" aria-hidden="true">○</span><span>Zielpunkt wirklich erreicht</span></li>
+                            <li class="training-check is-missing"><span class="training-check-icon" aria-hidden="true">○</span><span>Ziel mit sichtbarer Spur erreicht</span></li>
                             <li class="training-check is-missing"><span class="training-check-icon" aria-hidden="true">○</span><span>Punkt direkt am Ziel markiert</span></li>
                             <li class="training-check is-missing"><span class="training-check-icon" aria-hidden="true">○</span><span>Echte Position mit print() ausgegeben</span></li>
                         </ul>
@@ -108,9 +111,11 @@
                 <section class="training-code-panel" aria-labelledby="training-code-title">
                     <div class="training-task-card">
                         <h2>Dein Auftrag</h2>
-                        <p>Der Agent ist schon vorbereitet. Ergänze unter dem Kommentar genau diese drei neuen Schritte:</p>
+                        <p>Die Drohne ist vorbereitet. Ergänze diese fünf Befehle und beobachte, wie <code>pendown()</code> und <code>penup()</code> die Spur ein- und ausschalten:</p>
                         <ol class="training-command-list">
+                            <li><code>agent.pendown()</code></li>
                             <li><code>agent.goto(160, 80)</code></li>
+                            <li><code>agent.penup()</code></li>
                             <li><code>agent.dot(30, "#7df2a9")</code></li>
                             <li><code>print("Position:", agent.position())</code></li>
                         </ol>
@@ -128,7 +133,7 @@ agent.color("#71edf4")
 agent.speed(2)
 agent.penup()
 
-# Ergänze hier deine drei Befehle:
+# Ergänze hier deine fünf Befehle:
 </textarea>
 
                     <div class="training-controls" aria-label="Programmaktionen">
@@ -146,7 +151,7 @@ agent.penup()
     <script src="assets/vendor/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="assets/vendor/codemirror/5.65.2/python.min.js"></script>
     <script src="assets/editor.js"></script>
-    <script src="assets/agent-training-core.js?v=20260721-1"></script>
-    <script src="assets/agent-training.js?v=20260721-1"></script>
+    <script src="assets/agent-training-core.js?v=20260721-3"></script>
+    <script src="assets/agent-training.js?v=20260721-3"></script>
 </body>
 </html>

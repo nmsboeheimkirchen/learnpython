@@ -8,7 +8,9 @@ agent.color("#71edf4")
 agent.speed(2)
 agent.penup()
 
+agent.pendown()
 agent.goto(160, 80)
+agent.penup()
 agent.dot(30, "#7df2a9")
 print("Position:", agent.position())
 agent.goto(160, 180)`;
@@ -32,7 +34,7 @@ markiere()
 gehe_zu(80, 130)
 markiere()`;
 
-const level3PassingCode = `import turtle
+const level3GuardedCode = `import turtle
 
 agent = turtle.Turtle()
 agent.shape("triangle")
@@ -47,18 +49,30 @@ def markiere():
     agent.dot(30, "#7df2a9")
 
 inventar = []
-gehe_zu(-210, 65)
+gehe_zu(-210, -65)
 markiere()
 fund = agent.suche_hier()
 print("Gefunden:", fund)
 if fund == "Datenchip":
     inventar.append(fund)`;
 
-const level3InventedItemCode = level3PassingCode.replace(
-    "    inventar.append(fund)",
-    `    if False:
+const level3DirectCode = level3GuardedCode.replace(
+    'print("Gefunden:", fund)\nif fund == "Datenchip":\n    inventar.append(fund)',
+    "print(fund)\ninventar.append(fund)"
+);
+
+const level3InventedItemCode = level3DirectCode.replace(
+    "print(fund)\ninventar.append(fund)",
+    'print(fund)\nfund = "Datenchip"\ninventar.append(fund)'
+);
+
+const level3DeadGuardCode = level3DirectCode.replace(
+    "print(fund)\ninventar.append(fund)",
+    `print(fund)
+def nie_aufgerufen():
+    if fund == "Datenchip":
         inventar.append(fund)
-    inventar.append("Datenchip")`
+inventar.append(fund)`
 );
 
 function capturePageErrors(page) {
@@ -96,6 +110,23 @@ test("Agent training level 1 observes the real Turtle route, mark and position o
     await expect(page.locator("#training-stage-message")).toBeVisible();
     await expect(page.locator("#training-checks .is-passed")).toHaveCount(3);
     await expect(page.locator("#console-output")).toContainText("Position:");
+    const visibleTrail = page.locator("#training-marks-layer .training-live-trail");
+    const visibleTrailCount = await visibleTrail.count();
+    expect(visibleTrailCount).toBeGreaterThan(0);
+    await expect(visibleTrail.first()).toBeVisible();
+    await expect(page.locator("#next-level-btn")).toHaveText("Nächstes Level");
+    await expect(page.locator("#next-level-btn")).toBeVisible();
+    const completion = page.locator("#success-overlay");
+    await expect(completion).toBeVisible();
+    await expect(completion).toHaveAttribute("role", "dialog");
+    await expect(completion.locator('[data-success-symbol="graduation-cap"]')).toBeVisible();
+    await expect(completion.locator(".success-btn")).toHaveText("Nächstes Level");
+    await expect(completion.locator(".close-overlay-btn")).toHaveText("Im Editor weiterspielen");
+
+    const completionBox = await completion.locator(".success-badge").boundingBox();
+    expect(completionBox).not.toBeNull();
+    expect(completionBox.y).toBeGreaterThanOrEqual(0);
+    expect(completionBox.y + completionBox.height).toBeLessThanOrEqual(page.viewportSize().height + 1);
 
     const state = await page.evaluate(() => window.AgentTrainingLevel.getState());
     expect(state.visitedTarget).toBe(true);
@@ -149,24 +180,32 @@ test("Agent training level 1 observes the real Turtle route, mark and position o
     expect(canvasCount).toBeGreaterThan(0);
     expect(canvasCount).toBeLessThanOrEqual(2);
 
+    await completion.locator(".close-overlay-btn").click();
+    await expect(completion).toBeHidden();
+    expect(await page.evaluate(() => window.editor.hasFocus())).toBe(true);
     await page.locator("#reset-btn").click();
     await expect(page.locator("#agent-training-turtle canvas")).toHaveCount(0);
     await expect(page.locator("#training-marks-layer .training-live-dot")).toHaveCount(0);
+    await expect(page.locator("#training-marks-layer .training-live-trail")).toHaveCount(0);
     await expect(page.locator("#coordinate-x")).toHaveText("0");
     await expect(page.locator("#coordinate-y")).toHaveText("0");
     await expect(page.locator("#training-stage-message")).toBeHidden();
+    await expect(page.locator("#status-text")).not.toHaveCSS("color", "rgb(52, 168, 83)");
 
     await page.goto("/agent_training_level1.html?e2e");
     await page.evaluate(() => window.editor.setValue(`import turtle
 agent = turtle.Turtle()
+agent.pendown()
+agent.goto(0, 10)
 agent.penup()
-agent.goto(80, 160)
+agent.pendown()
+agent.goto(160, 80)
 agent.dot(30)
-print("Position: (160, 80)")`));
+print("Position:", agent.position())`));
     await page.locator("#run-btn").click();
     await expect(page.locator("#run-status")).toHaveText("Code prüfen");
-    await expect(page.locator("#training-checks .is-passed")).toHaveCount(0);
-    await expect(page.locator("#training-feedback-message")).toContainText("(80, 160)");
+    await expect(page.locator("#training-checks .is-passed")).toHaveCount(2);
+    await expect(page.locator("#training-feedback-message")).toContainText("Spur ein");
     expect(pageErrors).toEqual([]);
 });
 
@@ -188,27 +227,76 @@ test("Agent training levels 2 and 3 validate reusable commands and a real found 
     );
     expect(markerSizes).toEqual(["30", "30"]);
     await expect(page.locator("#next-level-btn")).toBeVisible();
+    await expect(page.locator("#next-level-btn")).toHaveText("Nächstes Level");
+    await expect(page.locator('#success-overlay [data-success-symbol="graduation-cap"]')).toBeVisible();
 
     await page.goto("/agent_training_level3.html?e2e");
-    await page.evaluate(code => window.editor.setValue(code), level3PassingCode);
+    await page.evaluate(code => window.editor.setValue(code), level3GuardedCode);
     await page.locator("#run-btn").click();
 
-    await expect(page.locator("#run-status")).toHaveText("Geschafft", { timeout: 12_000 });
+    await expect(page.locator("#run-status")).toHaveText("Weiter ohne if", { timeout: 12_000 });
     await expect(page.locator("#training-checks .is-passed")).toHaveCount(3);
     await expect(page.locator("#console-output")).toContainText("Gefunden: Datenchip");
     await expect(page.locator("#training-inventory-items")).toHaveText("Datenchip");
+    await expect(page.locator('[data-training-phase="guarded"]')).toBeHidden();
+    await expect(page.locator('[data-training-phase="direct"]')).toBeVisible();
+    await expect(page.locator("#training-feedback-message")).toContainText("ohne „if“");
+    await expect(page.locator("body")).not.toHaveClass(/training-complete/);
+    await expect(page.locator("#success-overlay")).toHaveCount(0);
+    const phaseOneState = await page.evaluate(() => window.AgentTrainingLevel.getState());
+    expect(phaseOneState.level3Phase).toBe("direct");
+    expect(phaseOneState.collectedRealFind).toBe(true);
+    const phaseOneCompletedCode = await page.evaluate(() => JSON.parse(
+        localStorage.getItem("completedLevelCode_v1") || "{}"
+    ));
+    expect(phaseOneCompletedCode.agent_training_level3).toBeUndefined();
+
+    await page.evaluate(code => window.editor.setValue(code), level3DirectCode);
+    await page.locator("#run-btn").click();
+
+    await expect(page.locator("#run-status")).toHaveText("Geschafft", { timeout: 12_000 });
+    await expect(page.locator("#training-checks .is-passed")).toHaveCount(4);
+    const finalCompletion = page.locator("#success-overlay");
+    await expect(finalCompletion).toBeVisible();
+    await expect(finalCompletion.locator('[data-success-symbol="diploma"]')).toBeVisible();
+    await expect(finalCompletion.locator("h1")).toHaveText("TRAININGSMISSION ABGESCHLOSSEN");
+    await expect(finalCompletion.locator(".success-btn")).toHaveText("Zur Trainingsübersicht");
+    const fireworkBursts = page.locator("#training-fireworks .training-firework");
+    await expect(fireworkBursts).toHaveCount(3);
+    const fireworkSparks = page.locator("#training-fireworks .training-firework-spark");
+    await expect(fireworkSparks).toHaveCount(54);
+    const firstSparkAnimation = await fireworkSparks.first().evaluate(
+        element => getComputedStyle(element).animationName
+    );
+    expect(firstSparkAnimation).toContain("training-firework-spark");
     const level3State = await page.evaluate(() => window.AgentTrainingLevel.getState());
     expect(level3State.foundItem).toBe("Datenchip");
     expect(level3State.collectedRealFind).toBe(true);
+    expect(level3State.level3Phase).toBe("direct");
 
+    await finalCompletion.locator(".close-overlay-btn").click();
+    await expect(page.locator("#training-fireworks")).toHaveCount(0);
     await page.locator("#reset-btn").click();
     await expect(page.locator("#training-inventory-items")).toHaveText("leer");
     await expect(page.locator("#training-marks-layer .training-live-dot")).toHaveCount(0);
+    await expect(page.locator('[data-training-phase="guarded"]')).toBeVisible();
+    await expect(page.locator('[data-training-phase="direct"]')).toBeHidden();
+
+    await page.evaluate(code => window.editor.setValue(code), level3DeadGuardCode);
+    await page.locator("#run-btn").click();
+    await expect(page.locator("#run-status")).toHaveText(/Code pr/);
+    await expect(page.locator("#training-checks .is-passed")).toHaveCount(2);
+    await expect(page.locator('[data-training-phase="guarded"]')).toBeVisible();
+    await expect(page.locator('[data-training-phase="direct"]')).toBeHidden();
+
+    await page.evaluate(code => window.editor.setValue(code), level3GuardedCode);
+    await page.locator("#run-btn").click();
+    await expect(page.locator("#run-status")).toHaveText("Weiter ohne if", { timeout: 12_000 });
 
     await page.evaluate(code => window.editor.setValue(code), level3InventedItemCode);
     await page.locator("#run-btn").click();
     await expect(page.locator("#run-status")).toHaveText(/Code pr/);
-    await expect(page.locator("#training-checks .is-passed")).toHaveCount(2);
+    await expect(page.locator("#training-checks .is-passed")).toHaveCount(3);
     await expect(page.locator("#training-inventory-items")).toHaveText("Datenchip");
     const inventedState = await page.evaluate(() => window.AgentTrainingLevel.getState());
     expect(inventedState.foundItem).toBe("Datenchip");

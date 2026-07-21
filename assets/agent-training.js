@@ -20,6 +20,8 @@
     const checksList = document.getElementById("training-checks");
     const stageMessage = document.getElementById("training-stage-message");
     const inventoryItems = document.getElementById("training-inventory-items");
+    const taskPhases = [...document.querySelectorAll("[data-training-phase]")];
+    const teacherSolutionButton = document.querySelector("[data-teacher-solution]");
 
     if (
         !core || !levelConfig || !editor || !window.Sk || !turtleTarget || !marksLayer ||
@@ -27,7 +29,7 @@
         !coordinateX || !coordinateY || !feedbackTitle || !feedbackMessage ||
         !checksList || !stageMessage
     ) {
-        throw new Error("Das Agenten-Training ist unvollständig aufgebaut.");
+        throw new Error("Das Drohnen-Training ist unvollständig aufgebaut.");
     }
 
     const defaultCode = editor.getValue();
@@ -43,6 +45,27 @@
     let cancelRequested = false;
     let issuedFindTokens = new Set();
     let inventoryAppendEvents = [];
+    let completionShown = false;
+    let level3Phase = "guarded";
+    let lastLivePosition = { x: 0, y: 0 };
+
+    function applyLevel3Phase() {
+        if (levelId !== "agent_training_level3") return;
+        taskPhases.forEach(section => {
+            section.hidden = section.dataset.trainingPhase !== level3Phase;
+        });
+        document.body.classList.toggle("training-phase-direct", level3Phase === "direct");
+        if (teacherSolutionButton) {
+            teacherSolutionButton.dataset.teacherSolution = level3Phase === "direct"
+                ? "agent_training_level3_direct"
+                : "agent_training_level3";
+        }
+    }
+
+    function enterDirectInventoryPhase() {
+        level3Phase = "direct";
+        applyLevel3Phase();
+    }
 
     function builtinRead(path) {
         const file = Sk.builtinFiles?.files?.[path];
@@ -58,6 +81,7 @@
     function setTopStatus(text, state = "ready") {
         statusText.textContent = text;
         statusText.dataset.state = state;
+        statusText.style.color = "";
     }
 
     function setRunning(nextRunning) {
@@ -66,7 +90,7 @@
         runButton.disabled = nextRunning;
         runButton.setAttribute("aria-busy", String(nextRunning));
         runButton.innerHTML = nextRunning
-            ? '<span class="training-spinner" aria-hidden="true"></span> Agent unterwegs'
+            ? '<span class="training-spinner" aria-hidden="true"></span> Drohne unterwegs'
             : '<span aria-hidden="true">▶</span> Training starten';
         resetButton.textContent = nextRunning
             ? (cancelRequested ? "Wird gestoppt …" : "■ Training stoppen")
@@ -99,6 +123,7 @@
             turtleTarget.turtleInstance = undefined;
         }
         activeTurtle = null;
+        lastLivePosition = { x: 0, y: 0 };
         turtleTarget.replaceChildren();
         marksLayer.replaceChildren();
     }
@@ -131,10 +156,44 @@
         marksLayer.appendChild(marker);
     }
 
+    function renderLiveTrail(point, trailDown) {
+        const x = Number(point?.x);
+        const y = Number(point?.y);
+        const previousX = Number(lastLivePosition?.x);
+        const previousY = Number(lastLivePosition?.y);
+        if (![x, y, previousX, previousY].every(Number.isFinite)) {
+            lastLivePosition = {
+                x: Number.isFinite(x) ? x : 0,
+                y: Number.isFinite(y) ? y : 0
+            };
+            return;
+        }
+
+        const moved = Math.hypot(x - previousX, y - previousY) > 0.25;
+        if (trailDown && moved) {
+            const existingSegments = marksLayer.querySelectorAll(".training-live-trail");
+            if (existingSegments.length >= 600) existingSegments[0].remove();
+            const segment = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            segment.classList.add("training-live-trail");
+            segment.setAttribute("x1", String(400 + previousX));
+            segment.setAttribute("y1", String(225 - previousY));
+            segment.setAttribute("x2", String(400 + x));
+            segment.setAttribute("y2", String(225 - y));
+            marksLayer.appendChild(segment);
+        }
+        lastLivePosition = { x, y };
+    }
+
     function recordRawPosition(raw) {
         const state = raw?.getState?.();
         if (!state) return;
-        core.recordPosition(runState, { x: state.x, y: state.y });
+        const point = { x: state.x, y: state.y };
+        renderLiveTrail(point, Boolean(state.down));
+        core.recordPosition(
+            runState,
+            point,
+            { trailDown: Boolean(state.down) }
+        );
         updateCoordinates(runState.current);
         document.body.classList.toggle("training-target-visited", runState.visitedTargetIds.length > 0);
     }
@@ -328,8 +387,36 @@
     function initialResult(message) {
         return core.initialResult(
             levelId,
-            message || "Starte deinen Code. Die Prüfung beobachtet den echten Agentenweg."
+            message || "Starte deinen Code. Die Prüfung beobachtet den echten Drohnenweg.",
+            { level3Phase }
         );
+    }
+
+    function showTrainingCompletion() {
+        if (completionShown || typeof window.triggerSuccess !== "function") return;
+        completionShown = true;
+        const commonOptions = {
+            className: "training-completion",
+            closeLabel: "Im Editor weiterspielen"
+        };
+        if (levelId === "agent_training_level3") {
+            window.triggerSuccess(true, levelConfig.successMessage, {
+                ...commonOptions,
+                title: "TRAININGSMISSION ABGESCHLOSSEN",
+                statusLabel: "TRAINING ABGESCHLOSSEN!",
+                symbol: "diploma",
+                celebration: "fireworks",
+                primaryHref: "agent_training_start.html",
+                primaryLabel: "Zur Trainingsübersicht"
+            });
+            return;
+        }
+        window.triggerSuccess(false, levelConfig.successMessage, {
+            ...commonOptions,
+            title: "LEVEL GESCHAFFT",
+            statusLabel: "LEVEL GESCHAFFT!",
+            symbol: "graduation-cap"
+        });
     }
 
     function validateRun(code) {
@@ -338,8 +425,15 @@
         const structure = typeof window.validateLevelSolution === "function"
             ? window.validateLevelSolution(levelId, code, outputText)
             : true;
-        const result = core.validate(runState, outputText, structure);
+        const result = core.validate(runState, outputText, structure, { level3Phase });
         renderChecks(result);
+
+        if (levelId === "agent_training_level3" && result.phaseComplete) {
+            enterDirectInventoryPhase();
+            setStatus("Weiter ohne if", "success");
+            setTopStatus("Drei Ziele erreicht – jetzt vereinfachen", "success");
+            return result;
+        }
 
         if (result.passed) {
             window.saveCompletedLevelCode?.(levelId, code);
@@ -347,6 +441,7 @@
             if (nextButton) nextButton.style.display = "block";
             setStatus("Geschafft", "success");
             setTopStatus(levelConfig.successTitle, "success");
+            showTrainingCompletion();
         } else {
             setStatus("Code prüfen", "warning");
             setTopStatus("Noch nicht ganz – lies den nächsten Hinweis", "warning");
@@ -382,9 +477,9 @@
         stageMessage.hidden = true;
         updateInventoryHud(null);
         updateCoordinates();
-        renderChecks(initialResult("Simulation läuft – die drei Lernziele werden live geprüft."));
+        renderChecks(initialResult("Simulation läuft – die Lernziele werden live geprüft."));
         setRunning(true);
-        setStatus("Agent unterwegs", "running");
+        setStatus("Drohne unterwegs", "running");
         setTopStatus("Simulation läuft …", "running");
 
         const code = editor.getValue();
@@ -421,18 +516,24 @@
             Sk.execStart = new Date(0);
             setRunning(true);
             setStatus("Training wird gestoppt", "warning");
-            setTopStatus("Agent wird zurückgesetzt …", "warning");
+            setTopStatus("Drohne wird zurückgesetzt …", "warning");
             return;
         }
 
         runGeneration += 1;
+        if (levelId === "agent_training_level3") {
+            level3Phase = "guarded";
+            applyLevel3Phase();
+        }
         editor.setValue(defaultCode);
         editor.clearHistory?.();
         runState = core.createState(levelId);
         outputText = "";
         issuedFindTokens = new Set();
         inventoryAppendEvents = [];
-        consoleOutput.textContent = "Bereit für deinen nächsten Agentenbefehl.";
+        completionShown = false;
+        window.cancelSuccessCelebration?.();
+        consoleOutput.textContent = "Bereit für deinen nächsten Drohnenbefehl.";
         consoleOutput.classList.remove("is-error");
         document.body.classList.remove(
             "training-complete",
@@ -441,6 +542,8 @@
             "training-search-found"
         );
         stageMessage.hidden = true;
+        const overlay = document.getElementById("success-overlay");
+        if (overlay) overlay.style.display = "none";
         clearTurtle();
         updateInventoryHud(null);
         updateCoordinates();
@@ -459,6 +562,8 @@
 
     const restoredCompletedCode = window.restoreCompletedLevelCode?.(levelId);
     if (restoredCompletedCode && nextButton) nextButton.style.display = "block";
+    if (restoredCompletedCode && levelId === "agent_training_level3") enterDirectInventoryPhase();
+    applyLevel3Phase();
     stageMessage.textContent = levelConfig.stageMessage;
     renderChecks(initialResult());
     updateInventoryHud(null);
@@ -479,7 +584,8 @@
                 visitedTargetIds: [...runState.visitedTargetIds],
                 markedTargetIds: [...runState.markedTargetIds],
                 output: outputText,
-                running
+                running,
+                level3Phase
             };
         },
         reset: resetLevel,

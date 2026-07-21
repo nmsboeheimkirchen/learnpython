@@ -733,14 +733,27 @@ const LEVEL_VALIDATORS = {
         ]);
     },
     agent_training_level1({ statements }) {
-        const printsRealPosition = statements.some(statement =>
+        const topLevelStatements = statements.filter(statement => statement.indent === 0);
+        const commandIndex = (methodName, startIndex = 0) => topLevelStatements.findIndex(
+            (statement, index) => index >= startIndex &&
+                statementStartsWith(statement, ["agent", ".", methodName, "("])
+        );
+        const penDownIndex = commandIndex("pendown");
+        const gotoIndex = commandIndex("goto", penDownIndex + 1);
+        const penUpIndex = commandIndex("penup", gotoIndex + 1);
+        const usesTrailControls = penDownIndex >= 0 && gotoIndex > penDownIndex && penUpIndex > gotoIndex;
+        const printsRealPosition = topLevelStatements.some(statement =>
             statementStartsWith(statement, ["print", "("]) &&
             statementContains(statement, [".", "position", "("])
         );
         const result = firstFailedRequirement([
-            { passed: printsRealPosition, message: "Gib die echte Agentenposition mit print(...position()) aus." }
+            {
+                passed: usesTrailControls,
+                message: "Schalte vor goto() mit pendown() die Spur ein und danach mit penup() wieder aus."
+            },
+            { passed: printsRealPosition, message: "Gib die echte Drohnenposition mit print(...position()) aus." }
         ]);
-        return { ...result, evidence: { printsRealPosition } };
+        return { ...result, evidence: { printsRealPosition, usesTrailControls } };
     },
     agent_training_level2({ statements }) {
         const movementFunction = analyzeCalledFunctionForMethod(statements, "goto", 2);
@@ -748,7 +761,7 @@ const LEVEL_VALIDATORS = {
         const result = firstFailedRequirement([
             {
                 passed: movementFunction,
-                message: "Bewege den Agenten in einer eigenen, mindestens zweimal aufgerufenen Funktion mit goto(...)."
+                message: "Bewege die Drohne in einer eigenen, mindestens zweimal aufgerufenen Funktion mit goto(...)."
             },
             {
                 passed: markerFunction,
@@ -758,15 +771,23 @@ const LEVEL_VALIDATORS = {
         return { ...result, evidence: { movementFunction, markerFunction } };
     },
     agent_training_level3({ statements }) {
-        const searchStatement = findStatement(statements, [
-            "fund", "=", "agent", ".", "suche_hier", "(", ")"
-        ]);
+        const searchStatement = statements.find(statement =>
+            statement.indent === 0 &&
+            statementStartsWith(statement, [
+                "fund", "=", "agent", ".", "suche_hier", "(", ")"
+            ])
+        );
         const printStatement = statements.find(statement =>
+            statement.indent === 0 &&
             statementStartsWith(statement, ["print", "("]) &&
             statementContains(statement, ["fund"])
         );
         const ifPattern = ["if", "fund", "==", stringToken("Datenchip"), ":"];
-        const ifStatement = findStatement(statements, ifPattern);
+        const anyIfStatement = findStatement(statements, ifPattern);
+        const ifStatement = statements.find(statement =>
+            statement.indent === 0 && statementStartsWith(statement, ifPattern)
+        );
+        const hasFundGuard = Boolean(anyIfStatement);
         const searchAssignment = Boolean(searchStatement);
         const printsFund = Boolean(
             printStatement && searchStatement && printStatement.line > searchStatement.line
@@ -779,6 +800,13 @@ const LEVEL_VALIDATORS = {
                 ["inventar", ".", "append", "(", "fund", ")"]
             )
         );
+        const directAppendStatement = statements.find(statement =>
+            statement.indent === 0 &&
+            statementStartsWith(statement, ["inventar", ".", "append", "(", "fund", ")"])
+        );
+        const directAppend = Boolean(
+            directAppendStatement && printStatement && directAppendStatement.line > printStatement.line
+        );
         const result = firstFailedRequirement([
             {
                 passed: searchAssignment,
@@ -786,14 +814,23 @@ const LEVEL_VALIDATORS = {
             },
             {
                 passed: printsFund,
-                message: "Gib fund nach der Suche mit print(\"Gefunden:\", fund) aus."
+                message: "Gib fund nach der Suche mit print(fund) aus."
             },
             {
-                passed: guardedAppend,
-                message: "Prüfe fund mit if und hänge eingerückt genau fund an inventar an."
+                passed: guardedAppend || directAppend,
+                message: "Hänge genau fund mit inventar.append(fund) an inventar an."
             }
         ]);
-        return { ...result, evidence: { searchAssignment, printsFund, guardedAppend } };
+        return {
+            ...result,
+            evidence: {
+                searchAssignment,
+                printsFund,
+                guardedAppend,
+                directAppend,
+                hasFundGuard
+            }
+        };
     }
 };
 
@@ -813,7 +850,7 @@ const LEVEL_OUTCOMES = {
     mission4_level3: {
         unlocks: ["link-agent-training-title", "link-agent-training-l1"],
         finale: true,
-        successMessage: "Nachricht verschlüsselt! Die Agentensteuerung ist freigeschaltet."
+        successMessage: "Nachricht verschlüsselt! Die Drohnensteuerung ist freigeschaltet."
     },
     agent_training_level1: {
         unlocks: ["link-agent-training-l2"],
@@ -821,7 +858,7 @@ const LEVEL_OUTCOMES = {
     },
     agent_training_level2: {
         unlocks: ["link-agent-training-l3"],
-        successMessage: "Eigene Agentenbefehle funktionieren."
+        successMessage: "Eigene Drohnenfunktionen funktionieren."
     },
     agent_training_level3: { unlocks: [], successMessage: "Datenchip echt gefunden und gesichert." }
 };
@@ -964,7 +1001,72 @@ function runit(levelTestFunction) {
     }
 }
 
-function triggerSuccess(isFinale = false, successMessage = "") {
+function trainingAwardSvg(symbol) {
+    if (symbol === "graduation-cap") {
+        return `
+            <svg viewBox="0 0 160 120" role="img" aria-label="Absolventenhut">
+                <path class="award-glow" d="M14 43 80 13l66 30-66 30Z"></path>
+                <path d="M35 57v29c19 17 71 17 90 0V57L80 77Z"></path>
+                <path d="M144 45v37"></path>
+                <circle cx="144" cy="89" r="7"></circle>
+            </svg>`;
+    }
+    if (symbol === "diploma") {
+        return `
+            <svg viewBox="0 0 180 120" role="img" aria-label="Abschlussrolle">
+                <path class="award-glow" d="M31 24h118v72H31c13-10 13-62 0-72Z"></path>
+                <path d="M31 24c20 0 20 72 0 72M149 24c-17 0-17 72 0 72"></path>
+                <circle cx="112" cy="76" r="17"></circle>
+                <path d="m103 88-7 21 16-9 15 9-7-21"></path>
+            </svg>`;
+    }
+    return '<div class="trophy" aria-hidden="true">🏆</div>';
+}
+
+let successCelebrationTimeouts = [];
+
+function cancelSuccessCelebration() {
+    successCelebrationTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+    successCelebrationTimeouts = [];
+    document.getElementById("training-fireworks")?.remove();
+}
+
+function triggerTrainingFireworks() {
+    cancelSuccessCelebration();
+    const overlay = document.getElementById("success-overlay");
+    if (!overlay) return;
+
+    const colors = ["#71edf4", "#d995ff", "#f1df9b", "#7df2a9"];
+    const layer = document.createElement("div");
+    layer.id = "training-fireworks";
+    layer.className = "training-fireworks";
+    layer.setAttribute("aria-hidden", "true");
+
+    const burst = (x, y, delay) => {
+        const firework = document.createElement("div");
+        firework.className = "training-firework";
+        firework.style.left = `${x * 100}%`;
+        firework.style.top = `${y * 100}%`;
+        firework.style.setProperty("--burst-delay", `${delay}ms`);
+        for (let index = 0; index < 18; index += 1) {
+            const spark = document.createElement("i");
+            spark.className = "training-firework-spark";
+            spark.style.setProperty("--spark-angle", `${index * 20}deg`);
+            spark.style.setProperty("--spark-distance", `-${82 + (index % 3) * 18}px`);
+            spark.style.setProperty("--spark-color", colors[index % colors.length]);
+            spark.style.setProperty("--spark-delay", `${delay}ms`);
+            firework.appendChild(spark);
+        }
+        layer.appendChild(firework);
+    };
+    burst(0.2, 0.34, 0);
+    burst(0.8, 0.32, 260);
+    burst(0.5, 0.16, 520);
+    overlay.appendChild(layer);
+    successCelebrationTimeouts.push(setTimeout(() => layer.remove(), 1900));
+}
+
+function triggerSuccess(isFinale = false, successMessage = "", options = {}) {
     // Ein modaler Drawer läge sonst in der Browser-Top-Layer über der Belohnung.
     setNavOpen(false, false);
 
@@ -974,21 +1076,31 @@ function triggerSuccess(isFinale = false, successMessage = "") {
         overlay = document.createElement("div");
         overlay.id = "success-overlay";
         overlay.className = "success-overlay";
-        
-        let titleText = isFinale ? "MISSION ERFÜLLT" : "LEVEL GESCHAFFT";
-        let subText = successMessage || (isFinale ? "Sehr starker Code, Agent!" : "Gut gemacht! Weiter geht's.");
+        overlay.setAttribute?.("role", "dialog");
+        overlay.setAttribute?.("aria-modal", "true");
+        overlay.setAttribute?.("aria-labelledby", "success-overlay-title");
 
-                overlay.innerHTML = `
-            <div class="success-badge">
-                <div class="trophy">🏆</div>
-                <h1>${titleText}</h1>
+        const titleText = options.title || (isFinale ? "MISSION ERFÜLLT" : "LEVEL GESCHAFFT");
+        const subText = successMessage || (isFinale ? "Sehr starker Code, Agent!" : "Gut gemacht! Weiter geht's.");
+        const symbol = ["graduation-cap", "diploma"].includes(options.symbol)
+            ? options.symbol
+            : "trophy";
+        const closeLabel = options.closeLabel || "Weiterspielen / Editor ansehen";
+        const completionClass = options.className === "training-completion"
+            ? " training-completion"
+            : "";
+
+        overlay.innerHTML = `
+            <div class="success-badge${completionClass}">
+                <div class="success-symbol" data-success-symbol="${symbol}" aria-hidden="true">${trainingAwardSvg(symbol)}</div>
+                <h1 id="success-overlay-title">${titleText}</h1>
                 <p>${subText}</p>
                 <div class="btn-container"></div>
-                <button class="close-overlay-btn" onclick="document.getElementById('success-overlay').style.display='none'">Weiterspielen / Editor ansehen</button>
+                <button class="close-overlay-btn" type="button">${closeLabel}</button>
             </div>
         `;
         document.body.appendChild(overlay);
-        
+
         // Wir clonen den nächsten-Level-Button von oben in unser Pop-up
         const nextBtnSource = document.getElementById("next-level-btn");
         if (nextBtnSource) {
@@ -997,12 +1109,36 @@ function triggerSuccess(isFinale = false, successMessage = "") {
             btnClone.style.display = "inline-block";
             btnClone.className = "success-btn";
             overlay.querySelector(".btn-container").appendChild(btnClone);
+        } else if (options.primaryHref) {
+            const primaryLink = document.createElement("a");
+            primaryLink.href = options.primaryHref;
+            primaryLink.className = "success-btn";
+            primaryLink.textContent = options.primaryLabel || "Weiter";
+            overlay.querySelector(".btn-container").appendChild(primaryLink);
         }
+
+        const closeButton = overlay.querySelector(".close-overlay-btn");
+        const closeOverlay = () => {
+            overlay.style.display = "none";
+            cancelSuccessCelebration();
+            if (window.editor && typeof window.editor.focus === "function") {
+                window.editor.focus();
+            } else {
+                document.getElementById("python-editor")?.focus?.();
+            }
+        };
+        closeButton?.addEventListener?.("click", closeOverlay);
+        document.addEventListener("keydown", event => {
+            if (event.key === "Escape" && overlay.style.display !== "none") closeOverlay();
+        });
     }
-    
+
     // UI Updates
-    document.getElementById("status-text").innerHTML = "✅ <b>MISSION ERFÜLLT!</b>";
-    document.getElementById("status-text").style.color = "#34a853";
+    const status = document.getElementById("status-text");
+    if (status) {
+        status.textContent = "✓ " + (options.statusLabel || (isFinale ? "MISSION ERFÜLLT!" : "LEVEL GESCHAFFT!"));
+        status.style.color = "#34a853";
+    }
     const fill = document.getElementById("progress-fill");
     if(fill) fill.style.width = "100%";
     const nextBtnTop = document.getElementById("next-level-btn");
@@ -1010,9 +1146,11 @@ function triggerSuccess(isFinale = false, successMessage = "") {
 
     // Zeige fettes Overlay
     overlay.style.display = "flex";
+    overlay.querySelector(".success-btn, .close-overlay-btn")?.focus?.();
 
-    // --- CONFETTI (Nur beim Finale) ---
-    if (isFinale) {
+    if (options.celebration === "fireworks") {
+        triggerTrainingFireworks();
+    } else if (isFinale && options.celebration !== "none" && typeof confetti === "function") {
         confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, zIndex: 2000 });
 
         var defaults = { spread: 360, ticks: 50, gravity: 0, decay: 0.94, startVelocity: 30, colors: ['FFE400', 'FFBD00', 'E89400', 'FFCA6C', 'FDFFB8'], zIndex: 2000 };
