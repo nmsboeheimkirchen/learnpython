@@ -73,7 +73,7 @@ window.AgentNavigation = (() => {
                 { id: "link-pico-l2", href: "pico_level2.html", number: "2", label: "Finden und aufladen" },
                 { id: "link-pico-l2a", href: "pico_level2a.html", number: "2a", label: "Status-Cockpit" },
                 { id: "link-pico-l3", href: "pico_level3.html", number: "3", label: "Zur Funkbase" },
-                { id: "link-pico-l4", href: "pico_level4.html", number: "4", label: "Memory löschen" }
+                { id: "link-pico-l4", href: "pico_level4.html", number: "4", label: "Drohne zerstören" }
             ]
         },
         {

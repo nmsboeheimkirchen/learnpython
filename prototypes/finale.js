@@ -60,6 +60,17 @@
     let automaticStopRendered = false;
     let cancelRequested = false;
 
+    function revealLiveCockpit() {
+        const cockpit = document.querySelector(".game-column");
+        if (!cockpit?.scrollIntoView) return;
+        const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+        cockpit.scrollIntoView({
+            behavior: testMode || reducedMotion ? "auto" : "smooth",
+            block: "start",
+            inline: "nearest"
+        });
+    }
+
     function builtinRead(path) {
         if (!Sk.builtinFiles || !Sk.builtinFiles.files || !Sk.builtinFiles.files[path]) {
             throw new Error("Python-Modul nicht gefunden: " + path);
@@ -380,6 +391,7 @@
 
     async function runProgram() {
         if (running) return;
+        revealLiveCockpit();
 
         const generation = ++runGeneration;
         cancelRequested = false;

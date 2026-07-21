@@ -1030,6 +1030,10 @@ body.is-presenting {
     gap: 14px;
 }
 
+.game-column {
+    scroll-margin-block-start: 86px;
+}
+
 .section-heading {
     display: flex;
     min-height: 42px;

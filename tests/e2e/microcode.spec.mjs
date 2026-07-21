@@ -9,7 +9,8 @@ const stackedBlockPages = [
     "mission4_level3.html",
     "agent_training_level2.html",
     "agent_training_level3.html",
-    "pico_level2.html"
+    "pico_level2.html",
+    "pico_level3.html"
 ];
 
 const indentationPlans = [
@@ -27,7 +28,8 @@ const ipadStackedBlockPages = new Set([
     "mission4_level3.html",
     "agent_training_level2.html",
     "agent_training_level3.html",
-    "pico_level2.html"
+    "pico_level2.html",
+    "pico_level3.html"
 ]);
 
 async function blockGeometry(hint) {
@@ -182,4 +184,31 @@ test("PICO level 2 presents three separate blocks instead of a copy-ready soluti
     expect(starter).not.toContain("fund = drohne.suche_hier()");
     expect(starter).not.toContain('print("Gefunden:", fund)');
     expect(starter).not.toContain("ausruestung.append(fund)");
+});
+
+test("PICO level 3 explains the route in three separate focusable blocks", async ({ page }) => {
+    await page.goto("/pico_level3.html?e2e");
+    await expect.poll(() => page.evaluate(() => Boolean(window.DroneMissionRuntime))).toBe(true);
+
+    const task = page.locator(".mission-task-card");
+    const blocks = task.locator(".pico-route-blocks > .block-tooltip");
+    await expect(blocks).toHaveCount(3);
+    await expect(task.locator(".mission-code-hint")).toHaveCount(0);
+
+    const helperIds = await blocks.evaluateAll(elements => elements.map(element => (
+        element.getAttribute("aria-describedby")
+    )));
+    expect(new Set(helperIds).size).toBe(3);
+
+    for (let index = 0; index < 3; index += 1) {
+        const block = blocks.nth(index);
+        const helperId = helperIds[index];
+        await block.focus();
+        await expect(block).toBeFocused();
+        await expect(block.locator(`:scope > #${helperId}`)).toBeVisible();
+    }
+
+    const starter = await page.evaluate(() => window.DroneMissionRuntime.editor.getValue());
+    expect(starter).not.toContain("fahre_zu(340, 15)");
+    expect(starter).not.toContain("signal_erfolgreich = drohne.sende()");
 });

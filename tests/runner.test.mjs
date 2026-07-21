@@ -998,7 +998,12 @@ const teacherSolutionExpectations = new Map([
     ["mission4_level3", /geheimtext = geheimtext \+ chr\(zahl\)/],
     ["agent_training_level1", /drohne\.pendown\(\)[\s\S]*drohne\.goto\(160, 80\)[\s\S]*drohne\.penup\(\)[\s\S]*drohne\.dot\(30,/],
     ["agent_training_level2", /def markiere\(\):[\s\S]*gehe_zu\(80, 130\)/],
-    ["agent_training_level3", /gehe_zu\(-210, -65\)[\s\S]*if fund == "Datenchip":[\s\S]*inventar\.append\(fund\)/]
+    ["agent_training_level3", /gehe_zu\(-210, -65\)[\s\S]*if fund == "Datenchip":[\s\S]*inventar\.append\(fund\)/],
+    ["pico_level1", /fahre_zu\(340, 15\)/],
+    ["pico_level2", /fund = drohne\.suche_hier\(\)[\s\S]*ausruestung\.append\(fund\)/],
+    ["pico_level2a", /status\["TRANSPONDER"\] = "aufgeladen"/],
+    ["pico_level3", /signal_erfolgreich = drohne\.sende\(\)/],
+    ["pico_level4", /if signal_erfolgreich:[\s\S]*status\["DROHNE"\] = "self-destroy"[\s\S]*status\["TRANSPONDER"\] = "delete"/]
 ]);
 
 test("teacher solutions are centralized and available for every level", () => {
@@ -1034,6 +1039,45 @@ test("teacher solutions are centralized and available for every level", () => {
         assert.match(html, new RegExp(`data-teacher-solution="${levelId}"`));
         assert.doesNotMatch(html, /onclick="[^"]*(?:atob|editor\.setValue)/);
     }
+
+    assert.equal(window.TeacherSolutions.load("pico_level1_cell"), true);
+    assert.match(editor.value, /fahre_zu\(-380, -90\)/);
+});
+
+test("stored teacher mode keeps PICO solutions visible after hashless navigation", () => {
+    const editor = {
+        value: "",
+        focus() {},
+        setValue(value) { this.value = value; }
+    };
+    const button = {
+        dataset: { teacherSolution: "pico_level2" },
+        style: { display: "none" },
+        addEventListener(type, listener) {
+            if (type === "click") this.click = listener;
+        }
+    };
+    let domReady;
+    const document = {
+        addEventListener(type, listener) {
+            if (type === "DOMContentLoaded") domReady = listener;
+        },
+        querySelectorAll() { return [button]; }
+    };
+    const window = {
+        atob(encoded) { return Buffer.from(encoded, "base64").toString("binary"); },
+        editor,
+        location: { hash: "" },
+        localStorage: { getItem(key) { return key === "cheatMode" ? "true" : null; } }
+    };
+    const context = vm.createContext({ document, TextDecoder, Uint8Array, window });
+    const source = readFileSync(new URL("../assets/teacher-solutions.js", import.meta.url), "utf8");
+    vm.runInContext(source, context);
+
+    domReady();
+    assert.equal(button.style.display, "block");
+    button.click();
+    assert.match(editor.value, /fund = drohne\.suche_hier\(\)/);
 });
 
 const missionPages = [
@@ -1222,7 +1266,7 @@ test("mission navigation is rendered from one central definition", () => {
     for (const page of missionPages) {
         const html = readFileSync(new URL(`../${page}`, import.meta.url), "utf8");
         assert.match(html, /<div id="navigation-root"><\/div>/);
-        assert.match(html, /<script src="assets\/navigation\.js\?v=202607(?:20-[23]|21-[13])"><\/script>/);
+        assert.match(html, /<script src="assets\/navigation\.js\?v=20260721-5"><\/script>/);
         assert.match(html, /<link rel="stylesheet" href="assets\/style\.css\?v=20260720-[23]">/);
         assert.doesNotMatch(html, /id="mySidebar"/);
     }
@@ -1387,9 +1431,12 @@ test("the public PICO path shares one runtime and uses TRANSPONDER from level 1"
 
     for (const page of pages) {
         const html = readFileSync(new URL(`../${page}`, import.meta.url), "utf8");
+        const solutionId = page.replace(".html", "");
         assert.match(html, /data-pico-level="(?:1|2|2a|3|4)"/);
         assert.match(html, /assets\/pico-mission-core\.js/);
         assert.match(html, /assets\/pico-mission\.js/);
+        assert.match(html, /assets\/teacher-solutions\.js/);
+        assert.match(html, new RegExp(`data-teacher-solution="${solutionId}"`));
         assert.match(html, /<small>TRANSPONDER<\/small>/);
         assert.doesNotMatch(html, /\bFUNK\b/);
     }
@@ -1405,6 +1452,12 @@ test("the public PICO path shares one runtime and uses TRANSPONDER from level 1"
     assert.match(level2a, /Optionales Level 2a/);
     assert.match(level2a, /class="pico-skip-top"[^>]+href="pico_level3\.html"[^>]*>Überspringen<\/a>/);
     assert.match(level2a, /status\["TRANSPONDER"\] = "aufgeladen"/);
+
+    const level4 = readFileSync(new URL("../pico_level4.html", import.meta.url), "utf8");
+    assert.match(level4, /Drohne zerstören und die Daten darauf löschen/);
+    assert.match(level4, /damit sie dem bösen Lord nicht in die Hände fällt/);
+    assert.match(level4, /status\["DROHNE"\] = "self-destroy"/);
+    assert.match(level4, /status\["TRANSPONDER"\] = "delete"/);
 });
 
 test("both helicopter escape landings use distinct optimized renders and a shared mission handoff", () => {
@@ -1641,10 +1694,10 @@ test("finale prototypes stay unlinked, isolated and locally hosted", () => {
         assert.match(html, /src="\.\.\/assets\/brand\/agent-py-logo\.png\?v=20260720-2"/);
         assert.match(html, /class="prototype-path-token"/);
         assert.doesNotMatch(html, /class="prototype-path-token"[^>]*(?:href=|onclick=)/);
-        assert.match(html, /href="finale\.css\?v=p3-glass-v1"/);
+        assert.match(html, /href="finale\.css\?v=cockpit-scroll-v1"/);
         assert.match(html, /class="turtle-target"/);
         assert.match(html, /window\.FINALE_CONFIG/);
-        assert.match(html, /src="finale\.js\?v=p2-audit-v1"/);
+        assert.match(html, /src="finale\.js\?v=cockpit-scroll-v1"/);
         assert.match(html, /src="finale-analysis\.js\?v=drone-status-v2"/);
         assert.match(html, /assets\/images\/finales\/.+\.webp/);
         assert.match(html, /assets\/vendor\/skulpt\/1\.2\.0\/skulpt\.min\.js/);

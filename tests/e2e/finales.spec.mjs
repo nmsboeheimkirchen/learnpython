@@ -251,3 +251,22 @@ print("INVENTARLISTE: " + ",".join(inventar))`);
     expect(output.match(/Alarmstufe 8: Das Museum stoppt die Mission\./g)).toHaveLength(1);
     expect(pageErrors).toEqual([]);
 });
+
+test("starting Pixelmuseum code brings the live cockpit back into view", async ({ page }) => {
+    await page.setViewportSize({ width: 1180, height: 720 });
+    const pageErrors = await openFinale(page, "/prototypes/pixelmuseum_finale.html?e2e");
+    await page.evaluate(() => {
+        window.finalePrototype.editor.setValue('print("Scrolltest")');
+        window.scrollTo(0, document.documentElement.scrollHeight);
+    });
+
+    await page.locator("#run-btn").click();
+    await expect.poll(() => page.evaluate(() => {
+        const stage = document.querySelector(".game-column")?.getBoundingClientRect();
+        const cockpit = document.querySelector(".museum-hud")?.getBoundingClientRect();
+        return Boolean(stage && cockpit &&
+            stage.top >= 0 && stage.top <= 110 &&
+            cockpit.top >= 0 && cockpit.bottom <= window.innerHeight);
+    })).toBe(true);
+    expect(pageErrors).toEqual([]);
+});

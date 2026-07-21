@@ -162,6 +162,10 @@
 }
 
 .mission-stage-panel {
+    scroll-margin-block-start: 86px;
+}
+
+.mission-stage-panel {
     padding: clamp(16px, 2vw, 24px);
 }
 
@@ -501,6 +505,20 @@
     text-align: center;
     text-shadow: 0 0 18px rgba(125, 242, 169, 0.5);
     transform: translate(-50%, -50%);
+}
+
+.pico-deleting.rescue-success .pico-result-message {
+    border-color: rgba(255, 86, 80, 0.88);
+    background: rgba(62, 3, 8, 0.94);
+    box-shadow: 0 0 48px rgba(255, 48, 48, 0.46), inset 0 1px rgba(255, 255, 255, 0.13);
+    color: #ff625c;
+    text-shadow: 0 0 20px rgba(255, 48, 48, 0.76);
+    animation: pico-deleting-blink 420ms steps(2, end) infinite;
+}
+
+@keyframes pico-deleting-blink {
+    0%, 42% { opacity: 1; }
+    43%, 100% { opacity: 0.28; }
 }
 
 .rescue-failed .pico-result-message {
@@ -1210,6 +1228,11 @@
         animation: none;
         border-color: rgba(125, 242, 169, 0.8);
         box-shadow: 0 0 18px rgba(125, 242, 169, 0.2);
+    }
+
+    .pico-deleting.rescue-success .pico-result-message {
+        animation: none;
+        opacity: 1;
     }
 }
 

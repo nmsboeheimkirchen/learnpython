@@ -13,8 +13,10 @@
     const directTask = byId("level1-direct-task");
     const cellTask = byId("level1-cell-task");
     const stageMessage = byId("stage-discovery-message");
+    const teacherSolutionButton = document.querySelector("[data-teacher-solution]");
     let level1Phase = "direct";
     let completionShown = false;
+    let completionTimer = null;
 
     const LEVEL_SPECS = Object.freeze({
         "1": Object.freeze({
@@ -75,12 +77,12 @@
         }),
         "4": Object.freeze({
             id: "pico_level4_memory",
-            runningLabel: "PICO sendet und löscht das Memory",
+            runningLabel: "PICO sendet, zerstört die Drohne und löscht Daten",
             runLabel: "Rettung abschließen",
-            readyLabel: "Bereit zum Spurenlöschen",
+            readyLabel: "Bereit zur sicheren Zerstörung",
             resetLabel: "↺ Missionscode laden",
-            resetOutput: "Sende zuerst das Rettungssignal und lösche danach das Memory.",
-            initialMessage: "Sende erfolgreich und setze erst danach DROHNE auf self-destroy und TRANSPONDER auf delete.",
+            resetOutput: "Sende zuerst das Rettungssignal. Zerstöre danach die Drohne und lösche ihre Daten.",
+            initialMessage: "Sende erfolgreich. Löse erst danach mit den beiden Statusmeldungen Selbstzerstörung und Datenlöschung aus.",
             initialChecks: [
                 "Energiezelle real finden und laden",
                 "Funkbase erreichen und Signal senden",
@@ -115,7 +117,7 @@
             primaryLabel: "Weiter zum Status-Cockpit"
         }),
         "2a": Object.freeze({
-            rewardCount: 1,
+            rewardCount: 3,
             title: "STATUS-CHECK GESCHAFFT",
             message: "Der TRANSPONDER zeigt jetzt den echten Ladezustand.",
             primaryHref: "pico_level3.html",
@@ -123,6 +125,7 @@
         }),
         "3": Object.freeze({
             rewardCount: 3,
+            popupDelayMs: 1000,
             title: "SIGNAL GESENDET",
             message: "Die Funkbase hat das Rettungssignal bestätigt.",
             primaryHref: "pico_level4.html",
@@ -130,8 +133,9 @@
         }),
         "4": Object.freeze({
             rewardCount: 7,
-            title: "MEMORY GELÖSCHT",
-            message: "Signal zuerst, Löschstatus danach: PICO hinterlässt keine verwertbaren Spuren.",
+            popupDelayMs: 1000,
+            title: "DROHNE ZERSTÖRT",
+            message: "Signal zuerst, Selbstzerstörung und Datenlöschung danach: Der böse Lord findet keine verwertbaren Daten.",
             primaryHref: "helikopter_flucht.html",
             primaryLabel: "Zur Flucht mit dem Helikopter"
         })
@@ -163,9 +167,12 @@
                 : '<span aria-hidden="true">ϟ</span> Energiezelle (−380, −90)';
         }
 
+        const deleting = level === "4" && snapshot.memoryDeletedAfterSignal;
         const rescueMessage = byId("pico-result-message");
         if (rescueMessage) {
-            if (snapshot.signalSent) {
+            if (deleting) {
+                rescueMessage.textContent = "DELETING";
+            } else if (snapshot.signalSent) {
                 rescueMessage.textContent = "SIGNAL GESENDET";
             } else if (snapshot.signalAttempted) {
                 const messages = {
@@ -183,6 +190,7 @@
         document.body.classList.toggle("energy-depleted", snapshot.depleted);
         document.body.classList.toggle("rescue-success", snapshot.signalSent);
         document.body.classList.toggle("rescue-failed", snapshot.signalAttempted && !snapshot.signalSent);
+        document.body.classList.toggle("pico-deleting", deleting);
         return snapshot;
     }
 
@@ -196,6 +204,11 @@
             energyAdvice.setAttribute("aria-expanded", String(cellPhase));
         }
         document.body.classList.toggle("pico-cell-phase", cellPhase);
+        if (teacherSolutionButton) {
+            teacherSolutionButton.dataset.teacherSolution = cellPhase
+                ? "pico_level1_cell"
+                : "pico_level1";
+        }
     }
 
     function enterCellPhase() {
@@ -364,11 +377,11 @@
         return {
             passed,
             levelComplete: passed,
-            title: passed ? "Signal gesendet, Memory gelöscht" : "Reihenfolge noch nicht sicher",
+            title: passed ? "Drohne zerstört, Daten gelöscht" : "Reihenfolge noch nicht sicher",
             message: passed
-                ? "Die Laufzeitkette stimmt: finden, laden, senden – und erst danach beide Löschwerte setzen."
-                : "Sende zuerst erfolgreich. Setze danach DROHNE auf self-destroy und TRANSPONDER auf delete.",
-            status: passed ? "Memory gelöscht" : "Reihenfolge prüfen",
+                ? "Die Laufzeitkette stimmt: Signal senden und erst danach Selbstzerstörung und Datenlöschung auslösen."
+                : "Sende zuerst erfolgreich. Löse danach mit beiden Statusmeldungen Selbstzerstörung und Datenlöschung aus.",
+            status: passed ? "Selbstzerstörung ausgelöst" : "Reihenfolge prüfen",
             statusState: passed ? "success" : "warning",
             checks
         };
@@ -421,12 +434,19 @@
         if (result.passed && result.levelComplete !== false && !result.restored && !completionShown) {
             completionShown = true;
             const completion = LEVEL_COMPLETIONS[level];
-            window.triggerSuccess?.(level === "4", completion.message, {
-                ...completion,
-                celebration: "coins",
-                closeLabel: "Zurück zum Editor",
-                statusLabel: level === "4" ? "MEMORY GELÖSCHT!" : "LEVEL GESCHAFFT!"
-            });
+            const showCompletion = () => {
+                completionTimer = null;
+                window.triggerSuccess?.(level === "4", completion.message, {
+                    ...completion,
+                    celebration: "coins",
+                    closeLabel: "Zurück zum Editor",
+                    statusLabel: level === "4" ? "DROHNE ZERSTÖRT · DATEN GELÖSCHT!" : "LEVEL GESCHAFFT!"
+                });
+            };
+            completionTimer = completion.popupDelayMs
+                ? window.setTimeout(showCompletion, completion.popupDelayMs)
+                : null;
+            if (!completionTimer) showCompletion();
         }
     }
 
@@ -436,16 +456,16 @@
             "2": ["Energiezelle mit suche_hier() am Fundort gefunden", "Echten Fund ausgegeben", "Echten Fund aufgenommen und Energie geladen"],
             "2a": ["Energiezelle im selben Lauf geladen", "Drohnenname bleibt im Status erhalten", "TRANSPONDER wurde zur Laufzeit auf „aufgeladen“ gesetzt"],
             "3": ["Energie im selben Programmlauf geladen", "Funkbase mit Restenergie erreicht", "sende() bestätigt das Rettungssignal"],
-            "4": ["Energiezelle real gefunden und geladen", "Rettungssignal bestätigt", "DROHNE wurde danach gelöscht", "TRANSPONDER wurde danach gelöscht"]
+            "4": ["Energiezelle real gefunden und geladen", "Funkbase mit Restenergie erreicht", "Rettungssignal bestätigt", "DROHNE wurde danach zerstört", "TRANSPONDER-Daten wurden danach gelöscht"]
         };
         return {
             passed: true,
             levelComplete: true,
             restored: true,
             kind: level === "1" ? "cell-reached" : "restored",
-            title: level === "4" ? "PICO ist gerettet" : "Checkpoint bereits erreicht",
+            title: level === "4" ? "Drohne zerstört, Daten sicher gelöscht" : "Checkpoint bereits erreicht",
             message: "Dein erfolgreicher Code wurde wiederhergestellt. Du kannst ihn weiter verändern.",
-            status: level === "4" ? "Mission erfüllt" : "Checkpoint erreicht",
+            status: level === "4" ? "Selbstzerstörung ausgelöst" : "Checkpoint erreicht",
             statusState: "success",
             checks: labels[level].map(label => ({ label, passed: true }))
         };
@@ -473,6 +493,10 @@
             }
         },
         resetHud(options = {}) {
+            if (completionTimer !== null) {
+                window.clearTimeout(completionTimer);
+                completionTimer = null;
+            }
             state.reset();
             completionShown = false;
             if (level === "1" && ["initial", "manual"].includes(options.reason)) {
