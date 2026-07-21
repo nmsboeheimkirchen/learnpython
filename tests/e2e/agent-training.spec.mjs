@@ -281,6 +281,8 @@ test("Agent training levels 2 and 3 validate reusable commands and a real found 
 
     await finalCompletion.locator(".close-overlay-btn").click();
     await expect(page.locator("#training-fireworks")).toHaveCount(0);
+    await expect(page.locator("#next-level-btn")).toBeVisible();
+    await expect(page.locator("#next-level-btn")).toHaveText("Projekt wählen");
     await page.locator("#reset-btn").click();
     await expect(page.locator("#training-inventory-items")).toHaveText("leer");
     await expect(page.locator("#training-marks-layer .training-live-dot")).toHaveCount(0);

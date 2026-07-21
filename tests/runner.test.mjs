@@ -1198,7 +1198,9 @@ test("all progress link ids keep their established unlock routes", () => {
         "link-agent-training-title": "agent_training_start.html",
         "link-agent-training-l1": "agent_training_level1.html",
         "link-agent-training-l2": "agent_training_level2.html",
-        "link-agent-training-l3": "agent_training_level3.html"
+        "link-agent-training-l3": "agent_training_level3.html",
+        "link-project-choice": "projektwahl.html",
+        "link-pico-l1": "pico_level1.html"
     });
 });
 
@@ -1268,6 +1270,7 @@ test("mission 4 hands off to the shared Agent training without exposing later pr
     assert.match(trainingLevel3, /data-training-phase="direct" hidden/);
     assert.match(trainingLevel3, /Fund direkt ins Inventar aufnehmen/);
     assert.match(trainingLevel3, /ohne „<code>if<\/code>“/);
+    assert.match(trainingLevel3, /id="next-level-btn"[^>]+projektwahl\.html[^>]*>Projekt wählen<\/button>/);
 
     const trainingRuntime = readFileSync(new URL("../assets/agent-training.js", import.meta.url), "utf8");
     const trainingCore = readFileSync(new URL("../assets/agent-training-core.js", import.meta.url), "utf8");
@@ -1290,7 +1293,7 @@ test("mission 4 hands off to the shared Agent training without exposing later pr
     assert.doesNotMatch(trainingStart + trainingLevel1 + trainingLevel2 + trainingLevel3, /pico_finale|pixelmuseum_finale/);
 });
 
-test("project choice is a neutral responsive preview without direct finale links", () => {
+test("project choice opens PICO level 1 while keeping Pixelmuseum as a neutral preview", () => {
     const projectChoice = readFileSync(new URL("../projektwahl.html", import.meta.url), "utf8");
     const projectChoiceCss = readFileSync(new URL("../assets/project-choice.css", import.meta.url), "utf8");
 
@@ -1298,10 +1301,13 @@ test("project choice is a neutral responsive preview without direct finale links
     assert.match(projectChoice, /drohne\.goto\(\)/);
     assert.match(projectChoice, /drohne\.dot\(\)/);
     assert.match(projectChoice, /drohne\.suche_hier\(\)/);
+    assert.match(projectChoice, /eigene Funktionen/);
+    assert.match(projectChoice, /Listen \+ append\(\)/);
     assert.match(projectChoice, /Begleitete Projektmission/);
     assert.match(projectChoice, /Offene Projektmission/);
     assert.equal((projectChoice.match(/class="project-card /g) || []).length, 2);
-    assert.equal((projectChoice.match(/aria-disabled="true"/g) || []).length, 2);
+    assert.equal((projectChoice.match(/aria-disabled="true"/g) || []).length, 1);
+    assert.match(projectChoice, /id="link-pico-l1"[^>]+href="pico_level1\.html"/);
     assert.doesNotMatch(projectChoice, /href="[^"]*prototypes\//);
     assert.doesNotMatch(projectChoice, /für Schnelle|für Langsame|leichter|schwerer/i);
     assert.match(projectChoiceCss, /grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);

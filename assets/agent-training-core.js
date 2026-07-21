@@ -48,7 +48,7 @@
             successTitle: "Fundstück gesichert",
             successMessage: "Dein Datenchip stammt aus einer Suche und liegt nachweislich im Inventar.",
             stageMessage: "DATENCHIP GESICHERT",
-            unlockId: null
+            unlockId: "link-project-choice"
         })
     });
 

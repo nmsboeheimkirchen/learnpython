@@ -73,20 +73,23 @@ Alternativ kann jeder andere statische Webserver verwendet werden.
 │   ├── navigation.js          # Gemeinsame Navigation aller Missionen
 │   └── runner.js              # Python-Ausführung, Fortschritt und Validierung
 ├── tests/
-│   └── runner.test.mjs        # Automatisierte Tests der zentralen Logik
+│   ├── all.test.mjs           # Einstiegspunkt für die Unit-Tests
+│   ├── runner.test.mjs        # Tests der Lernpfad- und Fortschrittslogik
+│   └── drone-mission-core.test.mjs
+│                              # Tests der gemeinsamen Drohnen-Laufzeitlogik
 └── .github/workflows/pages.yml
                                # Veröffentlichung über GitHub Pages
 ```
 
 ## Tests
 
-Die Tests verwenden ausschließlich die in Node.js integrierten Testwerkzeuge. Mit Node.js 18 oder neuer können sie so ausgeführt werden:
+Die Unit-Tests verwenden ausschließlich die in Node.js integrierten Testwerkzeuge. Mit Node.js 18 oder neuer können sie so ausgeführt werden:
 
 ```bash
-node tests/runner.test.mjs
+npm test
 ```
 
-Geprüft werden unter anderem die Level-Validatoren, die sichere Konsolenausgabe und der Erfolgsdialog der Abschlusslevel.
+Geprüft werden unter anderem die Level-Validatoren, die sichere Konsolenausgabe, der Erfolgsdialog und die gemeinsame Drohnen-Laufzeitlogik.
 
 ## Veröffentlichung
 

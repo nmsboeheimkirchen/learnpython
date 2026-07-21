@@ -1,12 +1,15 @@
 import { expect, test } from "@playwright/test";
 
-test("@ipad project choice presents equal routes responsively without exposing finales", async ({ page }, testInfo) => {
+test("@ipad project choice opens PICO and keeps Pixelmuseum as the open-path preview", async ({ page }, testInfo) => {
+    const pageErrors = [];
+    page.on("pageerror", error => pageErrors.push(String(error)));
     await page.goto("/projektwahl.html");
 
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Welche Mission übernimmst du?");
     await expect(page.getByRole("article", { name: "PICO Das letzte Rettungssignal" })).toBeVisible();
     await expect(page.getByRole("article", { name: "Pixelmuseum Das gestohlene Sternenfragment" })).toBeVisible();
-    await expect(page.locator(".project-preview-action[aria-disabled='true']")).toHaveCount(2);
+    await expect(page.getByRole("link", { name: "PICO erkunden" })).toHaveAttribute("href", "pico_level1.html");
+    await expect(page.locator(".project-preview-action[aria-disabled='true']")).toHaveCount(1);
     await expect(page.locator('a[href*="prototypes/"]')).toHaveCount(0);
 
     const layout = await page.evaluate(() => {
@@ -32,4 +35,10 @@ test("@ipad project choice presents equal routes responsively without exposing f
     expect(decisionText).toMatch(/Begleitete Projektmission/i);
     expect(decisionText).toMatch(/Offene Projektmission/i);
     expect(decisionText).not.toMatch(/für Schnelle|für Langsame|leichter|schwerer/i);
+
+    await page.getByRole("link", { name: "PICO erkunden" }).click();
+    await expect(page).toHaveURL(/\/pico_level1\.html$/);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Reicht die Energie?");
+    await expect.poll(() => page.evaluate(() => Boolean(window.DroneMissionRuntime))).toBe(true);
+    expect(pageErrors).toEqual([]);
 });

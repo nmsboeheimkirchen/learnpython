@@ -315,7 +315,8 @@
     color: var(--choice-magenta);
 }
 
-.project-preview-action {
+.project-preview-action,
+.project-start-action {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -329,6 +330,22 @@
     font-size: 0.8rem;
     font-weight: 780;
     text-align: center;
+}
+
+.project-start-action {
+    gap: 10px;
+    border-style: solid;
+    border-color: rgba(var(--choice-cyan-rgb), 0.6);
+    background: linear-gradient(130deg, rgba(var(--choice-cyan-rgb), 0.2), rgba(var(--choice-cyan-rgb), 0.08));
+    box-shadow: 0 12px 30px rgba(var(--choice-cyan-rgb), 0.1);
+    color: #d9fdff;
+    text-decoration: none;
+    transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
+}
+
+.project-start-action span {
+    font-size: 1rem;
+    transition: transform 180ms ease;
 }
 
 .project-card-museum .project-preview-action {
@@ -361,6 +378,17 @@
     border-color: rgba(var(--choice-cyan-rgb), 0.34);
     background: rgba(var(--choice-cyan-rgb), 0.09);
     color: #fff;
+}
+
+.project-start-action:hover {
+    border-color: var(--choice-cyan);
+    background: linear-gradient(130deg, rgba(var(--choice-cyan-rgb), 0.3), rgba(var(--choice-cyan-rgb), 0.12));
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+.project-start-action:hover span {
+    transform: translateX(3px);
 }
 
 .project-card:hover .project-card-art img {
@@ -446,7 +474,8 @@
     .project-choice-header,
     .project-card,
     .project-choice-tools li,
-    .project-preview-action {
+    .project-preview-action,
+    .project-start-action {
         border: 2px solid CanvasText;
         background: Canvas;
         color: CanvasText;

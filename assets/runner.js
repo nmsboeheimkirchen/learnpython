@@ -24,7 +24,9 @@ const LEVEL_ROUTES = Object.freeze({
     "link-agent-training-title": "agent_training_start.html",
     "link-agent-training-l1": "agent_training_level1.html",
     "link-agent-training-l2": "agent_training_level2.html",
-    "link-agent-training-l3": "agent_training_level3.html"
+    "link-agent-training-l3": "agent_training_level3.html",
+    "link-project-choice": "projektwahl.html",
+    "link-pico-l1": "pico_level1.html"
 });
 
 function safeStorageGetItem(key) {
@@ -865,8 +867,12 @@ const LEVEL_OUTCOMES = {
         successMessage: "Eigene Drohnenfunktionen funktionieren."
     },
     agent_training_level3: {
-        unlocks: [],
+        unlocks: ["link-project-choice", "link-pico-l1"],
         successMessage: "Dein Datenchip stammt aus einer Suche und liegt nachweislich im Inventar."
+    },
+    pico_level1: {
+        unlocks: [],
+        successMessage: "PICO hat sein reales Energielimit entdeckt."
     }
 };
 
@@ -1133,7 +1139,7 @@ function triggerSuccess(isFinale = false, successMessage = "", options = {}) {
         overlay.setAttribute?.("aria-labelledby", "success-overlay-title");
 
         const titleText = options.title || (isFinale ? "MISSION ERFÜLLT" : "LEVEL GESCHAFFT");
-        const subText = successMessage || (isFinale ? "Sehr starker Code, Agent!" : "Gut gemacht! Weiter geht's.");
+        const subText = successMessage || (isFinale ? "Sehr starker Drohnencode!" : "Gut gemacht! Weiter geht's.");
         const symbol = ["graduation-cap", "diploma"].includes(options.symbol)
             ? options.symbol
             : "trophy";
@@ -1155,18 +1161,18 @@ function triggerSuccess(isFinale = false, successMessage = "", options = {}) {
 
         // Wir clonen den nächsten-Level-Button von oben in unser Pop-up
         const nextBtnSource = document.getElementById("next-level-btn");
-        if (nextBtnSource) {
-            const btnClone = nextBtnSource.cloneNode(true);
-            btnClone.removeAttribute("id");
-            btnClone.style.display = "inline-block";
-            btnClone.className = "success-btn";
-            overlay.querySelector(".btn-container").appendChild(btnClone);
-        } else if (options.primaryHref) {
+        if (options.primaryHref) {
             const primaryLink = document.createElement("a");
             primaryLink.href = options.primaryHref;
             primaryLink.className = "success-btn";
             primaryLink.textContent = options.primaryLabel || "Weiter";
             overlay.querySelector(".btn-container").appendChild(primaryLink);
+        } else if (nextBtnSource) {
+            const btnClone = nextBtnSource.cloneNode(true);
+            btnClone.removeAttribute("id");
+            btnClone.style.display = "inline-block";
+            btnClone.className = "success-btn";
+            overlay.querySelector(".btn-container").appendChild(btnClone);
         }
 
         const closeButton = overlay.querySelector(".close-overlay-btn");
