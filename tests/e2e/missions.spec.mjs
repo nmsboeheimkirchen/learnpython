@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 const sharedAssetVersion = "20260722-1";
-const runnerAssetVersion = "20260722-2";
+const runnerAssetVersion = "20260722-3";
 const logoAssetVersion = "20260720-2";
 
 const missionPages = [
@@ -286,6 +286,9 @@ test("Mission 3 levels provide the staged starter bonuses", async ({ page }) => 
         "# Setze hier fort!",
         ""
     ].join("\n"));
+    await expect(page.locator(".guide-panel")).not.toContainText("Startbonus");
+    await expect(page.locator(".guide-panel h2").first()).toHaveText("Zahlen aus Text machen");
+    await expect(page.locator(".guide-panel")).toContainText("50 ist der voreingestellte Code");
     await expect(page.locator(".guide-panel")).toContainText("Die kurze Schreibweise");
     await expect(page.locator(".guide-panel")).toContainText("wird ebenfalls akzeptiert");
 
@@ -297,6 +300,36 @@ test("Mission 3 levels provide the staged starter bonuses", async ({ page }) => 
     expect(starter).not.toMatch(/import random|random\.randint|tipp\s*=\s*0|print\("Knack!"\)/);
     await expect(page.locator(".guide-panel")).toContainText("Jetzt musst du den gemeinen Code herausfinden");
     await expect(page.locator(".guide-panel")).toContainText("Startbonus");
+});
+
+test("Mission 3 level 2 requires one guess below and one above 50", async ({ page }) => {
+    await page.goto("/mission3_level2.html");
+    await page.waitForFunction(() => Boolean(window.editor));
+    await page.evaluate(() => {
+        window.editor.setValue([
+            'tipp = input("Tipp: ")',
+            "tipp = int(tipp)",
+            "if tipp < 50:",
+            '    print("zu niedrig!")',
+            "elif tipp > 50:",
+            '    print("zu hoch!")'
+        ].join("\n"));
+    });
+
+    const runButton = page.locator("#run-btn");
+    await runButton.click();
+    await page.locator(".console-input").fill("25");
+    await page.locator(".console-input").press("Enter");
+    await expect(page.locator("#status-text")).toHaveText(
+        "Noch nicht: Teste jetzt noch mit einer Zahl über 50."
+    );
+    await expect(page.locator("#success-overlay")).toHaveCount(0);
+
+    await runButton.click();
+    await page.locator(".console-input").fill("75");
+    await page.locator(".console-input").press("Enter");
+    await expect(page.locator("#status-text")).toHaveText("✓ Geschafft – lies kurz dein Ergebnis.");
+    await expect(page.locator("#success-overlay")).toBeVisible({ timeout: 3000 });
 });
 
 test("interactive input points to Enter and delays success for two seconds", async ({ page }) => {

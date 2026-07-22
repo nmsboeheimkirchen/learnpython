@@ -741,7 +741,7 @@ const LEVEL_VALIDATORS = {
             { passed: hasNestedStatement(statements, whilePattern, ["tipp", "=", "input", "("]), message: "Die neue Eingabe für tipp muss eingerückt in der while-Schleife stehen." }
         ]);
     },
-    mission3_level2({ statements, output }) {
+    mission3_level2({ statements, output, evidence = {} }) {
         const inlineNumberInput = findStatement(statements, ["tipp", "=", "int", "(", "input", "("]);
         const textInput = findStatement(statements, ["tipp", "=", "input", "("]);
         const separateConversion = findStatement(statements, ["tipp", "=", "int", "(", "tipp", ")"]);
@@ -750,13 +750,33 @@ const LEVEL_VALIDATORS = {
             separateConversion.line > textInput.line &&
             separateConversion.indent === textInput.indent
         );
+        const hasNumberInput = Boolean(inlineNumberInput) || usesTwoLines;
+        const hasLowerBranch = Boolean(findStatement(statements, ["if", "tipp", "<", numberToken(50), ":"]));
+        const hasHigherBranch = Boolean(findStatement(statements, ["elif", "tipp", ">", numberToken(50), ":"]));
+        const structurePassed = hasNumberInput && hasLowerBranch && hasHigherBranch;
         const normalizedOutput = output.toLocaleLowerCase("de-DE");
-        return firstFailedRequirement([
-            { passed: Boolean(inlineNumberInput) || usesTwoLines, message: "Wandle die Eingabe entweder mit tipp = int(tipp) in der zweiten Zeile oder direkt mit int(input(...)) in eine Zahl um." },
-            { passed: Boolean(findStatement(statements, ["if", "tipp", "<", numberToken(50), ":"])), message: "Prüfe mit if, ob tipp kleiner als 50 ist." },
-            { passed: Boolean(findStatement(statements, ["elif", "tipp", ">", numberToken(50), ":"])), message: "Prüfe mit elif, ob tipp größer als 50 ist." },
-            { passed: normalizedOutput.includes("zu niedrig!") || normalizedOutput.includes("zu hoch!"), message: "Teste mit einer Zahl unter oder über 50 und gib den passenden Hinweis aus." }
+        const nextEvidence = {
+            sawLowerHint: Boolean(
+                evidence.sawLowerHint ||
+                (structurePassed && normalizedOutput.includes("zu niedrig!"))
+            ),
+            sawHigherHint: Boolean(
+                evidence.sawHigherHint ||
+                (structurePassed && normalizedOutput.includes("zu hoch!"))
+            )
+        };
+        const testMessage = nextEvidence.sawLowerHint
+            ? "Teste jetzt noch mit einer Zahl über 50."
+            : nextEvidence.sawHigherHint
+                ? "Teste jetzt noch mit einer Zahl unter 50."
+                : "Teste einmal mit einer Zahl unter 50 und einmal mit einer Zahl über 50.";
+        const result = firstFailedRequirement([
+            { passed: hasNumberInput, message: "Wandle die Eingabe entweder mit tipp = int(tipp) in der zweiten Zeile oder direkt mit int(input(...)) in eine Zahl um." },
+            { passed: hasLowerBranch, message: "Prüfe mit if, ob tipp kleiner als 50 ist." },
+            { passed: hasHigherBranch, message: "Prüfe mit elif, ob tipp größer als 50 ist." },
+            { passed: nextEvidence.sawLowerHint && nextEvidence.sawHigherHint, message: testMessage }
         ]);
+        return { ...result, evidence: nextEvidence };
     },
     mission3_level3({ statements, output }) {
         const whilePattern = ["while", "tipp", "!=", "geheim", ":"];
@@ -981,10 +1001,11 @@ const LEVEL_CODE_INHERITANCE = Object.freeze({
     pico_level4_memory: Object.freeze({ from: "pico_level3" })
 });
 
-function validateLevelSolution(levelId, code, output) {
+function validateLevelSolution(levelId, code, output, evidence = {}) {
     const validator = LEVEL_VALIDATORS[levelId];
     if (!validator) return { passed: false, message: "Für dieses Level fehlt die Prüfregel." };
-    return validator({ statements: pythonStatements(code), output });
+    const safeEvidence = evidence && typeof evidence === "object" ? evidence : {};
+    return validator({ statements: pythonStatements(code), output, evidence: safeEvidence });
 }
 
 function showLevelFeedback(message) {
@@ -999,6 +1020,7 @@ function setupLevel(levelId) {
     const outcome = LEVEL_OUTCOMES[levelId];
     if (!runButton || !outcome) return;
     let successPopupTimeout = null;
+    let validationEvidence = {};
 
     const restoreCode = () => restoreLevelCode(levelId);
     if (document.readyState === "loading") {
@@ -1010,7 +1032,10 @@ function setupLevel(levelId) {
     runButton.addEventListener("click", () => {
         if (runButton.disabled || successPopupTimeout !== null) return;
         runit((code, output) => {
-            const result = validateLevelSolution(levelId, code, output);
+            const result = validateLevelSolution(levelId, code, output, validationEvidence);
+            if (result.evidence && typeof result.evidence === "object") {
+                validationEvidence = result.evidence;
+            }
             if (!result.passed) {
                 showLevelFeedback(result.message);
                 return;

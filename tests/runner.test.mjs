@@ -461,6 +461,38 @@ test("a successful run waits exactly two seconds before showing its popup", () =
     assert.equal(context.successEvents[0][0], false);
 });
 
+test("Mission 3 level 2 keeps both required guesses across consecutive runs", () => {
+    const { context, elements, storage, timers } = createRunnerContext();
+    const code = [
+        'tipp = input("Tipp: ")',
+        "tipp = int(tipp)",
+        "if tipp < 50:",
+        '    print("zu niedrig!")',
+        "elif tipp > 50:",
+        '    print("zu hoch!")'
+    ].join("\n");
+    const outputs = ["Tipp: 25\nzu niedrig!\n", "Tipp: 75\nzu hoch!\n"];
+    context.runit = callback => callback(code, outputs.shift());
+    context.successEvents = [];
+    vm.runInContext("triggerSuccess = (...args) => successEvents.push(args)", context);
+
+    vm.runInContext('setupLevel("mission3_level2")', context);
+    const runButton = elements.get("run-btn");
+    runButton.dispatch("click");
+
+    assert.match(elements.get("status-text").textContent, /Zahl über 50/);
+    assert.equal(storage.has("completedLevelCode_v1"), false);
+    assert.equal(timers.filter(timer => timer.type === "timeout").length, 0);
+    assert.equal(runButton.disabled, false);
+
+    runButton.dispatch("click");
+    assert.deepEqual(JSON.parse(storage.get("completedLevelCode_v1")), {
+        mission3_level2: code
+    });
+    assert.equal(elements.get("status-text").textContent, "✓ Geschafft – lies kurz dein Ergebnis.");
+    assert.equal(timers.filter(timer => timer.type === "timeout").length, 1);
+});
+
 test("console input explains Enter and disables Run until Enter is pressed", async () => {
     const { context, elements } = createRunnerContext();
     const runButton = elements.get("run-btn");
@@ -604,6 +636,7 @@ test("assignment microcode consistently uses setze auf", () => {
 });
 
 test("Mission 3 starter bonuses match the beginner progression", () => {
+    const mission1Level2 = readFileSync(new URL("../mission1_level2.html", import.meta.url), "utf8");
     const mission3Level2 = readFileSync(new URL("../mission3_level2.html", import.meta.url), "utf8");
     const mission3Level3 = readFileSync(new URL("../mission3_level3.html", import.meta.url), "utf8");
     const level2Starter = mission3Level2.match(/<textarea id="python-editor">([\s\S]*?)<\/textarea>/)?.[1]
@@ -611,11 +644,20 @@ test("Mission 3 starter bonuses match the beginner progression", () => {
     const level3Starter = mission3Level3.match(/<textarea id="python-editor">([\s\S]*?)<\/textarea>/)?.[1]
         .replace(/\r/g, "");
 
+    assert.match(mission1Level2, /<h1>Level 2: Pause<\/h1>/);
+    assert.doesNotMatch(mission1Level2, /Einen Hack simulieren/);
     assert.equal(
         level2Starter,
         'tipp = input("Tipp: ")\ntipp = int(tipp)\n# Setze hier fort!\n'
     );
     assert.match(mission3Level2, /kurze Schreibweise[\s\S]*tipp = int\(input\("Tipp: "\)\)[\s\S]*ebenfalls akzeptiert/);
+    assert.doesNotMatch(mission3Level2, /<h2>Startbonus<\/h2>/);
+    assert.ok(
+        mission3Level2.indexOf("<h2>Zahlen aus Text machen</h2>") <
+            mission3Level2.indexOf("<h2>Zu hoch, zu niedrig</h2>")
+    );
+    assert.match(mission3Level2, /50 ist der voreingestellte Code/);
+    assert.match(mission3Level2, /einmal mit einer Zahl unter 50[\s\S]*noch einmal mit einer Zahl über 50/);
     assert.equal(
         level3Starter,
         [
@@ -676,7 +718,8 @@ const validSolutions = [
     {
         level: "mission3_level2",
         code: 'tipp = input("Tipp: ")\ntipp = int(tipp)\nif tipp < 50:\n    print("zu niedrig!")\nelif tipp > 50:\n    print("zu hoch!")',
-        output: "Tipp: 25\nzu niedrig!\n"
+        output: "Tipp: 75\nzu hoch!\n",
+        evidence: { sawLowerHint: true }
     },
     {
         level: "mission3_level3",
@@ -737,7 +780,8 @@ test("all documented solutions pass their central validators", async (t) => {
             context.levelId = solution.level;
             context.code = solution.code;
             context.output = solution.output;
-            const result = vm.runInContext("validateLevelSolution(levelId, code, output)", context);
+            context.evidence = solution.evidence || {};
+            const result = vm.runInContext("validateLevelSolution(levelId, code, output, evidence)", context);
             assert.equal(result.passed, true, result.message);
         });
     }
@@ -825,28 +869,34 @@ test("Mission 2 level 3 consistently requires the blue no-op message", () => {
     assert.match(result.message, /Nichts passiert\./);
 });
 
-test("Mission 3 level 2 accepts both number conversions and lowercase hints", () => {
+test("Mission 3 level 2 accepts both number conversions but requires both guesses", () => {
     const { context } = createRunnerContext();
-    const acceptedSolutions = [
-        {
-            code: 'tipp = input("Tipp: ")\ntipp = int(tipp)\nif tipp < 50:\n    print("zu niedrig!")\nelif tipp > 50:\n    print("zu hoch!")',
-            output: "Tipp: 12\nzu niedrig!\n"
-        },
-        {
-            code: 'tipp = int(input("Tipp: "))\nif tipp < 50:\n    print("zu niedrig!")\nelif tipp > 50:\n    print("zu hoch!")',
-            output: "Tipp: 75\nzu hoch!\n"
-        }
-    ];
+    context.code = 'tipp = input("Tipp: ")\ntipp = int(tipp)\nif tipp < 50:\n    print("zu niedrig!")\nelif tipp > 50:\n    print("zu hoch!")';
+    context.output = "Tipp: 12\nzu niedrig!\n";
+    context.evidence = {};
+    const lowerAttempt = vm.runInContext(
+        'validateLevelSolution("mission3_level2", code, output, evidence)',
+        context
+    );
+    assert.equal(lowerAttempt.passed, false);
+    assert.deepEqual(JSON.parse(JSON.stringify(lowerAttempt.evidence)), {
+        sawLowerHint: true,
+        sawHigherHint: false
+    });
+    assert.match(lowerAttempt.message, /Zahl über 50/);
 
-    for (const solution of acceptedSolutions) {
-        context.code = solution.code;
-        context.output = solution.output;
-        const result = vm.runInContext(
-            'validateLevelSolution("mission3_level2", code, output)',
-            context
-        );
-        assert.equal(result.passed, true, result.message);
-    }
+    context.code = 'tipp = int(input("Tipp: "))\nif tipp < 50:\n    print("zu niedrig!")\nelif tipp > 50:\n    print("zu hoch!")';
+    context.output = "Tipp: 75\nzu hoch!\n";
+    context.evidence = lowerAttempt.evidence;
+    const higherAttempt = vm.runInContext(
+        'validateLevelSolution("mission3_level2", code, output, evidence)',
+        context
+    );
+    assert.equal(higherAttempt.passed, true, higherAttempt.message);
+    assert.deepEqual(JSON.parse(JSON.stringify(higherAttempt.evidence)), {
+        sawLowerHint: true,
+        sawHigherHint: true
+    });
 
     const rejectedSolutions = [
         'tipp = input("Tipp: ")',
@@ -855,8 +905,9 @@ test("Mission 3 level 2 accepts both number conversions and lowercase hints", ()
     for (const inputCode of rejectedSolutions) {
         context.code = `${inputCode}\nif tipp < 50:\n    print("zu niedrig!")\nelif tipp > 50:\n    print("zu hoch!")`;
         context.output = "Tipp: 12\nzu niedrig!\n";
+        context.evidence = { sawLowerHint: true, sawHigherHint: true };
         const result = vm.runInContext(
-            'validateLevelSolution("mission3_level2", code, output)',
+            'validateLevelSolution("mission3_level2", code, output, evidence)',
             context
         );
         assert.equal(result.passed, false);
@@ -1658,7 +1709,7 @@ test("mission navigation is rendered from one central definition", () => {
         assert.match(html, /<div id="navigation-root"><\/div>/);
         assert.match(html, /<script src="assets\/navigation\.js\?v=20260722-1"><\/script>/);
         assert.match(html, /<link rel="stylesheet" href="assets\/style\.css\?v=20260722-1">/);
-        assert.match(html, /<script src="assets\/runner\.js\?v=20260722-2"><\/script>/);
+        assert.match(html, /<script src="assets\/runner\.js\?v=20260722-3"><\/script>/);
         assert.doesNotMatch(html, /id="mySidebar"/);
     }
 });
