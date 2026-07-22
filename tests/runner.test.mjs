@@ -603,6 +603,40 @@ test("assignment microcode consistently uses setze auf", () => {
     assert.match(mission3Level3, />setze <span[^>]*>tipp<\/span> auf die Zahl aus /);
 });
 
+test("Mission 3 starter bonuses match the beginner progression", () => {
+    const mission3Level2 = readFileSync(new URL("../mission3_level2.html", import.meta.url), "utf8");
+    const mission3Level3 = readFileSync(new URL("../mission3_level3.html", import.meta.url), "utf8");
+    const level2Starter = mission3Level2.match(/<textarea id="python-editor">([\s\S]*?)<\/textarea>/)?.[1]
+        .replace(/\r/g, "");
+    const level3Starter = mission3Level3.match(/<textarea id="python-editor">([\s\S]*?)<\/textarea>/)?.[1]
+        .replace(/\r/g, "");
+
+    assert.equal(
+        level2Starter,
+        'tipp = input("Tipp: ")\ntipp = int(tipp)\n# Setze hier fort!\n'
+    );
+    assert.match(mission3Level2, /kurze Schreibweise[\s\S]*tipp = int\(input\("Tipp: "\)\)[\s\S]*ebenfalls akzeptiert/);
+    assert.equal(
+        level3Starter,
+        [
+            "# Ergänze hier den Start",
+            "",
+            "while tipp != geheim:",
+            '    tipp = int(input("Code eingeben: "))',
+            "    if tipp < geheim:",
+            '        print("Zu niedrig!")',
+            "    elif tipp > geheim:",
+            '        print("Zu hoch!")',
+            "",
+            "# Ergänze hier den Abschluss",
+            ""
+        ].join("\n")
+    );
+    assert.match(mission3Level3, /Jetzt musst du den gemeinen Code herausfinden/);
+    assert.match(mission3Level3, /<h2>Startbonus<\/h2>/);
+    assert.doesNotMatch(level3Starter, /import random|random\.randint|tipp\s*=\s*0|print\("Knack!"\)/);
+});
+
 const validSolutions = [
     {
         level: "mission1_level1",
@@ -641,8 +675,8 @@ const validSolutions = [
     },
     {
         level: "mission3_level2",
-        code: 'tipp = int(input("Code eingeben: "))\nif tipp < 50:\n    print("Zu niedrig!")\nelif tipp > 50:\n    print("Zu hoch!")',
-        output: "Code eingeben: 25\nZu niedrig!\n"
+        code: 'tipp = input("Tipp: ")\ntipp = int(tipp)\nif tipp < 50:\n    print("zu niedrig!")\nelif tipp > 50:\n    print("zu hoch!")',
+        output: "Tipp: 25\nzu niedrig!\n"
     },
     {
         level: "mission3_level3",
@@ -789,6 +823,45 @@ test("Mission 2 level 3 consistently requires the blue no-op message", () => {
     );
     assert.equal(result.passed, false);
     assert.match(result.message, /Nichts passiert\./);
+});
+
+test("Mission 3 level 2 accepts both number conversions and lowercase hints", () => {
+    const { context } = createRunnerContext();
+    const acceptedSolutions = [
+        {
+            code: 'tipp = input("Tipp: ")\ntipp = int(tipp)\nif tipp < 50:\n    print("zu niedrig!")\nelif tipp > 50:\n    print("zu hoch!")',
+            output: "Tipp: 12\nzu niedrig!\n"
+        },
+        {
+            code: 'tipp = int(input("Tipp: "))\nif tipp < 50:\n    print("zu niedrig!")\nelif tipp > 50:\n    print("zu hoch!")',
+            output: "Tipp: 75\nzu hoch!\n"
+        }
+    ];
+
+    for (const solution of acceptedSolutions) {
+        context.code = solution.code;
+        context.output = solution.output;
+        const result = vm.runInContext(
+            'validateLevelSolution("mission3_level2", code, output)',
+            context
+        );
+        assert.equal(result.passed, true, result.message);
+    }
+
+    const rejectedSolutions = [
+        'tipp = input("Tipp: ")',
+        "tipp = int(tipp)\ntipp = input(\"Tipp: \")"
+    ];
+    for (const inputCode of rejectedSolutions) {
+        context.code = `${inputCode}\nif tipp < 50:\n    print("zu niedrig!")\nelif tipp > 50:\n    print("zu hoch!")`;
+        context.output = "Tipp: 12\nzu niedrig!\n";
+        const result = vm.runInContext(
+            'validateLevelSolution("mission3_level2", code, output)',
+            context
+        );
+        assert.equal(result.passed, false);
+        assert.match(result.message, /int\(tipp\)|int\(input/);
+    }
 });
 
 test("keywords in comments or strings cannot bypass validators", () => {
@@ -1193,7 +1266,7 @@ const teacherSolutionExpectations = new Map([
     ["mission2_level2", /else:/],
     ["mission2_level3", /elif kabel == "blau":[\s\S]*Nichts passiert\./],
     ["mission3_level1", /while tipp != "123":/],
-    ["mission3_level2", /elif tipp > 50:/],
+    ["mission3_level2", /tipp = input\("Tipp: "\)[\s\S]*tipp = int\(tipp\)[\s\S]*elif tipp > 50:/],
     ["mission3_level3", /random\.randint\(1, 100\)/],
     ["mission4_level1", /for buchstabe in nachricht:/],
     ["mission4_level2", /ord\(buchstabe\)/],
@@ -1585,7 +1658,7 @@ test("mission navigation is rendered from one central definition", () => {
         assert.match(html, /<div id="navigation-root"><\/div>/);
         assert.match(html, /<script src="assets\/navigation\.js\?v=20260722-1"><\/script>/);
         assert.match(html, /<link rel="stylesheet" href="assets\/style\.css\?v=20260722-1">/);
-        assert.match(html, /<script src="assets\/runner\.js\?v=20260722-1"><\/script>/);
+        assert.match(html, /<script src="assets\/runner\.js\?v=20260722-2"><\/script>/);
         assert.doesNotMatch(html, /id="mySidebar"/);
     }
 });

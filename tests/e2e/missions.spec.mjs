@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 const sharedAssetVersion = "20260722-1";
+const runnerAssetVersion = "20260722-2";
 const logoAssetVersion = "20260720-2";
 
 const missionPages = [
@@ -92,7 +93,7 @@ test("mission pages expose the shared Agent PY dock without horizontal overflow"
         );
         await expect(menu).toBeVisible();
         await expect(page.locator(`link[href="assets/style.css?v=${sharedAssetVersion}"]`)).toHaveCount(1);
-        await expect(page.locator(`script[src="assets/runner.js?v=${sharedAssetVersion}"]`)).toHaveCount(1);
+        await expect(page.locator(`script[src="assets/runner.js?v=${runnerAssetVersion}"]`)).toHaveCount(1);
         await expect(page.locator(`script[src="assets/navigation.js?v=${sharedAssetVersion}"]`)).toHaveCount(1);
         if (missionPage.includes("_level")) {
             await expect(page.locator(`script[src="assets/editor.js?v=${sharedAssetVersion}"]`)).toHaveCount(1);
@@ -275,6 +276,27 @@ test("optional Mission 2 level 3 starts without elif and can unlock Mission 3", 
     await expect(page).toHaveURL(/\/mission3_start\.html$/);
     const unlocked = await page.evaluate(() => JSON.parse(localStorage.getItem("unlockedLevels_v2")));
     expect(unlocked).toEqual(expect.arrayContaining(["link-m3-title", "link-m3-l1"]));
+});
+
+test("Mission 3 levels provide the staged starter bonuses", async ({ page }) => {
+    await page.goto("/mission3_level2.html");
+    await expect(page.locator("#python-editor")).toHaveValue([
+        'tipp = input("Tipp: ")',
+        "tipp = int(tipp)",
+        "# Setze hier fort!",
+        ""
+    ].join("\n"));
+    await expect(page.locator(".guide-panel")).toContainText("Die kurze Schreibweise");
+    await expect(page.locator(".guide-panel")).toContainText("wird ebenfalls akzeptiert");
+
+    await page.goto("/mission3_level3.html");
+    const starter = await page.locator("#python-editor").inputValue();
+    expect(starter).toContain("while tipp != geheim:");
+    expect(starter).toContain('    tipp = int(input("Code eingeben: "))');
+    expect(starter).toContain('        print("Zu niedrig!")');
+    expect(starter).not.toMatch(/import random|random\.randint|tipp\s*=\s*0|print\("Knack!"\)/);
+    await expect(page.locator(".guide-panel")).toContainText("Jetzt musst du den gemeinen Code herausfinden");
+    await expect(page.locator(".guide-panel")).toContainText("Startbonus");
 });
 
 test("interactive input points to Enter and delays success for two seconds", async ({ page }) => {

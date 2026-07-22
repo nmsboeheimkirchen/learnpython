@@ -10,8 +10,8 @@
     <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
     <!-- Confetti Bibliothek für Belohnungen -->
     <script src="assets/vendor/canvas-confetti/1.9.2/confetti.browser.min.js"></script>
-    <script src="assets/runner.js?v=20260722-1"></script>
-    <script src="assets/teacher-solutions.js"></script>
+    <script src="assets/runner.js?v=20260722-2"></script>
+    <script src="assets/teacher-solutions.js?v=20260722-2"></script>
     <!-- CodeMirror für den Editor -->
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
@@ -42,10 +42,13 @@
                         <!-- Linke Seite: Anleitung -->
         <div class="panel guide-panel">
             <h1>Safe-Knacker - 3:</h1><h2>Safe knacken</h2>
-            <p>Der fertige Tresor! Ein guter Tresor ändert seinen Code, deshalb nutzen wir Zufall.</p>
+            <p>Jetzt musst du den gemeinen Code herausfinden. Damit der Code nicht im Programm steht, nutzen wir Zufall.</p>
             
             <h2>Zufall generieren</h2>
             <p>Wir erweitern Python durch das Einbinden des <span class="tooltip">Moduls<span class="tooltiptext">Ein Werkzeugkasten voller fertiger Code-Stücke!</span></span> <code>random</code>.</p>
+
+            <h2>Startbonus</h2>
+            <p>Dein voriger Code wurde bereits eingerückt und eine <code>while</code>-Schleife darum gebaut. Die Eingabe für <code>tipp</code> wird jetzt sogar in derselben Zeile in eine Zahl umgewandelt.</p>
             
             <h2>Dein Programm-Plan</h2>
             <p>Tippe auf einen Block oder fahre mit der Maus darüber, um den <strong>Python-Code</strong> zu sehen.</p>
@@ -84,19 +87,25 @@
             </div>
 
             <h2>Dein Schritt</h2>
-            <p>Kopiere den Python-Code der Blöcke in derselben Reihenfolge in das Feld <strong>Python-Code</strong>. Übernimm auch alle Einrückungen.</p>
+            <p>Ergänze nur die fehlenden Teile des Plans: Lade oberhalb der <code>while</code>-Schleife <code>random</code>, erzeuge <code>geheim</code> und setze <code>tipp</code> auf <code>0</code>. Schreibe unter die Schleife ohne Einrückung <code>print("Knack!")</code>.</p>
 
             <h2>Erklärung</h2>
-            <p>Die Schleife fragt bis zum richtigen Zufallswert weiter. <code>if</code> und <code>elif</code> liegen in der Schleife und sind deshalb einmal eingerückt; ihre <code>print()</code>-Zeilen sind doppelt eingerückt.</p>
+            <p>Die vorbereitete Schleife fragt so lange weiter, bis <code>tipp</code> und <code>geheim</code> gleich sind. <code>if</code> und <code>elif</code> liegen in der Schleife und sind einmal eingerückt; ihre Hinweise sind doppelt eingerückt. Weil <code>print("Knack!")</code> nicht eingerückt ist, läuft diese Zeile erst nach der Schleife.</p>
         </div>
 
         <!-- Rechte Seite: Editor und Konsole -->
         <div class="panel editor-panel">
             <h2>Python-Code</h2>
-            <textarea id="python-editor"># Wir fangen neu an!
-# Fahre mit der Maus ueber die bloecke links
-# und baue das ganze Spiel hier nach:
+            <textarea id="python-editor"># Ergänze hier den Start
 
+while tipp != geheim:
+    tipp = int(input("Code eingeben: "))
+    if tipp < geheim:
+        print("Zu niedrig!")
+    elif tipp > geheim:
+        print("Zu hoch!")
+
+# Ergänze hier den Abschluss
 </textarea>
             <div style="display: flex; gap: 10px;">
                 <button id="run-btn" style="flex-grow: 1;">▶ Code Ausführen</button>

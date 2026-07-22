@@ -10,8 +10,8 @@
     <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
     <!-- Confetti Bibliothek für Belohnungen -->
     <script src="assets/vendor/canvas-confetti/1.9.2/confetti.browser.min.js"></script>
-    <script src="assets/runner.js?v=20260722-1"></script>
-    <script src="assets/teacher-solutions.js"></script>
+    <script src="assets/runner.js?v=20260722-2"></script>
+    <script src="assets/teacher-solutions.js?v=20260722-2"></script>
     <!-- CodeMirror für den Editor -->
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
@@ -42,55 +42,62 @@
                         <!-- Linke Seite: Anleitung -->
         <div class="panel guide-panel">
             <h1>Safe-Knacker - 2:</h1><h2>Zu hoch, zu niedrig</h2>
-            <p>Für diesen Schritt starten wir mit einem sauberen Editor! Der Tresor muss wissen, ob unsere Zahl größer oder kleiner als sein Code ist.</p>
+            <p>Der Tresor muss wissen, ob unser Tipp größer oder kleiner als sein Code ist. Die Eingabe ist als Startbonus bereits vorbereitet.</p>
+
+            <h2>Startbonus</h2>
+            <p>Die ersten beiden Zeilen stehen schon im Feld <strong>Python-Code</strong>. Ergänze darunter die Abfragen für „Zu niedrig!“ und „Zu hoch!“.</p>
             
             <h2>Zahlen aus Text machen</h2>
-            <p>In Python ist "5" (Text) nicht das gleiche wie 5 (Zahl). Um Text in echte Zahlen umzuwandeln, setzen wir ein <span class="tooltip">int()<span class="tooltiptext">Integer, auf Deutsch: Ganzzahl.</span></span> darum.</p>
+            <p>In Python ist "5" (Text) nicht dasselbe wie 5 (Zahl). Im Startbonus geschieht die Umwandlung bewusst in zwei Schritten: <code>input()</code> speichert zuerst den Text in <code>tipp</code>. Danach macht <span class="tooltip">int(tipp)<span class="tooltiptext">Integer, auf Deutsch: Ganzzahl.</span></span> daraus eine Zahl.</p>
             
             <h2>Dein Programm-Plan</h2>
             <p>Tippe auf einen Block oder fahre mit der Maus darüber, um den <strong>Python-Code</strong> zu sehen.</p>
             
             <div class="block-hint">
                 <!-- Block 1 -->
-                <div class="makecode-block block-tooltip">setze <span class="makecode-var-pill" style="background:#005a9e;">tipp</span> auf die Zahl aus <span class="makecode-input">input("Tipp: ")</span>
-                    <span class="tooltiptext">tipp = int(input("Tipp: "))</span>
+                <div class="makecode-block block-tooltip">setze <span class="makecode-var-pill" style="background:#005a9e;">tipp</span> auf <span class="makecode-input">input("Tipp: ")</span>
+                    <span class="tooltiptext">tipp = input("Tipp: ")</span>
                 </div>
                 
                 <!-- Block 2 -->
+                <div class="makecode-block block-tooltip">setze <span class="makecode-var-pill" style="background:#005a9e;">tipp</span> auf die Zahl aus <span class="makecode-input">tipp</span>
+                    <span class="tooltiptext">tipp = int(tipp)</span>
+                </div>
+
+                <!-- Block 3 -->
                 <div class="makecode-block-var block-tooltip">wenn <span class="makecode-input">tipp < 50</span> dann
                     <span class="tooltiptext">if tipp &lt; 50:</span>
                 </div>
                 
-                <!-- Block 3 -->
+                <!-- Block 4 -->
                 <div class="makecode-block block-tooltip microcode-indent-1">zeige Text <span class="makecode-input">"Zu niedrig!"</span>
                     <span class="tooltiptext">print("Zu niedrig!")</span>
                 </div>
                 
-                <!-- Block 4 -->
+                <!-- Block 5 -->
                 <div class="makecode-block-var block-tooltip">ansonsten wenn <span class="makecode-input">tipp > 50</span> dann
                     <span class="tooltiptext">elif tipp &gt; 50:</span>
                 </div>
 
-                <!-- Block 5 -->
+                <!-- Block 6 -->
                 <div class="makecode-block block-tooltip microcode-indent-1">zeige Text <span class="makecode-input">"Zu hoch!"</span>
                     <span class="tooltiptext">print("Zu hoch!")</span>
                 </div>
             </div>
 
             <h2>Dein Schritt</h2>
-            <p>Kopiere den Python-Code der Blöcke in derselben Reihenfolge in das Feld <strong>Python-Code</strong> und achte auf die Einrückungen.</p>
+            <p>Die ersten beiden Zeilen sind schon da. Ergänze ab Zeile 3 die beiden Abfragen mit ihren eingerückten <code>print()</code>-Hinweisen.</p>
 
             <h2>Erklärung</h2>
-            <p><code>int(input(...))</code> macht aus der Texteingabe eine Zahl. <code>if</code> erkennt Zahlen unter 50; <code>elif</code> prüft danach Zahlen über 50.</p>
+            <p><code>tipp = input(...)</code> speichert zuerst den Text. <code>tipp = int(tipp)</code> macht daraus eine Zahl. Die kurze Schreibweise <code>tipp = int(input("Tipp: "))</code> bedeutet dasselbe und wird ebenfalls akzeptiert. <code>if</code> erkennt Zahlen unter 50; <code>elif</code> prüft danach Zahlen über 50.</p>
         </div>
 
         <!-- Rechte Seite: Editor und Konsole -->
         <div class="panel editor-panel">
             <h2>Python-Code</h2>
-            <textarea id="python-editor"># Wir fangen neu an!
-# Fahre mit der Maus ueber die bloecke links
-# und schreibe den Python-Code hierhin:
-
+            <textarea id="python-editor">tipp = input("Tipp: ")
+tipp = int(tipp)
+# Setze hier fort!
 </textarea>
             <div style="display: flex; gap: 10px;">
                 <button id="run-btn" style="flex-grow: 1;">▶ Code Ausführen</button>

@@ -742,11 +742,20 @@ const LEVEL_VALIDATORS = {
         ]);
     },
     mission3_level2({ statements, output }) {
+        const inlineNumberInput = findStatement(statements, ["tipp", "=", "int", "(", "input", "("]);
+        const textInput = findStatement(statements, ["tipp", "=", "input", "("]);
+        const separateConversion = findStatement(statements, ["tipp", "=", "int", "(", "tipp", ")"]);
+        const usesTwoLines = Boolean(
+            textInput && separateConversion &&
+            separateConversion.line > textInput.line &&
+            separateConversion.indent === textInput.indent
+        );
+        const normalizedOutput = output.toLocaleLowerCase("de-DE");
         return firstFailedRequirement([
-            { passed: Boolean(findStatement(statements, ["tipp", "=", "int", "(", "input", "("])), message: "Wandle die Eingabe mit int(input(...)) in eine Zahl um." },
+            { passed: Boolean(inlineNumberInput) || usesTwoLines, message: "Wandle die Eingabe entweder mit tipp = int(tipp) in der zweiten Zeile oder direkt mit int(input(...)) in eine Zahl um." },
             { passed: Boolean(findStatement(statements, ["if", "tipp", "<", numberToken(50), ":"])), message: "Prüfe mit if, ob tipp kleiner als 50 ist." },
             { passed: Boolean(findStatement(statements, ["elif", "tipp", ">", numberToken(50), ":"])), message: "Prüfe mit elif, ob tipp größer als 50 ist." },
-            { passed: output.includes("Zu niedrig!") || output.includes("Zu hoch!"), message: "Teste mit einer Zahl unter oder über 50 und gib den passenden Hinweis aus." }
+            { passed: normalizedOutput.includes("zu niedrig!") || normalizedOutput.includes("zu hoch!"), message: "Teste mit einer Zahl unter oder über 50 und gib den passenden Hinweis aus." }
         ]);
     },
     mission3_level3({ statements, output }) {
@@ -759,7 +768,7 @@ const LEVEL_VALIDATORS = {
             { passed: hasNestedStatement(statements, whilePattern, ["tipp", "=", "int", "(", "input", "("]), message: "Lies den Zahlentipp eingerückt in der while-Schleife ein." },
             { passed: hasNestedStatement(statements, whilePattern, ["if", "tipp", "<", "geheim", ":"]), message: "Prüfe innerhalb der Schleife, ob der Tipp zu niedrig ist." },
             { passed: hasNestedStatement(statements, whilePattern, ["elif", "tipp", ">", "geheim", ":"]), message: "Prüfe innerhalb der Schleife, ob der Tipp zu hoch ist." },
-            { passed: output.includes("Knack!"), message: "Gib nach dem richtigen Tipp ‚Knack!‘ aus." }
+            { passed: output.toLocaleLowerCase("de-DE").includes("knack!"), message: "Gib nach dem richtigen Tipp ‚Knack!‘ aus." }
         ]);
     },
     mission4_level1({ statements, output }) {

@@ -14,7 +14,7 @@ const stackedBlockPages = [
 ];
 
 const indentationPlans = [
-    { page: "mission3_level2.html", offsets: [0, 0, 20, 0, 20] },
+    { page: "mission3_level2.html", offsets: [0, 0, 0, 20, 0, 20] },
     { page: "mission3_level3.html", offsets: [0, 0, 0, 0, 20, 20, 40, 20, 40, 0] },
     { page: "mission4_level3.html", offsets: [0, 0, 0, 20, 20, 0] },
     { page: "agent_training_level2.html", offsets: [0, 20, 0, 0] },
@@ -107,7 +107,7 @@ test("a focused block helper opens above the module without being clipped", { ta
     await expect(bubble).toBeVisible();
     await expect(bubble).toHaveCSS("visibility", "visible");
     await expect(bubble).toHaveCSS("opacity", "1");
-    await expect(bubble).toContainText('tipp = int(input("Tipp: "))');
+    await expect(bubble).toContainText('tipp = input("Tipp: ")');
 
     const [hintBox, blockBox, bubbleBox, guideBox] = await Promise.all([
         hint.boundingBox(),
