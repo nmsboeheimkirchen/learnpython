@@ -1,7 +1,8 @@
 import { expect, test } from "@playwright/test";
 
 const sharedAssetVersion = "20260722-1";
-const runnerAssetVersion = "20260722-3";
+const styleAssetVersion = "20260722-2";
+const runnerAssetVersion = "20260722-4";
 const logoAssetVersion = "20260720-2";
 
 const missionPages = [
@@ -92,7 +93,7 @@ test("mission pages expose the shared Agent PY dock without horizontal overflow"
             `assets/brand/agent-py-logo.png?v=${logoAssetVersion}`
         );
         await expect(menu).toBeVisible();
-        await expect(page.locator(`link[href="assets/style.css?v=${sharedAssetVersion}"]`)).toHaveCount(1);
+        await expect(page.locator(`link[href="assets/style.css?v=${styleAssetVersion}"]`)).toHaveCount(1);
         await expect(page.locator(`script[src="assets/runner.js?v=${runnerAssetVersion}"]`)).toHaveCount(1);
         await expect(page.locator(`script[src="assets/navigation.js?v=${sharedAssetVersion}"]`)).toHaveCount(1);
         if (missionPage.includes("_level")) {
@@ -192,7 +193,7 @@ test("legacy Mission 1 level 4 redirects to the combined level 3", async ({ page
     await page.goto("/mission1_level4.html#legacy-progress");
 
     await expect(page).toHaveURL(/\/mission1_level3\.html#legacy-progress$/);
-    await expect(page.locator("h1")).toContainText("Identifikation abschließen");
+    await expect(page.locator("h1")).toContainText("Weiter geht‘s mit der Indentification");
     await expect(page.locator(".level-badge")).toHaveText("Level 3 von 3");
     await expect(page.locator("#link-level4")).toHaveCount(0);
 });
@@ -235,6 +236,17 @@ test("CodeMirror line numbers stay in the gutter and align with code rows", asyn
         expect(rows[index].numberRight).toBeLessThanOrEqual(rows[index].lineLeft + 1);
         expect(Math.abs(rows[index].numberTop - rows[index].lineTop)).toBeLessThanOrEqual(1);
     }
+
+    const syntaxColors = await page.evaluate(() => {
+        const comment = document.querySelector(".cm-comment");
+        const printKeyword = document.querySelector(".cm-builtin");
+        return {
+            comment: comment ? getComputedStyle(comment).color : null,
+            printKeyword: printKeyword ? getComputedStyle(printKeyword).color : null
+        };
+    });
+    expect(syntaxColors.comment).toBe("rgb(63, 191, 127)");
+    expect(syntaxColors.comment).not.toBe(syntaxColors.printKeyword);
 });
 
 test("Mission finale buttons navigate to the next mission", async ({ page }) => {
@@ -332,7 +344,7 @@ test("Mission 3 level 2 requires one guess below and one above 50", async ({ pag
     await expect(page.locator("#success-overlay")).toBeVisible({ timeout: 3000 });
 });
 
-test("interactive input points to Enter and delays success for two seconds", async ({ page }) => {
+test("interactive input points to Enter and delays Mission 1 success for four seconds", async ({ page }) => {
     await page.goto("/mission1_level3.html");
     await page.waitForFunction(() => Boolean(window.editor));
     await page.evaluate(() => {
@@ -375,7 +387,7 @@ test("interactive input points to Enter and delays success for two seconds", asy
     await expect(runButton).toBeDisabled();
     await expect(page.locator("#success-overlay")).toHaveCount(0);
 
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(2000);
     await expect(page.locator("#success-overlay")).toHaveCount(0);
-    await expect(page.locator("#success-overlay")).toBeVisible({ timeout: 2500 });
+    await expect(page.locator("#success-overlay")).toBeVisible({ timeout: 3000 });
 });

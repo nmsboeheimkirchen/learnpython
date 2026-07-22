@@ -9,12 +9,12 @@
     <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
     <!-- Confetti Bibliothek für Belohnungen -->
     <script src="assets/vendor/canvas-confetti/1.9.2/confetti.browser.min.js"></script>
-    <script src="assets/runner.js?v=20260722-3"></script>
-    <script src="assets/teacher-solutions.js"></script>
+    <script src="assets/runner.js?v=20260722-4"></script>
+    <script src="assets/teacher-solutions.js?v=20260722-4"></script>
     <!-- CodeMirror für den Editor -->
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
-    <link rel="stylesheet" href="assets/style.css?v=20260722-1">
+    <link rel="stylesheet" href="assets/style.css?v=20260722-2">
 </head>
 <body>
     <a class="skip-link" href="#python-editor">Zum Python-Editor</a>
@@ -41,35 +41,48 @@
         <!-- Linke Seite: Anleitung -->
         <div class="panel guide-panel">
             <h1>Level 2: Pause</h1>
-            <p>Wir simulieren jetzt eine kurze Wartepause, bevor das System antwortet.</p>
+            <p>Das System soll nach einer fünfsekündigen Pause melden, dass es bereit ist.</p>
             
             <h2>Pausiere das Skript</h2>
-            <p>Damit Python Pausen einlegen kann, musst du ganz am Anfang mit <span class="tooltip">import time<span class="tooltiptext">Lädt zusätzliche Fähigkeiten in dein Programm, hier die Zeit-Funktionen.</span></span> das Modul <code>time</code> laden. 
-            Mit <span class="tooltip">time.sleep(1)<span class="tooltiptext">Pausiert den Code für 1 Sekunde.</span></span> wartet der Computer dann genau eine Sekunde.</p>
+            <p>Damit Python Pausen einlegen kann, lädst du ganz am Anfang mit <span class="tooltip">import time<span class="tooltiptext">Lädt die Zeitfunktionen in dein Programm.</span></span> das Modul <code>time</code>. Mit <span class="tooltip">time.sleep(5)<span class="tooltiptext">Pausiert den Code für 5 Sekunden.</span></span> wartet der Computer genau fünf Sekunden.</p>
             
             <div class="block-hint">
-                <div class="makecode-block">pausiere (ms) <span class="makecode-input">1000</span></div>
-                <p>Python-Code zum Kopieren (1000 ms = 1 Sekunde):</p>
+                <div class="makecode-block block-tooltip">lade Werkzeugkiste <span class="makecode-input">time</span>
+                    <span class="tooltiptext">import time</span>
+                </div>
+                <div class="makecode-block block-tooltip">zeige Text <span class="makecode-input">"Verbindung wird hergestellt..."</span>
+                    <span class="tooltiptext">print("Verbindung wird hergestellt...")</span>
+                </div>
+                <div class="makecode-block block-tooltip">pausiere (s) <span class="makecode-input">5</span>
+                    <span class="tooltiptext">time.sleep(5)</span>
+                </div>
+                <div class="makecode-block block-tooltip"><span class="makecode-input">print("System bereit!")</span>
+                    <span class="tooltiptext">print("System bereit!")</span>
+                </div>
+                <p>Python-Codeausschnitt:</p>
                 <pre class="python-example"><code>import time
 print("Verbindung wird hergestellt...")
-time.sleep(1)</code></pre>
+time.sleep(5)</code></pre>
             </div>
 
             <h2>Dein Schritt</h2>
-            <p>Kopiere den Python-Code von oben in das Feld <strong>Python-Code</strong> und führe ihn aus.</p>
+            <p>Kopiere den Python-Codeausschnitt von oben in das Feld <strong>Python-Code</strong>. Ergänze danach <code>print("System bereit!")</code> und führe den vollständigen Code aus.</p>
 
             <h2>Erklärung</h2>
-            <p><code>import time</code> lädt die Zeitfunktionen. <code>print()</code> zeigt den Text an und <code>time.sleep(1)</code> wartet danach eine Sekunde.</p>
+            <p>Das Python-Modul <code>time</code> zählt in Sekunden. <code>time.sleep(5)</code> pausiert das Programm fünf Sekunden. Erst danach zeigt <code>print("System bereit!")</code> die Bereitschaft im Ergebnis an.</p>
         </div>
 
         <!-- Rechte Seite: Editor und Konsole -->
         <div class="panel editor-panel">
             <h2>Python-Code</h2>
-            <textarea id="python-editor"># Ganz oben time laden:
+            <textarea id="python-editor"># Lade hier die Werkzeugkiste time:
 
 
 print("Verbindung wird hergestellt...")
-# Mache hier eine Pause (1 Sekunde):
+# Pausiere hier 5 Sekunden:
+
+
+# Zeige danach "System bereit!":
 
 </textarea>
             <div style="display: flex; gap: 10px;">

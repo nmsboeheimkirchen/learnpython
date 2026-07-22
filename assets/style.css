@@ -376,6 +376,11 @@ code {
     font-variant-numeric: tabular-nums;
 }
 
+/* #-Kommentare bleiben gut sichtbar, aber etwas dunkler als print(). */
+.cm-s-monokai span.cm-comment {
+    color: #3fbf7f;
+}
+
 button,
 .mission-start-action {
     min-height: 44px;

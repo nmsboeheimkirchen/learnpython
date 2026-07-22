@@ -426,7 +426,7 @@ test("a level stores code through the normal success path", () => {
     });
 });
 
-test("a successful run waits exactly two seconds before showing its popup", () => {
+test("Mission 1 waits four seconds before showing its success popup", () => {
     const { context, elements, timers } = createRunnerContext();
     const passingCode = 'print("Verbindung wird hergestellt...")\n';
     let runCount = 0;
@@ -442,6 +442,13 @@ test("a successful run waits exactly two seconds before showing its popup", () =
     runButton.dispatch("click");
 
     assert.equal(vm.runInContext("SUCCESS_POPUP_DELAY_MS", context), 2000);
+    assert.equal(vm.runInContext("MISSION1_SUCCESS_POPUP_DELAY_MS", context), 4000);
+    for (const levelId of ["mission1_level1", "mission1_level2", "mission1_level3"]) {
+        context.levelId = levelId;
+        assert.equal(vm.runInContext("successPopupDelayForLevel(levelId)", context), 4000);
+    }
+    context.levelId = "mission2_level1";
+    assert.equal(vm.runInContext("successPopupDelayForLevel(levelId)", context), 2000);
     assert.equal(runCount, 1);
     assert.equal(runButton.disabled, true);
     assert.equal(elements.get("status-text").textContent, "✓ Geschafft – lies kurz dein Ergebnis.");
@@ -449,7 +456,7 @@ test("a successful run waits exactly two seconds before showing its popup", () =
 
     const popupTimers = timers.filter(timer => timer.type === "timeout");
     assert.equal(popupTimers.length, 1);
-    assert.equal(popupTimers[0].delay, 2000);
+    assert.equal(popupTimers[0].delay, 4000);
 
     runButton.dispatch("click");
     assert.equal(runCount, 1, "Während der Wartezeit darf kein zweiter Lauf starten");
@@ -679,6 +686,22 @@ test("Mission 3 starter bonuses match the beginner progression", () => {
     assert.doesNotMatch(level3Starter, /import random|random\.randint|tipp\s*=\s*0|print\("Knack!"\)/);
 });
 
+test("Mission 1 level 2 teaches the five-second ready sequence and level 3 carries it forward", () => {
+    const level2 = readFileSync(new URL("../mission1_level2.html", import.meta.url), "utf8");
+    const level3 = readFileSync(new URL("../mission1_level3.html", import.meta.url), "utf8");
+    const level3Starter = level3.match(/<textarea id="python-editor">([\s\S]*?)<\/textarea>/)?.[1]
+        .replace(/\r/g, "") ?? "";
+
+    assert.match(level2, /lade Werkzeugkiste[\s\S]*>time</);
+    assert.match(level2, /zeige Text[\s\S]*Verbindung wird hergestellt/);
+    assert.match(level2, /pausiere \(s\)[\s\S]*>5</);
+    assert.match(level2, /print\("System bereit!"\)/);
+    assert.match(level2, /Python-Codeausschnitt:[\s\S]*import time[\s\S]*time\.sleep\(5\)/);
+    assert.match(level2, /Das Python-Modul <code>time<\/code> zählt in Sekunden/);
+    assert.match(level3, /<h1>Level 3: Weiter geht‘s mit der Indentification<\/h1>/);
+    assert.match(level3Starter, /^import time\nprint\("Verbindung wird hergestellt\.\.\."\)\ntime\.sleep\(5\)\nprint\("System bereit!"\)/);
+});
+
 const validSolutions = [
     {
         level: "mission1_level1",
@@ -687,8 +710,8 @@ const validSolutions = [
     },
     {
         level: "mission1_level2",
-        code: 'import time\nprint("Verbindung wird hergestellt...")\ntime.sleep(1)',
-        output: "Verbindung wird hergestellt...\n"
+        code: 'import time\nprint("Verbindung wird hergestellt...")\ntime.sleep(5)\nprint("System bereit!")',
+        output: "Verbindung wird hergestellt...\nSystem bereit!\n"
     },
     {
         level: "mission1_level3",
@@ -812,6 +835,38 @@ test("Mission 1 level 3 requires name, the exact question, and the welcome outpu
         context.output = solution.output;
         const result = vm.runInContext(
             'validateLevelSolution("mission1_level3", code, output)',
+            context
+        );
+        assert.equal(result.passed, false);
+        assert.match(result.message, solution.message);
+    }
+});
+
+test("Mission 1 level 2 requires five seconds, the ready message, and the target order", () => {
+    const { context } = createRunnerContext();
+    const invalidSolutions = [
+        {
+            code: 'import time\nprint("Verbindung wird hergestellt...")\ntime.sleep(1)\nprint("System bereit!")',
+            output: "Verbindung wird hergestellt...\nSystem bereit!\n",
+            message: /time\.sleep\(5\)/
+        },
+        {
+            code: 'import time\nprint("Verbindung wird hergestellt...")\ntime.sleep(5)',
+            output: "Verbindung wird hergestellt...\n",
+            message: /System bereit/
+        },
+        {
+            code: 'import time\nprint("System bereit!")\nprint("Verbindung wird hergestellt...")\ntime.sleep(5)',
+            output: "System bereit!\nVerbindung wird hergestellt...\n",
+            message: /vier Zeilen/
+        }
+    ];
+
+    for (const solution of invalidSolutions) {
+        context.code = solution.code;
+        context.output = solution.output;
+        const result = vm.runInContext(
+            'validateLevelSolution("mission1_level2", code, output)',
             context
         );
         assert.equal(result.passed, false);
@@ -1311,8 +1366,8 @@ test("Agent training level 3 needs a real search and provenance-backed collectio
 
 const teacherSolutionExpectations = new Map([
     ["mission1_level1", /Verbindung wird hergestellt/],
-    ["mission1_level2", /time\.sleep\(1\)/],
-    ["mission1_level3", /name = input\("Wie heißt du\? "\)[\s\S]*Willkommen im System/],
+    ["mission1_level2", /time\.sleep\(5\)[\s\S]*System bereit!/],
+    ["mission1_level3", /time\.sleep\(5\)[\s\S]*System bereit![\s\S]*name = input\("Wie heißt du\? "\)[\s\S]*Willkommen im System/],
     ["mission2_level1", /kabel = "rot"/],
     ["mission2_level2", /else:/],
     ["mission2_level3", /elif kabel == "blau":[\s\S]*Nichts passiert\./],
@@ -1708,8 +1763,8 @@ test("mission navigation is rendered from one central definition", () => {
         const html = readFileSync(new URL(`../${page}`, import.meta.url), "utf8");
         assert.match(html, /<div id="navigation-root"><\/div>/);
         assert.match(html, /<script src="assets\/navigation\.js\?v=20260722-1"><\/script>/);
-        assert.match(html, /<link rel="stylesheet" href="assets\/style\.css\?v=20260722-1">/);
-        assert.match(html, /<script src="assets\/runner\.js\?v=20260722-3"><\/script>/);
+        assert.match(html, /<link rel="stylesheet" href="assets\/style\.css\?v=20260722-2">/);
+        assert.match(html, /<script src="assets\/runner\.js\?v=20260722-4"><\/script>/);
         assert.doesNotMatch(html, /id="mySidebar"/);
     }
 });
@@ -2007,7 +2062,7 @@ test("both homepage options keep distinct light moods and one shared logo while 
         assert.match(html, variant.concept);
         assert.match(html, variant.brand);
         assert.match(html, /src="assets\/brand\/agent-py-logo\.png\?v=20260720-2"/);
-        assert.match(html, /href="assets\/style\.css\?v=20260722-1"/);
+        assert.match(html, /href="assets\/style\.css\?v=20260722-2"/);
         assert.match(html, /href="assets\/home\.css\?v=20260720-2"/);
         assert.match(html, /href="index\.html" aria-label="Agent PY – Startseite"/);
         assert.deepEqual(missionTargets, expectedMissionTargets);

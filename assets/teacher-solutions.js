@@ -4,8 +4,8 @@
 window.TeacherSolutions = (() => {
     const encodedSolutions = Object.freeze({
         mission1_level1: "cHJpbnQoIlZlcmJpbmR1bmcgd2lyZCBoZXJnZXN0ZWxsdC4uLiIp",
-        mission1_level2: "aW1wb3J0IHRpbWUKcHJpbnQoIlZlcmJpbmR1bmcgd2lyZCBoZXJnZXN0ZWxsdC4uLiIpCnRpbWUuc2xlZXAoMSk=",
-        mission1_level3: "aW1wb3J0IHRpbWUKcHJpbnQoIlZlcmJpbmR1bmcgd2lyZCBoZXJnZXN0ZWxsdC4uLiIpCnRpbWUuc2xlZXAoMSkKbmFtZSA9IGlucHV0KCJXaWUgaGVpw590IGR1PyAiKQpwcmludCgiV2lsbGtvbW1lbiBpbSBTeXN0ZW0sIiwgbmFtZSk=",
+        mission1_level2: "aW1wb3J0IHRpbWUKcHJpbnQoIlZlcmJpbmR1bmcgd2lyZCBoZXJnZXN0ZWxsdC4uLiIpCnRpbWUuc2xlZXAoNSkKcHJpbnQoIlN5c3RlbSBiZXJlaXQhIik=",
+        mission1_level3: "aW1wb3J0IHRpbWUKcHJpbnQoIlZlcmJpbmR1bmcgd2lyZCBoZXJnZXN0ZWxsdC4uLiIpCnRpbWUuc2xlZXAoNSkKcHJpbnQoIlN5c3RlbSBiZXJlaXQhIikKbmFtZSA9IGlucHV0KCJXaWUgaGVpw590IGR1PyAiKQpwcmludCgiV2lsbGtvbW1lbiBpbSBTeXN0ZW0sIiwgbmFtZSk=",
         mission1_level4: "aW1wb3J0IHRpbWUKcHJpbnQoIlZlcmJpbmR1bmcgd2lyZCBoZXJnZXN0ZWxsdC4uLiIpCnRpbWUuc2xlZXAoMSkKbmFtZSA9IGlucHV0KCJXaWUgaGVpw590IGR1PyAiKQpwcmludCgiV2lsbGtvbW1lbiBpbSBTeXN0ZW0sIiwgbmFtZSk=",
         mission2_level1: "a2FiZWwgPSAicm90IgppZiBrYWJlbCA9PSAicm90IjoKICAgIHByaW50KCJFbnRzY2jDpHJmdCEiKQ==",
         mission2_level2: "a2FiZWwgPSAiZ3LDvG4iCmlmIGthYmVsID09ICJyb3QiOgogICAgcHJpbnQoIkVudHNjaMOkcmZ0ISIpCmVsc2U6CiAgICBwcmludCgiS0FCVU1NISIp",

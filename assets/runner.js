@@ -4,6 +4,13 @@ const PROGRESS_STORAGE_KEY = "unlockedLevels_v2";
 const COMPLETED_CODE_STORAGE_KEY = "completedLevelCode_v1";
 const TEACHER_MODE_STORAGE_KEY = "cheatMode";
 const SUCCESS_POPUP_DELAY_MS = 2000;
+const MISSION1_SUCCESS_POPUP_DELAY_MS = SUCCESS_POPUP_DELAY_MS * 2;
+
+function successPopupDelayForLevel(levelId) {
+    return /^mission1_level[123]$/.test(levelId)
+        ? MISSION1_SUCCESS_POPUP_DELAY_MS
+        : SUCCESS_POPUP_DELAY_MS;
+}
 const DEFAULT_UNLOCKED_LEVELS = Object.freeze(["link-level1"]);
 const LEVEL_ROUTES = Object.freeze({
     "link-level1": "mission1_level1.html",
@@ -678,10 +685,17 @@ const LEVEL_VALIDATORS = {
         ]);
     },
     mission1_level2({ statements, output }) {
+        const importIndex = statements.findIndex(statement => statementStartsWith(statement, ["import", "time"]));
+        const connectionIndex = statements.findIndex(statement => statementStartsWith(statement, ["print", "(", stringToken("Verbindung wird hergestellt..."), ")"]));
+        const pauseIndex = statements.findIndex(statement => statementStartsWith(statement, ["time", ".", "sleep", "(", numberToken(5), ")"]));
+        const readyIndex = statements.findIndex(statement => statementStartsWith(statement, ["print", "(", stringToken("System bereit!"), ")"]));
         return firstFailedRequirement([
-            { passed: Boolean(findStatement(statements, ["import", "time"])), message: "Lade zuerst das Modul mit import time." },
-            { passed: statements.some((statement) => statementContains(statement, ["time", ".", "sleep", "("])), message: "Rufe time.sleep(...) für die Pause auf." },
-            { passed: output.toLowerCase().includes("verbindung wird hergestellt"), message: "Gib zusätzlich ‚Verbindung wird hergestellt...‘ aus." }
+            { passed: importIndex >= 0, message: "Lade zuerst das Modul mit import time." },
+            { passed: connectionIndex >= 0, message: "Gib danach mit print() ‚Verbindung wird hergestellt...‘ aus." },
+            { passed: pauseIndex >= 0, message: "Pausiere mit time.sleep(5) genau fünf Sekunden." },
+            { passed: readyIndex >= 0, message: "Gib nach der Pause mit print() ‚System bereit!‘ aus." },
+            { passed: importIndex < connectionIndex && connectionIndex < pauseIndex && pauseIndex < readyIndex, message: "Ordne die vier Zeilen wie im Zielcode an." },
+            { passed: outputMatchesLines(output, ["Verbindung wird hergestellt...", "System bereit!"]), message: "Im Ergebnis müssen zuerst die Verbindung und danach ‚System bereit!‘ stehen." }
         ]);
     },
     mission1_level3({ statements, output }) {
@@ -1053,7 +1067,7 @@ function setupLevel(levelId) {
                 successPopupTimeout = null;
                 runButton.disabled = false;
                 triggerSuccess(Boolean(outcome.finale), outcome.successMessage);
-            }, SUCCESS_POPUP_DELAY_MS);
+            }, successPopupDelayForLevel(levelId));
         });
     });
 }
