@@ -12,7 +12,7 @@ Eine browserbasierte Python-Lernplattform für Schüler:innen. In kurzen Agenten
 - Python-Ausführung mit Skulpt, ohne lokale Python-Installation
 - Konkrete Rückmeldungen zu noch fehlenden Lösungsschritten
 - Automatisch freigeschaltete Level und gespeicherter Lernfortschritt
-- Vier Missionen mit insgesamt dreizehn Leveln
+- Vier Missionen mit insgesamt zwölf Leveln
 
 ## Lernpfad
 
@@ -62,7 +62,7 @@ Alternativ kann jeder andere statische Webserver verwendet werden.
 ```text
 .
 ├── index.html                 # Einstieg und Weiterleitung zur ersten Mission
-├── mission1_*.html            # Mission 1 mit vier Leveln
+├── mission1_*.html            # Mission 1 mit drei Leveln (Level 4 leitet aus alten Links auf Level 3 um)
 ├── mission2_*.html            # Mission 2 mit drei Leveln
 ├── mission3_*.html            # Mission 3 mit drei Leveln
 ├── mission4_*.html            # Mission 4 mit drei aufeinander aufbauenden Leveln

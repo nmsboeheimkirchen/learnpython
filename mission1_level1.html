@@ -10,28 +10,28 @@
     <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
     <!-- Confetti Bibliothek für Belohnungen -->
     <script src="assets/vendor/canvas-confetti/1.9.2/confetti.browser.min.js"></script>
-    <script src="assets/runner.js?v=20260721-8"></script>
+    <script src="assets/runner.js?v=20260722-1"></script>
     <script src="assets/teacher-solutions.js"></script>
     <!-- CodeMirror für den Editor -->
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
-    <link rel="stylesheet" href="assets/style.css?v=20260720-2">
+    <link rel="stylesheet" href="assets/style.css?v=20260722-1">
 </head>
 <body>
     <a class="skip-link" href="#python-editor">Zum Python-Editor</a>
 
         <!-- Sidebar Navigation -->
     <div id="navigation-root"></div>
-    <script src="assets/navigation.js?v=20260721-6"></script>
+    <script src="assets/navigation.js?v=20260722-1"></script>
 
     <!-- Main Content -->
     <main id="main-content">
         <div style="max-width: 1200px; margin: 0 auto;">
             <!-- Fortschritts-Tracker UI -->
             <div class="progress-container">
-                <span class="level-badge">Level 1 von 4</span>
+                <span class="level-badge">Level 1 von 3</span>
                 <div class="progress-bar-bg">
-                    <div class="progress-bar-fill" id="progress-fill" style="width: 25%;"></div>
+                    <div class="progress-bar-fill" id="progress-fill" style="width: 33%;"></div>
                 </div>
                 <span id="status-text">Warte auf Eingabe...</span>
                 <button id="next-level-btn" class="next-level-btn" onclick="window.location.href='mission1_level2.html'">Nächstes Level</button>
@@ -50,16 +50,19 @@
             <div class="block-hint">
                 <div class="makecode-block">zeige Text <span class="makecode-input">"Verbindung wird hergestellt..."</span></div>
                 <p>In Python:</p>
-                <code>print("Verbindung wird hergestellt...")</code>
+                <pre class="python-example"><code>print("Verbindung wird hergestellt...")</code></pre>
             </div>
 
-            <h2>Aufgabe</h2>
-            <p>1. Lösche den Code im Editor.<br>2. Schreibe: <strong>print("Verbindung wird hergestellt...")</strong><br>3. Klicke "Code Ausführen".</p>
+            <h2>Dein Schritt</h2>
+            <p>Kopiere den Python-Code von oben in das Feld <strong>Python-Code</strong> und klicke auf <strong>Code Ausführen</strong>.</p>
+
+            <h2>Erklärung</h2>
+            <p><code>print()</code> zeigt den Text zwischen den Anführungszeichen im Bereich <strong>Ergebnis</strong> an.</p>
         </div>
 
         <!-- Rechte Seite: Editor und Konsole -->
         <div class="panel editor-panel">
-            <h2>Python Terminal</h2>
+            <h2>Python-Code</h2>
             <textarea id="python-editor"># Tippe deinen Code hier rein!
 print("Irgendein Text")
 </textarea>
@@ -67,7 +70,8 @@ print("Irgendein Text")
                 <button id="run-btn" style="flex-grow: 1;">▶ Code Ausführen</button>
                 <button class="test-btn" data-teacher-solution="mission1_level1">Musterlösung (Für Lehrer)</button>
             </div>
-            <div id="console-output">Bereit für deine Befehle, Agent.</div>
+            <h2 class="console-heading" id="console-heading">Ergebnis</h2>
+            <div id="console-output" role="log" aria-labelledby="console-heading" aria-live="polite">Hier erscheinen Eingaben und Ergebnisse.</div>
         </div>
     </div>
     </main>
@@ -80,7 +84,7 @@ print("Irgendein Text")
     <!-- CodeMirror Setup für Syntax Highlighting -->
     <script src="assets/vendor/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="assets/vendor/codemirror/5.65.2/python.min.js"></script>
-    <script src="assets/editor.js"></script>
+    <script src="assets/editor.js?v=20260722-1"></script>
 </body>
 </html>
 

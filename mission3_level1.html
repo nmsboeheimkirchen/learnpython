@@ -10,19 +10,19 @@
     <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
     <!-- Confetti Bibliothek für Belohnungen -->
     <script src="assets/vendor/canvas-confetti/1.9.2/confetti.browser.min.js"></script>
-    <script src="assets/runner.js?v=20260721-8"></script>
+    <script src="assets/runner.js?v=20260722-1"></script>
     <script src="assets/teacher-solutions.js"></script>
     <!-- CodeMirror für den Editor -->
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
-    <link rel="stylesheet" href="assets/style.css?v=20260720-2">
+    <link rel="stylesheet" href="assets/style.css?v=20260722-1">
 </head>
 <body>
     <a class="skip-link" href="#python-editor">Zum Python-Editor</a>
 
         <!-- Sidebar Navigation -->
     <div id="navigation-root"></div>
-    <script src="assets/navigation.js?v=20260721-6"></script>
+    <script src="assets/navigation.js?v=20260722-1"></script>
 
     <!-- Main Content -->
     <main id="main-content">
@@ -46,20 +46,26 @@
             
             <h2>Die While-Schleife</h2>
             <p>Die <span class="tooltip">while-Schleife<span class="tooltiptext">"Solange" - Wiederholt den Code eingerückt darunter, solange die Bedingung wahr ist.</span></span> prüft bei jedem Durchlauf, ob eine Bedingung noch gilt.</p>
+            <p><code>!=</code> bedeutet <strong>ungleich</strong> und entspricht dem mathematischen Zeichen <strong>≠</strong>. <code>while tipp != "123":</code> wiederholt den eingerückten Code also, solange <code>tipp</code> nicht <code>"123"</code> ist.</p>
             
             <div class="block-hint">
                 <div class="makecode-block">solange <span class="makecode-input">tipp != "123"</span> mache</div>
                 <p>In Python:</p>
-                <code>tipp = ""<br>while tipp != "123":<br>&nbsp;&nbsp;&nbsp;&nbsp;tipp = input("Code eingeben: ")</code>
+                <pre class="python-example"><code>tipp = ""
+while tipp != "123":
+    tipp = input("Code eingeben: ")</code></pre>
             </div>
 
-            <h2>Aufgabe</h2>
-            <p>1. Erstelle eine Variable <strong>tipp = ""</strong> (Leer).<br>2. Starte die Schleife: <strong>while tipp != "123":</strong><br>3. Frage IN der Schleife (eingerückt) nach dem neuen Tipp via <strong>input()</strong>.<br>4. Klicke auf Ausführen und gib 123 in der Konsole ein, um die Schleife zu beenden!</p>
+            <h2>Dein Schritt</h2>
+            <p>Kopiere den Python-Code von oben in das Feld <strong>Python-Code</strong>. Führe ihn aus, gib im Bereich <strong>Ergebnis</strong> die Zahl <code>123</code> ein und bestätige mit <strong>Enter</strong>.</p>
+
+            <h2>Erklärung</h2>
+            <p><code>tipp = ""</code> startet mit leerem Text. Die <code>while</code>-Schleife fragt eingerückt so oft nach einem neuen Tipp, bis die Ungleich-Bedingung falsch wird.</p>
         </div>
 
         <!-- Rechte Seite: Editor und Konsole -->
         <div class="panel editor-panel">
-            <h2>Python Terminal</h2>
+            <h2>Python-Code</h2>
             <textarea id="python-editor"># Tippe deinen Code hier rein!
 print("Irgendein Text")
 </textarea>
@@ -67,7 +73,8 @@ print("Irgendein Text")
                 <button id="run-btn" style="flex-grow: 1;">▶ Code Ausführen</button>
                 <button class="test-btn" data-teacher-solution="mission3_level1">Musterlösung (Für Lehrer)</button>
             </div>
-            <div id="console-output">Bereit für deine Befehle, Agent.</div>
+            <h2 class="console-heading" id="console-heading">Ergebnis</h2>
+            <div id="console-output" role="log" aria-labelledby="console-heading" aria-live="polite">Hier erscheinen Eingaben und Ergebnisse.</div>
         </div>
     </div>
     </main>
@@ -80,7 +87,7 @@ print("Irgendein Text")
     <!-- CodeMirror Setup für Syntax Highlighting -->
     <script src="assets/vendor/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="assets/vendor/codemirror/5.65.2/python.min.js"></script>
-    <script src="assets/editor.js"></script>
+    <script src="assets/editor.js?v=20260722-1"></script>
 </body>
 </html>
 

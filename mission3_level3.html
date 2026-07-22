@@ -10,19 +10,19 @@
     <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
     <!-- Confetti Bibliothek für Belohnungen -->
     <script src="assets/vendor/canvas-confetti/1.9.2/confetti.browser.min.js"></script>
-    <script src="assets/runner.js?v=20260721-8"></script>
+    <script src="assets/runner.js?v=20260722-1"></script>
     <script src="assets/teacher-solutions.js"></script>
     <!-- CodeMirror für den Editor -->
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
-    <link rel="stylesheet" href="assets/style.css?v=20260720-2">
+    <link rel="stylesheet" href="assets/style.css?v=20260722-1">
 </head>
 <body>
     <a class="skip-link" href="#python-editor">Zum Python-Editor</a>
 
         <!-- Sidebar Navigation -->
     <div id="navigation-root"></div>
-    <script src="assets/navigation.js?v=20260721-6"></script>
+    <script src="assets/navigation.js?v=20260722-1"></script>
 
     <!-- Main Content -->
     <main id="main-content">
@@ -34,7 +34,7 @@
                     <div class="progress-bar-fill" id="progress-fill" style="width: 100%;"></div>
                 </div>
                 <span id="status-text">Warte auf Eingabe...</span>
-                
+                <button id="next-level-btn" class="next-level-btn" onclick="window.location.href='mission4_start.html'">Nächste Mission</button>
             </div>
         </div>
 
@@ -83,15 +83,17 @@
                 </div>
             </div>
 
-            <h2>Aufgabe</h2>
-            <p>Baue das Tresor-Spiel aus den Blöcken exakt im Editor nach. Pass auf! Achte auf die *doppelten* &nbsp;&nbsp;&nbsp;&nbsp;Einrückungen bei den if-Abfragen, da sie IN der Schleife liegen!</p>
+            <h2>Dein Schritt</h2>
+            <p>Kopiere den Python-Code der Blöcke in derselben Reihenfolge in das Feld <strong>Python-Code</strong>. Übernimm auch alle Einrückungen.</p>
+
+            <h2>Erklärung</h2>
+            <p>Die Schleife fragt bis zum richtigen Zufallswert weiter. <code>if</code> und <code>elif</code> liegen in der Schleife und sind deshalb einmal eingerückt; ihre <code>print()</code>-Zeilen sind doppelt eingerückt.</p>
         </div>
 
         <!-- Rechte Seite: Editor und Konsole -->
         <div class="panel editor-panel">
-            <h2>Python Terminal</h2>
-            <textarea id="python-editor">
-# Wir fangen neu an!
+            <h2>Python-Code</h2>
+            <textarea id="python-editor"># Wir fangen neu an!
 # Fahre mit der Maus ueber die bloecke links
 # und baue das ganze Spiel hier nach:
 
@@ -100,7 +102,8 @@
                 <button id="run-btn" style="flex-grow: 1;">▶ Code Ausführen</button>
                 <button class="test-btn" data-teacher-solution="mission3_level3">Musterlösung (Für Lehrer)</button>
             </div>
-            <div id="console-output">Bereit für deine Befehle, Agent.</div>
+            <h2 class="console-heading" id="console-heading">Ergebnis</h2>
+            <div id="console-output" role="log" aria-labelledby="console-heading" aria-live="polite">Hier erscheinen Eingaben und Ergebnisse.</div>
         </div>
     </div>
     </main>
@@ -113,7 +116,7 @@
     <!-- CodeMirror Setup für Syntax Highlighting -->
     <script src="assets/vendor/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="assets/vendor/codemirror/5.65.2/python.min.js"></script>
-    <script src="assets/editor.js"></script>
+    <script src="assets/editor.js?v=20260722-1"></script>
 </body>
 </html>
 

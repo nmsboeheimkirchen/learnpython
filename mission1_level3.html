@@ -9,70 +9,75 @@
     <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
     <!-- Confetti Bibliothek für Belohnungen -->
     <script src="assets/vendor/canvas-confetti/1.9.2/confetti.browser.min.js"></script>
-    <script src="assets/runner.js?v=20260721-8"></script>
+    <script src="assets/runner.js?v=20260722-1"></script>
     <script src="assets/teacher-solutions.js"></script>
     <!-- CodeMirror für den Editor -->
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
-    <link rel="stylesheet" href="assets/style.css?v=20260720-2">
+    <link rel="stylesheet" href="assets/style.css?v=20260722-1">
 </head>
 <body>
     <a class="skip-link" href="#python-editor">Zum Python-Editor</a>
 
         <!-- Sidebar Navigation -->
     <div id="navigation-root"></div>
-    <script src="assets/navigation.js?v=20260721-6"></script>
+    <script src="assets/navigation.js?v=20260722-1"></script>
 
     <!-- Main Content -->
     <main id="main-content">
         <div style="max-width: 1200px; margin: 0 auto;">
             <!-- Fortschritts-Tracker UI -->
             <div class="progress-container">
-                <span class="level-badge">Level 3 von 4</span>
+                <span class="level-badge">Level 3 von 3</span>
                 <div class="progress-bar-bg">
-                    <div class="progress-bar-fill" id="progress-fill" style="width: 75%;"></div>
+                    <div class="progress-bar-fill" id="progress-fill" style="width: 100%;"></div>
                 </div>
                 <span id="status-text">Warte auf Eingabe...</span>
-                <button id="next-level-btn" class="next-level-btn" onclick="window.location.href='mission1_level4.html'">Nächstes Level</button>
+                <button id="next-level-btn" class="next-level-btn" onclick="window.location.href='mission2_start.html'">Nächste Mission</button>
             </div>
         </div>
 
     <div class="container">
         <!-- Linke Seite: Anleitung -->
         <div class="panel guide-panel">
-            <h1>Level 3: Identifikation anfordern</h1>
-            <p>Die 1-sekündige Pause klappt! Jetzt fordern wir die Eingabe an.</p>
+            <h1>Level 3: Identifikation abschließen</h1>
+            <p>Jetzt fragt das System nach deinem Namen und begrüßt dich damit.</p>
             
             <h2>Eingabe & Variablen</h2>
-            <p>Nutze <span class="tooltip">input()<span class="tooltiptext">Wartet auf Texteingabe, die mit [Enter] bestätigt werden muss.</span></span> um zu fragen. Speichere die Antwort in einer <span class="tooltip">Variable<span class="tooltiptext">Eine Schublade für Daten.</span></span>.</p>
+            <p>Mit <span class="tooltip">input()<span class="tooltiptext">Wartet auf Texteingabe, die mit Enter bestätigt werden muss.</span></span> stellst du eine Frage. Die Antwort speicherst du in einer <span class="tooltip">Variable<span class="tooltiptext">Ein benannter Speicherplatz für Daten.</span></span>.</p>
             
             <div class="block-hint">
                 <div class="makecode-block-var">
-                    setze <span class="makecode-var-pill">name</span> auf <span class="makecode-var-pill" style="border: 1px dotted #ccc; box-shadow:none; margin-left: 8px;">frage nach Text</span>
+                    setze <span class="makecode-var-pill">name</span> auf <span class="makecode-var-pill" style="border: 1px dotted #ccc; box-shadow:none; margin-left: 8px;">input("Wie heißt du? ")</span>
                 </div>
-                <p>In Python:</p>
-                <code>agent_name = input("Wie heißt du? ")</code>
+                <div class="makecode-block">zeige Text <span class="makecode-input">"Willkommen im System," und name</span></div>
+                <p>Python-Code zum Kopieren:</p>
+                <pre class="python-example"><code>name = input("Wie heißt du? ")
+print("Willkommen im System,", name)</code></pre>
             </div>
 
-            <h2>Aufgabe</h2>
-            <p>1. Erstelle ganz unten die Variable <strong>agent_name</strong>.<br>2. Nutze <strong>input()</strong>, um zu fragen: <strong>"Gib deinen Namen ein: "</strong>.<br>3. Klicke "Code Ausführen" und bestätige im schwarzen Fenster mit der [Enter]-Taste.</p>
+            <p><strong>So geht’s:</strong> Kopiere die zwei Zeilen von oben ans Ende des Felds <strong>Python-Code</strong>. Führe den Code aus, tippe deinen Namen im Bereich <strong>Ergebnis</strong> ein und bestätige mit <strong>Enter</strong>.</p>
+
+            <h2>Erklärung</h2>
+            <p>Die erste Zeile erstellt die Variable <code>name</code> und weist ihr sofort die Antwort der <code>input()</code>-Abfrage zu. <strong>„Wie heißt du?“</strong> ist die Frage, die das System dabei stellt. Die zweite Zeile gibt die Begrüßung zusammen mit dem gespeicherten Namen im Ergebnis aus.</p>
         </div>
 
         <!-- Rechte Seite: Editor und Konsole -->
         <div class="panel editor-panel">
-            <h2>Python Terminal</h2>
+            <h2>Python-Code</h2>
             <textarea id="python-editor">import time
 print("Verbindung wird hergestellt...")
 time.sleep(1)
 
-# Erstelle unten agent_name und frage mit input():
+# Kopiere hier die zwei neuen Zeilen hin:
 
 </textarea>
             <div style="display: flex; gap: 10px;">
                 <button id="run-btn" style="flex-grow: 1;">▶ Code Ausführen</button>
                 <button class="test-btn" data-teacher-solution="mission1_level3">Musterlösung (Für Lehrer)</button>
             </div>
-            <div id="console-output">Bereit für deine Befehle, Agent.</div>
+            <h2 class="console-heading" id="console-heading">Ergebnis</h2>
+            <div id="console-output" role="log" aria-labelledby="console-heading" aria-live="polite">Hier erscheinen Eingaben und Ergebnisse.</div>
         </div>
     </div>
     </main>
@@ -85,7 +90,7 @@ time.sleep(1)
     <!-- CodeMirror Setup für Syntax Highlighting -->
     <script src="assets/vendor/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="assets/vendor/codemirror/5.65.2/python.min.js"></script>
-    <script src="assets/editor.js"></script>
+    <script src="assets/editor.js?v=20260722-1"></script>
 </body>
 </html>
 

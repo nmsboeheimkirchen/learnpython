@@ -265,6 +265,23 @@ code {
     align-self: stretch;
 }
 
+.python-example {
+    align-self: stretch;
+    max-width: 100%;
+    margin: 0;
+    padding: 13px 15px;
+    overflow-x: auto;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 12px;
+    background: rgba(2, 8, 15, 0.68);
+}
+
+.python-example code {
+    display: block;
+    min-width: max-content;
+    white-space: pre;
+}
+
 .tooltip,
 .block-tooltip {
     position: relative;
@@ -330,6 +347,7 @@ code {
 }
 
 .CodeMirror {
+    --editor-line-height: 24px;
     width: 100%;
     height: clamp(260px, 36vh, 390px);
     margin-bottom: 16px;
@@ -339,12 +357,23 @@ code {
     background: #090d15;
     box-shadow: inset 0 1px rgba(255, 255, 255, 0.04);
     font-size: 16px;
-    line-height: 1.55;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    line-height: var(--editor-line-height);
 }
 
 .CodeMirror-gutters {
     border-right-color: rgba(255, 255, 255, 0.07) !important;
     background: #070b12 !important;
+}
+
+.CodeMirror pre.CodeMirror-line,
+.CodeMirror pre.CodeMirror-line-like,
+.CodeMirror-linenumber {
+    line-height: var(--editor-line-height);
+}
+
+.CodeMirror-linenumber {
+    font-variant-numeric: tabular-nums;
 }
 
 button,
@@ -400,7 +429,7 @@ button:disabled {
 #console-output {
     min-height: 150px;
     height: 150px;
-    margin-top: 16px;
+    margin-top: 0;
     padding: 17px;
     overflow-y: auto;
     border: 1px solid rgba(255, 255, 255, 0.09);
@@ -411,6 +440,88 @@ button:disabled {
     font-size: 0.88rem;
     line-height: 1.55;
     white-space: pre-wrap;
+}
+
+.console-heading {
+    margin: 18px 0 8px;
+}
+
+.console-input-wrap {
+    position: relative;
+    display: inline-grid;
+    width: min(235px, 100%);
+    min-width: min(190px, 100%);
+    padding-top: 40px;
+    vertical-align: bottom;
+}
+
+.console-input {
+    width: 100%;
+    min-width: 0;
+    height: 30px;
+    padding: 2px 7px;
+    border: 1px solid rgba(var(--mission-accent-rgb), 0.45);
+    border-bottom: 2px solid var(--mission-accent);
+    border-radius: 8px 8px 4px 4px;
+    outline: 0;
+    background: rgba(var(--mission-accent-rgb), 0.08);
+    box-shadow: 0 0 0 3px rgba(var(--mission-accent-rgb), 0.08);
+    color: var(--ink);
+    caret-color: var(--mission-accent);
+    font-family: inherit;
+    animation: console-input-glow 1.15s ease-in-out infinite;
+}
+
+.console-input:focus {
+    border-color: var(--mission-accent);
+    box-shadow: 0 0 0 3px rgba(var(--mission-accent-rgb), 0.16), 0 0 22px rgba(var(--mission-accent-rgb), 0.13);
+}
+
+.console-enter-hint {
+    position: absolute;
+    z-index: 4;
+    top: 0;
+    right: 0;
+    padding: 7px 11px;
+    border: 1px solid rgba(var(--mission-accent-rgb), 0.48);
+    border-radius: 999px;
+    background: #10283a;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35), 0 0 18px rgba(var(--mission-accent-rgb), 0.16);
+    color: var(--ink);
+    font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+    font-size: 0.75rem;
+    font-weight: 800;
+    line-height: 1.2;
+    white-space: nowrap;
+    animation: console-hint-pulse 1.15s ease-in-out infinite;
+}
+
+.console-enter-hint::after {
+    position: absolute;
+    right: 18px;
+    bottom: -6px;
+    width: 10px;
+    height: 10px;
+    border-right: 1px solid rgba(var(--mission-accent-rgb), 0.48);
+    border-bottom: 1px solid rgba(var(--mission-accent-rgb), 0.48);
+    background: #10283a;
+    content: "";
+    transform: rotate(45deg);
+}
+
+@keyframes console-hint-pulse {
+    0%, 100% { opacity: 0.82; transform: translateY(0) scale(0.98); }
+    50% { opacity: 1; transform: translateY(-2px) scale(1.03); }
+}
+
+@keyframes console-input-glow {
+    0%, 100% { box-shadow: 0 0 0 3px rgba(var(--mission-accent-rgb), 0.07); }
+    50% { box-shadow: 0 0 0 4px rgba(var(--mission-accent-rgb), 0.17), 0 0 20px rgba(var(--mission-accent-rgb), 0.12); }
+}
+
+.inline-action-link {
+    color: var(--mission-accent);
+    font-weight: 750;
 }
 
 .carryover-note {
@@ -1072,7 +1183,9 @@ body.navigation-open {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .success-coin {
+    .success-coin,
+    .console-enter-hint,
+    .console-input {
         animation: none;
     }
 }

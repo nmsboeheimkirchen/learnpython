@@ -3,12 +3,12 @@
 const PROGRESS_STORAGE_KEY = "unlockedLevels_v2";
 const COMPLETED_CODE_STORAGE_KEY = "completedLevelCode_v1";
 const TEACHER_MODE_STORAGE_KEY = "cheatMode";
+const SUCCESS_POPUP_DELAY_MS = 2000;
 const DEFAULT_UNLOCKED_LEVELS = Object.freeze(["link-level1"]);
 const LEVEL_ROUTES = Object.freeze({
     "link-level1": "mission1_level1.html",
     "link-level2": "mission1_level2.html",
     "link-level3": "mission1_level3.html",
-    "link-level4": "mission1_level4.html",
     "link-m2-title": "mission2_start.html",
     "link-m2-l1": "mission2_level1.html",
     "link-m2-l2": "mission2_level2.html",
@@ -159,7 +159,9 @@ function getCompletedLevelCode(levelId) {
 }
 
 function restoreCompletedLevelCode(levelId) {
-    const savedCode = getCompletedLevelCode(levelId);
+    const savedCode = levelId === "mission1_level3"
+        ? (getCompletedLevelCode("mission1_level4") ?? getCompletedLevelCode(levelId))
+        : getCompletedLevelCode(levelId);
     if (
         savedCode === null ||
         !window.editor ||
@@ -168,9 +170,18 @@ function restoreCompletedLevelCode(levelId) {
         return false;
     }
 
-    const migratedCode = /^agent_training_level[123]$/.test(levelId)
+    let migratedCode = /^agent_training_level[123]$/.test(levelId)
         ? savedCode.replace(/\bagent\b/g, "drohne")
         : savedCode;
+    if (levelId === "mission1_level3") {
+        migratedCode = migratedCode
+            .replace(/\bagent_name\b/g, "name")
+            .replace(/Gib deinen Namen ein:\s*/g, "Wie heißt du? ")
+            .replace(/Name:\s*/g, "Wie heißt du? ");
+        if (!/print\s*\(\s*["']Willkommen im System,?["']\s*,\s*name\s*\)/.test(migratedCode)) {
+            migratedCode = migratedCode.replace(/\s+$/, "") + '\nprint("Willkommen im System,", name)';
+        }
+    }
     if (migratedCode !== savedCode) saveCompletedLevelCode(levelId, migratedCode);
     window.editor.setValue(migratedCode);
     return true;
@@ -371,6 +382,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if(window.location.hash === '#l') {
         document.querySelectorAll('.next-level-btn').forEach(btn => btn.style.display = 'block');
     }
+
+    document.querySelectorAll("[data-skip-unlocks]").forEach(link => {
+        link.addEventListener("click", () => {
+            link.dataset.skipUnlocks
+                .split(/\s+/)
+                .filter(Boolean)
+                .forEach(unlockLevel);
+        });
+    });
 
     const resetButton = document.getElementById("reset-progress-btn");
     if (resetButton) {
@@ -664,20 +684,24 @@ const LEVEL_VALIDATORS = {
             { passed: output.toLowerCase().includes("verbindung wird hergestellt"), message: "Gib zusätzlich ‚Verbindung wird hergestellt...‘ aus." }
         ]);
     },
-    mission1_level3({ statements }) {
+    mission1_level3({ statements, output }) {
+        const nameInput = findStatement(statements, ["name", "=", "input", "("]);
+        const asksForName = nameInput?.tokens.some(token =>
+            token.type === "string" && token.value.trim() === "Wie heißt du?"
+        );
+        const hasWelcomePrint = statements.some(statement =>
+            statementStartsWith(statement, ["print", "("]) &&
+            statementContains(statement, [",", "name"])
+        );
         return firstFailedRequirement([
-            { passed: Boolean(findStatement(statements, ["agent_name", "=", "input", "("])), message: "Speichere input(...) in der Variable agent_name." }
+            { passed: Boolean(nameInput), message: "Speichere input(...) in der Variable name." },
+            { passed: asksForName, message: "Stelle in input(...) die Frage ‚Wie heißt du?‘." },
+            { passed: hasWelcomePrint, message: "Gib den festen Text und name gemeinsam mit einem Komma in print(...) aus." },
+            { passed: output.toLowerCase().includes("willkommen im system"), message: "Die Ausgabe muss ‚Willkommen im System‘ enthalten." }
         ]);
     },
     mission1_level4({ statements, output }) {
-        const hasWelcomePrint = statements.some(statement =>
-            statementStartsWith(statement, ["print", "("]) &&
-            statementContains(statement, [",", "agent_name"])
-        );
-        return firstFailedRequirement([
-            { passed: hasWelcomePrint, message: "Gib den festen Text und agent_name gemeinsam mit einem Komma in print(...) aus." },
-            { passed: output.toLowerCase().includes("willkommen im system"), message: "Die Ausgabe muss ‚Willkommen im System‘ enthalten." }
-        ]);
+        return LEVEL_VALIDATORS.mission1_level3({ statements, output });
     },
     mission2_level1({ statements, output }) {
         return firstFailedRequirement([
@@ -687,20 +711,26 @@ const LEVEL_VALIDATORS = {
         ]);
     },
     mission2_level2({ statements, output }) {
+        const cableAssignment = findStatement(statements, ["kabel", "="]);
+        const cableColor = cableAssignment?.tokens[2]?.type === "string"
+            ? cableAssignment.tokens[2].value.trim()
+            : "";
         return firstFailedRequirement([
-            { passed: Boolean(findStatement(statements, ["kabel", "=", stringToken("blau")])), message: "Setze kabel für diesen Test auf ‚blau‘." },
+            { passed: Boolean(cableColor) && cableColor !== "rot", message: "Setze kabel auf eine beliebige Farbe außer ‚rot‘." },
             { passed: Boolean(findStatement(statements, ["if", "kabel", "==", stringToken("rot"), ":"])), message: "Behalte die Prüfung auf das rote Kabel bei." },
             { passed: Boolean(findStatement(statements, ["else", ":"])), message: "Ergänze einen else-Zweig." },
             { passed: output.includes("KABUMM"), message: "Gib im else-Zweig ‚KABUMM!‘ aus." }
         ]);
     },
     mission2_level3({ statements, output }) {
+        const blueBranch = ["elif", "kabel", "==", stringToken("blau"), ":"];
         return firstFailedRequirement([
             { passed: Boolean(findStatement(statements, ["kabel", "=", "input", "("])), message: "Lies die Kabelwahl mit input(...) in kabel ein." },
             { passed: Boolean(findStatement(statements, ["if", "kabel", "==", stringToken("rot"), ":"])), message: "Prüfe zuerst das rote Kabel mit if." },
-            { passed: Boolean(findStatement(statements, ["elif", "kabel", "==", stringToken("blau"), ":"])), message: "Prüfe das blaue Kabel mit elif." },
+            { passed: Boolean(findStatement(statements, blueBranch)), message: "Prüfe das blaue Kabel mit elif." },
+            { passed: hasNestedStatement(statements, blueBranch, ["print", "(", stringToken("Nichts passiert."), ")"]), message: "Gib im blauen elif-Zweig ‚Nichts passiert.‘ aus." },
             { passed: Boolean(findStatement(statements, ["else", ":"])), message: "Fange alle übrigen Kabel mit else ab." },
-            { passed: output.includes("Entschärft!"), message: "Teste das Programm mit der Eingabe rot, bis ‚Entschärft!‘ erscheint." }
+            { passed: output.includes("Nichts passiert."), message: "Teste das Programm mit der Eingabe blau, bis ‚Nichts passiert.‘ erscheint." }
         ]);
     },
     mission3_level1({ statements }) {
@@ -867,10 +897,10 @@ const LEVEL_VALIDATORS = {
 const LEVEL_OUTCOMES = {
     mission1_level1: { unlocks: ["link-level2"] },
     mission1_level2: { unlocks: ["link-level3"] },
-    mission1_level3: { unlocks: ["link-level4"] },
+    mission1_level3: { unlocks: ["link-m2-title", "link-m2-l1"], finale: true },
     mission1_level4: { unlocks: ["link-m2-title", "link-m2-l1"], finale: true },
     mission2_level1: { unlocks: ["link-m2-l2"] },
-    mission2_level2: { unlocks: ["link-m2-l3"] },
+    mission2_level2: { unlocks: ["link-m2-l3", "link-m3-title", "link-m3-l1"] },
     mission2_level3: { unlocks: ["link-m3-title", "link-m3-l1"], finale: true },
     mission3_level1: { unlocks: ["link-m3-l2"] },
     mission3_level2: { unlocks: ["link-m3-l3"] },
@@ -959,6 +989,7 @@ function setupLevel(levelId) {
     const runButton = document.getElementById("run-btn");
     const outcome = LEVEL_OUTCOMES[levelId];
     if (!runButton || !outcome) return;
+    let successPopupTimeout = null;
 
     const restoreCode = () => restoreLevelCode(levelId);
     if (document.readyState === "loading") {
@@ -968,6 +999,7 @@ function setupLevel(levelId) {
     }
 
     runButton.addEventListener("click", () => {
+        if (runButton.disabled || successPopupTimeout !== null) return;
         runit((code, output) => {
             const result = validateLevelSolution(levelId, code, output);
             if (!result.passed) {
@@ -977,7 +1009,17 @@ function setupLevel(levelId) {
 
             saveCompletedLevelCode(levelId, code);
             outcome.unlocks.forEach(unlockLevel);
-            triggerSuccess(Boolean(outcome.finale), outcome.successMessage);
+            runButton.disabled = true;
+            const statusText = document.getElementById("status-text");
+            if (statusText) {
+                statusText.textContent = "✓ Geschafft – lies kurz dein Ergebnis.";
+                statusText.style.color = "#7df2a9";
+            }
+            successPopupTimeout = setTimeout(() => {
+                successPopupTimeout = null;
+                runButton.disabled = false;
+                triggerSuccess(Boolean(outcome.finale), outcome.successMessage);
+            }, SUCCESS_POPUP_DELAY_MS);
         });
     });
 }
@@ -1001,6 +1043,7 @@ function outf(text) {
 function customInput(promptMsg) {
     return new Promise((resolve) => {
         const outDiv = document.getElementById("console-output");
+        const runButton = document.getElementById("run-btn");
         
         // Zeige den Prompt an, falls vorhanden
         if (promptMsg) {
@@ -1008,28 +1051,47 @@ function customInput(promptMsg) {
             currentOutput += promptMsg;
         }
 
-        // Erstelle eine Eingabe-Zeile am Ende der Konsole
-        const inputSpan = document.createElement("span");
-        inputSpan.contentEditable = "true";
-        inputSpan.style.borderBottom = "1px solid #34a853";
-        inputSpan.style.outline = "none";
-        inputSpan.style.minWidth = "20px";
-        inputSpan.style.display = "inline-block";
-        outDiv.appendChild(inputSpan);
-        inputSpan.focus();
+        // Eine echte Eingabe verhindert Mehrdeutigkeiten und zeigt den blinkenden Cursor zuverlässig.
+        const inputWrapper = document.createElement("span");
+        inputWrapper.className = "console-input-wrap";
+
+        const inputHint = document.createElement("span");
+        inputHint.className = "console-enter-hint";
+        inputHint.id = "console-enter-hint";
+        inputHint.textContent = "Hier eingeben · Enter drücken ↵";
+        inputHint.setAttribute("role", "status");
+
+        const inputField = document.createElement("input");
+        inputField.className = "console-input";
+        inputField.type = "text";
+        inputField.autocomplete = "off";
+        inputField.spellcheck = false;
+        inputField.setAttribute("aria-label", "Eingabe; mit Enter bestätigen");
+        inputField.setAttribute("aria-describedby", inputHint.id);
+
+        inputWrapper.appendChild(inputHint);
+        inputWrapper.appendChild(inputField);
+        outDiv.appendChild(inputWrapper);
+        if (runButton) {
+            runButton.disabled = true;
+            runButton.setAttribute("aria-describedby", inputHint.id);
+        }
+        inputField.focus();
 
         outDiv.scrollTop = outDiv.scrollHeight;
 
         // Warte auf Enter
-        inputSpan.addEventListener("keydown", function(e) {
+        inputField.addEventListener("keydown", function(e) {
             if (e.key === "Enter") {
                 e.preventDefault();
-                const v = inputSpan.innerText;
-                // Damit der Cursor verschwindet und die Eingabe zum Text wird
-                inputSpan.contentEditable = "false";
-                inputSpan.style.borderBottom = "none";
-                appendConsoleText(outDiv, "\n");
+                const v = inputField.value;
+                inputWrapper.remove();
+                appendConsoleText(outDiv, v + "\n");
                 currentOutput += v + "\n";
+                if (runButton) {
+                    runButton.disabled = false;
+                    runButton.removeAttribute("aria-describedby");
+                }
                 resolve(v);
             }
         });
@@ -1058,12 +1120,7 @@ function runit(levelTestFunction) {
 
         myPromise.then(function(mod) {
             // Erfolg: Prüfe Level
-            if(levelTestFunction) {
-                // Warte kurz, damit die finale Print-Ausgabe erst noch gelesen werden kann
-                setTimeout(() => {
-                    levelTestFunction(code, currentOutput);
-                }, 1000); // 1 Sekunde Verzögerung
-            }
+            if(levelTestFunction) levelTestFunction(code, currentOutput);
         }, function(err) {
             appendConsoleError(outDiv, err);
         });
@@ -1208,7 +1265,7 @@ function triggerSuccess(isFinale = false, successMessage = "", options = {}) {
         overlay.setAttribute?.("aria-labelledby", "success-overlay-title");
 
         const titleText = options.title || (isFinale ? "MISSION ERFÜLLT" : "LEVEL GESCHAFFT");
-        const subText = successMessage || (isFinale ? "Sehr starker Drohnencode!" : "Gut gemacht! Weiter geht's.");
+        const subText = successMessage || (isFinale ? "Sehr starker Code!" : "Gut gemacht! Weiter geht's.");
         const symbol = ["graduation-cap", "diploma"].includes(options.symbol)
             ? options.symbol
             : "trophy";

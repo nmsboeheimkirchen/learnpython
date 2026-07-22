@@ -10,19 +10,19 @@
     <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
     <!-- Confetti Bibliothek für Belohnungen -->
     <script src="assets/vendor/canvas-confetti/1.9.2/confetti.browser.min.js"></script>
-    <script src="assets/runner.js?v=20260721-8"></script>
+    <script src="assets/runner.js?v=20260722-1"></script>
     <script src="assets/teacher-solutions.js"></script>
     <!-- CodeMirror für den Editor -->
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
-    <link rel="stylesheet" href="assets/style.css?v=20260720-2">
+    <link rel="stylesheet" href="assets/style.css?v=20260722-1">
 </head>
 <body>
     <a class="skip-link" href="#python-editor">Zum Python-Editor</a>
 
         <!-- Sidebar Navigation -->
     <div id="navigation-root"></div>
-    <script src="assets/navigation.js?v=20260721-6"></script>
+    <script src="assets/navigation.js?v=20260722-1"></script>
 
     <!-- Main Content -->
     <main id="main-content">
@@ -34,44 +34,59 @@
                     <div class="progress-bar-fill" id="progress-fill" style="width: 100%;"></div>
                 </div>
                 <span id="status-text">Warte auf Eingabe...</span>
-                
+                <button id="next-level-btn" class="next-level-btn" onclick="window.location.href='mission3_start.html'">Nächste Mission</button>
             </div>
         </div>
 
     <div class="container">
                 <!-- Linke Seite: Anleitung -->
         <div class="panel guide-panel">
-            <h1>Bombe entschärfen - 3:</h1><h2>Rotes Kabel</h2>
-            <p>Jetzt wird es ernst. Du musst die User um Eingabe bitten, welches Kabel geschnitten werden soll.</p>
+            <h1>Bombe entschärfen - 3:</h1><h2>Mehrere Fälle prüfen</h2>
+            <p>Dieses Level ist optional. Du kannst <a class="inline-action-link" href="mission3_start.html" data-skip-unlocks="link-m3-title link-m3-l1">direkt mit Mission 3 weitermachen</a>.</p>
             
             <h2>elif (Else-If) und input()</h2>
-            <p>Mit <span class="tooltip">elif:<span class="tooltiptext">Kurz für "else if" (ansonsten wenn). Erlaubt es, eine weitere Bedingung zu prüfen, falls die erste falsch war.</span></span> können wir noch mehr Bedingungen prüfen, bevor wir zum <code>else</code> kommen.</p>
+            <p>Mit <span class="tooltip">elif:<span class="tooltiptext">Kurz für „else if“ (ansonsten wenn). Prüft eine weitere Bedingung, falls die vorherige falsch war.</span></span> können wir vor dem <code>else</code> einen weiteren Fall prüfen.</p>
             
             <div class="block-hint">
+                <div class="makecode-block">setze kabel auf <span class="makecode-input">input("Welches Kabel? ")</span></div>
+                <div class="makecode-block-var">wenn <span class="makecode-input">kabel = "rot"</span> dann</div>
+                <div class="makecode-block microcode-indent-1">zeige Text <span class="makecode-input">"Entschärft!"</span></div>
                 <div class="makecode-block-var">ansonsten wenn <span class="makecode-input">kabel = "blau"</span> dann</div>
-                <p>In Python:</p>
-                <code>elif kabel == "blau":<br>&nbsp;&nbsp;&nbsp;&nbsp;print("Das war falsch herum!")</code>
+                <div class="makecode-block microcode-indent-1">zeige Text <span class="makecode-input">"Nichts passiert."</span></div>
+                <div class="makecode-block-var">ansonsten</div>
+                <div class="makecode-block microcode-indent-1">zeige Text <span class="makecode-input">"KABUMM!"</span></div>
+                <p>Vollständiger Python-Code:</p>
+                <pre class="python-example"><code>kabel = input("Welches Kabel? ")
+if kabel == "rot":
+    print("Entschärft!")
+elif kabel == "blau":
+    print("Nichts passiert.")
+else:
+    print("KABUMM!")</code></pre>
             </div>
 
             <h2>Aufgabe</h2>
-            <p>1. <strong>kabel = input("Welches Kabel? ")</strong><br>2. <strong>if kabel == "rot":</strong> -> Entschärft<br>3. <strong>elif kabel == "blau":</strong> -> Kurzschluss<br>4. <strong>else:</strong> -> KABUMM!<br><em>Schneide das rote Kabel im Terminal durch!</em></p>
+            <p>Füge vor dem <code>else</code>-Zweig mit <code>KABUMM!</code> ein <code>elif</code> (= else if) für das blaue Kabel ein. Den Code kannst du von oben kopieren.</p>
+
+            <h2>Erklärung</h2>
+            <p><code>if</code> prüft zuerst Rot. Nur wenn das falsch ist, prüft <code>elif</code> Blau. <code>else</code> übernimmt ohne eigene Bedingung alle übrigen Farben. Genau ein Zweig läuft: Rot → „Entschärft!“, Blau → „Nichts passiert.“ und der Code kann erneut gestartet werden, jede andere Farbe → „KABUMM!“.</p>
         </div>
 
         <!-- Rechte Seite: Editor und Konsole -->
         <div class="panel editor-panel">
-            <h2>Python Terminal</h2>
-            <textarea id="python-editor">
-kabel = "blau"
+            <h2>Python-Code</h2>
+            <textarea id="python-editor">kabel = input("Welches Kabel? ")
 if kabel == "rot":
     print("Entschärft!")
 else:
-    print("KABUMM")
+    print("KABUMM!")
 </textarea>
             <div style="display: flex; gap: 10px;">
                 <button id="run-btn" style="flex-grow: 1;">▶ Code Ausführen</button>
                 <button class="test-btn" data-teacher-solution="mission2_level3">Musterlösung (Für Lehrer)</button>
             </div>
-            <div id="console-output">Bereit für deine Befehle, Agent.</div>
+            <h2 class="console-heading" id="console-heading">Ergebnis</h2>
+            <div id="console-output" role="log" aria-labelledby="console-heading" aria-live="polite">Hier erscheinen Eingaben und Ergebnisse.</div>
         </div>
     </div>
     </main>
@@ -84,7 +99,7 @@ else:
     <!-- CodeMirror Setup für Syntax Highlighting -->
     <script src="assets/vendor/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="assets/vendor/codemirror/5.65.2/python.min.js"></script>
-    <script src="assets/editor.js"></script>
+    <script src="assets/editor.js?v=20260722-1"></script>
 </body>
 </html>
 

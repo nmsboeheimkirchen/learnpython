@@ -8,8 +8,12 @@ import vm from "node:vm";
 class FakeElement {
     constructor(tagName = "div") {
         this.tagName = tagName;
+        this.attributes = new Map();
         this.children = [];
+        this.disabled = false;
+        this.focused = false;
         this.listeners = new Map();
+        this.parentNode = null;
         this.style = {};
         this.classList = {
             add() {},
@@ -17,10 +21,12 @@ class FakeElement {
             remove() {}
         };
         this.textContent = "";
+        this.value = "";
     }
 
     appendChild(child) {
         this.children.push(child);
+        if (child && typeof child === "object") child.parentNode = this;
         return child;
     }
 
@@ -30,18 +36,33 @@ class FakeElement {
         this.listeners.set(type, listeners);
     }
 
-    dispatch(type) {
+    dispatch(type, init = {}) {
+        const event = {
+            preventDefault() {},
+            target: this,
+            type,
+            ...init
+        };
         for (const listener of this.listeners.get(type) ?? []) {
-            listener({ type, target: this });
+            listener(event);
         }
     }
 
-    focus() {}
+    focus() { this.focused = true; }
+    getAttribute(name) { return this.attributes.get(name) ?? null; }
+    remove() {
+        if (!this.parentNode) return;
+        this.parentNode.children = this.parentNode.children.filter(child => child !== this);
+        this.parentNode = null;
+    }
+    removeAttribute(name) { this.attributes.delete(name); }
+    setAttribute(name, value) { this.attributes.set(name, String(value)); }
     querySelector() { return new FakeElement(); }
 }
 
 function createRunnerContext(initialStorage = {}) {
     const storage = new Map(Object.entries(initialStorage));
+    const timers = [];
     const elements = new Map([
         ["console-output", new FakeElement()],
         ["progress-fill", new FakeElement()],
@@ -73,8 +94,22 @@ function createRunnerContext(initialStorage = {}) {
             removeItem(key) { storage.delete(key); },
             setItem(key, value) { storage.set(key, String(value)); }
         },
-        setInterval() { return 0; },
-        setTimeout() { return 0; },
+        clearInterval(timerId) {
+            const timer = timers[timerId - 1];
+            if (timer) timer.cleared = true;
+        },
+        clearTimeout(timerId) {
+            const timer = timers[timerId - 1];
+            if (timer) timer.cleared = true;
+        },
+        setInterval(callback, delay) {
+            timers.push({ callback, cleared: false, delay, type: "interval" });
+            return timers.length;
+        },
+        setTimeout(callback, delay) {
+            timers.push({ callback, cleared: false, delay, type: "timeout" });
+            return timers.length;
+        },
         window: {
             location: { hash: "", pathname: "/mission3_level3.html" }
         }
@@ -82,7 +117,7 @@ function createRunnerContext(initialStorage = {}) {
 
     const source = readFileSync(new URL("../assets/runner.js", import.meta.url), "utf8");
     vm.runInContext(source, context);
-    return { context, elements, storage };
+    return { context, elements, storage, timers };
 }
 
 function createAgentTrainingCore() {
@@ -341,6 +376,33 @@ test("stored Agent-training code migrates from agent to drohne when restored", (
     );
 });
 
+test("legacy Mission 1 level 4 code migrates into the combined level 3", () => {
+    const legacyCode = [
+        'agent_name = input("Gib deinen Namen ein: ")',
+        'print("Willkommen im System,", agent_name)'
+    ].join("\n");
+    const { context, storage } = createRunnerContext({
+        completedLevelCode_v1: JSON.stringify({ mission1_level4: legacyCode })
+    });
+    const editor = {
+        value: "",
+        setValue(value) { this.value = value; }
+    };
+    context.window.editor = editor;
+
+    assert.equal(
+        vm.runInContext('restoreCompletedLevelCode("mission1_level3")', context),
+        true
+    );
+    assert.match(editor.value, /^name = input\("Wie heißt du\? "\)$/m);
+    assert.match(editor.value, /^print\("Willkommen im System,", name\)$/m);
+    assert.doesNotMatch(editor.value, /agent_name|Gib deinen Namen ein/);
+    assert.equal(
+        JSON.parse(storage.get("completedLevelCode_v1")).mission1_level3,
+        editor.value
+    );
+});
+
 test("corrupted completed-code data is discarded safely", () => {
     const { context, storage } = createRunnerContext({
         completedLevelCode_v1: "not valid JSON"
@@ -362,6 +424,70 @@ test("a level stores code through the normal success path", () => {
     assert.deepEqual(JSON.parse(storage.get("completedLevelCode_v1")), {
         mission1_level1: passingCode
     });
+});
+
+test("a successful run waits exactly two seconds before showing its popup", () => {
+    const { context, elements, timers } = createRunnerContext();
+    const passingCode = 'print("Verbindung wird hergestellt...")\n';
+    let runCount = 0;
+    context.runit = callback => {
+        runCount += 1;
+        callback(passingCode, "Verbindung wird hergestellt...\n");
+    };
+    context.successEvents = [];
+    vm.runInContext("triggerSuccess = (...args) => successEvents.push(args)", context);
+
+    vm.runInContext('setupLevel("mission1_level1")', context);
+    const runButton = elements.get("run-btn");
+    runButton.dispatch("click");
+
+    assert.equal(vm.runInContext("SUCCESS_POPUP_DELAY_MS", context), 2000);
+    assert.equal(runCount, 1);
+    assert.equal(runButton.disabled, true);
+    assert.equal(elements.get("status-text").textContent, "✓ Geschafft – lies kurz dein Ergebnis.");
+    assert.equal(context.successEvents.length, 0);
+
+    const popupTimers = timers.filter(timer => timer.type === "timeout");
+    assert.equal(popupTimers.length, 1);
+    assert.equal(popupTimers[0].delay, 2000);
+
+    runButton.dispatch("click");
+    assert.equal(runCount, 1, "Während der Wartezeit darf kein zweiter Lauf starten");
+    assert.equal(context.successEvents.length, 0);
+
+    popupTimers[0].callback();
+    assert.equal(runButton.disabled, false);
+    assert.equal(context.successEvents.length, 1);
+    assert.equal(context.successEvents[0][0], false);
+});
+
+test("console input explains Enter and disables Run until Enter is pressed", async () => {
+    const { context, elements } = createRunnerContext();
+    const runButton = elements.get("run-btn");
+    const consoleOutput = elements.get("console-output");
+
+    const answerPromise = vm.runInContext('customInput("Wie heißt du? ")', context);
+    const inputWrapper = consoleOutput.children.find(child => child.className === "console-input-wrap");
+    assert.ok(inputWrapper);
+    const hint = inputWrapper.children.find(child => child.className === "console-enter-hint");
+    const input = inputWrapper.children.find(child => child.className === "console-input");
+
+    assert.equal(hint.textContent, "Hier eingeben · Enter drücken ↵");
+    assert.equal(hint.getAttribute("role"), "status");
+    assert.equal(input.getAttribute("aria-label"), "Eingabe; mit Enter bestätigen");
+    assert.equal(input.getAttribute("aria-describedby"), "console-enter-hint");
+    assert.equal(input.focused, true);
+    assert.equal(runButton.disabled, true);
+    assert.equal(runButton.getAttribute("aria-describedby"), "console-enter-hint");
+
+    input.value = "Ada";
+    input.dispatch("keydown", { key: "Enter" });
+
+    assert.equal(await answerPromise, "Ada");
+    assert.equal(runButton.disabled, false);
+    assert.equal(runButton.getAttribute("aria-describedby"), null);
+    assert.equal(consoleOutput.children.includes(inputWrapper), false);
+    assert.equal(vm.runInContext("currentOutput", context), "Wie heißt du? Ada\n");
 });
 
 test("mission 4 carries successful code forward without discarding student lines", () => {
@@ -490,13 +616,8 @@ const validSolutions = [
     },
     {
         level: "mission1_level3",
-        code: 'agent_name = input("Gib deinen Namen ein: ")',
-        output: "Gib deinen Namen ein: Ada\n"
-    },
-    {
-        level: "mission1_level4",
-        code: 'print("Verbindung wird hergestellt...")\nagent_name = input("Name: ")\nprint("Willkommen im System,", agent_name)',
-        output: "Verbindung wird hergestellt...\nName: Ada\nWillkommen im System, Ada\n"
+        code: 'name = input("Wie heißt du? ")\nprint("Willkommen im System,", name)',
+        output: "Wie heißt du? Ada\nWillkommen im System, Ada\n"
     },
     {
         level: "mission2_level1",
@@ -510,8 +631,8 @@ const validSolutions = [
     },
     {
         level: "mission2_level3",
-        code: 'kabel = input("Welches Kabel? ")\nif kabel == "rot":\n    print("Entschärft!")\nelif kabel == "blau":\n    print("Kurzschluss!")\nelse:\n    print("KABUMM!")',
-        output: "Welches Kabel? rot\nEntschärft!\n"
+        code: 'kabel = input("Welches Kabel? ")\nif kabel == "rot":\n    print("Entschärft!")\nelif kabel == "blau":\n    print("Nichts passiert.")\nelse:\n    print("KABUMM!")',
+        output: "Welches Kabel? blau\nNichts passiert.\n"
     },
     {
         level: "mission3_level1",
@@ -586,6 +707,88 @@ test("all documented solutions pass their central validators", async (t) => {
             assert.equal(result.passed, true, result.message);
         });
     }
+});
+
+test("Mission 1 level 3 requires name, the exact question, and the welcome output", () => {
+    const { context } = createRunnerContext();
+    const invalidSolutions = [
+        {
+            code: 'agent_name = input("Wie heißt du? ")\nprint("Willkommen im System,", agent_name)',
+            output: "Wie heißt du? Ada\nWillkommen im System, Ada\n",
+            message: /Variable name/
+        },
+        {
+            code: 'name = input("Name: ")\nprint("Willkommen im System,", name)',
+            output: "Name: Ada\nWillkommen im System, Ada\n",
+            message: /Wie heißt du/
+        },
+        {
+            code: 'name = input("Wie heißt du? ")',
+            output: "Wie heißt du? Ada\nWillkommen im System, Ada\n",
+            message: /Text und name/
+        }
+    ];
+
+    for (const solution of invalidSolutions) {
+        context.code = solution.code;
+        context.output = solution.output;
+        const result = vm.runInContext(
+            'validateLevelSolution("mission1_level3", code, output)',
+            context
+        );
+        assert.equal(result.passed, false);
+        assert.match(result.message, solution.message);
+    }
+});
+
+test("Mission 2 level 2 accepts several colors other than red", () => {
+    const { context } = createRunnerContext();
+
+    for (const color of ["blau", "grün", "gelb"]) {
+        context.code = [
+            `kabel = ${JSON.stringify(color)}`,
+            'if kabel == "rot":',
+            '    print("Entschärft!")',
+            "else:",
+            '    print("KABUMM!")'
+        ].join("\n");
+        context.output = "KABUMM!\n";
+        const result = vm.runInContext(
+            'validateLevelSolution("mission2_level2", code, output)',
+            context
+        );
+        assert.equal(result.passed, true, `${color}: ${result.message}`);
+    }
+
+    context.code = 'kabel = "rot"\nif kabel == "rot":\n    print("Entschärft!")\nelse:\n    print("KABUMM!")';
+    context.output = "KABUMM!\n";
+    const red = vm.runInContext(
+        'validateLevelSolution("mission2_level2", code, output)',
+        context
+    );
+    assert.equal(red.passed, false);
+    assert.match(red.message, /außer.*rot/);
+});
+
+test("Mission 2 level 3 consistently requires the blue no-op message", () => {
+    const { context } = createRunnerContext();
+    context.code = [
+        'kabel = input("Welches Kabel? ")',
+        'if kabel == "rot":',
+        '    print("Entschärft!")',
+        'elif kabel == "blau":',
+        '    print("Kurzschluss!")',
+        "else:",
+        '    print("KABUMM!")'
+    ].join("\n");
+    context.output = "Welches Kabel? blau\nKurzschluss!\n";
+
+    const result = vm.runInContext(
+        'validateLevelSolution("mission2_level3", code, output)',
+        context
+    );
+    assert.equal(result.passed, false);
+    assert.match(result.message, /Nichts passiert\./);
 });
 
 test("keywords in comments or strings cannot bypass validators", () => {
@@ -985,11 +1188,10 @@ test("Agent training level 3 needs a real search and provenance-backed collectio
 const teacherSolutionExpectations = new Map([
     ["mission1_level1", /Verbindung wird hergestellt/],
     ["mission1_level2", /time\.sleep\(1\)/],
-    ["mission1_level3", /agent_name = input/],
-    ["mission1_level4", /Willkommen im System/],
+    ["mission1_level3", /name = input\("Wie heißt du\? "\)[\s\S]*Willkommen im System/],
     ["mission2_level1", /kabel = "rot"/],
     ["mission2_level2", /else:/],
-    ["mission2_level3", /elif kabel == "blau":/],
+    ["mission2_level3", /elif kabel == "blau":[\s\S]*Nichts passiert\./],
     ["mission3_level1", /while tipp != "123":/],
     ["mission3_level2", /elif tipp > 50:/],
     ["mission3_level3", /random\.randint\(1, 100\)/],
@@ -1086,7 +1288,6 @@ const missionPages = [
     "mission1_level1.html",
     "mission1_level2.html",
     "mission1_level3.html",
-    "mission1_level4.html",
     "mission2_start.html",
     "mission2_level1.html",
     "mission2_level2.html",
@@ -1104,6 +1305,117 @@ const missionPages = [
     "agent_training_level2.html",
     "agent_training_level3.html"
 ];
+
+const activeIntroMissionLevelPages = [
+    "mission1_level1.html",
+    "mission1_level2.html",
+    "mission1_level3.html",
+    "mission2_level1.html",
+    "mission2_level2.html",
+    "mission2_level3.html",
+    "mission3_level1.html",
+    "mission3_level2.html",
+    "mission3_level3.html"
+];
+
+test("Mission 1 exposes three active levels and keeps level 4 only as a legacy redirect", () => {
+    const legacy = readFileSync(new URL("../mission1_level4.html", import.meta.url), "utf8");
+    const navigation = readFileSync(new URL("../assets/navigation.js", import.meta.url), "utf8");
+
+    assert.equal(missionPages.includes("mission1_level4.html"), false);
+    assert.match(legacy, /http-equiv="refresh" content="0; url=mission1_level3\.html"/);
+    assert.match(legacy, /window\.location\.replace\("mission1_level3\.html" \+ window\.location\.hash\)/);
+    assert.match(legacy, /Level 4 ist jetzt Teil von Level 3/);
+    assert.doesNotMatch(navigation, /link-level4|mission1_level4\.html/);
+});
+
+test("Missions 1 to 3 use clear code and result labels without legacy wording", () => {
+    for (const page of activeIntroMissionLevelPages) {
+        const html = readFileSync(new URL(`../${page}`, import.meta.url), "utf8");
+        assert.match(html, /<h2>Python-Code<\/h2>/, `${page}: Python-Code fehlt`);
+        assert.match(
+            html,
+            /<h2 class="console-heading" id="console-heading">Ergebnis<\/h2>/,
+            `${page}: Ergebnis fehlt`
+        );
+        assert.doesNotMatch(
+            html,
+            /Python Terminal|Bereit für deine Befehle|schwarzen? Fenster|Drohnencode/i,
+            `${page} enthält noch eine alte Bezeichnung`
+        );
+    }
+
+    const missionOne = activeIntroMissionLevelPages
+        .filter(page => page.startsWith("mission1_"))
+        .map(page => readFileSync(new URL(`../${page}`, import.meta.url), "utf8"))
+        .join("\n");
+    const missionTwo = activeIntroMissionLevelPages
+        .filter(page => page.startsWith("mission2_"))
+        .map(page => readFileSync(new URL(`../${page}`, import.meta.url), "utf8"))
+        .join("\n");
+    assert.doesNotMatch(missionOne, /agent_name|Gib deinen Namen ein/);
+    assert.doesNotMatch(missionTwo, /Fallback|Kurzschluss/);
+
+    const runner = readFileSync(new URL("../assets/runner.js", import.meta.url), "utf8");
+    assert.doesNotMatch(runner, /Sehr starker Drohnencode/);
+});
+
+test("the first three mission finales point to the following mission", () => {
+    const handoffs = new Map([
+        ["mission1_level3.html", "mission2_start.html"],
+        ["mission2_level3.html", "mission3_start.html"],
+        ["mission3_level3.html", "mission4_start.html"]
+    ]);
+    const { context } = createRunnerContext();
+    const outcomes = JSON.parse(vm.runInContext("JSON.stringify(LEVEL_OUTCOMES)", context));
+
+    for (const [page, target] of handoffs) {
+        const html = readFileSync(new URL(`../${page}`, import.meta.url), "utf8");
+        assert.match(
+            html,
+            new RegExp(`<button id="next-level-btn"[^>]*window\\.location\\.href='${target}'[^>]*>Nächste Mission<\\/button>`)
+        );
+    }
+
+    assert.deepEqual(outcomes.mission1_level3, {
+        unlocks: ["link-m2-title", "link-m2-l1"],
+        finale: true
+    });
+    assert.deepEqual(outcomes.mission2_level3, {
+        unlocks: ["link-m3-title", "link-m3-l1"],
+        finale: true
+    });
+    assert.deepEqual(outcomes.mission3_level3, {
+        unlocks: ["link-m4-title", "link-m4-l1"],
+        finale: true
+    });
+});
+
+test("Mission 2 level 3 is optional and starts before the elif is added", () => {
+    const html = readFileSync(new URL("../mission2_level3.html", import.meta.url), "utf8");
+    const starter = html.match(/<textarea id="python-editor">([\s\S]*?)<\/textarea>/)?.[1] ?? "";
+    const { context } = createRunnerContext();
+    const outcomes = JSON.parse(vm.runInContext("JSON.stringify(LEVEL_OUTCOMES)", context));
+
+    assert.match(html, /Dieses Level ist optional/);
+    assert.match(html, /data-skip-unlocks="link-m3-title link-m3-l1"/);
+    assert.match(html, /elif kabel == "blau":[\s\S]*print\("Nichts passiert\."\)/);
+    assert.match(starter, /kabel = input\("Welches Kabel\? "\)/);
+    assert.match(starter, /if kabel == "rot":/);
+    assert.match(starter, /else:/);
+    assert.doesNotMatch(starter, /\belif\b|Nichts passiert\./);
+    assert.deepEqual(outcomes.mission2_level2.unlocks, [
+        "link-m2-l3",
+        "link-m3-title",
+        "link-m3-l1"
+    ]);
+});
+
+test("Mission 3 level 1 explains Python != as mathematical not-equal", () => {
+    const html = readFileSync(new URL("../mission3_level1.html", import.meta.url), "utf8");
+    assert.match(html, /<code>!=<\/code> bedeutet <strong>ungleich<\/strong>/);
+    assert.match(html, /mathematischen Zeichen <strong>≠<\/strong>/);
+});
 
 test("browser dependencies are local and checksum-protected", () => {
     const referencedVendorFiles = new Set();
@@ -1212,7 +1524,6 @@ test("mission navigation is rendered from one central definition", () => {
         "link-level1",
         "link-level2",
         "link-level3",
-        "link-level4",
         "link-m2-title",
         "link-m2-l1",
         "link-m2-l2",
@@ -1238,6 +1549,7 @@ test("mission navigation is rendered from one central definition", () => {
     for (const id of expectedNavigationIds) {
         assert.equal(elementsById.has(id), true, `${id} fehlt in der zentralen Navigation`);
     }
+    assert.equal(elementsById.has("link-level4"), false);
 
     const renderedMenuButton = elementsById.get("menu-btn");
     assert.equal(renderedMenuButton.tagName, "button");
@@ -1271,8 +1583,9 @@ test("mission navigation is rendered from one central definition", () => {
     for (const page of missionPages) {
         const html = readFileSync(new URL(`../${page}`, import.meta.url), "utf8");
         assert.match(html, /<div id="navigation-root"><\/div>/);
-        assert.match(html, /<script src="assets\/navigation\.js\?v=20260721-6"><\/script>/);
-        assert.match(html, /<link rel="stylesheet" href="assets\/style\.css\?v=20260720-[23]">/);
+        assert.match(html, /<script src="assets\/navigation\.js\?v=20260722-1"><\/script>/);
+        assert.match(html, /<link rel="stylesheet" href="assets\/style\.css\?v=20260722-1">/);
+        assert.match(html, /<script src="assets\/runner\.js\?v=20260722-1"><\/script>/);
         assert.doesNotMatch(html, /id="mySidebar"/);
     }
 });
@@ -1285,7 +1598,6 @@ test("all progress link ids keep their established unlock routes", () => {
         "link-level1": "mission1_level1.html",
         "link-level2": "mission1_level2.html",
         "link-level3": "mission1_level3.html",
-        "link-level4": "mission1_level4.html",
         "link-m2-title": "mission2_start.html",
         "link-m2-l1": "mission2_level1.html",
         "link-m2-l2": "mission2_level2.html",
@@ -1317,7 +1629,7 @@ test("all progress link ids keep their established unlock routes", () => {
 });
 
 test("mission pages use the central drawer without legacy offsets and contain one balanced main", () => {
-    assert.equal(missionPages.length, 21);
+    assert.equal(missionPages.length, 20);
 
     for (const page of missionPages) {
         const html = readFileSync(new URL(`../${page}`, import.meta.url), "utf8");
@@ -1571,7 +1883,7 @@ test("both homepage options keep distinct light moods and one shared logo while 
         assert.match(html, variant.concept);
         assert.match(html, variant.brand);
         assert.match(html, /src="assets\/brand\/agent-py-logo\.png\?v=20260720-2"/);
-        assert.match(html, /href="assets\/style\.css\?v=20260720-2"/);
+        assert.match(html, /href="assets\/style\.css\?v=20260722-1"/);
         assert.match(html, /href="assets\/home\.css\?v=20260720-2"/);
         assert.match(html, /href="index\.html" aria-label="Agent PY – Startseite"/);
         assert.deepEqual(missionTargets, expectedMissionTargets);
@@ -1662,9 +1974,81 @@ test("CodeMirror is initialized from one central editor module", () => {
 
     for (const page of missionPages.filter(name => name.includes("_level"))) {
         const html = readFileSync(new URL(`../${page}`, import.meta.url), "utf8");
-        assert.match(html, /<script src="assets\/editor\.js"><\/script>/);
+        assert.match(html, /<script src="assets\/editor\.js\?v=20260722-1"><\/script>/);
         assert.doesNotMatch(html, /CodeMirror\.fromTextArea/);
     }
+});
+
+test("the editor refreshes after layout events and real width changes", () => {
+    const textarea = { id: "python-editor" };
+    let width = 640;
+    const wrapper = {
+        getBoundingClientRect() { return { width }; }
+    };
+    const editor = {
+        refreshCount: 0,
+        getWrapperElement() { return wrapper; },
+        refresh() { this.refreshCount += 1; }
+    };
+    const frameQueue = [];
+    const eventListeners = new Map();
+    let fontReadyCallback = null;
+    let resizeCallback = null;
+    let observedElement = null;
+    const document = {
+        fonts: {
+            ready: {
+                then(callback) { fontReadyCallback = callback; }
+            }
+        },
+        getElementById(id) { return id === "python-editor" ? textarea : null; }
+    };
+    const window = {
+        CodeMirror: {
+            fromTextArea() { return editor; }
+        },
+        ResizeObserver: class {
+            constructor(callback) { resizeCallback = callback; }
+            observe(element) { observedElement = element; }
+        },
+        addEventListener(type, callback, options) {
+            eventListeners.set(type, { callback, options });
+        },
+        requestAnimationFrame(callback) {
+            frameQueue.push(callback);
+            return frameQueue.length;
+        }
+    };
+    const context = vm.createContext({ document, Error, Number, window });
+    const source = readFileSync(new URL("../assets/editor.js", import.meta.url), "utf8");
+    vm.runInContext(source, context);
+
+    assert.equal(frameQueue.length, 1);
+    frameQueue.shift()();
+    assert.equal(frameQueue.length, 1);
+    frameQueue.shift()();
+    assert.equal(editor.refreshCount, 1);
+
+    assert.equal(eventListeners.get("load").options.once, true);
+    eventListeners.get("load").callback();
+    eventListeners.get("pageshow").callback();
+    fontReadyCallback();
+    assert.equal(editor.refreshCount, 4);
+
+    assert.equal(observedElement, wrapper);
+    resizeCallback([{ contentRect: { width } }]);
+    assert.equal(editor.refreshCount, 4, "Gleiche Breite darf keinen Refresh-Loop auslösen");
+    width = 720;
+    resizeCallback([{ contentRect: { width } }]);
+    assert.equal(editor.refreshCount, 5);
+});
+
+test("the animated Enter callout is positioned above the live input", () => {
+    const css = readFileSync(new URL("../assets/style.css", import.meta.url), "utf8");
+    assert.match(css, /\.console-enter-hint\s*\{[\s\S]*position:\s*absolute;[\s\S]*right:\s*0;/);
+    assert.match(css, /\.console-enter-hint\s*\{[\s\S]*animation:\s*console-hint-pulse/);
+    assert.match(css, /\.console-input\s*\{[\s\S]*caret-color:[\s\S]*animation:\s*console-input-glow/);
+    assert.match(css, /@keyframes console-hint-pulse/);
 });
 
 test("finale prototypes stay isolated while the production Pixelmuseum path is public", () => {

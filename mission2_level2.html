@@ -10,19 +10,19 @@
     <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
     <!-- Confetti Bibliothek für Belohnungen -->
     <script src="assets/vendor/canvas-confetti/1.9.2/confetti.browser.min.js"></script>
-    <script src="assets/runner.js?v=20260721-8"></script>
+    <script src="assets/runner.js?v=20260722-1"></script>
     <script src="assets/teacher-solutions.js"></script>
     <!-- CodeMirror für den Editor -->
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
-    <link rel="stylesheet" href="assets/style.css?v=20260720-2">
+    <link rel="stylesheet" href="assets/style.css?v=20260722-1">
 </head>
 <body>
     <a class="skip-link" href="#python-editor">Zum Python-Editor</a>
 
         <!-- Sidebar Navigation -->
     <div id="navigation-root"></div>
-    <script src="assets/navigation.js?v=20260721-6"></script>
+    <script src="assets/navigation.js?v=20260722-1"></script>
 
     <!-- Main Content -->
     <main id="main-content">
@@ -45,23 +45,26 @@
             <p>Ein Agent muss auf das Unerwartete vorbereitet sein. Was passiert, wenn die if-Bedingung NICHT zutrifft?</p>
             
             <h2>Der Else-Zweig</h2>
-            <p>Mit <span class="tooltip">else:<span class="tooltiptext">Bedeutet "ansonsten". Wird ausgeführt, wenn das 'if' darüber falsch war. Braucht keine eigene Bedingung.</span></span> können wir einen Fallback einbauen.</p>
+            <p>Mit <span class="tooltip">else:<span class="tooltiptext">Bedeutet „ansonsten“. Wird ausgeführt, wenn das if darüber falsch war, und braucht keine eigene Bedingung.</span></span> können wir einen Plan B einbauen.</p>
             
             <div class="block-hint">
                 <div class="makecode-block-var">ansonsten</div>
                 <p>In Python:</p>
-                <code>else:<br>&nbsp;&nbsp;&nbsp;&nbsp;print("KABUMM!")</code>
+                <pre class="python-example"><code>else:
+    print("KABUMM!")</code></pre>
             </div>
 
-            <h2>Aufgabe</h2>
-            <p>1. Verwende den Code von Level 1.<br>2. Füge darunter ein <strong>else:</strong> hinzu<br>3. Rücke darunter das <strong>print("KABUMM!")</strong> ein.<br>4. Ändere ganz oben <strong>kabel = "blau"</strong> um eine Explosion auszulösen!</p>
+            <h2>Dein Schritt</h2>
+            <p>Setze <code>kabel</code> im Feld <strong>Python-Code</strong> auf eine beliebige Farbe außer <code>"rot"</code> und ergänze darunter den <code>else</code>-Zweig von oben.</p>
+
+            <h2>Erklärung</h2>
+            <p>Ist die <code>if</code>-Bedingung falsch, führt Python stattdessen den eingerückten Plan B unter <code>else</code> aus. Dafür funktioniert jede andere Farbe, nicht nur Blau.</p>
         </div>
 
         <!-- Rechte Seite: Editor und Konsole -->
         <div class="panel editor-panel">
-            <h2>Python Terminal</h2>
-            <textarea id="python-editor">
-kabel = "rot"
+            <h2>Python-Code</h2>
+            <textarea id="python-editor">kabel = "rot"
 if kabel == "rot":
     print("Entschärft!")
 </textarea>
@@ -69,7 +72,8 @@ if kabel == "rot":
                 <button id="run-btn" style="flex-grow: 1;">▶ Code Ausführen</button>
                 <button class="test-btn" data-teacher-solution="mission2_level2">Musterlösung (Für Lehrer)</button>
             </div>
-            <div id="console-output">Bereit für deine Befehle, Agent.</div>
+            <h2 class="console-heading" id="console-heading">Ergebnis</h2>
+            <div id="console-output" role="log" aria-labelledby="console-heading" aria-live="polite">Hier erscheinen Eingaben und Ergebnisse.</div>
         </div>
     </div>
     </main>
@@ -82,7 +86,7 @@ if kabel == "rot":
     <!-- CodeMirror Setup für Syntax Highlighting -->
     <script src="assets/vendor/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="assets/vendor/codemirror/5.65.2/python.min.js"></script>
-    <script src="assets/editor.js"></script>
+    <script src="assets/editor.js?v=20260722-1"></script>
 </body>
 </html>
 

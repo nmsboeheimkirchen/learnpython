@@ -10,19 +10,19 @@
     <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
     <!-- Confetti Bibliothek für Belohnungen -->
     <script src="assets/vendor/canvas-confetti/1.9.2/confetti.browser.min.js"></script>
-    <script src="assets/runner.js?v=20260721-8"></script>
+    <script src="assets/runner.js?v=20260722-1"></script>
     <script src="assets/teacher-solutions.js"></script>
     <!-- CodeMirror für den Editor -->
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
-    <link rel="stylesheet" href="assets/style.css?v=20260720-2">
+    <link rel="stylesheet" href="assets/style.css?v=20260722-1">
 </head>
 <body>
     <a class="skip-link" href="#python-editor">Zum Python-Editor</a>
 
         <!-- Sidebar Navigation -->
     <div id="navigation-root"></div>
-    <script src="assets/navigation.js?v=20260721-6"></script>
+    <script src="assets/navigation.js?v=20260722-1"></script>
 
     <!-- Main Content -->
     <main id="main-content">
@@ -77,15 +77,17 @@
                 </div>
             </div>
 
-            <h2>Aufgabe</h2>
-            <p>Baue das Programm aus den Blöcken exakt im Editor nach. Pass auf die Einrückungen (Leerzeichen) auf!</p>
+            <h2>Dein Schritt</h2>
+            <p>Kopiere den Python-Code der Blöcke in derselben Reihenfolge in das Feld <strong>Python-Code</strong> und achte auf die Einrückungen.</p>
+
+            <h2>Erklärung</h2>
+            <p><code>int(input(...))</code> macht aus der Texteingabe eine Zahl. <code>if</code> erkennt Zahlen unter 50; <code>elif</code> prüft danach Zahlen über 50.</p>
         </div>
 
         <!-- Rechte Seite: Editor und Konsole -->
         <div class="panel editor-panel">
-            <h2>Python Terminal</h2>
-            <textarea id="python-editor">
-# Wir fangen neu an!
+            <h2>Python-Code</h2>
+            <textarea id="python-editor"># Wir fangen neu an!
 # Fahre mit der Maus ueber die bloecke links
 # und schreibe den Python-Code hierhin:
 
@@ -94,7 +96,8 @@
                 <button id="run-btn" style="flex-grow: 1;">▶ Code Ausführen</button>
                 <button class="test-btn" data-teacher-solution="mission3_level2">Musterlösung (Für Lehrer)</button>
             </div>
-            <div id="console-output">Bereit für deine Befehle, Agent.</div>
+            <h2 class="console-heading" id="console-heading">Ergebnis</h2>
+            <div id="console-output" role="log" aria-labelledby="console-heading" aria-live="polite">Hier erscheinen Eingaben und Ergebnisse.</div>
         </div>
     </div>
     </main>
@@ -107,7 +110,7 @@
     <!-- CodeMirror Setup für Syntax Highlighting -->
     <script src="assets/vendor/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="assets/vendor/codemirror/5.65.2/python.min.js"></script>
-    <script src="assets/editor.js"></script>
+    <script src="assets/editor.js?v=20260722-1"></script>
 </body>
 </html>
 

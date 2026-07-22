@@ -1,13 +1,13 @@
 import { expect, test } from "@playwright/test";
 
-const assetVersion = "20260720-2";
+const sharedAssetVersion = "20260722-1";
+const logoAssetVersion = "20260720-2";
 
 const missionPages = [
     "mission1_start.html",
     "mission1_level1.html",
     "mission1_level2.html",
     "mission1_level3.html",
-    "mission1_level4.html",
     "mission2_start.html",
     "mission2_level1.html",
     "mission2_level2.html",
@@ -32,6 +32,10 @@ const ipadMissionPages = new Set([
     "mission4_level3.html",
     "agent_training_level1.html"
 ]);
+
+const activeIntroMissionLevelPages = missionPages.filter(pageName =>
+    /^mission[123]_level[123]\.html$/.test(pageName)
+);
 
 function capturePageErrors(page) {
     const errors = [];
@@ -62,7 +66,7 @@ async function documentOverflow(page) {
 
 test("mission pages expose the shared Agent PY dock without horizontal overflow", { tag: "@ipad" }, async ({ page }, testInfo) => {
     const pageErrors = capturePageErrors(page);
-    const logoResponse = await page.request.get(`/assets/brand/agent-py-logo.png?v=${assetVersion}`);
+    const logoResponse = await page.request.get(`/assets/brand/agent-py-logo.png?v=${logoAssetVersion}`);
     expect(logoResponse.ok()).toBe(true);
     expect(logoResponse.headers()["content-type"]).toContain("image/png");
 
@@ -84,9 +88,15 @@ test("mission pages expose the shared Agent PY dock without horizontal overflow"
         await expect(home).toHaveAttribute("aria-label", "Agent PY – zur Startseite");
         await expect(home.locator(".mission-home-logo")).toHaveAttribute(
             "src",
-            `assets/brand/agent-py-logo.png?v=${assetVersion}`
+            `assets/brand/agent-py-logo.png?v=${logoAssetVersion}`
         );
         await expect(menu).toBeVisible();
+        await expect(page.locator(`link[href="assets/style.css?v=${sharedAssetVersion}"]`)).toHaveCount(1);
+        await expect(page.locator(`script[src="assets/runner.js?v=${sharedAssetVersion}"]`)).toHaveCount(1);
+        await expect(page.locator(`script[src="assets/navigation.js?v=${sharedAssetVersion}"]`)).toHaveCount(1);
+        if (missionPage.includes("_level")) {
+            await expect(page.locator(`script[src="assets/editor.js?v=${sharedAssetVersion}"]`)).toHaveCount(1);
+        }
 
         const dockRect = await elementRect(dock);
         const homeRect = await elementRect(home);
@@ -175,4 +185,142 @@ test("the learning-path drawer overlays accessibly and restores focus", { tag: "
     await expect(menuButton).toHaveAttribute("aria-expanded", "false");
     await expect(menuButton).toBeFocused();
     expect(pageErrors).toEqual([]);
+});
+
+test("legacy Mission 1 level 4 redirects to the combined level 3", async ({ page }) => {
+    await page.goto("/mission1_level4.html#legacy-progress");
+
+    await expect(page).toHaveURL(/\/mission1_level3\.html#legacy-progress$/);
+    await expect(page.locator("h1")).toContainText("Identifikation abschließen");
+    await expect(page.locator(".level-badge")).toHaveText("Level 3 von 3");
+    await expect(page.locator("#link-level4")).toHaveCount(0);
+});
+
+test("Missions 1 to 3 show Python code above a separate result area", async ({ page }) => {
+    for (const missionPage of activeIntroMissionLevelPages) {
+        await page.goto(`/${missionPage}`);
+        await expect(page.locator(".editor-panel > h2").first()).toHaveText("Python-Code");
+        await expect(page.locator("#console-heading")).toHaveText("Ergebnis");
+
+        const pageText = await page.locator("body").innerText();
+        expect(pageText).not.toMatch(/Python Terminal|Bereit für deine Befehle|schwarzen? Fenster|Drohnencode/i);
+    }
+});
+
+test("CodeMirror line numbers stay in the gutter and align with code rows", async ({ page }) => {
+    await page.goto("/mission1_level2.html");
+    await expect(page.locator(".CodeMirror-code > div").first()).toBeVisible();
+
+    const rows = await page.evaluate(() => {
+        return [...document.querySelectorAll(".CodeMirror-code > div")]
+            .map(row => {
+                const line = row.querySelector("pre.CodeMirror-line");
+                const number = row.querySelector(".CodeMirror-linenumber");
+                if (!line || !number) return null;
+                const lineRect = line.getBoundingClientRect();
+                const numberRect = number.getBoundingClientRect();
+                return {
+                    lineLeft: lineRect.left,
+                    lineTop: lineRect.top,
+                    numberRight: numberRect.right,
+                    numberTop: numberRect.top
+                };
+            })
+            .filter(Boolean);
+    });
+
+    expect(rows.length).toBeGreaterThanOrEqual(6);
+    for (let index = 0; index < 6; index += 1) {
+        expect(rows[index].numberRight).toBeLessThanOrEqual(rows[index].lineLeft + 1);
+        expect(Math.abs(rows[index].numberTop - rows[index].lineTop)).toBeLessThanOrEqual(1);
+    }
+});
+
+test("Mission finale buttons navigate to the next mission", async ({ page }) => {
+    const handoffs = [
+        ["mission1_level3.html", "mission2_start.html"],
+        ["mission2_level3.html", "mission3_start.html"],
+        ["mission3_level3.html", "mission4_start.html"]
+    ];
+
+    for (const [source, target] of handoffs) {
+        await page.goto(`/${source}`);
+        const nextMission = page.locator("#next-level-btn");
+        await expect(nextMission).toHaveText("Nächste Mission");
+        await expect(nextMission).toHaveAttribute(
+            "onclick",
+            `window.location.href='${target}'`
+        );
+
+        await nextMission.evaluate(button => button.click());
+        await expect(page).toHaveURL(new RegExp(`/${target.replace(".", "\\.")}$`));
+    }
+});
+
+test("optional Mission 2 level 3 starts without elif and can unlock Mission 3", async ({ page }) => {
+    await page.goto("/mission2_level3.html");
+
+    const starter = await page.locator("#python-editor").inputValue();
+    expect(starter).toContain('kabel = input("Welches Kabel? ")');
+    expect(starter).toContain('if kabel == "rot":');
+    expect(starter).toContain("else:");
+    expect(starter).not.toMatch(/\belif\b|Nichts passiert\./);
+
+    const skip = page.locator("[data-skip-unlocks]");
+    await expect(skip).toContainText("direkt mit Mission 3 weitermachen");
+    await expect(skip).toHaveAttribute("href", "mission3_start.html");
+    await expect(skip).toHaveAttribute("data-skip-unlocks", "link-m3-title link-m3-l1");
+    await skip.click();
+
+    await expect(page).toHaveURL(/\/mission3_start\.html$/);
+    const unlocked = await page.evaluate(() => JSON.parse(localStorage.getItem("unlockedLevels_v2")));
+    expect(unlocked).toEqual(expect.arrayContaining(["link-m3-title", "link-m3-l1"]));
+});
+
+test("interactive input points to Enter and delays success for two seconds", async ({ page }) => {
+    await page.goto("/mission1_level3.html");
+    await page.waitForFunction(() => Boolean(window.editor));
+    await page.evaluate(() => {
+        window.editor.setValue([
+            'name = input("Wie heißt du? ")',
+            'print("Willkommen im System,", name)'
+        ].join("\n"));
+    });
+
+    const runButton = page.locator("#run-btn");
+    await runButton.click();
+
+    const hint = page.locator("#console-enter-hint");
+    const input = page.locator(".console-input");
+    await expect(hint).toBeVisible();
+    await expect(hint).toHaveText("Hier eingeben · Enter drücken ↵");
+    await expect(input).toBeFocused();
+    await expect(runButton).toBeDisabled();
+    await expect(runButton).toHaveAttribute("aria-describedby", "console-enter-hint");
+
+    const inputLayout = await page.evaluate(() => {
+        const hintRect = document.querySelector("#console-enter-hint").getBoundingClientRect();
+        const inputRect = document.querySelector(".console-input").getBoundingClientRect();
+        return {
+            animationName: getComputedStyle(document.querySelector("#console-enter-hint")).animationName,
+            hintBottom: hintRect.bottom,
+            hintRight: hintRect.right,
+            inputRight: inputRect.right,
+            inputTop: inputRect.top
+        };
+    });
+    expect(inputLayout.hintBottom).toBeLessThanOrEqual(inputLayout.inputTop + 1);
+    expect(Math.abs(inputLayout.hintRight - inputLayout.inputRight)).toBeLessThanOrEqual(2.5);
+    expect(inputLayout.animationName).toContain("console-hint-pulse");
+
+    await input.fill("Ada");
+    await input.press("Enter");
+    await expect(input).toHaveCount(0);
+    await expect(page.locator("#status-text")).toHaveText("✓ Geschafft – lies kurz dein Ergebnis.");
+    await expect(runButton).toBeDisabled();
+    await expect(page.locator("#success-overlay")).toHaveCount(0);
+
+    await page.waitForTimeout(1000);
+    await expect(page.locator("#success-overlay")).toHaveCount(0);
+    await expect(page.locator("#success-overlay")).toBeVisible({ timeout: 2500 });
 });

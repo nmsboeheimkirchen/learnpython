@@ -7,12 +7,11 @@ window.AgentNavigation = (() => {
             title: "Mission 1: System Access",
             titleId: "link-m1-title",
             href: "mission1_start.html",
-            description: "Erste Befehle senden, Werte speichern und den Agentennamen ins System bringen.",
+            description: "Erste Befehle senden, Werte speichern und den Namen ins System bringen.",
             levels: [
                 { id: "link-level1", href: "mission1_level1.html", label: "Ping senden" },
                 { id: "link-level2", label: "Pause simulieren" },
-                { id: "link-level3", label: "Identifikation" },
-                { id: "link-level4", label: "Der finale Hack" }
+                { id: "link-level3", label: "Identifikation abschließen" }
             ]
         },
         {
@@ -23,7 +22,7 @@ window.AgentNavigation = (() => {
             levels: [
                 { id: "link-m2-l1", label: "Die If-Weiche" },
                 { id: "link-m2-l2", label: "Falsches Kabel" },
-                { id: "link-m2-l3", label: "Rotes Kabel" }
+                { id: "link-m2-l3", label: "Mehrere Fälle (optional)" }
             ]
         },
         {

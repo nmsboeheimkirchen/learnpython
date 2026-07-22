@@ -1,95 +1,15 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Python Agenten-Training</title>
-    <!-- Skulpt für Python im Browser -->
-    <script src="assets/vendor/skulpt/1.2.0/skulpt.min.js"></script>
-    <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
-    <!-- Confetti Bibliothek für Belohnungen -->
-    <script src="assets/vendor/canvas-confetti/1.9.2/confetti.browser.min.js"></script>
-    <script src="assets/runner.js?v=20260721-8"></script>
-    <script src="assets/teacher-solutions.js"></script>
-    <!-- CodeMirror für den Editor -->
-    <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
-    <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
-    <link rel="stylesheet" href="assets/style.css?v=20260720-2">
+    <meta http-equiv="refresh" content="0; url=mission1_level3.html">
+    <title>Mission 1 · Weiterleitung zu Level 3</title>
+    <script>
+        window.location.replace("mission1_level3.html" + window.location.hash);
+    </script>
 </head>
 <body>
-    <a class="skip-link" href="#python-editor">Zum Python-Editor</a>
-
-        <!-- Sidebar Navigation -->
-    <div id="navigation-root"></div>
-    <script src="assets/navigation.js?v=20260721-6"></script>
-
-    <!-- Main Content -->
-    <main id="main-content">
-        <div style="max-width: 1200px; margin: 0 auto;">
-            <!-- Fortschritts-Tracker UI -->
-            <div class="progress-container">
-                <span class="level-badge">Level 4 von 4</span>
-                <div class="progress-bar-bg">
-                    <div class="progress-bar-fill" id="progress-fill" style="width: 100%;"></div>
-                </div>
-                <span id="status-text">Warte auf Eingabe...</span>
-                
-            </div>
-        </div>
-
-    <div class="container">
-        <!-- Linke Seite: Anleitung -->
-        <div class="panel guide-panel">
-            <h1>Level 4: Der finale Hack</h1>
-            <p>Jetzt wo das System deinen Namen in der Schublade hat, wollen wir alles zusammenfügen.</p>
-            
-            <h2>Variablen & Text mischen</h2>
-            <p>Du kannst <code>print()</code> nutzen, um festen Text in Anführungszeichen mit Variablen ohne Anführungszeichen zu mischen. Trenne sie einfach mit einem <strong>Komma</strong>!</p>
-            
-            <div class="block-hint">
-                <div class="makecode-block">zeige Text <span class="makecode-input" style="border: 1px dashed red;">verbinde <span>"Hallo "</span> und <span class="makecode-var-pill" style="margin: 0;">name</span></span></div>
-                <p>In Python (mit Komma):</p>
-                <code>print("Hallo", agent_name)</code>
-            </div>
-
-            <h2>Aufgabe</h2>
-            <p>1. Füge als letzte Zeile unseren neuen <code>print()</code> Hack hinzu.<br>2. Gib aus: <strong>"Willkommen im System,"</strong> und direkt danach deine Variable <strong>agent_name</strong>.<br>3. Mische festen Text und die Variable mit einem Komma.<br>4. Klicke "Code Ausführen".</p>
-        </div>
-
-        <!-- Rechte Seite: Editor und Konsole -->
-        <div class="panel editor-panel">
-            <h2>Python Terminal</h2>
-            <textarea id="python-editor">import time
-print("Verbindung wird hergestellt...")
-time.sleep(1)
-agent_name = input("Gib deinen Namen ein: ")
-
-# TODO: Gib "Willkommen im System," und agent_name aus:
-
-</textarea>
-            <div style="display: flex; gap: 10px;">
-                <button id="run-btn" style="flex-grow: 1;">▶ Code Ausführen</button>
-                <button class="test-btn" data-teacher-solution="mission1_level4">Musterlösung (Für Lehrer)</button>
-            </div>
-            <div id="console-output">Bereit für deine Befehle, Agent.</div>
-        </div>
-    </div>
-    </main>
-
-    <!-- Ausführung -->
-    <script>
-        setupLevel("mission1_level4");
-    </script>
-
-    <!-- CodeMirror Setup für Syntax Highlighting -->
-    <script src="assets/vendor/codemirror/5.65.2/codemirror.min.js"></script>
-    <script src="assets/vendor/codemirror/5.65.2/python.min.js"></script>
-    <script src="assets/editor.js"></script>
+    <p>Level 4 ist jetzt Teil von Level 3. <a href="mission1_level3.html">Weiter zu Level 3</a></p>
 </body>
 </html>
-
-
-
-
-
-
