@@ -117,7 +117,7 @@ test("Agent training level 1 observes the real Turtle route, mark and position o
     await expect(page.locator("#next-level-btn")).toHaveText("Nächstes Level");
     await expect(page.locator("#next-level-btn")).toBeVisible();
     const completion = page.locator("#success-overlay");
-    await expect(completion).toBeVisible();
+    await expect(completion).toBeVisible({ timeout: 7_000 });
     await expect(completion).toHaveAttribute("role", "dialog");
     await expect(completion.locator('[data-success-symbol="graduation-cap"]')).toBeVisible();
     await expect(completion.locator(".success-btn")).toHaveText("Nächstes Level");
@@ -228,7 +228,7 @@ test("Agent training levels 2 and 3 validate reusable commands and a real found 
     expect(markerSizes).toEqual(["30", "30"]);
     await expect(page.locator("#next-level-btn")).toBeVisible();
     await expect(page.locator("#next-level-btn")).toHaveText("Nächstes Level");
-    await expect(page.locator('#success-overlay [data-success-symbol="graduation-cap"]')).toBeVisible();
+    await expect(page.locator('#success-overlay [data-success-symbol="graduation-cap"]')).toBeVisible({ timeout: 7_000 });
 
     await page.goto("/agent_training_level3.html?e2e");
     await page.evaluate(code => window.editor.setValue(code), level3GuardedCode);
@@ -250,6 +250,10 @@ test("Agent training levels 2 and 3 validate reusable commands and a real found 
         localStorage.getItem("completedLevelCode_v1") || "{}"
     ));
     expect(phaseOneCompletedCode.agent_training_level3).toBeUndefined();
+    const phaseOneAttemptedCode = await page.evaluate(() => JSON.parse(
+        localStorage.getItem("attemptedLevelCode_v1") || "{}"
+    ));
+    expect(phaseOneAttemptedCode.agent_training_level3).toBe(level3GuardedCode);
 
     await page.evaluate(code => window.editor.setValue(code), level3DirectCode);
     await page.locator("#run-btn").click();
@@ -257,7 +261,7 @@ test("Agent training levels 2 and 3 validate reusable commands and a real found 
     await expect(page.locator("#run-status")).toHaveText("Geschafft", { timeout: 12_000 });
     await expect(page.locator("#training-checks .is-passed")).toHaveCount(4);
     const finalCompletion = page.locator("#success-overlay");
-    await expect(finalCompletion).toBeVisible();
+    await expect(finalCompletion).toBeVisible({ timeout: 7_000 });
     await expect(finalCompletion.locator('[data-success-symbol="diploma"]')).toBeVisible();
     await expect(finalCompletion.locator("h1")).toHaveText("TRAININGSMISSION ABGESCHLOSSEN");
     await expect(finalCompletion.locator("p")).toHaveText(

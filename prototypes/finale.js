@@ -414,6 +414,7 @@
         const generation = ++runGeneration;
         cancelRequested = false;
         const code = editor.getValue();
+        if (config.levelId) window.saveAttemptedLevelCode?.(config.levelId, code);
         hasRun = true;
         lastRunCode = code;
         lastErrorMessage = null;
@@ -539,6 +540,10 @@
     });
 
     config.resetHud?.();
+    if (config.levelId) {
+        const attempted = window.restoreAttemptedLevelCode?.(config.levelId);
+        if (!attempted) window.restoreCompletedLevelCode?.(config.levelId);
+    }
     setStatus("Bereit", "ready");
     window.finalePrototype = {
         editor,

@@ -125,7 +125,6 @@
         }),
         "3": Object.freeze({
             rewardCount: 3,
-            popupDelayMs: 1000,
             title: "SIGNAL GESENDET",
             message: "Die Funkbase hat das Rettungssignal bestätigt.",
             primaryHref: "pico_level4.html",
@@ -133,7 +132,6 @@
         }),
         "4": Object.freeze({
             rewardCount: 7,
-            popupDelayMs: 1000,
             title: "DROHNE ZERSTÖRT",
             message: "Signal zuerst, Selbstzerstörung und Datenlöschung danach: Der böse Lord findet keine verwertbaren Daten.",
             primaryHref: "helikopter_flucht.html",
@@ -443,10 +441,10 @@
                     statusLabel: level === "4" ? "DROHNE ZERSTÖRT · DATEN GELÖSCHT!" : "LEVEL GESCHAFFT!"
                 });
             };
-            completionTimer = completion.popupDelayMs
-                ? window.setTimeout(showCompletion, completion.popupDelayMs)
-                : null;
-            if (!completionTimer) showCompletion();
+            completionTimer = window.setTimeout(
+                showCompletion,
+                window.SUCCESS_POPUP_DELAY_MS ?? 4000
+            );
         }
     }
 

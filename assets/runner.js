@@ -2,15 +2,10 @@
 
 const PROGRESS_STORAGE_KEY = "unlockedLevels_v2";
 const COMPLETED_CODE_STORAGE_KEY = "completedLevelCode_v1";
+const ATTEMPTED_CODE_STORAGE_KEY = "attemptedLevelCode_v1";
 const TEACHER_MODE_STORAGE_KEY = "cheatMode";
-const SUCCESS_POPUP_DELAY_MS = 2000;
-const MISSION1_SUCCESS_POPUP_DELAY_MS = SUCCESS_POPUP_DELAY_MS * 2;
-
-function successPopupDelayForLevel(levelId) {
-    return /^mission1_level[123]$/.test(levelId)
-        ? MISSION1_SUCCESS_POPUP_DELAY_MS
-        : SUCCESS_POPUP_DELAY_MS;
-}
+const SUCCESS_POPUP_DELAY_MS = 4000;
+window.SUCCESS_POPUP_DELAY_MS = SUCCESS_POPUP_DELAY_MS;
 const DEFAULT_UNLOCKED_LEVELS = Object.freeze(["link-level1"]);
 const LEVEL_ROUTES = Object.freeze({
     "link-level1": "mission1_level1.html",
@@ -126,8 +121,8 @@ function normalizeCompletedLevelCode(value) {
     return normalized;
 }
 
-function readCompletedLevelCode() {
-    const storedValue = safeStorageGetItem(COMPLETED_CODE_STORAGE_KEY);
+function readLevelCodeStorage(storageKey) {
+    const storedValue = safeStorageGetItem(storageKey);
     if (!storedValue) {
         return {};
     }
@@ -136,16 +131,16 @@ function readCompletedLevelCode() {
         const parsedValue = JSON.parse(storedValue);
         const normalized = normalizeCompletedLevelCode(parsedValue);
         if (JSON.stringify(parsedValue) !== JSON.stringify(normalized)) {
-            safeStorageSetItem(COMPLETED_CODE_STORAGE_KEY, JSON.stringify(normalized));
+            safeStorageSetItem(storageKey, JSON.stringify(normalized));
         }
         return normalized;
     } catch (_error) {
-        safeStorageRemoveItem(COMPLETED_CODE_STORAGE_KEY);
+        safeStorageRemoveItem(storageKey);
         return {};
     }
 }
 
-function saveCompletedLevelCode(levelId, code) {
+function saveLevelCode(storageKey, levelId, code) {
     if (
         !Object.prototype.hasOwnProperty.call(LEVEL_OUTCOMES, levelId) ||
         typeof code !== "string"
@@ -153,16 +148,66 @@ function saveCompletedLevelCode(levelId, code) {
         return false;
     }
 
-    const completedCode = readCompletedLevelCode();
-    completedCode[levelId] = code;
-    return safeStorageSetItem(COMPLETED_CODE_STORAGE_KEY, JSON.stringify(completedCode));
+    const storedCode = readLevelCodeStorage(storageKey);
+    storedCode[levelId] = code;
+    return safeStorageSetItem(storageKey, JSON.stringify(storedCode));
+}
+
+function getLevelCode(storageKey, levelId) {
+    const storedCode = readLevelCodeStorage(storageKey);
+    return Object.prototype.hasOwnProperty.call(storedCode, levelId)
+        ? storedCode[levelId]
+        : null;
+}
+
+function readCompletedLevelCode() {
+    return readLevelCodeStorage(COMPLETED_CODE_STORAGE_KEY);
+}
+
+function saveCompletedLevelCode(levelId, code) {
+    return saveLevelCode(COMPLETED_CODE_STORAGE_KEY, levelId, code);
 }
 
 function getCompletedLevelCode(levelId) {
-    const completedCode = readCompletedLevelCode();
-    return Object.prototype.hasOwnProperty.call(completedCode, levelId)
-        ? completedCode[levelId]
-        : null;
+    return getLevelCode(COMPLETED_CODE_STORAGE_KEY, levelId);
+}
+
+function readAttemptedLevelCode() {
+    return readLevelCodeStorage(ATTEMPTED_CODE_STORAGE_KEY);
+}
+
+function saveAttemptedLevelCode(levelId, code) {
+    return saveLevelCode(ATTEMPTED_CODE_STORAGE_KEY, levelId, code);
+}
+
+function getAttemptedLevelCode(levelId) {
+    return getLevelCode(ATTEMPTED_CODE_STORAGE_KEY, levelId);
+}
+
+function migrateSavedLevelCode(levelId, savedCode) {
+    let migratedCode = /^agent_training_level[123]$/.test(levelId)
+        ? savedCode.replace(/\bagent\b/g, "drohne")
+        : savedCode;
+
+    if (/^mission3_level[123]$/.test(levelId)) {
+        migratedCode = migratedCode
+            .replace(/\btipp\b/g, "eingabe")
+            .replace(/Tipp:\s*/g, "Code eingeben: ");
+        if (levelId === "mission3_level2") {
+            migratedCode = migratedCode.replace(/([<>]\s*)50\b/g, (_match, operator) => operator + "123");
+        }
+    }
+
+    if (levelId === "mission1_level3") {
+        migratedCode = migratedCode
+            .replace(/\bagent_name\b/g, "name")
+            .replace(/Gib deinen Namen ein:\s*/g, "Wie heißt du? ")
+            .replace(/Name:\s*/g, "Wie heißt du? ");
+        if (!/print\s*\(\s*["']Willkommen im System,?["']\s*,\s*name\s*\)/.test(migratedCode)) {
+            migratedCode = migratedCode.replace(/\s+$/, "") + '\nprint("Willkommen im System,", name)';
+        }
+    }
+    return migratedCode;
 }
 
 function restoreCompletedLevelCode(levelId) {
@@ -177,19 +222,24 @@ function restoreCompletedLevelCode(levelId) {
         return false;
     }
 
-    let migratedCode = /^agent_training_level[123]$/.test(levelId)
-        ? savedCode.replace(/\bagent\b/g, "drohne")
-        : savedCode;
-    if (levelId === "mission1_level3") {
-        migratedCode = migratedCode
-            .replace(/\bagent_name\b/g, "name")
-            .replace(/Gib deinen Namen ein:\s*/g, "Wie heißt du? ")
-            .replace(/Name:\s*/g, "Wie heißt du? ");
-        if (!/print\s*\(\s*["']Willkommen im System,?["']\s*,\s*name\s*\)/.test(migratedCode)) {
-            migratedCode = migratedCode.replace(/\s+$/, "") + '\nprint("Willkommen im System,", name)';
-        }
-    }
+    const migratedCode = migrateSavedLevelCode(levelId, savedCode);
     if (migratedCode !== savedCode) saveCompletedLevelCode(levelId, migratedCode);
+    window.editor.setValue(migratedCode);
+    return true;
+}
+
+function restoreAttemptedLevelCode(levelId) {
+    const savedCode = getAttemptedLevelCode(levelId);
+    if (
+        savedCode === null ||
+        !window.editor ||
+        typeof window.editor.setValue !== "function"
+    ) {
+        return false;
+    }
+
+    const migratedCode = migrateSavedLevelCode(levelId, savedCode);
+    if (migratedCode !== savedCode) saveAttemptedLevelCode(levelId, migratedCode);
     window.editor.setValue(migratedCode);
     return true;
 }
@@ -236,6 +286,10 @@ function buildInheritedLevelCode(levelId) {
 }
 
 function restoreLevelCode(levelId) {
+    if (restoreAttemptedLevelCode(levelId)) {
+        return true;
+    }
+
     if (restoreCompletedLevelCode(levelId)) {
         return true;
     }
@@ -256,6 +310,7 @@ function restoreLevelCode(levelId) {
 function clearProgress() {
     safeStorageRemoveItem(PROGRESS_STORAGE_KEY);
     safeStorageRemoveItem(COMPLETED_CODE_STORAGE_KEY);
+    safeStorageRemoveItem(ATTEMPTED_CODE_STORAGE_KEY);
     safeStorageRemoveItem(TEACHER_MODE_STORAGE_KEY);
     safeStorageRemoveItem("pixelmuseumHelp_v1");
     safeStorageRemoveItem("sidebarState");
@@ -747,26 +802,34 @@ const LEVEL_VALIDATORS = {
             { passed: output.includes("Nichts passiert."), message: "Teste das Programm mit der Eingabe blau, bis ‚Nichts passiert.‘ erscheint." }
         ]);
     },
-    mission3_level1({ statements }) {
-        const whilePattern = ["while", "tipp", "!=", stringToken("123"), ":"];
+    mission3_level1({ statements, output }) {
+        const whilePattern = ["while", "eingabe", "!=", stringToken("123"), ":"];
+        const whileStatement = findStatement(statements, whilePattern);
+        const safeOpenPrint = statements.find(statement =>
+            statement.indent === 0 &&
+            statementStartsWith(statement, ["print", "(", stringToken("Safe offen!"), ")"]) &&
+            (!whileStatement || statement.line > whileStatement.line)
+        );
         return firstFailedRequirement([
-            { passed: Boolean(findStatement(statements, ["tipp", "=", stringToken("")])), message: "Initialisiere tipp mit einem leeren Text." },
-            { passed: Boolean(findStatement(statements, whilePattern)), message: "Wiederhole mit while, solange tipp nicht ‚123‘ ist." },
-            { passed: hasNestedStatement(statements, whilePattern, ["tipp", "=", "input", "("]), message: "Die neue Eingabe für tipp muss eingerückt in der while-Schleife stehen." }
+            { passed: Boolean(findStatement(statements, ["eingabe", "=", stringToken("")])), message: "Initialisiere eingabe mit einem leeren Text." },
+            { passed: Boolean(whileStatement), message: "Wiederhole mit while, solange eingabe nicht ‚123‘ ist." },
+            { passed: hasNestedStatement(statements, whilePattern, ["eingabe", "=", "input", "("]), message: "Die neue Eingabe muss eingerückt in der while-Schleife stehen." },
+            { passed: Boolean(safeOpenPrint), message: "Gib nach der while-Schleife mit print(\"Safe offen!\") den Erfolg aus." },
+            { passed: output.toLocaleLowerCase("de-DE").includes("safe offen!"), message: "Probiere Zahlenkombinationen, bis ‚Safe offen!‘ erscheint." }
         ]);
     },
     mission3_level2({ statements, output, evidence = {} }) {
-        const inlineNumberInput = findStatement(statements, ["tipp", "=", "int", "(", "input", "("]);
-        const textInput = findStatement(statements, ["tipp", "=", "input", "("]);
-        const separateConversion = findStatement(statements, ["tipp", "=", "int", "(", "tipp", ")"]);
+        const inlineNumberInput = findStatement(statements, ["eingabe", "=", "int", "(", "input", "("]);
+        const textInput = findStatement(statements, ["eingabe", "=", "input", "("]);
+        const separateConversion = findStatement(statements, ["eingabe", "=", "int", "(", "eingabe", ")"]);
         const usesTwoLines = Boolean(
             textInput && separateConversion &&
             separateConversion.line > textInput.line &&
             separateConversion.indent === textInput.indent
         );
         const hasNumberInput = Boolean(inlineNumberInput) || usesTwoLines;
-        const hasLowerBranch = Boolean(findStatement(statements, ["if", "tipp", "<", numberToken(50), ":"]));
-        const hasHigherBranch = Boolean(findStatement(statements, ["elif", "tipp", ">", numberToken(50), ":"]));
+        const hasLowerBranch = Boolean(findStatement(statements, ["if", "eingabe", "<", numberToken(123), ":"]));
+        const hasHigherBranch = Boolean(findStatement(statements, ["elif", "eingabe", ">", numberToken(123), ":"]));
         const structurePassed = hasNumberInput && hasLowerBranch && hasHigherBranch;
         const normalizedOutput = output.toLocaleLowerCase("de-DE");
         const nextEvidence = {
@@ -780,28 +843,28 @@ const LEVEL_VALIDATORS = {
             )
         };
         const testMessage = nextEvidence.sawLowerHint
-            ? "Teste jetzt noch mit einer Zahl über 50."
+            ? "Teste jetzt noch mit einer Zahl über 123."
             : nextEvidence.sawHigherHint
-                ? "Teste jetzt noch mit einer Zahl unter 50."
-                : "Teste einmal mit einer Zahl unter 50 und einmal mit einer Zahl über 50.";
+                ? "Teste jetzt noch mit einer Zahl unter 123."
+                : "Teste einmal mit einer Zahl unter 123 und einmal mit einer Zahl über 123.";
         const result = firstFailedRequirement([
-            { passed: hasNumberInput, message: "Wandle die Eingabe entweder mit tipp = int(tipp) in der zweiten Zeile oder direkt mit int(input(...)) in eine Zahl um." },
-            { passed: hasLowerBranch, message: "Prüfe mit if, ob tipp kleiner als 50 ist." },
-            { passed: hasHigherBranch, message: "Prüfe mit elif, ob tipp größer als 50 ist." },
+            { passed: hasNumberInput, message: "Wandle die Eingabe entweder mit eingabe = int(eingabe) in der zweiten Zeile oder direkt mit int(input(...)) in eine Zahl um." },
+            { passed: hasLowerBranch, message: "Prüfe mit if, ob eingabe kleiner als 123 ist." },
+            { passed: hasHigherBranch, message: "Prüfe mit elif, ob eingabe größer als 123 ist." },
             { passed: nextEvidence.sawLowerHint && nextEvidence.sawHigherHint, message: testMessage }
         ]);
         return { ...result, evidence: nextEvidence };
     },
     mission3_level3({ statements, output }) {
-        const whilePattern = ["while", "tipp", "!=", "geheim", ":"];
+        const whilePattern = ["while", "eingabe", "!=", "geheim", ":"];
         return firstFailedRequirement([
             { passed: Boolean(findStatement(statements, ["import", "random"])), message: "Lade das Modul random." },
             { passed: Boolean(findStatement(statements, ["geheim", "=", "random", ".", "randint", "(", numberToken(1), ",", numberToken(100), ")"])), message: "Erzeuge geheim mit random.randint(1, 100)." },
-            { passed: Boolean(findStatement(statements, ["tipp", "=", numberToken(0)])), message: "Initialisiere tipp mit 0." },
-            { passed: Boolean(findStatement(statements, whilePattern)), message: "Wiederhole, solange tipp und geheim verschieden sind." },
-            { passed: hasNestedStatement(statements, whilePattern, ["tipp", "=", "int", "(", "input", "("]), message: "Lies den Zahlentipp eingerückt in der while-Schleife ein." },
-            { passed: hasNestedStatement(statements, whilePattern, ["if", "tipp", "<", "geheim", ":"]), message: "Prüfe innerhalb der Schleife, ob der Tipp zu niedrig ist." },
-            { passed: hasNestedStatement(statements, whilePattern, ["elif", "tipp", ">", "geheim", ":"]), message: "Prüfe innerhalb der Schleife, ob der Tipp zu hoch ist." },
+            { passed: Boolean(findStatement(statements, ["eingabe", "=", numberToken(0)])), message: "Initialisiere eingabe mit 0." },
+            { passed: Boolean(findStatement(statements, whilePattern)), message: "Wiederhole, solange eingabe und geheim verschieden sind." },
+            { passed: hasNestedStatement(statements, whilePattern, ["eingabe", "=", "int", "(", "input", "("]), message: "Lies die Zahl eingerückt in der while-Schleife ein." },
+            { passed: hasNestedStatement(statements, whilePattern, ["if", "eingabe", "<", "geheim", ":"]), message: "Prüfe innerhalb der Schleife, ob die Eingabe zu niedrig ist." },
+            { passed: hasNestedStatement(statements, whilePattern, ["elif", "eingabe", ">", "geheim", ":"]), message: "Prüfe innerhalb der Schleife, ob die Eingabe zu hoch ist." },
             { passed: output.toLocaleLowerCase("de-DE").includes("knack!"), message: "Gib nach dem richtigen Tipp ‚Knack!‘ aus." }
         ]);
     },
@@ -1045,6 +1108,10 @@ function setupLevel(levelId) {
 
     runButton.addEventListener("click", () => {
         if (runButton.disabled || successPopupTimeout !== null) return;
+        const attemptedCode = window.editor?.getValue?.();
+        if (typeof attemptedCode === "string") {
+            saveAttemptedLevelCode(levelId, attemptedCode);
+        }
         runit((code, output) => {
             const result = validateLevelSolution(levelId, code, output, validationEvidence);
             if (result.evidence && typeof result.evidence === "object") {
@@ -1067,7 +1134,7 @@ function setupLevel(levelId) {
                 successPopupTimeout = null;
                 runButton.disabled = false;
                 triggerSuccess(Boolean(outcome.finale), outcome.successMessage);
-            }, successPopupDelayForLevel(levelId));
+            }, SUCCESS_POPUP_DELAY_MS);
         });
     });
 }

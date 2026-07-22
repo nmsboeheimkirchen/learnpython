@@ -93,7 +93,7 @@ print("BRIEFING-INVENTAR: " + ",".join(inventar))`);
 
     await expect(page.locator("body")).toHaveClass(/mission-passed/);
     await expect(page.locator("#briefing-stage-message")).toHaveText("BRIEFING BEREIT");
-    await expect(page.locator("#success-overlay")).toBeVisible();
+    await expect(page.locator("#success-overlay")).toBeVisible({ timeout: 7_000 });
     await expect(page.locator("#success-overlay .success-coin")).toHaveCount(3);
     await expect(page.locator("#success-overlay .success-btn")).toHaveAttribute("href", "pixelmuseum_finale.html");
     await expect(page.locator("#next-level-btn")).toHaveAttribute("href", "pixelmuseum_finale.html");
@@ -172,7 +172,7 @@ test("Pixelmuseum finale accepts a real fast strategy without source-shape check
     await expect(page.locator("#museum-success")).toHaveText("MISSION ERFOLGREICH – DU BIST ENTKOMMEN!");
     await expect(page.locator("body")).toHaveClass(/validation-passed/);
     await expect(page.locator("#checks-list")).toContainText("Portal rechtzeitig vor Alarmstufe 1 erreicht");
-    await expect(page.locator("#success-overlay")).toBeVisible({ timeout: 3_000 });
+    await expect(page.locator("#success-overlay")).toBeVisible({ timeout: 7_000 });
     await expect(page.locator("#success-overlay .success-coin")).toHaveCount(3);
     await expect(page.locator("#success-overlay .success-btn")).toHaveAttribute("href", "helikopter_flucht-b.html");
     await expect(page.locator("#next-level-btn")).toHaveAttribute("href", "helikopter_flucht-b.html");
@@ -195,7 +195,7 @@ test("Pixelmuseum production finale completes the touch-accessible hack strategy
     await expect(page.locator("#alarm-console-label")).toContainText("Alarm gehackt");
     await expect(page.locator("body")).toHaveClass(/validation-passed/);
     await expect.poll(() => page.evaluate(() => window.FINALE_CONFIG.completedStrategy)).toBe("hack");
-    await expect(page.locator("#success-overlay")).toBeVisible({ timeout: 3_000 });
+    await expect(page.locator("#success-overlay")).toBeVisible({ timeout: 7_000 });
     expect(pageErrors).toEqual([]);
 });
 
@@ -284,6 +284,11 @@ test("Pixelmuseum never rewards or stores code edited during its active run", as
     await expect(page.locator("#museum-help-btn")).toBeEnabled();
     const stored = await page.evaluate(() => localStorage.getItem("completedLevelCode_v1") || "");
     expect(stored).not.toContain("pixelmuseum_finale");
+    const attempted = await page.evaluate(() => JSON.parse(
+        localStorage.getItem("attemptedLevelCode_v1") || "{}"
+    ).pixelmuseum_finale);
+    expect(attempted).toBe(HACK_ESCAPE_CODE);
+    expect(attempted).not.toContain("noch nicht getestet");
 });
 
 test("reset cancels the delayed Pixelmuseum reward UI", async ({ page }) => {
@@ -295,6 +300,6 @@ test("reset cancels the delayed Pixelmuseum reward UI", async ({ page }) => {
     await page.evaluate(() => window.finalePrototype.reset());
     await expect(page.locator("#next-level-btn")).toBeHidden();
     await expect(page.locator("#museum-help-btn")).toBeEnabled();
-    await page.waitForTimeout(1_150);
+    await page.waitForTimeout(4_150);
     await expect(page.locator("#success-overlay")).toBeHidden();
 });

@@ -143,7 +143,7 @@
                 primaryLabel: "Zur Flucht mit dem Helikopter",
                 statusLabel: "PIXELMUSEUM GESCHAFFT!"
             });
-        }, 1000);
+        }, window.SUCCESS_POPUP_DELAY_MS ?? 4000);
     }
 
     const previousOnResult = mission.onResult;
@@ -175,7 +175,7 @@
     renderHelpCount();
     showNext(false);
 
-    const restored = window.restoreCompletedLevelCode?.("pixelmuseum_finale");
+    const restored = window.getCompletedLevelCode?.("pixelmuseum_finale") !== null;
     if (restored) {
         showNext(true);
         byId("status-text").textContent = "Mission bereits geschafft";

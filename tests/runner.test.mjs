@@ -230,6 +230,7 @@ test("corrupted progress data falls back safely", () => {
     const { context, storage } = createRunnerContext({
         unlockedLevels_v2: "not valid JSON",
         completedLevelCode_v1: JSON.stringify({ mission1_level1: 'print("Alt")' }),
+        attemptedLevelCode_v1: JSON.stringify({ mission1_level1: 'print("Versuch")' }),
         cheatMode: "true"
     });
 
@@ -239,6 +240,7 @@ test("corrupted progress data falls back safely", () => {
 
     vm.runInContext("clearProgress()", context);
     assert.equal(storage.has("completedLevelCode_v1"), false);
+    assert.equal(storage.has("attemptedLevelCode_v1"), false);
     assert.equal(storage.has("cheatMode"), false);
 });
 
@@ -426,7 +428,7 @@ test("a level stores code through the normal success path", () => {
     });
 });
 
-test("Mission 1 waits four seconds before showing its success popup", () => {
+test("every standard level waits four seconds before showing its success popup", () => {
     const { context, elements, timers } = createRunnerContext();
     const passingCode = 'print("Verbindung wird hergestellt...")\n';
     let runCount = 0;
@@ -441,14 +443,7 @@ test("Mission 1 waits four seconds before showing its success popup", () => {
     const runButton = elements.get("run-btn");
     runButton.dispatch("click");
 
-    assert.equal(vm.runInContext("SUCCESS_POPUP_DELAY_MS", context), 2000);
-    assert.equal(vm.runInContext("MISSION1_SUCCESS_POPUP_DELAY_MS", context), 4000);
-    for (const levelId of ["mission1_level1", "mission1_level2", "mission1_level3"]) {
-        context.levelId = levelId;
-        assert.equal(vm.runInContext("successPopupDelayForLevel(levelId)", context), 4000);
-    }
-    context.levelId = "mission2_level1";
-    assert.equal(vm.runInContext("successPopupDelayForLevel(levelId)", context), 2000);
+    assert.equal(vm.runInContext("SUCCESS_POPUP_DELAY_MS", context), 4000);
     assert.equal(runCount, 1);
     assert.equal(runButton.disabled, true);
     assert.equal(elements.get("status-text").textContent, "✓ Geschafft – lies kurz dein Ergebnis.");
@@ -468,17 +463,47 @@ test("Mission 1 waits four seconds before showing its success popup", () => {
     assert.equal(context.successEvents[0][0], false);
 });
 
+test("clicking Code Ausführen stores the attempted code without marking the level complete", () => {
+    const { context, elements, storage } = createRunnerContext();
+    const attemptedCode = 'print("Noch nicht fertig")';
+    context.window.editor = {
+        getValue: () => attemptedCode,
+        setValue() {}
+    };
+    context.runit = callback => callback(attemptedCode, "Noch nicht fertig\n");
+
+    vm.runInContext('setupLevel("mission1_level1")', context);
+    elements.get("run-btn").dispatch("click");
+
+    assert.deepEqual(JSON.parse(storage.get("attemptedLevelCode_v1")), {
+        mission1_level1: attemptedCode
+    });
+    assert.equal(storage.has("completedLevelCode_v1"), false);
+
+    const restored = createRunnerContext({
+        attemptedLevelCode_v1: storage.get("attemptedLevelCode_v1")
+    });
+    const editor = {
+        value: "",
+        setValue(value) { this.value = value; }
+    };
+    restored.context.window.editor = editor;
+    assert.equal(vm.runInContext('restoreLevelCode("mission1_level1")', restored.context), true);
+    assert.equal(editor.value, attemptedCode);
+    assert.equal(restored.storage.has("completedLevelCode_v1"), false);
+});
+
 test("Mission 3 level 2 keeps both required guesses across consecutive runs", () => {
     const { context, elements, storage, timers } = createRunnerContext();
     const code = [
-        'tipp = input("Tipp: ")',
-        "tipp = int(tipp)",
-        "if tipp < 50:",
+        'eingabe = input("Code eingeben: ")',
+        "eingabe = int(eingabe)",
+        "if eingabe < 123:",
         '    print("zu niedrig!")',
-        "elif tipp > 50:",
+        "elif eingabe > 123:",
         '    print("zu hoch!")'
     ].join("\n");
-    const outputs = ["Tipp: 25\nzu niedrig!\n", "Tipp: 75\nzu hoch!\n"];
+    const outputs = ["Code eingeben: 25\nzu niedrig!\n", "Code eingeben: 175\nzu hoch!\n"];
     context.runit = callback => callback(code, outputs.shift());
     context.successEvents = [];
     vm.runInContext("triggerSuccess = (...args) => successEvents.push(args)", context);
@@ -487,7 +512,7 @@ test("Mission 3 level 2 keeps both required guesses across consecutive runs", ()
     const runButton = elements.get("run-btn");
     runButton.dispatch("click");
 
-    assert.match(elements.get("status-text").textContent, /Zahl über 50/);
+    assert.match(elements.get("status-text").textContent, /Zahl über 123/);
     assert.equal(storage.has("completedLevelCode_v1"), false);
     assert.equal(timers.filter(timer => timer.type === "timeout").length, 0);
     assert.equal(runButton.disabled, false);
@@ -636,10 +661,10 @@ test("assignment microcode consistently uses setze auf", () => {
         assert.doesNotMatch(html, /<div class="makecode-block block-tooltip"[^>]*>mach\s/i);
     }
 
-    assert.match(mission3Level2, />setze <span[^>]*>tipp<\/span> auf die Zahl aus /);
+    assert.match(mission3Level2, />setze <span[^>]*>eingabe<\/span> auf die Zahl aus /);
     assert.match(mission3Level3, />setze <span[^>]*>geheim<\/span> auf eine Zufallszahl /);
-    assert.match(mission3Level3, />setze <span[^>]*>tipp<\/span> auf <span[^>]*>0<\/span>/);
-    assert.match(mission3Level3, />setze <span[^>]*>tipp<\/span> auf die Zahl aus /);
+    assert.match(mission3Level3, />setze <span[^>]*>eingabe<\/span> auf <span[^>]*>0<\/span>/);
+    assert.match(mission3Level3, />setze <span[^>]*>eingabe<\/span> auf die Zahl aus /);
 });
 
 test("Mission 3 starter bonuses match the beginner progression", () => {
@@ -655,35 +680,46 @@ test("Mission 3 starter bonuses match the beginner progression", () => {
     assert.doesNotMatch(mission1Level2, /Einen Hack simulieren/);
     assert.equal(
         level2Starter,
-        'tipp = input("Tipp: ")\ntipp = int(tipp)\n# Setze hier fort!\n'
+        'eingabe = input("Code eingeben: ")\neingabe = int(eingabe)\n# Setze hier fort!\n'
     );
-    assert.match(mission3Level2, /kurze Schreibweise[\s\S]*tipp = int\(input\("Tipp: "\)\)[\s\S]*ebenfalls akzeptiert/);
+    assert.match(mission3Level2, /kurze Schreibweise[\s\S]*eingabe = int\(input\("Code eingeben: "\)\)[\s\S]*ebenfalls akzeptiert/);
     assert.doesNotMatch(mission3Level2, /<h2>Startbonus<\/h2>/);
-    assert.ok(
-        mission3Level2.indexOf("<h2>Zahlen aus Text machen</h2>") <
-            mission3Level2.indexOf("<h2>Zu hoch, zu niedrig</h2>")
-    );
-    assert.match(mission3Level2, /50 ist der voreingestellte Code/);
-    assert.match(mission3Level2, /einmal mit einer Zahl unter 50[\s\S]*noch einmal mit einer Zahl über 50/);
+    assert.doesNotMatch(mission3Level2, /<h2>Zu hoch, zu niedrig<\/h2>/);
+    assert.match(mission3Level2, /123 ist der voreingestellte Code/);
+    assert.match(mission3Level2, /einmal mit einer Zahl unter 123[\s\S]*noch einmal mit einer Zahl über 123/);
     assert.equal(
         level3Starter,
         [
             "# Ergänze hier den Start",
             "",
-            "while tipp != geheim:",
-            '    tipp = int(input("Code eingeben: "))',
-            "    if tipp < geheim:",
+            "",
+            "while eingabe != geheim:",
+            '    eingabe = int(input("Code eingeben: "))',
+            "    if eingabe < geheim:",
             '        print("Zu niedrig!")',
-            "    elif tipp > geheim:",
+            "    elif eingabe > geheim:",
             '        print("Zu hoch!")',
             "",
             "# Ergänze hier den Abschluss",
             ""
         ].join("\n")
     );
-    assert.match(mission3Level3, /Jetzt musst du den gemeinen Code herausfinden/);
-    assert.match(mission3Level3, /<h2>Startbonus<\/h2>/);
-    assert.doesNotMatch(level3Starter, /import random|random\.randint|tipp\s*=\s*0|print\("Knack!"\)/);
+    assert.match(mission3Level3, /Jetzt musst du den geheimen Code herausfinden/);
+    assert.doesNotMatch(mission3Level3, /<h2>(?:Startbonus|Zufall generieren)<\/h2>/);
+    assert.match(mission3Level3, /Dein voriger Code wurde eingerückt[\s\S]*Tippe oder clicke auf die Blöcke/);
+    assert.doesNotMatch(level3Starter, /import random|random\.randint|eingabe\s*=\s*0|print\("Knack!"\)/);
+});
+
+test("level headings omit a separator dash before their number", () => {
+    for (const mission of [1, 2, 3, 4]) {
+        for (const level of [1, 2, 3]) {
+            const html = readFileSync(
+                new URL(`../mission${mission}_level${level}.html`, import.meta.url),
+                "utf8"
+            );
+            assert.doesNotMatch(html, /<h1>[^<]*(?: - | – )\d+:/);
+        }
+    }
 });
 
 test("Mission 1 level 2 teaches the five-second ready sequence and level 3 carries it forward", () => {
@@ -698,7 +734,8 @@ test("Mission 1 level 2 teaches the five-second ready sequence and level 3 carri
     assert.match(level2, /print\("System bereit!"\)/);
     assert.match(level2, /Python-Codeausschnitt:[\s\S]*import time[\s\S]*time\.sleep\(5\)/);
     assert.match(level2, /Das Python-Modul <code>time<\/code> zählt in Sekunden/);
-    assert.match(level3, /<h1>Level 3: Weiter geht‘s mit der Indentification<\/h1>/);
+    assert.match(level3, /<h1>Level 3: Weiter geht‘s mit der Identifikation<\/h1>/);
+    assert.match(level3, /input\("Wie heißt du\? "\)[\s\S]*stellst du eine Frage/);
     assert.match(level3Starter, /^import time\nprint\("Verbindung wird hergestellt\.\.\."\)\ntime\.sleep\(5\)\nprint\("System bereit!"\)/);
 });
 
@@ -735,18 +772,18 @@ const validSolutions = [
     },
     {
         level: "mission3_level1",
-        code: 'tipp = ""\nwhile tipp != "123":\n    tipp = input("Code eingeben: ")',
-        output: "Code eingeben: 123\n"
+        code: 'eingabe = ""\nwhile eingabe != "123":\n    eingabe = input("Code eingeben: ")\nprint("Safe offen!")',
+        output: "Code eingeben: 123\nSafe offen!\n"
     },
     {
         level: "mission3_level2",
-        code: 'tipp = input("Tipp: ")\ntipp = int(tipp)\nif tipp < 50:\n    print("zu niedrig!")\nelif tipp > 50:\n    print("zu hoch!")',
-        output: "Tipp: 75\nzu hoch!\n",
+        code: 'eingabe = input("Code eingeben: ")\neingabe = int(eingabe)\nif eingabe < 123:\n    print("zu niedrig!")\nelif eingabe > 123:\n    print("zu hoch!")',
+        output: "Code eingeben: 175\nzu hoch!\n",
         evidence: { sawLowerHint: true }
     },
     {
         level: "mission3_level3",
-        code: 'import random\ngeheim = random.randint(1, 100)\ntipp = 0\nwhile tipp != geheim:\n    tipp = int(input("Code eingeben: "))\n    if tipp < geheim:\n        print("Zu niedrig!")\n    elif tipp > geheim:\n        print("Zu hoch!")\nprint("Knack!")',
+        code: 'import random\ngeheim = random.randint(1, 100)\neingabe = 0\nwhile eingabe != geheim:\n    eingabe = int(input("Code eingeben: "))\n    if eingabe < geheim:\n        print("Zu niedrig!")\n    elif eingabe > geheim:\n        print("Zu hoch!")\nprint("Knack!")',
         output: "Code eingeben: 42\nKnack!\n"
     },
     {
@@ -926,8 +963,8 @@ test("Mission 2 level 3 consistently requires the blue no-op message", () => {
 
 test("Mission 3 level 2 accepts both number conversions but requires both guesses", () => {
     const { context } = createRunnerContext();
-    context.code = 'tipp = input("Tipp: ")\ntipp = int(tipp)\nif tipp < 50:\n    print("zu niedrig!")\nelif tipp > 50:\n    print("zu hoch!")';
-    context.output = "Tipp: 12\nzu niedrig!\n";
+    context.code = 'eingabe = input("Code eingeben: ")\neingabe = int(eingabe)\nif eingabe < 123:\n    print("zu niedrig!")\nelif eingabe > 123:\n    print("zu hoch!")';
+    context.output = "Code eingeben: 12\nzu niedrig!\n";
     context.evidence = {};
     const lowerAttempt = vm.runInContext(
         'validateLevelSolution("mission3_level2", code, output, evidence)',
@@ -938,10 +975,10 @@ test("Mission 3 level 2 accepts both number conversions but requires both guesse
         sawLowerHint: true,
         sawHigherHint: false
     });
-    assert.match(lowerAttempt.message, /Zahl über 50/);
+    assert.match(lowerAttempt.message, /Zahl über 123/);
 
-    context.code = 'tipp = int(input("Tipp: "))\nif tipp < 50:\n    print("zu niedrig!")\nelif tipp > 50:\n    print("zu hoch!")';
-    context.output = "Tipp: 75\nzu hoch!\n";
+    context.code = 'eingabe = int(input("Code eingeben: "))\nif eingabe < 123:\n    print("zu niedrig!")\nelif eingabe > 123:\n    print("zu hoch!")';
+    context.output = "Code eingeben: 175\nzu hoch!\n";
     context.evidence = lowerAttempt.evidence;
     const higherAttempt = vm.runInContext(
         'validateLevelSolution("mission3_level2", code, output, evidence)',
@@ -954,19 +991,19 @@ test("Mission 3 level 2 accepts both number conversions but requires both guesse
     });
 
     const rejectedSolutions = [
-        'tipp = input("Tipp: ")',
-        "tipp = int(tipp)\ntipp = input(\"Tipp: \")"
+        'eingabe = input("Code eingeben: ")',
+        "eingabe = int(eingabe)\neingabe = input(\"Code eingeben: \")"
     ];
     for (const inputCode of rejectedSolutions) {
-        context.code = `${inputCode}\nif tipp < 50:\n    print("zu niedrig!")\nelif tipp > 50:\n    print("zu hoch!")`;
-        context.output = "Tipp: 12\nzu niedrig!\n";
+        context.code = `${inputCode}\nif eingabe < 123:\n    print("zu niedrig!")\nelif eingabe > 123:\n    print("zu hoch!")`;
+        context.output = "Code eingeben: 12\nzu niedrig!\n";
         context.evidence = { sawLowerHint: true, sawHigherHint: true };
         const result = vm.runInContext(
             'validateLevelSolution("mission3_level2", code, output, evidence)',
             context
         );
         assert.equal(result.passed, false);
-        assert.match(result.message, /int\(tipp\)|int\(input/);
+        assert.match(result.message, /int\(eingabe\)|int\(input/);
     }
 });
 
@@ -975,10 +1012,10 @@ test("keywords in comments or strings cannot bypass validators", () => {
     context.levelId = "mission3_level3";
     context.code = [
         '# import random; geheim = random.randint(1, 100)',
-        'print("while tipp != geheim: int(input) if elif randint")',
+        'print("while eingabe != geheim: int(input) if elif randint")',
         'print("Knack!")'
     ].join("\n");
-    context.output = "while tipp != geheim: int(input) if elif randint\nKnack!\n";
+    context.output = "while eingabe != geheim: int(input) if elif randint\nKnack!\n";
 
     const result = vm.runInContext("validateLevelSolution(levelId, code, output)", context);
 
@@ -989,8 +1026,8 @@ test("keywords in comments or strings cannot bypass validators", () => {
 test("nested loop requirements reject unindented input", () => {
     const { context } = createRunnerContext();
     context.levelId = "mission3_level1";
-    context.code = 'tipp = ""\nwhile tipp != "123":\n    print("Warte")\ntipp = input("Code: ")';
-    context.output = "Warte\nCode: 123\n";
+    context.code = 'eingabe = ""\nwhile eingabe != "123":\n    print("Warte")\neingabe = input("Code: ")\nprint("Safe offen!")';
+    context.output = "Warte\nCode: 123\nSafe offen!\n";
 
     const result = vm.runInContext("validateLevelSolution(levelId, code, output)", context);
 
@@ -1371,9 +1408,9 @@ const teacherSolutionExpectations = new Map([
     ["mission2_level1", /kabel = "rot"/],
     ["mission2_level2", /else:/],
     ["mission2_level3", /elif kabel == "blau":[\s\S]*Nichts passiert\./],
-    ["mission3_level1", /while tipp != "123":/],
-    ["mission3_level2", /tipp = input\("Tipp: "\)[\s\S]*tipp = int\(tipp\)[\s\S]*elif tipp > 50:/],
-    ["mission3_level3", /random\.randint\(1, 100\)/],
+    ["mission3_level1", /while eingabe != "123":[\s\S]*Safe offen!/],
+    ["mission3_level2", /eingabe = input\("Code eingeben: "\)[\s\S]*eingabe = int\(eingabe\)[\s\S]*elif eingabe > 123:/],
+    ["mission3_level3", /random\.randint\(1, 100\)[\s\S]*while eingabe != geheim:/],
     ["mission4_level1", /for buchstabe in nachricht:/],
     ["mission4_level2", /ord\(buchstabe\)/],
     ["mission4_level3", /geheimtext = geheimtext \+ chr\(zahl\)/],
@@ -1764,7 +1801,7 @@ test("mission navigation is rendered from one central definition", () => {
         assert.match(html, /<div id="navigation-root"><\/div>/);
         assert.match(html, /<script src="assets\/navigation\.js\?v=20260722-1"><\/script>/);
         assert.match(html, /<link rel="stylesheet" href="assets\/style\.css\?v=20260722-2">/);
-        assert.match(html, /<script src="assets\/runner\.js\?v=20260722-4"><\/script>/);
+        assert.match(html, /<script src="assets\/runner\.js\?v=20260722-5"><\/script>/);
         assert.doesNotMatch(html, /id="mySidebar"/);
     }
 });
@@ -1876,6 +1913,11 @@ test("mission 4 hands off to the shared Agent training without exposing later pr
     assert.match(trainingLevel3, /id="next-level-btn"[^>]+projektwahl\.html[^>]*>Projekt wählen<\/button>/);
 
     const trainingRuntime = readFileSync(new URL("../assets/agent-training.js", import.meta.url), "utf8");
+    const droneRuntime = readFileSync(new URL("../assets/drone-mission.js", import.meta.url), "utf8");
+    const picoRuntime = readFileSync(new URL("../assets/pico-mission.js", import.meta.url), "utf8");
+    const briefingRuntime = readFileSync(new URL("../assets/pixelmuseum-briefing.js", import.meta.url), "utf8");
+    const museumPath = readFileSync(new URL("../assets/pixelmuseum-path.js", import.meta.url), "utf8");
+    const finaleRuntime = readFileSync(new URL("../prototypes/finale.js", import.meta.url), "utf8");
     const trainingCore = readFileSync(new URL("../assets/agent-training-core.js", import.meta.url), "utf8");
     const runner = readFileSync(new URL("../assets/runner.js", import.meta.url), "utf8");
     const teacherSolutions = readFileSync(new URL("../assets/teacher-solutions.js", import.meta.url), "utf8");
@@ -1883,6 +1925,13 @@ test("mission 4 hands off to the shared Agent training without exposing later pr
     assert.match(trainingRuntime, /symbol: "diploma"/);
     assert.match(trainingRuntime, /celebration: "fireworks"/);
     assert.match(trainingRuntime, /primaryHref: "projektwahl\.html"/);
+    assert.match(trainingRuntime, /saveAttemptedLevelCode\?\.\(levelId, code\)/);
+    assert.match(trainingRuntime, /SUCCESS_POPUP_DELAY_MS \?\? 4000/);
+    assert.match(droneRuntime, /saveAttemptedLevelCode\?\.\(config\.levelId, code\)/);
+    assert.match(picoRuntime, /SUCCESS_POPUP_DELAY_MS \?\? 4000/);
+    assert.match(briefingRuntime, /SUCCESS_POPUP_DELAY_MS \?\? 4000/);
+    assert.match(museumPath, /SUCCESS_POPUP_DELAY_MS \?\? 4000/);
+    assert.match(finaleRuntime, /saveAttemptedLevelCode\?\.\(config\.levelId, code\)/);
     assert.match(trainingCore, /Dein Datenchip stammt aus einer Suche und liegt nachweislich im Inventar\./);
     assert.doesNotMatch(trainingCore, /Datenchip echt gefunden/);
     assert.match(runner, /function triggerTrainingFireworks\(\)/);

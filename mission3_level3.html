@@ -10,8 +10,8 @@
     <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
     <!-- Confetti Bibliothek für Belohnungen -->
     <script src="assets/vendor/canvas-confetti/1.9.2/confetti.browser.min.js"></script>
-    <script src="assets/runner.js?v=20260722-4"></script>
-    <script src="assets/teacher-solutions.js?v=20260722-2"></script>
+    <script src="assets/runner.js?v=20260722-5"></script>
+    <script src="assets/teacher-solutions.js?v=20260722-5"></script>
     <!-- CodeMirror für den Editor -->
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
@@ -41,17 +41,11 @@
     <div class="container">
                         <!-- Linke Seite: Anleitung -->
         <div class="panel guide-panel">
-            <h1>Safe-Knacker - 3:</h1><h2>Safe knacken</h2>
-            <p>Jetzt musst du den gemeinen Code herausfinden. Damit der Code nicht im Programm steht, nutzen wir Zufall.</p>
-            
-            <h2>Zufall generieren</h2>
-            <p>Wir erweitern Python durch das Einbinden des <span class="tooltip">Moduls<span class="tooltiptext">Ein Werkzeugkasten voller fertiger Code-Stücke!</span></span> <code>random</code>.</p>
-
-            <h2>Startbonus</h2>
-            <p>Dein voriger Code wurde bereits eingerückt und eine <code>while</code>-Schleife darum gebaut. Die Eingabe für <code>tipp</code> wird jetzt sogar in derselben Zeile in eine Zahl umgewandelt.</p>
+            <h1>Safe-Knacker 3:</h1><h2>Safe knacken</h2>
+            <p>Jetzt musst du den geheimen Code herausfinden. Damit der Code nicht im Programm steht, nutzen wir das Zufalls-<span class="tooltip">Modul<span class="tooltiptext">Ein Werkzeugkasten voller fertiger Code-Stücke!</span></span> <strong>random</strong>.</p>
             
             <h2>Dein Programm-Plan</h2>
-            <p>Tippe auf einen Block oder fahre mit der Maus darüber, um den <strong>Python-Code</strong> zu sehen.</p>
+            <p>Dein voriger Code wurde eingerückt und eine <strong>while</strong>-Schleife darum gebaut. Ergänze den Rest. Tippe oder clicke auf die Blöcke um den Python Code zu sehen.</p>
             
             <div class="block-hint">
                 <div class="makecode-block block-tooltip">lade Werkzeugkiste <span class="makecode-input">random</span>
@@ -60,23 +54,23 @@
                 <div class="makecode-block block-tooltip">setze <span class="makecode-var-pill" style="background:#005a9e;">geheim</span> auf eine Zufallszahl <span class="makecode-input">1 bis 100</span>
                     <span class="tooltiptext">geheim = random.randint(1, 100)</span>
                 </div>
-                <div class="makecode-block block-tooltip">setze <span class="makecode-var-pill" style="background:#005a9e;">tipp</span> auf <span class="makecode-input">0</span>
-                    <span class="tooltiptext">tipp = 0</span>
+                <div class="makecode-block block-tooltip">setze <span class="makecode-var-pill" style="background:#005a9e;">eingabe</span> auf <span class="makecode-input">0</span>
+                    <span class="tooltiptext">eingabe = 0</span>
                 </div>
-                <div class="makecode-block-var block-tooltip microcode-group-gap">solange <span class="makecode-input">tipp != geheim</span> mache
-                    <span class="tooltiptext">while tipp != geheim:</span>
+                <div class="makecode-block-var block-tooltip microcode-group-gap">solange <span class="makecode-input">eingabe != geheim</span> mache
+                    <span class="tooltiptext">while eingabe != geheim:</span>
                 </div>
-                <div class="makecode-block block-tooltip microcode-indent-1">setze <span class="makecode-var-pill" style="background:#005a9e;">tipp</span> auf die Zahl aus <span class="makecode-input">input("Zahl: ")</span>
-                    <span class="tooltiptext">    tipp = int(input("Zahl: "))</span>
+                <div class="makecode-block block-tooltip microcode-indent-1">setze <span class="makecode-var-pill" style="background:#005a9e;">eingabe</span> auf die Zahl aus <span class="makecode-input">input("Code eingeben: ")</span>
+                    <span class="tooltiptext">    eingabe = int(input("Code eingeben: "))</span>
                 </div>
-                <div class="makecode-block-var block-tooltip microcode-indent-1">wenn <span class="makecode-input">tipp < geheim</span> dann
-                    <span class="tooltiptext">    if tipp &lt; geheim:</span>
+                <div class="makecode-block-var block-tooltip microcode-indent-1">wenn <span class="makecode-input">eingabe &lt; geheim</span> dann
+                    <span class="tooltiptext">    if eingabe &lt; geheim:</span>
                 </div>
                 <div class="makecode-block block-tooltip microcode-indent-2">zeige Text <span class="makecode-input">"Zu niedrig!"</span>
                     <span class="tooltiptext">        print("Zu niedrig!")</span>
                 </div>
-                <div class="makecode-block-var block-tooltip microcode-indent-1">ansonsten wenn <span class="makecode-input">tipp > geheim</span> dann
-                    <span class="tooltiptext">    elif tipp &gt; geheim:</span>
+                <div class="makecode-block-var block-tooltip microcode-indent-1">ansonsten wenn <span class="makecode-input">eingabe &gt; geheim</span> dann
+                    <span class="tooltiptext">    elif eingabe &gt; geheim:</span>
                 </div>
                 <div class="makecode-block block-tooltip microcode-indent-2">zeige Text <span class="makecode-input">"Zu hoch!"</span>
                     <span class="tooltiptext">        print("Zu hoch!")</span>
@@ -87,10 +81,10 @@
             </div>
 
             <h2>Dein Schritt</h2>
-            <p>Ergänze nur die fehlenden Teile des Plans: Lade oberhalb der <code>while</code>-Schleife <code>random</code>, erzeuge <code>geheim</code> und setze <code>tipp</code> auf <code>0</code>. Schreibe unter die Schleife ohne Einrückung <code>print("Knack!")</code>.</p>
+            <p>Ergänze nur die fehlenden Teile des Plans: Lade oberhalb der <code>while</code>-Schleife <code>random</code>, erzeuge <code>geheim</code> und setze <code>eingabe</code> auf <code>0</code>. Schreibe unter die Schleife ohne Einrückung <code>print("Knack!")</code>.</p>
 
             <h2>Erklärung</h2>
-            <p>Die vorbereitete Schleife fragt so lange weiter, bis <code>tipp</code> und <code>geheim</code> gleich sind. <code>if</code> und <code>elif</code> liegen in der Schleife und sind einmal eingerückt; ihre Hinweise sind doppelt eingerückt. Weil <code>print("Knack!")</code> nicht eingerückt ist, läuft diese Zeile erst nach der Schleife.</p>
+            <p>Die vorbereitete Schleife fragt so lange weiter, bis <code>eingabe</code> und <code>geheim</code> gleich sind. <code>if</code> und <code>elif</code> liegen in der Schleife und sind einmal eingerückt; ihre Hinweise sind doppelt eingerückt. Weil <code>print("Knack!")</code> nicht eingerückt ist, läuft diese Zeile erst nach der Schleife.</p>
         </div>
 
         <!-- Rechte Seite: Editor und Konsole -->
@@ -98,11 +92,12 @@
             <h2>Python-Code</h2>
             <textarea id="python-editor"># Ergänze hier den Start
 
-while tipp != geheim:
-    tipp = int(input("Code eingeben: "))
-    if tipp < geheim:
+
+while eingabe != geheim:
+    eingabe = int(input("Code eingeben: "))
+    if eingabe < geheim:
         print("Zu niedrig!")
-    elif tipp > geheim:
+    elif eingabe > geheim:
         print("Zu hoch!")
 
 # Ergänze hier den Abschluss

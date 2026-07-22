@@ -107,7 +107,7 @@ test("a focused block helper opens above the module without being clipped", { ta
     await expect(bubble).toBeVisible();
     await expect(bubble).toHaveCSS("visibility", "visible");
     await expect(bubble).toHaveCSS("opacity", "1");
-    await expect(bubble).toContainText('tipp = input("Tipp: ")');
+    await expect(bubble).toContainText('eingabe = input("Code eingeben: ")');
 
     const [hintBox, blockBox, bubbleBox, guideBox] = await Promise.all([
         hint.boundingBox(),

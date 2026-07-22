@@ -93,7 +93,7 @@ async function armSuccessTiming(page) {
 }
 
 async function expectReward(page, count, nextHref) {
-    await expect(page.locator("#success-overlay")).toBeVisible();
+    await expect(page.locator("#success-overlay")).toBeVisible({ timeout: 7_000 });
     await expect(page.locator("#success-overlay .success-coin")).toHaveCount(count);
     await expect(page.locator("#success-overlay .success-coins")).toHaveAttribute("data-reward-count", String(count));
     await expect(page.locator("#success-overlay .success-btn")).toHaveAttribute("href", nextHref);
@@ -237,7 +237,7 @@ test("level 3 sends visibly and level 4 destroys the drone only after that signa
     await expectReward(page, 3, "pico_level4.html");
     expect(await page.evaluate(() => (
         window.__successTriggeredAt - window.__lastTeacherRun.resolvedAt
-    ))).toBeGreaterThanOrEqual(900);
+    ))).toBeGreaterThanOrEqual(3_900);
 
     await page.getByRole("button", { name: "Zurück zum Editor" }).click();
     await page.locator("#next-level-btn").evaluate(link => {
@@ -279,7 +279,7 @@ test("level 3 sends visibly and level 4 destroys the drone only after that signa
     await expectReward(page, 7, "helikopter_flucht-b.html");
     expect(await page.evaluate(() => (
         window.__successTriggeredAt - window.__lastTeacherRun.resolvedAt
-    ))).toBeGreaterThanOrEqual(900);
+    ))).toBeGreaterThanOrEqual(3_900);
     await expect(page.locator("#success-overlay h1")).toHaveText("DROHNE ZERSTÖRT");
     const rewardPopup = await page.locator("#success-overlay .success-badge").evaluate(element => {
         const rect = element.getBoundingClientRect();

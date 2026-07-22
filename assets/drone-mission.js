@@ -355,6 +355,7 @@
         setRunning(true);
         setStatus(config.runningLabel || "Drohne unterwegs", "running");
         const code = editor.getValue();
+        if (config.levelId) window.saveAttemptedLevelCode?.(config.levelId, code);
 
         try {
             config.onRunStart?.(code);
@@ -430,11 +431,16 @@
     setStatus(config.readyLabel || "Bereit", "ready");
     renderChecks(initialResult());
 
-    const restored = config.levelId && window.restoreCompletedLevelCode?.(config.levelId);
-    const inherited = !restored && config.inheritCode && config.levelId &&
+    const hasCompletedCode = Boolean(
+        config.levelId && window.getCompletedLevelCode?.(config.levelId) !== null
+    );
+    const attempted = config.levelId && window.restoreAttemptedLevelCode?.(config.levelId);
+    const restored = !attempted && config.levelId &&
+        window.restoreCompletedLevelCode?.(config.levelId);
+    const inherited = !attempted && !restored && config.inheritCode && config.levelId &&
         window.restoreLevelCode?.(config.levelId);
-    if ((restored || inherited) && config.resetToLoadedCode) resetCode = editor.getValue();
-    if (restored) {
+    if ((restored || attempted || inherited) && config.resetToLoadedCode) resetCode = editor.getValue();
+    if (hasCompletedCode) {
         config.restoreCompletedState?.();
         const restoredResult = config.getRestoredResult?.();
         if (restoredResult) {

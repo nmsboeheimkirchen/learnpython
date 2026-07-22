@@ -8,6 +8,7 @@
     const byId = id => document.getElementById(id);
     const nextButton = byId("next-level-btn");
     let completionShown = false;
+    let completionTimer = null;
 
     function renderInventory(items) {
         const inventory = byId("briefing-inventory");
@@ -92,15 +93,18 @@
         if (!result.passed || result.restored || completionShown) return;
 
         completionShown = true;
-        window.triggerSuccess?.(false, "Die echte Fundkette sitzt. Jetzt beginnt deine offene Mission.", {
-            title: "BRIEFING GESCHAFFT",
-            rewardCount: 3,
-            celebration: "coins",
-            closeLabel: "Zurück zum Editor",
-            primaryHref: "pixelmuseum_finale.html",
-            primaryLabel: "Zum Pixelmuseum",
-            statusLabel: "BRIEFING GESCHAFFT!"
-        });
+        completionTimer = window.setTimeout(() => {
+            completionTimer = null;
+            window.triggerSuccess?.(false, "Die echte Fundkette sitzt. Jetzt beginnt deine offene Mission.", {
+                title: "BRIEFING GESCHAFFT",
+                rewardCount: 3,
+                celebration: "coins",
+                closeLabel: "Zurück zum Editor",
+                primaryHref: "pixelmuseum_finale.html",
+                primaryLabel: "Zum Pixelmuseum",
+                statusLabel: "BRIEFING GESCHAFFT!"
+            });
+        }, window.SUCCESS_POPUP_DELAY_MS ?? 4000);
     }
 
     function restoreCompleteState() {
@@ -139,6 +143,10 @@
             }
         },
         resetHud() {
+            if (completionTimer !== null) {
+                window.clearTimeout(completionTimer);
+                completionTimer = null;
+            }
             state.reset();
             completionShown = false;
             showNext(false);

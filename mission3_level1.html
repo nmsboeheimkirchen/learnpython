@@ -10,8 +10,8 @@
     <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
     <!-- Confetti Bibliothek für Belohnungen -->
     <script src="assets/vendor/canvas-confetti/1.9.2/confetti.browser.min.js"></script>
-    <script src="assets/runner.js?v=20260722-4"></script>
-    <script src="assets/teacher-solutions.js"></script>
+    <script src="assets/runner.js?v=20260722-5"></script>
+    <script src="assets/teacher-solutions.js?v=20260722-5"></script>
     <!-- CodeMirror für den Editor -->
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
@@ -41,26 +41,27 @@
     <div class="container">
                 <!-- Linke Seite: Anleitung -->
         <div class="panel guide-panel">
-            <h1>Safe-Knacker - 1:</h1><h2>Dauerschleife</h2>
+            <h1>Safe-Knacker 1:</h1><h2>Dauerschleife</h2>
             <p>Ein Safe verlangt immer wieder nach dem Code, bis man ihn knackt. Dafür brauchen wir eine Schleife, die sich wiederholt.</p>
             
             <h2>Die While-Schleife</h2>
             <p>Die <span class="tooltip">while-Schleife<span class="tooltiptext">"Solange" - Wiederholt den Code eingerückt darunter, solange die Bedingung wahr ist.</span></span> prüft bei jedem Durchlauf, ob eine Bedingung noch gilt.</p>
-            <p><code>!=</code> bedeutet <strong>ungleich</strong> und entspricht dem mathematischen Zeichen <strong>≠</strong>. <code>while tipp != "123":</code> wiederholt den eingerückten Code also, solange <code>tipp</code> nicht <code>"123"</code> ist.</p>
+            <p><code>!=</code> bedeutet <strong>ungleich</strong> und entspricht dem mathematischen Zeichen <strong>≠</strong>. <code>while eingabe != "123":</code> wiederholt den eingerückten Code also, solange <code>eingabe</code> nicht <code>"123"</code> ist.</p>
             
             <div class="block-hint">
-                <div class="makecode-block">solange <span class="makecode-input">tipp != "123"</span> mache</div>
+                <div class="makecode-block">solange <span class="makecode-input">eingabe != "123"</span> mache</div>
                 <p>In Python:</p>
-                <pre class="python-example"><code>tipp = ""
-while tipp != "123":
-    tipp = input("Code eingeben: ")</code></pre>
+                <pre class="python-example"><code>eingabe = ""
+while eingabe != "123":
+    eingabe = input("Code eingeben: ")
+print("Safe offen!")</code></pre>
             </div>
 
             <h2>Dein Schritt</h2>
-            <p>Kopiere den Python-Code von oben in das Feld <strong>Python-Code</strong>. Führe ihn aus, gib im Bereich <strong>Ergebnis</strong> die Zahl <code>123</code> ein und bestätige mit <strong>Enter</strong>.</p>
+            <p>Kopiere den Python-Code, führe ihn aus und probiere Zahlenkombinationen (z. B. <code>1234</code>), bis das System die <code>while</code>-Schleife verlässt und mit der Ausgabe <strong>„Safe offen!“</strong> beendet.</p>
 
             <h2>Erklärung</h2>
-            <p><code>tipp = ""</code> startet mit leerem Text. Die <code>while</code>-Schleife fragt eingerückt so oft nach einem neuen Tipp, bis die Ungleich-Bedingung falsch wird.</p>
+            <p><code>eingabe = ""</code> startet mit leerem Text. Die <code>while</code>-Schleife fragt eingerückt so oft nach einer neuen Eingabe, bis die Ungleich-Bedingung falsch wird. Danach läuft <code>print("Safe offen!")</code> außerhalb der Schleife.</p>
         </div>
 
         <!-- Rechte Seite: Editor und Konsole -->

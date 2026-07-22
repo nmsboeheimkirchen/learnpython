@@ -10,8 +10,8 @@
     <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
     <!-- Confetti Bibliothek für Belohnungen -->
     <script src="assets/vendor/canvas-confetti/1.9.2/confetti.browser.min.js"></script>
-    <script src="assets/runner.js?v=20260722-4"></script>
-    <script src="assets/teacher-solutions.js?v=20260722-2"></script>
+    <script src="assets/runner.js?v=20260722-5"></script>
+    <script src="assets/teacher-solutions.js?v=20260722-5"></script>
     <!-- CodeMirror für den Editor -->
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
@@ -41,30 +41,28 @@
     <div class="container">
                         <!-- Linke Seite: Anleitung -->
         <div class="panel guide-panel">
-            <h1>Safe-Knacker - 2:</h1>
+            <h1>Safe-Knacker 2:</h1>
             <h2>Zahlen aus Text machen</h2>
-            <p>In Python ist "5" (Text) nicht dasselbe wie 5 (Zahl). Die ersten beiden Zeilen sind bereits vorbereitet: <code>input()</code> speichert zuerst den Text in <code>tipp</code>. Danach macht <span class="tooltip">int(tipp)<span class="tooltiptext">Integer, auf Deutsch: Ganzzahl.</span></span> daraus eine Zahl.</p>
-
-            <h2>Zu hoch, zu niedrig</h2>
-            <p>Du rätst den Code. Der Tresor teilt dir mit, ob dein Tipp niedriger oder höher als 50 ist. 50 ist der voreingestellte Code.</p>
+            <p>In Python ist "5" (Text) nicht dasselbe wie 5 (Zahl). Die ersten beiden Zeilen sind bereits vorbereitet: <code>input()</code> speichert zuerst den Text in <code>eingabe</code>. Danach macht <span class="tooltip">int(eingabe)<span class="tooltiptext">Integer, auf Deutsch: Ganzzahl.</span></span> daraus eine Zahl.</p>
             
             <h2>Dein Programm-Plan</h2>
+            <p>Du rätst den Code. Der Tresor teilt dir mit, ob dein Tipp niedriger oder höher als 123 ist. 123 ist der voreingestellte Code.</p>
             <p>Tippe auf einen Block oder fahre mit der Maus darüber, um den <strong>Python-Code</strong> zu sehen.</p>
             
             <div class="block-hint">
                 <!-- Block 1 -->
-                <div class="makecode-block block-tooltip">setze <span class="makecode-var-pill" style="background:#005a9e;">tipp</span> auf <span class="makecode-input">input("Tipp: ")</span>
-                    <span class="tooltiptext">tipp = input("Tipp: ")</span>
+                <div class="makecode-block block-tooltip">setze <span class="makecode-var-pill" style="background:#005a9e;">eingabe</span> auf <span class="makecode-input">input("Code eingeben: ")</span>
+                    <span class="tooltiptext">eingabe = input("Code eingeben: ")</span>
                 </div>
                 
                 <!-- Block 2 -->
-                <div class="makecode-block block-tooltip">setze <span class="makecode-var-pill" style="background:#005a9e;">tipp</span> auf die Zahl aus <span class="makecode-input">tipp</span>
-                    <span class="tooltiptext">tipp = int(tipp)</span>
+                <div class="makecode-block block-tooltip">setze <span class="makecode-var-pill" style="background:#005a9e;">eingabe</span> auf die Zahl aus <span class="makecode-input">eingabe</span>
+                    <span class="tooltiptext">eingabe = int(eingabe)</span>
                 </div>
 
                 <!-- Block 3 -->
-                <div class="makecode-block-var block-tooltip">wenn <span class="makecode-input">tipp < 50</span> dann
-                    <span class="tooltiptext">if tipp &lt; 50:</span>
+                <div class="makecode-block-var block-tooltip">wenn <span class="makecode-input">eingabe &lt; 123</span> dann
+                    <span class="tooltiptext">if eingabe &lt; 123:</span>
                 </div>
                 
                 <!-- Block 4 -->
@@ -73,8 +71,8 @@
                 </div>
                 
                 <!-- Block 5 -->
-                <div class="makecode-block-var block-tooltip">ansonsten wenn <span class="makecode-input">tipp > 50</span> dann
-                    <span class="tooltiptext">elif tipp &gt; 50:</span>
+                <div class="makecode-block-var block-tooltip">ansonsten wenn <span class="makecode-input">eingabe &gt; 123</span> dann
+                    <span class="tooltiptext">elif eingabe &gt; 123:</span>
                 </div>
 
                 <!-- Block 6 -->
@@ -84,17 +82,17 @@
             </div>
 
             <h2>Dein Schritt</h2>
-            <p>Die ersten beiden Zeilen sind schon da. Ergänze ab Zeile 3 die beiden Abfragen mit ihren eingerückten <code>print()</code>-Hinweisen. Führe den fertigen Code einmal mit einer Zahl unter 50 und danach noch einmal mit einer Zahl über 50 aus.</p>
+            <p>Die ersten beiden Zeilen sind schon da. Ergänze ab Zeile 3 die beiden Abfragen mit ihren eingerückten <code>print()</code>-Hinweisen. Führe den fertigen Code einmal mit einer Zahl unter 123 und danach noch einmal mit einer Zahl über 123 aus.</p>
 
             <h2>Erklärung</h2>
-            <p><code>tipp = input(...)</code> speichert zuerst den Text. <code>tipp = int(tipp)</code> macht daraus eine Zahl. Die kurze Schreibweise <code>tipp = int(input("Tipp: "))</code> bedeutet dasselbe und wird ebenfalls akzeptiert. <code>if</code> erkennt Zahlen unter 50; <code>elif</code> prüft Zahlen über 50. Das Level ist geschafft, sobald du beide Hinweise durch je einen Test gesehen hast.</p>
+            <p><code>eingabe = input(...)</code> speichert zuerst den Text. <code>eingabe = int(eingabe)</code> macht daraus eine Zahl. Die kurze Schreibweise <code>eingabe = int(input("Code eingeben: "))</code> bedeutet dasselbe und wird ebenfalls akzeptiert. <code>if</code> erkennt Zahlen unter 123; <code>elif</code> prüft Zahlen über 123. Das Level ist geschafft, sobald du beide Hinweise durch je einen Test gesehen hast.</p>
         </div>
 
         <!-- Rechte Seite: Editor und Konsole -->
         <div class="panel editor-panel">
             <h2>Python-Code</h2>
-            <textarea id="python-editor">tipp = input("Tipp: ")
-tipp = int(tipp)
+            <textarea id="python-editor">eingabe = input("Code eingeben: ")
+eingabe = int(eingabe)
 # Setze hier fort!
 </textarea>
             <div style="display: flex; gap: 10px;">

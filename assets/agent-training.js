@@ -46,6 +46,7 @@
     let issuedFindTokens = new Set();
     let inventoryAppendEvents = [];
     let completionShown = false;
+    let completionTimer = null;
     let level3Phase = "guarded";
     let lastLivePosition = { x: 0, y: 0 };
 
@@ -399,24 +400,27 @@
             className: "training-completion",
             closeLabel: "Im Editor weiterspielen"
         };
-        if (levelId === "agent_training_level3") {
-            window.triggerSuccess(true, levelConfig.successMessage, {
+        completionTimer = window.setTimeout(() => {
+            completionTimer = null;
+            if (levelId === "agent_training_level3") {
+                window.triggerSuccess(true, levelConfig.successMessage, {
+                    ...commonOptions,
+                    title: "TRAININGSMISSION ABGESCHLOSSEN",
+                    statusLabel: "TRAINING ABGESCHLOSSEN!",
+                    symbol: "diploma",
+                    celebration: "fireworks",
+                    primaryHref: "projektwahl.html",
+                    primaryLabel: "Projekt wählen"
+                });
+                return;
+            }
+            window.triggerSuccess(false, levelConfig.successMessage, {
                 ...commonOptions,
-                title: "TRAININGSMISSION ABGESCHLOSSEN",
-                statusLabel: "TRAINING ABGESCHLOSSEN!",
-                symbol: "diploma",
-                celebration: "fireworks",
-                primaryHref: "projektwahl.html",
-                primaryLabel: "Projekt wählen"
+                title: "LEVEL GESCHAFFT",
+                statusLabel: "LEVEL GESCHAFFT!",
+                symbol: "graduation-cap"
             });
-            return;
-        }
-        window.triggerSuccess(false, levelConfig.successMessage, {
-            ...commonOptions,
-            title: "LEVEL GESCHAFFT",
-            statusLabel: "LEVEL GESCHAFFT!",
-            symbol: "graduation-cap"
-        });
+        }, window.SUCCESS_POPUP_DELAY_MS ?? 4000);
     }
 
     function validateRun(code) {
@@ -483,6 +487,7 @@
         setTopStatus("Simulation läuft …", "running");
 
         const code = editor.getValue();
+        window.saveAttemptedLevelCode?.(levelId, code);
         try {
             configureSkulpt();
             await Sk.misceval.asyncToPromise(() => Sk.importMainWithBody("<stdin>", false, code, true));
@@ -532,6 +537,10 @@
         issuedFindTokens = new Set();
         inventoryAppendEvents = [];
         completionShown = false;
+        if (completionTimer !== null) {
+            window.clearTimeout(completionTimer);
+            completionTimer = null;
+        }
         window.cancelSuccessCelebration?.();
         consoleOutput.textContent = "Bereit für deinen nächsten Drohnenbefehl.";
         consoleOutput.classList.remove("is-error");
@@ -560,9 +569,11 @@
         "Cmd-Enter": runProgram
     });
 
-    const restoredCompletedCode = window.restoreCompletedLevelCode?.(levelId);
-    if (restoredCompletedCode && nextButton) nextButton.style.display = "block";
-    if (restoredCompletedCode && levelId === "agent_training_level3") enterDirectInventoryPhase();
+    const hasCompletedCode = window.getCompletedLevelCode?.(levelId) !== null;
+    const restoredAttemptedCode = window.restoreAttemptedLevelCode?.(levelId);
+    if (!restoredAttemptedCode) window.restoreCompletedLevelCode?.(levelId);
+    if (hasCompletedCode && nextButton) nextButton.style.display = "block";
+    if (hasCompletedCode && levelId === "agent_training_level3") enterDirectInventoryPhase();
     applyLevel3Phase();
     stageMessage.textContent = levelConfig.stageMessage;
     renderChecks(initialResult());
