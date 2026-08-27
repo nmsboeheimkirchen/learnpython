@@ -912,8 +912,7 @@ const LEVEL_VALIDATORS = {
         );
         const penDownIndex = commandIndex("pendown");
         const gotoIndex = commandIndex("goto", penDownIndex + 1);
-        const penUpIndex = commandIndex("penup", gotoIndex + 1);
-        const usesTrailControls = penDownIndex >= 0 && gotoIndex > penDownIndex && penUpIndex > gotoIndex;
+        const usesTrailControls = penDownIndex >= 0 && gotoIndex > penDownIndex;
         const printsRealPosition = topLevelStatements.some(statement =>
             statementStartsWith(statement, ["print", "("]) &&
             statementContains(statement, ["drohne", ".", "position", "("])
@@ -921,7 +920,7 @@ const LEVEL_VALIDATORS = {
         const result = firstFailedRequirement([
             {
                 passed: usesTrailControls,
-                message: "Schalte vor goto() mit pendown() die Spur ein und danach mit penup() wieder aus."
+                message: "Schalte vor goto() mit pendown() die Spur ein."
             },
             { passed: printsRealPosition, message: "Gib die aktuelle Drohnenposition mit print(...position()) aus." }
         ]);
@@ -976,6 +975,11 @@ const LEVEL_VALIDATORS = {
             statement.indent === 0 &&
             statementStartsWith(statement, ["inventar", ".", "append", "(", "fund", ")"])
         );
+        const emptyInventoryList = statements.some(statement =>
+            statement.indent === 0 &&
+            statement.tokens.length === 4 &&
+            statementStartsWith(statement, ["inventar", "=", "[", "]"])
+        );
         const directAppend = Boolean(
             directAppendStatement && printStatement && directAppendStatement.line > printStatement.line
         );
@@ -989,6 +993,10 @@ const LEVEL_VALIDATORS = {
                 message: "Gib fund nach der Suche mit print(fund) aus."
             },
             {
+                passed: emptyInventoryList,
+                message: "Lege mit inventar = [] eine leere Liste an."
+            },
+            {
                 passed: guardedAppend || directAppend,
                 message: "Hänge genau fund mit inventar.append(fund) an inventar an."
             }
@@ -998,6 +1006,7 @@ const LEVEL_VALIDATORS = {
             evidence: {
                 searchAssignment,
                 printsFund,
+                emptyInventoryList,
                 guardedAppend,
                 directAppend,
                 hasFundGuard

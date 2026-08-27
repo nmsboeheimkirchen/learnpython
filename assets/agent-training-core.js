@@ -42,8 +42,7 @@
             checkLabels: Object.freeze([
                 "Datenchip am Fundort gefunden",
                 "Gefundenes Ergebnis mit print() ausgegeben",
-                "Genau diesen Fund ins Inventar aufgenommen",
-                "Fund direkt ins Inventar aufnehmen"
+                "Genau diesen Fund ins Inventar aufgenommen"
             ]),
             successTitle: "Fundstück gesichert",
             successMessage: "Dein Datenchip stammt aus einer Suche und liegt nachweislich im Inventar.",
@@ -184,7 +183,6 @@
     function validateLevel1(state, output, structure) {
         const config = getLevelConfig(state?.levelId);
         const reachedWithTrail = Boolean(state?.visitedTargetWithTrail) &&
-            Boolean(state?.trailClosedAfterTarget) &&
             structureEvidence(structure, "usesTrailControls");
         const checks = [
             { label: config.checkLabels[0], passed: reachedWithTrail },
@@ -199,10 +197,9 @@
             message = `Deine Drohne steht bei ${formatPoint(state?.current)}. Das Ziel liegt bei (${TARGET.x}, ${TARGET.y}).`;
         } else if (
             !state?.visitedTargetWithTrail ||
-            !state?.trailClosedAfterTarget ||
             !structureEvidence(structure, "usesTrailControls")
         ) {
-            message = "Das Ziel ist erreicht. Schalte vor goto() mit pendown() die Spur ein und danach mit penup() wieder aus.";
+            message = "Das Ziel ist erreicht. Schalte vor goto() mit pendown() die Spur ein.";
         } else if (!checks[1].passed) {
             message = "Ziel erreicht – markiere genau diesen Ort jetzt mit drohne.dot(...).";
         } else if (!checks[2].passed) {
@@ -250,34 +247,28 @@
         const printedRealVariable = outputContainsFoundItem(output) &&
             structureEvidence(structure, "printsFund");
         const collectedRealFind = Boolean(state?.collectedRealFind);
-        const collectedWithGuard = collectedRealFind &&
-            structureEvidence(structure, "guardedAppend") &&
-            !structureEvidence(structure, "directAppend");
         const collectedDirectly = collectedRealFind &&
-            structureEvidence(structure, "directAppend") &&
-            !structureEvidence(structure, "hasFundGuard");
+            structureEvidence(structure, "emptyInventoryList") &&
+            structureEvidence(structure, "directAppend");
         const checks = [
             { label: config.checkLabels[0], passed: searchedCorrectly },
             { label: config.checkLabels[1], passed: printedRealVariable },
             {
                 label: config.checkLabels[2],
-                passed: phase === "direct" ? true : collectedWithGuard
-            },
-            { label: config.checkLabels[3], passed: phase === "direct" && collectedDirectly }
+                passed: phase === "direct" && collectedDirectly
+            }
         ];
-        const phaseComplete = phase === "guarded" && checks.slice(0, 3).every(check => check.passed);
+        const phaseComplete = phase === "guarded" && checks.slice(0, 2).every(check => check.passed);
         const passed = phase === "direct" && checks.every(check => check.passed);
         let message = config.successMessage;
         if (!checks[0].passed) {
             message = "Suche am markierten Fundort und speichere den Rückgabewert in fund.";
         } else if (!checks[1].passed) {
             message = "Der Datenchip wurde gefunden. Untersuche fund jetzt mit print(fund).";
-        } else if (phase === "guarded" && !checks[2].passed) {
-            message = "Gefunden, aber noch nicht gesichert: Prüfe fund mit if und hänge genau fund an inventar an.";
         } else if (phaseComplete) {
-            message = "Am richtigen Fundort kannst du auch ohne „if“ den Fund ins Inventar aufnehmen.";
-        } else if (!checks[3].passed) {
-            message = "Entferne die if-Prüfung und rücke inventar.append(fund) ganz nach links.";
+            message = "Der Datenchip ist gefunden und geprüft. Nimm ihn jetzt im nächsten Schritt ins Inventar auf.";
+        } else if (!checks[2].passed) {
+            message = "Lege mit inventar = [] eine leere Liste an und hänge fund mit inventar.append(fund) an.";
         }
         return { passed, checks, message, phase, phaseComplete };
     }
@@ -296,13 +287,12 @@
         options = {}
     ) {
         const config = getLevelConfig(levelId);
-        const directPhase = levelId === "agent_training_level3" && options.level3Phase === "direct";
         return {
             passed: false,
             message,
-            checks: config.checkLabels.map((label, index) => ({
+            checks: config.checkLabels.map(label => ({
                 label,
-                passed: directPhase && index === 2
+                passed: false
             }))
         };
     }

@@ -10,7 +10,6 @@ drohne.penup()
 
 drohne.pendown()
 drohne.goto(160, 80)
-drohne.penup()
 drohne.dot(30, "#7df2a9")
 print("Position:", drohne.position())
 drohne.goto(160, 180)`;
@@ -34,7 +33,7 @@ markiere()
 gehe_zu(80, 130)
 markiere()`;
 
-const level3GuardedCode = `import turtle
+const level3SearchCode = `import turtle
 
 drohne = turtle.Turtle()
 drohne.shape("triangle")
@@ -48,31 +47,18 @@ def gehe_zu(x, y):
 def markiere():
     drohne.dot(30, "#7df2a9")
 
-inventar = []
 gehe_zu(-210, -65)
 markiere()
 fund = drohne.suche_hier()
-print("Gefunden:", fund)
-if fund == "Datenchip":
-    inventar.append(fund)`;
+print("Gefunden:", fund)`;
 
-const level3DirectCode = level3GuardedCode.replace(
-    'print("Gefunden:", fund)\nif fund == "Datenchip":\n    inventar.append(fund)',
-    "print(fund)\ninventar.append(fund)"
-);
+const level3InventoryCode = level3SearchCode
+    .replace("gehe_zu(-210, -65)", "inventar = []\n\ngehe_zu(-210, -65)")
+    .concat("\ninventar.append(fund)");
 
-const level3InventedItemCode = level3DirectCode.replace(
-    "print(fund)\ninventar.append(fund)",
-    'print(fund)\nfund = "Datenchip"\ninventar.append(fund)'
-);
-
-const level3DeadGuardCode = level3DirectCode.replace(
-    "print(fund)\ninventar.append(fund)",
-    `print(fund)
-def nie_aufgerufen():
-    if fund == "Datenchip":
-        inventar.append(fund)
-inventar.append(fund)`
+const level3InventedItemCode = level3InventoryCode.replace(
+    "inventar.append(fund)",
+    'fund = "Datenchip"\ninventar.append(fund)'
 );
 
 function capturePageErrors(page) {
@@ -198,7 +184,6 @@ drohne = turtle.Turtle()
 drohne.pendown()
 drohne.goto(0, 10)
 drohne.penup()
-drohne.pendown()
 drohne.goto(160, 80)
 drohne.dot(30)
 print("Position:", drohne.position())`));
@@ -234,23 +219,26 @@ test("Agent training levels 2 and 3 validate reusable commands and a real found 
     await page.goto("/agent_training_level3.html?e2e");
     const level3Starter = await page.locator("#python-editor").inputValue();
     expect(level3Starter).not.toContain("inventar = []");
-    await expect(page.locator("#training-l3-tip-inventory")).toHaveText("inventar = []");
-    await expect(page.locator('[data-training-phase="guarded"] .microcode-separator')).toHaveText("•••");
-    await page.evaluate(code => window.editor.setValue(code), level3GuardedCode);
+    await expect(page.locator("#training-l3-tip-search")).toHaveText("fund = drohne.suche_hier()");
+    await expect(page.locator('[data-training-phase="guarded"] .makecode-block')).toHaveCount(2);
+    await expect(page.locator('[data-training-phase="guarded"] .microcode-separator')).toHaveCount(0);
+    await page.evaluate(code => window.editor.setValue(code), level3SearchCode);
     await page.locator("#run-btn").click();
 
-    await expect(page.locator("#run-status")).toHaveText("Weiter ohne if", { timeout: 12_000 });
-    await expect(page.locator("#training-checks .is-passed")).toHaveCount(3);
+    await expect(page.locator("#run-status")).toHaveText("Weiter zum Inventar", { timeout: 12_000 });
+    await expect(page.locator("#training-checks .is-passed")).toHaveCount(2);
     await expect(page.locator("#console-output")).toContainText("Gefunden: Datenchip");
-    await expect(page.locator("#training-inventory-items")).toHaveText("Datenchip");
+    await expect(page.locator("#training-inventory-items")).toHaveText("leer");
     await expect(page.locator('[data-training-phase="guarded"]')).toBeHidden();
-    await expect(page.locator('[data-training-phase="direct"]')).toBeVisible();
-    await expect(page.locator("#training-feedback-message")).toContainText("ohne „if“");
+    await expect(page.locator('.training-task-card > [data-training-phase="direct"]')).toBeVisible();
+    await expect(page.locator("#training-feedback-message")).toContainText("Inventar");
+    await expect(page.locator("#training-l3-direct-tip-inventory")).toHaveText("inventar = []");
+    await expect(page.locator('.training-task-card > [data-training-phase="direct"] .microcode-separator')).toHaveText("•••");
     await expect(page.locator("body")).not.toHaveClass(/training-complete/);
     await expect(page.locator("#success-overlay")).toHaveCount(0);
     const phaseOneState = await page.evaluate(() => window.AgentTrainingLevel.getState());
     expect(phaseOneState.level3Phase).toBe("direct");
-    expect(phaseOneState.collectedRealFind).toBe(true);
+    expect(phaseOneState.collectedRealFind).toBe(false);
     const phaseOneCompletedCode = await page.evaluate(() => JSON.parse(
         localStorage.getItem("completedLevelCode_v1") || "{}"
     ));
@@ -258,13 +246,13 @@ test("Agent training levels 2 and 3 validate reusable commands and a real found 
     const phaseOneAttemptedCode = await page.evaluate(() => JSON.parse(
         localStorage.getItem("attemptedLevelCode_v1") || "{}"
     ));
-    expect(phaseOneAttemptedCode.agent_training_level3).toBe(level3GuardedCode);
+    expect(phaseOneAttemptedCode.agent_training_level3).toBe(level3SearchCode);
 
-    await page.evaluate(code => window.editor.setValue(code), level3DirectCode);
+    await page.evaluate(code => window.editor.setValue(code), level3InventoryCode);
     await page.locator("#run-btn").click();
 
     await expect(page.locator("#run-status")).toHaveText("Geschafft", { timeout: 12_000 });
-    await expect(page.locator("#training-checks .is-passed")).toHaveCount(4);
+    await expect(page.locator("#training-checks .is-passed")).toHaveCount(3);
     const finalCompletion = page.locator("#success-overlay");
     await expect(finalCompletion).toBeVisible({ timeout: 7_000 });
     await expect(finalCompletion.locator('[data-success-symbol="diploma"]')).toBeVisible();
@@ -296,23 +284,19 @@ test("Agent training levels 2 and 3 validate reusable commands and a real found 
     await expect(page.locator("#training-inventory-items")).toHaveText("leer");
     await expect(page.locator("#training-marks-layer .training-live-dot")).toHaveCount(0);
     await expect(page.locator('[data-training-phase="guarded"]')).toBeVisible();
-    await expect(page.locator('[data-training-phase="direct"]')).toBeHidden();
+    await expect(page.locator('.training-task-card > [data-training-phase="direct"]')).toBeHidden();
 
-    await page.evaluate(code => window.editor.setValue(code), level3DeadGuardCode);
+    await page.evaluate(code => window.editor.setValue(code), level3SearchCode);
     await page.locator("#run-btn").click();
-    await expect(page.locator("#run-status")).toHaveText(/Code pr/);
+    await expect(page.locator("#run-status")).toHaveText("Weiter zum Inventar", { timeout: 12_000 });
     await expect(page.locator("#training-checks .is-passed")).toHaveCount(2);
-    await expect(page.locator('[data-training-phase="guarded"]')).toBeVisible();
-    await expect(page.locator('[data-training-phase="direct"]')).toBeHidden();
-
-    await page.evaluate(code => window.editor.setValue(code), level3GuardedCode);
-    await page.locator("#run-btn").click();
-    await expect(page.locator("#run-status")).toHaveText("Weiter ohne if", { timeout: 12_000 });
+    await expect(page.locator('[data-training-phase="guarded"]')).toBeHidden();
+    await expect(page.locator('.training-task-card > [data-training-phase="direct"]')).toBeVisible();
 
     await page.evaluate(code => window.editor.setValue(code), level3InventedItemCode);
     await page.locator("#run-btn").click();
     await expect(page.locator("#run-status")).toHaveText(/Code pr/);
-    await expect(page.locator("#training-checks .is-passed")).toHaveCount(3);
+    await expect(page.locator("#training-checks .is-passed")).toHaveCount(2);
     await expect(page.locator("#training-inventory-items")).toHaveText("Datenchip");
     const inventedState = await page.evaluate(() => window.AgentTrainingLevel.getState());
     expect(inventedState.foundItem).toBe("Datenchip");

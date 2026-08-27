@@ -8,8 +8,8 @@
     <title>Drohnensteuerung 1 – Zielpunkt erfassen</title>
     <script src="assets/vendor/skulpt/1.2.0/skulpt.min.js"></script>
     <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
-    <script src="assets/runner.js?v=20260827-1"></script>
-    <script src="assets/teacher-solutions.js?v=20260721-4"></script>
+    <script src="assets/runner.js?v=20260827-2"></script>
+    <script src="assets/teacher-solutions.js?v=20260827-2"></script>
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
     <link rel="stylesheet" href="assets/style.css?v=20260722-2">
@@ -35,13 +35,12 @@
                 <div>
                     <span class="training-eyebrow">Drohnensteuerung · Koordinatenlabor</span>
                     <h1 id="training-level-title">Zielpunkt erfassen</h1>
-                    <p>Schalte die Spur deiner Python-Turtle ein, fliege zum Signalpunkt <strong>(160, 80)</strong>, markiere den Ort und schalte die Spur danach wieder aus.</p>
+                    <p>Schalte die Spur deiner Python-Turtle ein, fliege zum Signalpunkt <strong>(160, 80)</strong> und markiere den Ort.</p>
                 </div>
                 <ul class="training-concept-row" aria-label="Neue Turtle-Befehle">
                     <li>pendown()</li>
                     <li>goto(x, y)</li>
                     <li>dot(größe, farbe)</li>
-                    <li>penup()</li>
                     <li>position()</li>
                 </ul>
             </section>
@@ -111,11 +110,10 @@
                 <section class="training-code-panel" aria-labelledby="training-code-title">
                     <div class="training-task-card">
                         <h2>Dein Auftrag</h2>
-                        <p>Die Drohne ist vorbereitet. Ergänze diese fünf Befehle und beobachte, wie <code>pendown()</code> und <code>penup()</code> die Spur ein- und ausschalten:</p>
+                        <p>Die Drohne ist vorbereitet. Ergänze diese vier Befehle und beobachte, wie <code>pendown()</code> die Spur einschaltet:</p>
                         <ol class="training-command-list">
                             <li><code>drohne.pendown()</code></li>
                             <li><code>drohne.goto(160, 80)</code></li>
-                            <li><code>drohne.penup()</code></li>
                             <li><code>drohne.dot(30, "#7df2a9")</code></li>
                             <li><code>print("Position:", drohne.position())</code></li>
                         </ol>
@@ -133,7 +131,7 @@ drohne.color("#71edf4")
 drohne.speed(2)
 drohne.penup()
 
-# Ergänze hier deine fünf Befehle:
+# Ergänze hier deine vier Befehle:
 </textarea>
 
                     <div class="training-controls" aria-label="Programmaktionen">
@@ -151,7 +149,7 @@ drohne.penup()
     <script src="assets/vendor/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="assets/vendor/codemirror/5.65.2/python.min.js"></script>
     <script src="assets/editor.js?v=20260722-1"></script>
-    <script src="assets/agent-training-core.js?v=20260721-4"></script>
-    <script src="assets/agent-training.js?v=20260827-1"></script>
+    <script src="assets/agent-training-core.js?v=20260827-2"></script>
+    <script src="assets/agent-training.js?v=20260827-2"></script>
 </body>
 </html>

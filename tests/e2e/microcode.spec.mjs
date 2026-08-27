@@ -18,7 +18,7 @@ const indentationPlans = [
     { page: "mission3_level3.html", offsets: [0, 0, 0, 0, 20, 20, 40, 20, 40, 0] },
     { page: "mission4_level3.html", offsets: [0, 0, 0, 20, 20, 0] },
     { page: "agent_training_level2.html", offsets: [0, 20, 0, 0] },
-    { page: "agent_training_level3.html", offsets: [0, 0, 0, 0, 20] }
+    { page: "agent_training_level3.html", offsets: [0, 0] }
 ];
 
 const ipadStackedBlockPages = new Set([
@@ -81,13 +81,13 @@ test("microcode modules stay stacked and correctly indented", { tag: "@ipad" }, 
             if (plan.offsets[index] === 40) expect(block.classes).toContain("microcode-indent-2");
         });
 
-        if (["agent_training_level2.html", "agent_training_level3.html"].includes(missionPage)) {
+        if (missionPage === "agent_training_level2.html") {
             const separator = hint.locator(".microcode-separator");
             await expect(separator).toBeVisible();
             await expect(separator).toHaveAttribute("aria-hidden", "true");
             await expect(separator).toHaveText("•••");
             const separatorBox = await separator.boundingBox();
-            const separatorAfter = missionPage === "agent_training_level2.html" ? 1 : 0;
+            const separatorAfter = 1;
             expect(separatorBox).not.toBeNull();
             expect(separatorBox.y).toBeGreaterThanOrEqual(blocks[separatorAfter].bottom - 1);
             expect(separatorBox.y + separatorBox.height).toBeLessThanOrEqual(blocks[separatorAfter + 1].top + 1);

@@ -9,8 +9,8 @@
     <script src="assets/vendor/skulpt/1.2.0/skulpt.min.js"></script>
     <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
     <script src="assets/vendor/fireworks-js/2.10.8/index.umd.js"></script>
-    <script src="assets/runner.js?v=20260827-1"></script>
-    <script src="assets/teacher-solutions.js?v=20260721-4"></script>
+    <script src="assets/runner.js?v=20260827-2"></script>
+    <script src="assets/teacher-solutions.js?v=20260827-2"></script>
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
     <link rel="stylesheet" href="assets/style.css?v=20260722-2">
@@ -41,7 +41,7 @@
                 <ul class="training-concept-row" aria-label="Neue Drohnen- und Python-Bausteine">
                     <li>suche_hier()</li>
                     <li>Rückgabewert</li>
-                    <li>append()</li>
+                    <li data-training-phase="direct" hidden>append()</li>
                 </ul>
             </section>
 
@@ -78,7 +78,7 @@
                         <svg id="training-marks-layer" class="training-marks-layer" viewBox="0 0 800 450" preserveAspectRatio="none" aria-hidden="true"></svg>
                         <div id="agent-training-turtle" class="training-turtle-layer" aria-hidden="true"></div>
 
-                        <div class="training-inventory-hud" aria-label="Inhalt der Python-Inventarliste">
+                        <div class="training-inventory-hud" data-training-phase="direct" aria-label="Inhalt der Python-Inventarliste" hidden>
                             <span>INVENTAR</span>
                             <strong id="training-inventory-items">leer</strong>
                         </div>
@@ -92,20 +92,19 @@
                     <div class="training-legend" aria-label="Suchhilfe">
                         <span><code>suche_hier()</code> ist ein Agent-PY-Zusatzbefehl.</span>
                         <span>Am falschen Ort liefert die Suche <code>None</code>.</span>
-                        <span><code>append()</code> hängt einen Wert an eine Liste an.</span>
+                        <span data-training-phase="direct" hidden><code>append()</code> hängt einen Wert an eine Liste an.</span>
                     </div>
 
                     <section class="training-feedback" aria-labelledby="training-feedback-title">
                         <div>
                             <span class="training-eyebrow">Live-Feedback</span>
                             <h2 id="training-feedback-title">Noch nicht ausgeführt</h2>
-                            <p id="training-feedback-message">Starte deinen Code. Fund, Ausgabe und Inventar werden als zusammengehörige Kette geprüft.</p>
+                            <p id="training-feedback-message">Starte deinen Code. Suche den Datenchip und gib das gefundene Ergebnis aus.</p>
                         </div>
                         <ul id="training-checks" class="training-checks" aria-label="Prüfergebnisse">
                             <li class="training-check is-missing"><span class="training-check-icon" aria-hidden="true">○</span><span>Datenchip am Fundort gefunden</span></li>
                             <li class="training-check is-missing"><span class="training-check-icon" aria-hidden="true">○</span><span>Gefundenes Ergebnis mit print() ausgegeben</span></li>
                             <li class="training-check is-missing"><span class="training-check-icon" aria-hidden="true">○</span><span>Genau diesen Fund ins Inventar aufgenommen</span></li>
-                            <li class="training-check is-missing"><span class="training-check-icon" aria-hidden="true">○</span><span>Fund direkt ins Inventar aufnehmen</span></li>
                         </ul>
                     </section>
                 </section>
@@ -114,16 +113,9 @@
                     <div class="training-task-card">
                         <div data-training-phase="guarded">
                             <h2>Dein Auftrag</h2>
-                            <p>Die Drohne steht gleich am bekannten Fundort. Finde den Datenchip, kontrolliere den Rückgabewert mit <code>print()</code> und sichere ihn zunächst mit einer <code>if</code>-Prüfung.</p>
-                            <p><strong>Liste vorbereiten:</strong> Eine Liste sammelt mehrere Werte. Leere eckige Klammern <code>[]</code> legen eine leere Liste an, die du danach füllen kannst.</p>
-                            <p class="training-touch-note">Tippe auf jeden Block oder fahre mit der Maus darüber. Jede Hilfsblase verrät nur eine Python-Zeile.</p>
+                            <p>Die Drohne steht gleich am bekannten Fundort. Finde den Datenchip und kontrolliere den Rückgabewert mit <code>print()</code>.</p>
 
-                            <div class="block-hint" aria-label="Fünf getrennte Codehinweise">
-                                <div class="makecode-block block-tooltip" aria-describedby="training-l3-tip-inventory">
-                                    lege eine leere Liste <span class="makecode-var-pill">inventar</span> an
-                                    <span class="tooltiptext" id="training-l3-tip-inventory" role="tooltip">inventar = []</span>
-                                </div>
-                                <div class="microcode-separator" aria-hidden="true"><span>•••</span></div>
+                            <div class="block-hint" aria-label="Zwei getrennte Codehinweise">
                                 <div class="makecode-block block-tooltip" aria-describedby="training-l3-tip-search">
                                     suche hier und speichere als <span class="makecode-var-pill">fund</span>
                                     <span class="tooltiptext" id="training-l3-tip-search" role="tooltip">fund = drohne.suche_hier()</span>
@@ -132,23 +124,20 @@
                                     zeige Text <span class="makecode-input">"Gefunden:", fund</span>
                                     <span class="tooltiptext" id="training-l3-tip-print" role="tooltip">print("Gefunden:", fund)</span>
                                 </div>
-                                <div class="makecode-block-var block-tooltip microcode-group-gap" aria-describedby="training-l3-tip-if">
-                                    wenn <span class="makecode-input">fund = "Datenchip"</span> dann
-                                    <span class="tooltiptext" id="training-l3-tip-if" role="tooltip">if fund == "Datenchip":</span>
-                                </div>
-                                <div class="makecode-block block-tooltip microcode-indent-1" aria-describedby="training-l3-tip-append">
-                                    hänge <span class="makecode-var-pill">fund</span> an <span class="makecode-var-pill">inventar</span>
-                                    <span class="tooltiptext" id="training-l3-tip-append" role="tooltip">    inventar.append(fund)</span>
-                                </div>
                             </div>
                         </div>
 
                         <div data-training-phase="direct" hidden>
-                            <h2>Vereinfache deinen Code</h2>
-                            <p>Am richtigen Fundort kannst du auch ohne „<code>if</code>“ den Fund ins Inventar aufnehmen.</p>
-                            <p class="training-touch-note">Lösche die <code>if</code>-Zeile und rücke <code>inventar.append(fund)</code> ganz nach links. Suche und <code>print()</code> bleiben als direkte Kontrolle erhalten.</p>
+                            <h2>Fundstück ins Inventar aufnehmen</h2>
+                            <p><strong>Liste vorbereiten:</strong> Eine Liste sammelt mehrere Werte. Mit <code>inventar = []</code> legst du eine leere Liste an, die du danach füllen kannst.</p>
+                            <p>Behalte deine Suche und <code>print()</code> bei. Hänge danach genau den gefundenen Wert an <code>inventar</code>.</p>
 
-                            <div class="block-hint" aria-label="Drei direkte Codehinweise">
+                            <div class="block-hint" aria-label="Vier getrennte Codehinweise">
+                                <div class="makecode-block block-tooltip" aria-describedby="training-l3-direct-tip-inventory">
+                                    lege eine leere Liste <span class="makecode-var-pill">inventar</span> an
+                                    <span class="tooltiptext" id="training-l3-direct-tip-inventory" role="tooltip">inventar = []</span>
+                                </div>
+                                <div class="microcode-separator" aria-hidden="true"><span>•••</span></div>
                                 <div class="makecode-block block-tooltip" aria-describedby="training-l3-direct-tip-search">
                                     suche hier und speichere als <span class="makecode-var-pill">fund</span>
                                     <span class="tooltiptext" id="training-l3-direct-tip-search" role="tooltip">fund = drohne.suche_hier()</span>
@@ -204,7 +193,7 @@ markiere()
     <script src="assets/vendor/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="assets/vendor/codemirror/5.65.2/python.min.js"></script>
     <script src="assets/editor.js?v=20260722-1"></script>
-    <script src="assets/agent-training-core.js?v=20260721-5"></script>
-    <script src="assets/agent-training.js?v=20260827-1"></script>
+    <script src="assets/agent-training-core.js?v=20260827-2"></script>
+    <script src="assets/agent-training.js?v=20260827-2"></script>
 </body>
 </html>

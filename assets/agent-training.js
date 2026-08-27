@@ -364,7 +364,10 @@
 
     function renderChecks(result) {
         checksList.replaceChildren();
-        result.checks.forEach(check => {
+        const visibleChecks = levelId === "agent_training_level3" && level3Phase === "guarded"
+            ? result.checks.slice(0, 2)
+            : result.checks;
+        visibleChecks.forEach(check => {
             const item = document.createElement("li");
             item.className = "training-check " + (check.passed ? "is-passed" : "is-missing");
 
@@ -434,8 +437,9 @@
 
         if (levelId === "agent_training_level3" && result.phaseComplete) {
             enterDirectInventoryPhase();
-            setStatus("Weiter ohne if", "success");
-            setTopStatus("Drei Ziele erreicht – jetzt vereinfachen", "success");
+            renderChecks(result);
+            setStatus("Weiter zum Inventar", "success");
+            setTopStatus("Fund untersucht – jetzt ins Inventar aufnehmen", "success");
             return result;
         }
 
