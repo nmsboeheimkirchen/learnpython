@@ -10,7 +10,7 @@
     <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
     <!-- Confetti Bibliothek für Belohnungen -->
     <script src="assets/vendor/canvas-confetti/1.9.2/confetti.browser.min.js"></script>
-    <script src="assets/runner.js?v=20260722-5"></script>
+    <script src="assets/runner.js?v=20260827-1"></script>
     <script src="assets/teacher-solutions.js?v=20260722-4"></script>
     <!-- CodeMirror für den Editor -->
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
@@ -48,13 +48,13 @@
             <p>Nutze <span class="tooltip">print()<span class="tooltiptext">Druckt Text. Text muss in " " stehen!</span></span>, um Text anzuzeigen.</p>
             
             <div class="block-hint">
-                <div class="makecode-block">zeige Text <span class="makecode-input">"Verbindung wird hergestellt..."</span></div>
-                <p>In Python:</p>
-                <pre class="python-example"><code>print("Verbindung wird hergestellt...")</code></pre>
+                <div class="makecode-block block-tooltip">zeige Text <span class="makecode-input">"Verbindung wird hergestellt..."</span>
+                    <span class="tooltiptext">print("Verbindung wird hergestellt...")</span>
+                </div>
             </div>
 
             <h2>Dein Schritt</h2>
-            <p>Kopiere den Python-Code von oben in das Feld <strong>Python-Code</strong> und klicke auf <strong>Code Ausführen</strong>.</p>
+            <p>Tippe oder klicke auf den Block, um den Python-Code zu sehen. Baue dann im Feld <strong>Python-Code</strong> <code>print()</code> um den bereits vorhandenen Text und führe den Code aus.</p>
 
             <h2>Erklärung</h2>
             <p><code>print()</code> zeigt den Text zwischen den Anführungszeichen im Bereich <strong>Ergebnis</strong> an.</p>
@@ -63,8 +63,7 @@
         <!-- Rechte Seite: Editor und Konsole -->
         <div class="panel editor-panel">
             <h2>Python-Code</h2>
-            <textarea id="python-editor"># Tippe deinen Code hier rein!
-print("Irgendein Text")
+            <textarea id="python-editor">"Verbindung wird hergestellt..."
 </textarea>
             <div style="display: flex; gap: 10px;">
                 <button id="run-btn" style="flex-grow: 1;">▶ Code Ausführen</button>

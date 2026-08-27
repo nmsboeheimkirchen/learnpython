@@ -485,6 +485,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Globale Hilfsfunktionen für Skulpt und UI
 let currentOutput = "";
+let currentInputValues = [];
 
 function appendConsoleText(outDiv, text) {
     outDiv.appendChild(document.createTextNode(String(text)));
@@ -802,7 +803,7 @@ const LEVEL_VALIDATORS = {
             { passed: output.includes("Nichts passiert."), message: "Teste das Programm mit der Eingabe blau, bis ‚Nichts passiert.‘ erscheint." }
         ]);
     },
-    mission3_level1({ statements, output }) {
+    mission3_level1({ statements, output, evidence = {} }) {
         const whilePattern = ["while", "eingabe", "!=", stringToken("123"), ":"];
         const whileStatement = findStatement(statements, whilePattern);
         const safeOpenPrint = statements.find(statement =>
@@ -810,11 +811,16 @@ const LEVEL_VALIDATORS = {
             statementStartsWith(statement, ["print", "(", stringToken("Safe offen!"), ")"]) &&
             (!whileStatement || statement.line > whileStatement.line)
         );
+        const triedDifferentNumber = Array.isArray(evidence.inputValues) && evidence.inputValues.some(value => {
+            const normalizedValue = String(value).trim();
+            return /^[+-]?\d+$/.test(normalizedValue) && Number(normalizedValue) !== 123;
+        });
         return firstFailedRequirement([
             { passed: Boolean(findStatement(statements, ["eingabe", "=", stringToken("")])), message: "Initialisiere eingabe mit einem leeren Text." },
             { passed: Boolean(whileStatement), message: "Wiederhole mit while, solange eingabe nicht ‚123‘ ist." },
             { passed: hasNestedStatement(statements, whilePattern, ["eingabe", "=", "input", "("]), message: "Die neue Eingabe muss eingerückt in der while-Schleife stehen." },
             { passed: Boolean(safeOpenPrint), message: "Gib nach der while-Schleife mit print(\"Safe offen!\") den Erfolg aus." },
+            { passed: triedDifferentNumber, message: "Probiere zuerst mindestens eine andere Zahl als 123 und danach 123." },
             { passed: output.toLocaleLowerCase("de-DE").includes("safe offen!"), message: "Probiere Zahlenkombinationen, bis ‚Safe offen!‘ erscheint." }
         ]);
     },
@@ -1112,8 +1118,11 @@ function setupLevel(levelId) {
         if (typeof attemptedCode === "string") {
             saveAttemptedLevelCode(levelId, attemptedCode);
         }
-        runit((code, output) => {
-            const result = validateLevelSolution(levelId, code, output, validationEvidence);
+        runit((code, output, executionEvidence = {}) => {
+            const result = validateLevelSolution(levelId, code, output, {
+                ...validationEvidence,
+                ...executionEvidence
+            });
             if (result.evidence && typeof result.evidence === "object") {
                 validationEvidence = result.evidence;
             }
@@ -1203,6 +1212,7 @@ function customInput(promptMsg) {
                 inputWrapper.remove();
                 appendConsoleText(outDiv, v + "\n");
                 currentOutput += v + "\n";
+                currentInputValues.push(v);
                 if (runButton) {
                     runButton.disabled = false;
                     runButton.removeAttribute("aria-describedby");
@@ -1218,6 +1228,7 @@ function runit(levelTestFunction) {
     const outDiv = document.getElementById("console-output");
     outDiv.textContent = "";
     currentOutput = "";
+    currentInputValues = [];
 
     // Skulpt konfigurieren
     Sk.pre = "console-output";
@@ -1235,7 +1246,9 @@ function runit(levelTestFunction) {
 
         myPromise.then(function(mod) {
             // Erfolg: Prüfe Level
-            if(levelTestFunction) levelTestFunction(code, currentOutput);
+            if(levelTestFunction) levelTestFunction(code, currentOutput, {
+                inputValues: currentInputValues.slice()
+            });
         }, function(err) {
             appendConsoleError(outDiv, err);
         });

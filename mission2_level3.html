@@ -10,7 +10,7 @@
     <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
     <!-- Confetti Bibliothek für Belohnungen -->
     <script src="assets/vendor/canvas-confetti/1.9.2/confetti.browser.min.js"></script>
-    <script src="assets/runner.js?v=20260722-5"></script>
+    <script src="assets/runner.js?v=20260827-1"></script>
     <script src="assets/teacher-solutions.js"></script>
     <!-- CodeMirror für den Editor -->
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
@@ -48,25 +48,33 @@
             <p>Mit <span class="tooltip">elif:<span class="tooltiptext">Kurz für „else if“ (ansonsten wenn). Prüft eine weitere Bedingung, falls die vorherige falsch war.</span></span> können wir vor dem <code>else</code> einen weiteren Fall prüfen.</p>
             
             <div class="block-hint">
-                <div class="makecode-block">setze kabel auf <span class="makecode-input">input("Welches Kabel? ")</span></div>
-                <div class="makecode-block-var">wenn <span class="makecode-input">kabel = "rot"</span> dann</div>
-                <div class="makecode-block microcode-indent-1">zeige Text <span class="makecode-input">"Entschärft!"</span></div>
-                <div class="makecode-block-var">ansonsten wenn <span class="makecode-input">kabel = "blau"</span> dann</div>
-                <div class="makecode-block microcode-indent-1">zeige Text <span class="makecode-input">"Nichts passiert."</span></div>
-                <div class="makecode-block-var">ansonsten</div>
-                <div class="makecode-block microcode-indent-1">zeige Text <span class="makecode-input">"KABUMM!"</span></div>
-                <p>Vollständiger Python-Code:</p>
-                <pre class="python-example"><code>kabel = input("Welches Kabel? ")
-if kabel == "rot":
-    print("Entschärft!")
-elif kabel == "blau":
-    print("Nichts passiert.")
-else:
-    print("KABUMM!")</code></pre>
+                <div class="makecode-block block-tooltip">setze kabel auf <span class="makecode-input">input("Welches Kabel? ")</span>
+                    <span class="tooltiptext">kabel = input("Welches Kabel? ")</span>
+                </div>
+                <div class="makecode-block-var block-tooltip">wenn <span class="makecode-input">kabel = "rot"</span> dann
+                    <span class="tooltiptext">if kabel == "rot":</span>
+                </div>
+                <div class="makecode-block block-tooltip microcode-indent-1">zeige Text <span class="makecode-input">"Entschärft!"</span>
+                    <span class="tooltiptext">    print("Entschärft!")</span>
+                </div>
+
+                <p><strong>Ändere hier deinen Code</strong></p>
+                <div class="makecode-block-var block-tooltip">ansonsten wenn <span class="makecode-input">kabel = "blau"</span> dann
+                    <span class="tooltiptext">elif kabel == "blau":</span>
+                </div>
+                <div class="makecode-block block-tooltip microcode-indent-1">zeige Text <span class="makecode-input">"Nichts passiert."</span>
+                    <span class="tooltiptext">    print("Nichts passiert.")</span>
+                </div>
+                <div class="makecode-block-var block-tooltip">ansonsten
+                    <span class="tooltiptext">else:</span>
+                </div>
+                <div class="makecode-block block-tooltip microcode-indent-1">zeige Text <span class="makecode-input">"KABUMM!"</span>
+                    <span class="tooltiptext">    print("KABUMM!")</span>
+                </div>
             </div>
 
             <h2>Aufgabe</h2>
-            <p>Füge vor dem <code>else</code>-Zweig mit <code>KABUMM!</code> ein <code>elif</code> (= else if) für das blaue Kabel ein. Den Code kannst du von oben kopieren.</p>
+            <p>Füge vor dem <code>else</code>-Zweig mit <code>KABUMM!</code> ein <code>elif</code> (= else if) für das blaue Kabel ein. Tippe oder klicke auf die Blöcke, um den Python-Code zu sehen.</p>
 
             <h2>Erklärung</h2>
             <p><code>if</code> prüft zuerst Rot. Nur wenn das falsch ist, prüft <code>elif</code> Blau. <code>else</code> übernimmt ohne eigene Bedingung alle übrigen Farben. Genau ein Zweig läuft: Rot → „Entschärft!“, Blau → „Nichts passiert.“ und der Code kann erneut gestartet werden, jede andere Farbe → „KABUMM!“.</p>

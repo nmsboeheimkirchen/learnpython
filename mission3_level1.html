@@ -10,7 +10,7 @@
     <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
     <!-- Confetti Bibliothek für Belohnungen -->
     <script src="assets/vendor/canvas-confetti/1.9.2/confetti.browser.min.js"></script>
-    <script src="assets/runner.js?v=20260722-5"></script>
+    <script src="assets/runner.js?v=20260827-1"></script>
     <script src="assets/teacher-solutions.js?v=20260722-5"></script>
     <!-- CodeMirror für den Editor -->
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
@@ -49,16 +49,22 @@
             <p><code>!=</code> bedeutet <strong>ungleich</strong> und entspricht dem mathematischen Zeichen <strong>≠</strong>. <code>while eingabe != "123":</code> wiederholt den eingerückten Code also, solange <code>eingabe</code> nicht <code>"123"</code> ist.</p>
             
             <div class="block-hint">
-                <div class="makecode-block">solange <span class="makecode-input">eingabe != "123"</span> mache</div>
-                <p>In Python:</p>
-                <pre class="python-example"><code>eingabe = ""
-while eingabe != "123":
-    eingabe = input("Code eingeben: ")
-print("Safe offen!")</code></pre>
+                <div class="makecode-block block-tooltip">setze eingabe auf <span class="makecode-input">""</span>
+                    <span class="tooltiptext">eingabe = ""</span>
+                </div>
+                <div class="makecode-block-var block-tooltip">solange <span class="makecode-input">eingabe != "123"</span> mache
+                    <span class="tooltiptext">while eingabe != "123":</span>
+                </div>
+                <div class="makecode-block block-tooltip microcode-indent-1">setze eingabe auf <span class="makecode-input">input("Code eingeben: ")</span>
+                    <span class="tooltiptext">    eingabe = input("Code eingeben: ")</span>
+                </div>
+                <div class="makecode-block block-tooltip">zeige Text <span class="makecode-input">"Safe offen!"</span>
+                    <span class="tooltiptext">print("Safe offen!")</span>
+                </div>
             </div>
 
             <h2>Dein Schritt</h2>
-            <p>Kopiere den Python-Code, führe ihn aus und probiere Zahlenkombinationen (z. B. <code>1234</code>), bis das System die <code>while</code>-Schleife verlässt und mit der Ausgabe <strong>„Safe offen!“</strong> beendet.</p>
+            <p>Tippe oder klicke auf die Blöcke, um den gesamten Python-Code zu sehen. Ergänze die fehlenden Zeilen und rücke die Eingabe in die <code>while</code>-Schleife ein. Führe den Code aus, probiere zuerst eine andere Zahl und danach <code>123</code>, bis <strong>„Safe offen!“</strong> erscheint.</p>
 
             <h2>Erklärung</h2>
             <p><code>eingabe = ""</code> startet mit leerem Text. Die <code>while</code>-Schleife fragt eingerückt so oft nach einer neuen Eingabe, bis die Ungleich-Bedingung falsch wird. Danach läuft <code>print("Safe offen!")</code> außerhalb der Schleife.</p>
@@ -67,8 +73,11 @@ print("Safe offen!")</code></pre>
         <!-- Rechte Seite: Editor und Konsole -->
         <div class="panel editor-panel">
             <h2>Python-Code</h2>
-            <textarea id="python-editor"># Tippe deinen Code hier rein!
-print("Irgendein Text")
+            <textarea id="python-editor"># Ergänze hier
+
+
+eingabe = input("Code eingeben: ")
+print("Safe offen!")
 </textarea>
             <div style="display: flex; gap: 10px;">
                 <button id="run-btn" style="flex-grow: 1;">▶ Code Ausführen</button>

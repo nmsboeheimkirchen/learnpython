@@ -10,7 +10,7 @@
     <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
     <!-- Confetti Bibliothek für Belohnungen -->
     <script src="assets/vendor/canvas-confetti/1.9.2/confetti.browser.min.js"></script>
-    <script src="assets/runner.js?v=20260722-5"></script>
+    <script src="assets/runner.js?v=20260827-1"></script>
     <script src="assets/teacher-solutions.js"></script>
     <!-- CodeMirror für den Editor -->
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
@@ -48,14 +48,27 @@
             <p>Mit <span class="tooltip">else:<span class="tooltiptext">Bedeutet „ansonsten“. Wird ausgeführt, wenn das if darüber falsch war, und braucht keine eigene Bedingung.</span></span> können wir einen Plan B einbauen.</p>
             
             <div class="block-hint">
-                <div class="makecode-block-var">ansonsten</div>
-                <p>In Python:</p>
-                <pre class="python-example"><code>else:
-    print("KABUMM!")</code></pre>
+                <div class="makecode-block block-tooltip">setze kabel auf <span class="makecode-input">"rot"</span>
+                    <span class="tooltiptext">kabel = "rot"</span>
+                </div>
+                <div class="makecode-block-var block-tooltip">wenn <span class="makecode-input">kabel = "rot"</span> dann
+                    <span class="tooltiptext">if kabel == "rot":</span>
+                </div>
+                <div class="makecode-block block-tooltip microcode-indent-1">zeige Text <span class="makecode-input">"Entschärft!"</span>
+                    <span class="tooltiptext">    print("Entschärft!")</span>
+                </div>
+
+                <p><strong>Dein neuer Code</strong></p>
+                <div class="makecode-block-var block-tooltip">ansonsten
+                    <span class="tooltiptext">else:</span>
+                </div>
+                <div class="makecode-block block-tooltip microcode-indent-1">zeige Text <span class="makecode-input">"KABUMM!"</span>
+                    <span class="tooltiptext">    print("KABUMM!")</span>
+                </div>
             </div>
 
             <h2>Dein Schritt</h2>
-            <p>Setze <code>kabel</code> im Feld <strong>Python-Code</strong> auf eine beliebige Farbe außer <code>"rot"</code> und ergänze darunter den <code>else</code>-Zweig von oben.</p>
+            <p>Setze <code>kabel</code> im Feld <strong>Python-Code</strong> auf eine beliebige Farbe außer <code>"rot"</code>. Tippe oder klicke dann auf die Blöcke unter <strong>Dein neuer Code</strong> und ergänze den <code>else</code>-Zweig.</p>
 
             <h2>Erklärung</h2>
             <p>Ist die <code>if</code>-Bedingung falsch, führt Python stattdessen den eingerückten Plan B unter <code>else</code> aus. Dafür funktioniert jede andere Farbe, nicht nur Blau.</p>

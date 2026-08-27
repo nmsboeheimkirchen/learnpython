@@ -723,20 +723,50 @@ test("level headings omit a separator dash before their number", () => {
 });
 
 test("Mission 1 level 2 teaches the five-second ready sequence and level 3 carries it forward", () => {
+    const level1 = readFileSync(new URL("../mission1_level1.html", import.meta.url), "utf8");
     const level2 = readFileSync(new URL("../mission1_level2.html", import.meta.url), "utf8");
     const level3 = readFileSync(new URL("../mission1_level3.html", import.meta.url), "utf8");
+    const level1Starter = level1.match(/<textarea id="python-editor">([\s\S]*?)<\/textarea>/)?.[1]
+        .replace(/\r/g, "") ?? "";
     const level3Starter = level3.match(/<textarea id="python-editor">([\s\S]*?)<\/textarea>/)?.[1]
         .replace(/\r/g, "") ?? "";
 
+    assert.equal(level1Starter, '"Verbindung wird hergestellt..."\n');
+    assert.match(level1, /block-tooltip[\s\S]*print\("Verbindung wird hergestellt\.\.\."\)/);
+    assert.doesNotMatch(level1, /python-example|Python-Code zum Kopieren|<p>In Python:<\/p>/);
     assert.match(level2, /lade Werkzeugkiste[\s\S]*>time</);
     assert.match(level2, /zeige Text[\s\S]*Verbindung wird hergestellt/);
     assert.match(level2, /pausiere \(s\)[\s\S]*>5</);
     assert.match(level2, /print\("System bereit!"\)/);
-    assert.match(level2, /Python-Codeausschnitt:[\s\S]*import time[\s\S]*time\.sleep\(5\)/);
+    assert.doesNotMatch(level2, /Python-Codeausschnitt|python-example/);
     assert.match(level2, /Das Python-Modul <code>time<\/code> zählt in Sekunden/);
     assert.match(level3, /<h1>Level 3: Weiter geht‘s mit der Identifikation<\/h1>/);
     assert.match(level3, /input\("Wie heißt du\? "\)[\s\S]*stellst du eine Frage/);
+    assert.match(level3, /print\("System bereit!"\)[\s\S]*Dein neuer Code[\s\S]*name = input\("Wie heißt du\? "\)/);
+    assert.doesNotMatch(level3, /Python-Code zum Kopieren|python-example/);
     assert.match(level3Starter, /^import time\nprint\("Verbindung wird hergestellt\.\.\."\)\ntime\.sleep\(5\)\nprint\("System bereit!"\)/);
+});
+
+test("Missions 1 to 3 reveal the requested beginner code only through blocks", () => {
+    const expectedBlockCounts = new Map([
+        ["mission1_level1.html", 1],
+        ["mission1_level2.html", 4],
+        ["mission1_level3.html", 6],
+        ["mission2_level1.html", 3],
+        ["mission2_level2.html", 5],
+        ["mission2_level3.html", 7],
+        ["mission3_level1.html", 4]
+    ]);
+
+    for (const [page, expectedBlockCount] of expectedBlockCounts) {
+        const html = readFileSync(new URL(`../${page}`, import.meta.url), "utf8");
+        const blocks = [...html.matchAll(/<div class="(?:makecode-block|makecode-block-var)[^"]*block-tooltip[^"]*">[\s\S]*?<\/div>/g)];
+        assert.equal(blocks.length, expectedBlockCount, `${page}: falsche Anzahl Hover-Blöcke`);
+        for (const block of blocks) {
+            assert.match(block[0], /<span class="tooltiptext">[\s\S]+<\/span>/, `${page}: Python-Hinweis fehlt`);
+        }
+        assert.doesNotMatch(html, /<pre class="python-example">/, `${page}: kopierbarer Python-Code ist noch sichtbar`);
+    }
 });
 
 const validSolutions = [
@@ -773,7 +803,8 @@ const validSolutions = [
     {
         level: "mission3_level1",
         code: 'eingabe = ""\nwhile eingabe != "123":\n    eingabe = input("Code eingeben: ")\nprint("Safe offen!")',
-        output: "Code eingeben: 123\nSafe offen!\n"
+        output: "Code eingeben: 999\nCode eingeben: 123\nSafe offen!\n",
+        evidence: { inputValues: ["999", "123"] }
     },
     {
         level: "mission3_level2",
@@ -1033,6 +1064,28 @@ test("nested loop requirements reject unindented input", () => {
 
     assert.equal(result.passed, false);
     assert.match(result.message, /eingerückt/);
+});
+
+test("Mission 3 level 1 requires a wrong numeric guess before 123", () => {
+    const { context } = createRunnerContext();
+    context.code = 'eingabe = ""\nwhile eingabe != "123":\n    eingabe = input("Code eingeben: ")\nprint("Safe offen!")';
+    context.output = "Code eingeben: 123\nSafe offen!\n";
+    context.evidence = { inputValues: ["123"] };
+
+    const directHit = vm.runInContext(
+        'validateLevelSolution("mission3_level1", code, output, evidence)',
+        context
+    );
+    assert.equal(directHit.passed, false);
+    assert.match(directHit.message, /andere Zahl als 123/);
+
+    context.output = "Code eingeben: 999\nCode eingeben: 123\nSafe offen!\n";
+    context.evidence = { inputValues: ["999", "123"] };
+    const testedLoop = vm.runInContext(
+        'validateLevelSolution("mission3_level1", code, output, evidence)',
+        context
+    );
+    assert.equal(testedLoop.passed, true, testedLoop.message);
 });
 
 test("mission 4 rejects Caesar steps outside the for loop", () => {
@@ -1629,8 +1682,19 @@ test("Mission 2 level 3 is optional and starts before the elif is added", () => 
 
 test("Mission 3 level 1 explains Python != as mathematical not-equal", () => {
     const html = readFileSync(new URL("../mission3_level1.html", import.meta.url), "utf8");
+    const starter = html.match(/<textarea id="python-editor">([\s\S]*?)<\/textarea>/)?.[1]
+        .replace(/\r/g, "") ?? "";
     assert.match(html, /<code>!=<\/code> bedeutet <strong>ungleich<\/strong>/);
     assert.match(html, /mathematischen Zeichen <strong>≠<\/strong>/);
+    assert.equal(starter, [
+        "# Ergänze hier",
+        "",
+        "",
+        'eingabe = input("Code eingeben: ")',
+        'print("Safe offen!")',
+        ""
+    ].join("\n"));
+    assert.match(html, /andere Zahl[\s\S]*danach <code>123<\/code>/);
 });
 
 test("browser dependencies are local and checksum-protected", () => {
@@ -1801,7 +1865,7 @@ test("mission navigation is rendered from one central definition", () => {
         assert.match(html, /<div id="navigation-root"><\/div>/);
         assert.match(html, /<script src="assets\/navigation\.js\?v=20260722-1"><\/script>/);
         assert.match(html, /<link rel="stylesheet" href="assets\/style\.css\?v=20260722-2">/);
-        assert.match(html, /<script src="assets\/runner\.js\?v=20260722-5"><\/script>/);
+        assert.match(html, /<script src="assets\/runner\.js\?v=20260827-1"><\/script>/);
         assert.doesNotMatch(html, /id="mySidebar"/);
     }
 });

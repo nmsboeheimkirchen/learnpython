@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 const sharedAssetVersion = "20260722-1";
 const styleAssetVersion = "20260722-2";
-const runnerAssetVersion = "20260722-5";
+const runnerAssetVersion = "20260827-1";
 const logoAssetVersion = "20260720-2";
 
 const missionPages = [
@@ -313,6 +313,53 @@ test("Mission 3 levels provide the staged starter bonuses", async ({ page }) => 
     await expect(page.locator(".guide-panel")).toContainText("Jetzt musst du den geheimen Code herausfinden");
     await expect(page.locator(".guide-panel")).not.toContainText("Startbonus");
     await expect(page.locator(".guide-panel")).not.toContainText("Zufall generieren");
+});
+
+test("beginner levels reveal code through blocks and Mission 3 level 1 tests the loop", async ({ page }) => {
+    await page.goto("/mission1_level1.html");
+    await expect(page.locator("#python-editor")).toHaveValue('"Verbindung wird hergestellt..."\n');
+    await expect(page.locator(".python-example")).toHaveCount(0);
+
+    const firstBlock = page.locator(".block-hint > .block-tooltip").first();
+    await firstBlock.focus();
+    await expect(firstBlock.locator(":scope > .tooltiptext")).toBeVisible();
+    await expect(firstBlock.locator(":scope > .tooltiptext")).toHaveText('print("Verbindung wird hergestellt...")');
+
+    await page.goto("/mission3_level1.html");
+    await expect(page.locator("#python-editor")).toHaveValue([
+        "# Ergänze hier",
+        "",
+        "",
+        'eingabe = input("Code eingeben: ")',
+        'print("Safe offen!")',
+        ""
+    ].join("\n"));
+    await expect(page.locator(".block-hint > .block-tooltip")).toHaveCount(4);
+    await expect(page.locator(".python-example")).toHaveCount(0);
+
+    await page.waitForFunction(() => Boolean(window.editor));
+    await page.evaluate(() => {
+        window.editor.setValue([
+            'eingabe = ""',
+            'while eingabe != "123":',
+            '    eingabe = input("Code eingeben: ")',
+            'print("Safe offen!")'
+        ].join("\n"));
+    });
+
+    const runButton = page.locator("#run-btn");
+    await runButton.click();
+    await page.locator(".console-input").fill("123");
+    await page.locator(".console-input").press("Enter");
+    await expect(page.locator("#status-text")).toContainText("andere Zahl als 123");
+    await expect(page.locator("#success-overlay")).toHaveCount(0);
+
+    await runButton.click();
+    await page.locator(".console-input").fill("999");
+    await page.locator(".console-input").press("Enter");
+    await page.locator(".console-input").fill("123");
+    await page.locator(".console-input").press("Enter");
+    await expect(page.locator("#status-text")).toHaveText("✓ Geschafft – lies kurz dein Ergebnis.");
 });
 
 test("Mission 3 level 2 requires one guess below and one above 123", async ({ page }) => {

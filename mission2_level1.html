@@ -10,7 +10,7 @@
     <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
     <!-- Confetti Bibliothek für Belohnungen -->
     <script src="assets/vendor/canvas-confetti/1.9.2/confetti.browser.min.js"></script>
-    <script src="assets/runner.js?v=20260722-5"></script>
+    <script src="assets/runner.js?v=20260827-1"></script>
     <script src="assets/teacher-solutions.js"></script>
     <!-- CodeMirror für den Editor -->
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
@@ -48,16 +48,19 @@
             <p>Zuerst weisen wir einer <span class="tooltip">Variable<span class="tooltiptext">Ein kleiner Speicherplatz im Computer</span></span> einen Wert mit einem einzelnen <code>=</code> zu. Dann prüfen wir mit <code>if</code> und <code>==</code> ob etwas stimmt.</p>
             
             <div class="block-hint">
-                <div class="makecode-block">setze kabel auf <span class="makecode-input">"rot"</span></div>
-                <div class="makecode-block-var">wenn <span class="makecode-input">kabel = "rot"</span> dann</div>
-                <p>In Python:</p>
-                <pre class="python-example"><code>kabel = "rot"
-if kabel == "rot":
-    print("Entschärft!")</code></pre>
+                <div class="makecode-block block-tooltip">setze kabel auf <span class="makecode-input">"rot"</span>
+                    <span class="tooltiptext">kabel = "rot"</span>
+                </div>
+                <div class="makecode-block-var block-tooltip">wenn <span class="makecode-input">kabel = "rot"</span> dann
+                    <span class="tooltiptext">if kabel == "rot":</span>
+                </div>
+                <div class="makecode-block block-tooltip microcode-indent-1">zeige Text <span class="makecode-input">"Entschärft!"</span>
+                    <span class="tooltiptext">    print("Entschärft!")</span>
+                </div>
             </div>
 
             <h2>Dein Schritt</h2>
-            <p>Kopiere den Python-Code von oben in das Feld <strong>Python-Code</strong> und führe ihn aus.</p>
+            <p>Tippe oder klicke auf die Blöcke, um den Python-Code zu sehen. Schreibe ihn in das Feld <strong>Python-Code</strong> und führe ihn aus.</p>
 
             <h2>Erklärung</h2>
             <p>Ein einzelnes <code>=</code> weist der Variable einen Wert zu. <code>==</code> vergleicht zwei Werte. Ist der Vergleich wahr, führt Python die eingerückte Zeile unter <code>if</code> aus.</p>
@@ -67,7 +70,6 @@ if kabel == "rot":
         <div class="panel editor-panel">
             <h2>Python-Code</h2>
             <textarea id="python-editor"># Tippe deinen Code hier rein!
-print("Irgendein Text")
 </textarea>
             <div style="display: flex; gap: 10px;">
                 <button id="run-btn" style="flex-grow: 1;">▶ Code Ausführen</button>

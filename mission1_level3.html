@@ -9,7 +9,7 @@
     <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
     <!-- Confetti Bibliothek für Belohnungen -->
     <script src="assets/vendor/canvas-confetti/1.9.2/confetti.browser.min.js"></script>
-    <script src="assets/runner.js?v=20260722-5"></script>
+    <script src="assets/runner.js?v=20260827-1"></script>
     <script src="assets/teacher-solutions.js?v=20260722-4"></script>
     <!-- CodeMirror für den Editor -->
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
@@ -47,16 +47,30 @@
             <p>Mit <span class="tooltip">input("Wie heißt du? ")<span class="tooltiptext">Wartet auf Texteingabe, die mit Enter bestätigt werden muss.</span></span> stellst du eine Frage. Die Antwort speicherst du in einer <span class="tooltip">Variable<span class="tooltiptext">Ein benannter Speicherplatz für Daten.</span></span>.</p>
             
             <div class="block-hint">
-                <div class="makecode-block-var">
-                    setze <span class="makecode-var-pill">name</span> auf <span class="makecode-var-pill" style="border: 1px dotted #ccc; box-shadow:none; margin-left: 8px;">input("Wie heißt du? ")</span>
+                <div class="makecode-block block-tooltip">lade Werkzeugkiste <span class="makecode-input">time</span>
+                    <span class="tooltiptext">import time</span>
                 </div>
-                <div class="makecode-block">zeige Text <span class="makecode-input">"Willkommen im System," und name</span></div>
-                <p>Python-Code zum Kopieren:</p>
-                <pre class="python-example"><code>name = input("Wie heißt du? ")
-print("Willkommen im System,", name)</code></pre>
+                <div class="makecode-block block-tooltip">zeige Text <span class="makecode-input">"Verbindung wird hergestellt..."</span>
+                    <span class="tooltiptext">print("Verbindung wird hergestellt...")</span>
+                </div>
+                <div class="makecode-block block-tooltip">pausiere (s) <span class="makecode-input">5</span>
+                    <span class="tooltiptext">time.sleep(5)</span>
+                </div>
+                <div class="makecode-block block-tooltip"><span class="makecode-input">print("System bereit!")</span>
+                    <span class="tooltiptext">print("System bereit!")</span>
+                </div>
+
+                <p><strong>Dein neuer Code</strong></p>
+                <div class="makecode-block-var block-tooltip">
+                    setze <span class="makecode-var-pill">name</span> auf <span class="makecode-var-pill" style="border: 1px dotted #ccc; box-shadow:none; margin-left: 8px;">input("Wie heißt du? ")</span>
+                    <span class="tooltiptext">name = input("Wie heißt du? ")</span>
+                </div>
+                <div class="makecode-block block-tooltip">zeige Text <span class="makecode-input">"Willkommen im System," und name</span>
+                    <span class="tooltiptext">print("Willkommen im System,", name)</span>
+                </div>
             </div>
 
-            <p><strong>So geht’s:</strong> Kopiere die zwei Zeilen von oben ans Ende des Felds <strong>Python-Code</strong>. Führe den Code aus, tippe deinen Namen im Bereich <strong>Ergebnis</strong> ein und bestätige mit <strong>Enter</strong>.</p>
+            <p><strong>So geht’s:</strong> Tippe oder klicke auf die Blöcke unter <strong>Dein neuer Code</strong>. Ergänze die zwei angezeigten Python-Zeilen am Ende des Felds <strong>Python-Code</strong>. Führe den Code aus, tippe deinen Namen im Bereich <strong>Ergebnis</strong> ein und bestätige mit <strong>Enter</strong>.</p>
 
             <h2>Erklärung</h2>
             <p>Die erste Zeile erstellt die Variable <code>name</code> und weist ihr sofort die Antwort der <code>input()</code>-Abfrage zu. <strong>„Wie heißt du?“</strong> ist die Frage, die das System dabei stellt. Die zweite Zeile gibt die Begrüßung zusammen mit dem gespeicherten Namen im Ergebnis aus.</p>
