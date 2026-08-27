@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 const sharedAssetVersion = "20260722-1";
 const styleAssetVersion = "20260722-2";
-const runnerAssetVersion = "20260827-1";
+const runnerAssetVersion = "20260827-2";
 const logoAssetVersion = "20260720-2";
 
 const missionPages = [
