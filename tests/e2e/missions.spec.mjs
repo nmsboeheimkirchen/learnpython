@@ -294,8 +294,6 @@ test("Mission 3 levels provide the staged starter bonuses", async ({ page }) => 
     await page.goto("/mission3_level2.html");
     await expect(page.locator("#python-editor")).toHaveValue([
         'eingabe = input("Code eingeben: ")',
-        "eingabe = int(eingabe)",
-        "# Setze hier fort!",
         ""
     ].join("\n"));
     await expect(page.locator(".guide-panel")).not.toContainText("Startbonus");

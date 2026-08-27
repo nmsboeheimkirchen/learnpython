@@ -680,8 +680,9 @@ test("Mission 3 starter bonuses match the beginner progression", () => {
     assert.doesNotMatch(mission1Level2, /Einen Hack simulieren/);
     assert.equal(
         level2Starter,
-        'eingabe = input("Code eingeben: ")\neingabe = int(eingabe)\n# Setze hier fort!\n'
+        'eingabe = input("Code eingeben: ")\n'
     );
+    assert.match(mission3Level2, /erste Zeile ist bereits vorbereitet[\s\S]*In Zeile 2 machst du/);
     assert.match(mission3Level2, /kurze Schreibweise[\s\S]*eingabe = int\(input\("Code eingeben: "\)\)[\s\S]*ebenfalls akzeptiert/);
     assert.doesNotMatch(mission3Level2, /<h2>Startbonus<\/h2>/);
     assert.doesNotMatch(mission3Level2, /<h2>Zu hoch, zu niedrig<\/h2>/);
@@ -1966,7 +1967,11 @@ test("mission 4 hands off to the shared Agent training without exposing later pr
 
     const level3Starter = trainingLevel3.match(/<textarea id="python-editor"[^>]*>([\s\S]*?)<\/textarea>/)?.[1] ?? "";
     assert.doesNotMatch(level3Starter, /fund\s*=\s*drohne\.suche_hier/);
+    assert.doesNotMatch(level3Starter, /inventar\s*=\s*\[\]/);
     assert.match(level3Starter, /gehe_zu\(-210, -65\)/);
+    assert.match(trainingLevel3, /Eine Liste sammelt mehrere Werte[\s\S]*leere Liste/);
+    assert.match(trainingLevel3, /lege eine leere Liste[\s\S]*inventar = \[\]/);
+    assert.match(trainingLevel3, /training-l3-tip-inventory[\s\S]*microcode-separator[\s\S]*training-l3-tip-search/);
     assert.match(trainingLevel3, /fund = drohne\.suche_hier\(\)/);
     assert.match(trainingLevel3, /inventar\.append\(fund\)/);
     assert.match(trainingLevel3, /microcode-indent-1/);

@@ -494,7 +494,11 @@
             if (generation !== runGeneration) return;
 
             validateRun(code);
-            if (!outputText.trim()) consoleOutput.textContent = "Programm beendet – noch ohne Ausgabe.";
+            if (!outputText.trim()) {
+                consoleOutput.textContent = levelId === "agent_training_level2"
+                    ? "Programm beendet."
+                    : "Programm beendet – noch ohne Ausgabe.";
+            }
         } catch (error) {
             if (generation !== runGeneration || cancelRequested) return;
             consoleOutput.textContent = "FEHLER: " + friendlyError(error);

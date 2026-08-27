@@ -43,7 +43,7 @@
         <div class="panel guide-panel">
             <h1>Safe-Knacker 2:</h1>
             <h2>Zahlen aus Text machen</h2>
-            <p>In Python ist "5" (Text) nicht dasselbe wie 5 (Zahl). Die ersten beiden Zeilen sind bereits vorbereitet: <code>input()</code> speichert zuerst den Text in <code>eingabe</code>. Danach macht <span class="tooltip">int(eingabe)<span class="tooltiptext">Integer, auf Deutsch: Ganzzahl.</span></span> daraus eine Zahl.</p>
+            <p>In Python ist "5" (Text) nicht dasselbe wie 5 (Zahl). Die erste Zeile ist bereits vorbereitet: <code>input()</code> speichert den Text in <code>eingabe</code>. In Zeile 2 machst du mit <span class="tooltip">int(eingabe)<span class="tooltiptext">Integer, auf Deutsch: Ganzzahl.</span></span> daraus eine Zahl.</p>
             
             <h2>Dein Programm-Plan</h2>
             <p>Du rätst den Code. Der Tresor teilt dir mit, ob dein Tipp niedriger oder höher als 123 ist. 123 ist der voreingestellte Code.</p>
@@ -82,7 +82,7 @@
             </div>
 
             <h2>Dein Schritt</h2>
-            <p>Die ersten beiden Zeilen sind schon da. Ergänze ab Zeile 3 die beiden Abfragen mit ihren eingerückten <code>print()</code>-Hinweisen. Führe den fertigen Code einmal mit einer Zahl unter 123 und danach noch einmal mit einer Zahl über 123 aus.</p>
+            <p>Die erste Zeile ist schon da. Ergänze ab Zeile 2 zuerst die Umwandlung in eine Zahl und danach die beiden Abfragen mit ihren eingerückten <code>print()</code>-Hinweisen. Führe den fertigen Code einmal mit einer Zahl unter 123 und danach noch einmal mit einer Zahl über 123 aus.</p>
 
             <h2>Erklärung</h2>
             <p><code>eingabe = input(...)</code> speichert zuerst den Text. <code>eingabe = int(eingabe)</code> macht daraus eine Zahl. Die kurze Schreibweise <code>eingabe = int(input("Code eingeben: "))</code> bedeutet dasselbe und wird ebenfalls akzeptiert. <code>if</code> erkennt Zahlen unter 123; <code>elif</code> prüft Zahlen über 123. Das Level ist geschafft, sobald du beide Hinweise durch je einen Test gesehen hast.</p>
@@ -92,8 +92,6 @@
         <div class="panel editor-panel">
             <h2>Python-Code</h2>
             <textarea id="python-editor">eingabe = input("Code eingeben: ")
-eingabe = int(eingabe)
-# Setze hier fort!
 </textarea>
             <div style="display: flex; gap: 10px;">
                 <button id="run-btn" style="flex-grow: 1;">▶ Code Ausführen</button>

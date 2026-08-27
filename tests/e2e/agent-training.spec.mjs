@@ -217,6 +217,7 @@ test("Agent training levels 2 and 3 validate reusable commands and a real found 
     await page.locator("#run-btn").click();
 
     await expect(page.locator("#run-status")).toHaveText("Geschafft", { timeout: 12_000 });
+    await expect(page.locator("#console-output")).toHaveText("Programm beendet.");
     await expect(page.locator("#training-checks .is-passed")).toHaveCount(3);
     await expect(page.locator("#training-marks-layer .training-live-dot")).toHaveCount(2);
     const level2State = await page.evaluate(() => window.AgentTrainingLevel.getState());
@@ -231,6 +232,10 @@ test("Agent training levels 2 and 3 validate reusable commands and a real found 
     await expect(page.locator('#success-overlay [data-success-symbol="graduation-cap"]')).toBeVisible({ timeout: 7_000 });
 
     await page.goto("/agent_training_level3.html?e2e");
+    const level3Starter = await page.locator("#python-editor").inputValue();
+    expect(level3Starter).not.toContain("inventar = []");
+    await expect(page.locator("#training-l3-tip-inventory")).toHaveText("inventar = []");
+    await expect(page.locator('[data-training-phase="guarded"] .microcode-separator')).toHaveText("•••");
     await page.evaluate(code => window.editor.setValue(code), level3GuardedCode);
     await page.locator("#run-btn").click();
 
