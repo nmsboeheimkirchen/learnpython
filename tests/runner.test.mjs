@@ -1933,6 +1933,21 @@ test("mission 4 hands off to the shared Agent training without exposing later pr
     assert.match(trainingLevel1, /Ergänze diese vier Befehle/);
     assert.match(trainingLevel1, /Nächstes Level/);
 
+    for (const trainingLevel of [trainingLevel1, trainingLevel2, trainingLevel3]) {
+        assert.equal(
+            (trainingLevel.match(/> Training starten<\/button>/g) ?? []).length,
+            2,
+            "jedes Agententraining bietet den Startknopf oberhalb und unterhalb des Editors an"
+        );
+        assert.match(trainingLevel, /training-controls training-controls-quick/);
+        assert.match(trainingLevel, /data-training-run/);
+        assert.match(trainingLevel, /data-training-reset/);
+        assert.ok(
+            trainingLevel.indexOf("training-controls-quick") < trainingLevel.indexOf("training-editor-label"),
+            "die schnelle Bedienleiste steht vor dem Python-Code"
+        );
+    }
+
     const level2Starter = trainingLevel2.match(/<textarea id="python-editor"[^>]*>([\s\S]*?)<\/textarea>/)?.[1] ?? "";
     assert.match(level2Starter, /def markiere\(\):\s*\n\s+pass/);
     assert.doesNotMatch(level2Starter, /gehe_zu\(80, 130\)\s*\nmarkiere\(\)/);
@@ -1974,6 +1989,8 @@ test("mission 4 hands off to the shared Agent training without exposing later pr
     assert.match(trainingRuntime, /primaryHref: "projektwahl\.html"/);
     assert.match(trainingRuntime, /saveAttemptedLevelCode\?\.\(levelId, code\)/);
     assert.match(trainingRuntime, /SUCCESS_POPUP_DELAY_MS \?\? 4000/);
+    assert.match(trainingRuntime, /runButtons\.forEach\(button => button\.addEventListener\("click", runProgram\)\)/);
+    assert.match(trainingRuntime, /resetButtons\.forEach\(button => button\.addEventListener\("click", resetLevel\)\)/);
     assert.match(droneRuntime, /saveAttemptedLevelCode\?\.\(config\.levelId, code\)/);
     assert.match(picoRuntime, /SUCCESS_POPUP_DELAY_MS \?\? 4000/);
     assert.match(briefingRuntime, /SUCCESS_POPUP_DELAY_MS \?\? 4000/);
@@ -1988,6 +2005,8 @@ test("mission 4 hands off to the shared Agent training without exposing later pr
     assert.match(trainingCss, /\.training-fireworks canvas/);
     assert.match(trainingLevel3, /assets\/vendor\/fireworks-js\/2\.10\.8\/index\.umd\.js/);
     assert.match(trainingCss, /\.training-live-dot\s*\{[\s\S]*animation:\s*none;/);
+    assert.match(trainingCss, /\.training-controls-quick\s*\{[\s\S]*margin:\s*0 2px 15px;/);
+    assert.match(trainingCss, /\.training-fund-label\s*\{\s*top:\s*72%;/);
     assert.doesNotMatch(trainingCss, /\.training-complete\s+\.training-target-halo/);
     assert.doesNotMatch(trainingStart + trainingLevel1 + trainingLevel2 + trainingLevel3, /pico_finale|pixelmuseum_finale/);
 });

@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
     <link rel="stylesheet" href="assets/style.css?v=20260722-2">
-    <link rel="stylesheet" href="assets/agent-training.css?v=20260721-4">
+    <link rel="stylesheet" href="assets/agent-training.css?v=20260827-1">
 </head>
 <body class="agent-training-level" data-training-level="agent_training_level3">
     <a class="skip-link" href="#python-editor">Zum Python-Editor</a>
@@ -154,6 +154,11 @@
                         </div>
                     </div>
 
+                    <div class="training-controls training-controls-quick" aria-label="Programmaktionen oberhalb des Python-Codes">
+                        <button type="button" data-training-run><span aria-hidden="true">▶</span> Training starten</button>
+                        <button class="secondary-action" type="button" data-training-reset>↺ Startcode laden</button>
+                    </div>
+
                     <label class="training-editor-label" for="python-editor">
                         <span id="training-code-title">Python-Kontrollraum</span>
                         <small>Strg/⌘ + Enter startet</small>
@@ -194,6 +199,6 @@ markiere()
     <script src="assets/vendor/codemirror/5.65.2/python.min.js"></script>
     <script src="assets/editor.js?v=20260722-1"></script>
     <script src="assets/agent-training-core.js?v=20260827-2"></script>
-    <script src="assets/agent-training.js?v=20260827-2"></script>
+    <script src="assets/agent-training.js?v=20260827-3"></script>
 </body>
 </html>

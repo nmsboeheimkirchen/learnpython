@@ -514,7 +514,7 @@
 }
 
 .training-fund-label {
-    top: 61%;
+    top: 72%;
 }
 
 .training-phase-direct .training-task-card {
@@ -741,6 +741,10 @@
     gap: 9px;
 }
 
+.training-controls-quick {
+    margin: 0 2px 15px;
+}
+
 .training-controls .secondary-action {
     border-color: rgba(255, 255, 255, 0.13);
     background: rgba(255, 255, 255, 0.065);
@@ -904,7 +908,7 @@
     }
 
     .training-fund-label {
-        top: 57%;
+        top: 72%;
         right: auto;
         left: 6px;
     }

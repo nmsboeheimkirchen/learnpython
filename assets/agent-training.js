@@ -9,6 +9,8 @@
     const marksLayer = document.getElementById("training-marks-layer");
     const runButton = document.getElementById("run-btn");
     const resetButton = document.getElementById("reset-btn");
+    const runButtons = [runButton, ...document.querySelectorAll("[data-training-run]")];
+    const resetButtons = [resetButton, ...document.querySelectorAll("[data-training-reset]")];
     const nextButton = document.getElementById("next-level-btn");
     const consoleOutput = document.getElementById("console-output");
     const runStatus = document.getElementById("run-status");
@@ -88,14 +90,18 @@
     function setRunning(nextRunning) {
         running = nextRunning;
         document.body.classList.toggle("training-running", nextRunning);
-        runButton.disabled = nextRunning;
-        runButton.setAttribute("aria-busy", String(nextRunning));
-        runButton.innerHTML = nextRunning
-            ? '<span class="training-spinner" aria-hidden="true"></span> Drohne unterwegs'
-            : '<span aria-hidden="true">▶</span> Training starten';
-        resetButton.textContent = nextRunning
-            ? (cancelRequested ? "Wird gestoppt …" : "■ Training stoppen")
-            : "↺ Startcode laden";
+        runButtons.forEach(button => {
+            button.disabled = nextRunning;
+            button.setAttribute("aria-busy", String(nextRunning));
+            button.innerHTML = nextRunning
+                ? '<span class="training-spinner" aria-hidden="true"></span> Drohne unterwegs'
+                : '<span aria-hidden="true">▶</span> Training starten';
+        });
+        resetButtons.forEach(button => {
+            button.textContent = nextRunning
+                ? (cancelRequested ? "Wird gestoppt …" : "■ Training stoppen")
+                : "↺ Startcode laden";
+        });
     }
 
     function updateCoordinates(point = runState.current) {
@@ -570,8 +576,8 @@
         editor.focus();
     }
 
-    runButton.addEventListener("click", runProgram);
-    resetButton.addEventListener("click", resetLevel);
+    runButtons.forEach(button => button.addEventListener("click", runProgram));
+    resetButtons.forEach(button => button.addEventListener("click", resetLevel));
     editor.addKeyMap?.({
         "Ctrl-Enter": runProgram,
         "Cmd-Enter": runProgram

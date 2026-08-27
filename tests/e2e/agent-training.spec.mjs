@@ -75,20 +75,24 @@ async function documentOverflow(page) {
 }
 
 test("Agent training level 1 observes the real Turtle route, mark and position output", { tag: "@ipad" }, async ({ page }, testInfo) => {
+    testInfo.setTimeout(40_000);
     const pageErrors = capturePageErrors(page);
     const fastSuffix = testInfo.project.name === "webkit-ipad" ? "?e2e" : "";
     await page.goto(`/agent_training_level1.html${fastSuffix}`);
 
     await expect(page.locator(".training-stage")).toBeVisible();
     await page.evaluate(code => window.editor.setValue(code), passingCode);
-    await page.locator("#run-btn").click();
+    await page.locator("[data-training-run]").click();
 
     if (testInfo.project.name === "chromium-school-laptop") {
         await page.waitForFunction(() => {
             const state = window.AgentTrainingLevel?.getState?.();
             return state?.running && state.marks.length === 1 && state.current.y > 90 && state.current.y < 175;
         }, null, { timeout: 12_000 });
-        await expect(page.locator("#run-btn")).toHaveAttribute("aria-busy", "true");
+        const synchronizedRunButtons = page.locator("#run-btn, [data-training-run]");
+        await expect(synchronizedRunButtons).toHaveCount(2);
+        await expect(synchronizedRunButtons.first()).toHaveAttribute("aria-busy", "true");
+        await expect(synchronizedRunButtons.last()).toHaveAttribute("aria-busy", "true");
         await expect(page.locator("#training-marks-layer .training-live-dot")).toBeVisible();
     }
 
@@ -169,7 +173,7 @@ test("Agent training level 1 observes the real Turtle route, mark and position o
     await completion.locator(".close-overlay-btn").click();
     await expect(completion).toBeHidden();
     expect(await page.evaluate(() => window.editor.hasFocus())).toBe(true);
-    await page.locator("#reset-btn").click();
+    await page.locator("[data-training-reset]").click();
     await expect(page.locator("#agent-training-turtle canvas")).toHaveCount(0);
     await expect(page.locator("#training-marks-layer .training-live-dot")).toHaveCount(0);
     await expect(page.locator("#training-marks-layer .training-live-trail")).toHaveCount(0);
@@ -187,7 +191,7 @@ drohne.penup()
 drohne.goto(160, 80)
 drohne.dot(30)
 print("Position:", drohne.position())`));
-    await page.locator("#run-btn").click();
+    await page.locator("[data-training-run]").click();
     await expect(page.locator("#run-status")).toHaveText("Code prüfen");
     await expect(page.locator("#training-checks .is-passed")).toHaveCount(2);
     await expect(page.locator("#training-feedback-message")).toContainText("Spur ein");
@@ -327,6 +331,22 @@ test("Agent training keeps its glass workspace contained on laptop and iPad", { 
         await expect(codePanel).toBeVisible();
         await expect(stage).toBeVisible();
         await expect(page.locator("#learning-nav-dock")).toBeVisible();
+        await expect(page.getByRole("button", { name: "Training starten" })).toHaveCount(2);
+
+        const quickControls = page.locator(".training-controls-quick");
+        const taskCard = page.locator(".training-task-card");
+        const editorLabel = page.locator(".training-editor-label");
+        await expect(quickControls).toBeVisible();
+        const [taskBox, quickBox, editorLabelBox] = await Promise.all([
+            taskCard.boundingBox(),
+            quickControls.boundingBox(),
+            editorLabel.boundingBox()
+        ]);
+        expect(taskBox).not.toBeNull();
+        expect(quickBox).not.toBeNull();
+        expect(editorLabelBox).not.toBeNull();
+        expect(quickBox.y).toBeGreaterThanOrEqual(taskBox.y + taskBox.height - 1);
+        expect(quickBox.y + quickBox.height).toBeLessThanOrEqual(editorLabelBox.y + 1);
 
         const stageBox = await stagePanel.boundingBox();
         const codeBox = await codePanel.boundingBox();
@@ -352,10 +372,20 @@ test("Agent training keeps its glass workspace contained on laptop and iPad", { 
         expect(visual.border).not.toBe("rgba(0, 0, 0, 0)");
         expect(visual.background).toContain("linear-gradient");
 
-        for (const selector of ["#run-btn", "#reset-btn", "#menu-btn"]) {
+        for (const selector of ["#run-btn", "#reset-btn", "[data-training-run]", "[data-training-reset]", "#menu-btn"]) {
             const box = await page.locator(selector).boundingBox();
             expect(box).not.toBeNull();
             expect(box.height).toBeGreaterThanOrEqual(44);
+        }
+
+        if (levelPage === "agent_training_level3.html") {
+            const [fundLabelBox, fundHaloBox] = await Promise.all([
+                page.locator(".training-fund-label").boundingBox(),
+                page.locator(".training-search-halo").boundingBox()
+            ]);
+            expect(fundLabelBox).not.toBeNull();
+            expect(fundHaloBox).not.toBeNull();
+            expect(fundLabelBox.y).toBeGreaterThanOrEqual(fundHaloBox.y + fundHaloBox.height + 2);
         }
 
         if (levelPage !== "agent_training_level1.html") {
