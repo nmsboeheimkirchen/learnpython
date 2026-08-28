@@ -31,7 +31,7 @@ drohne = turtle.Turtle()
 drohne.speed(0)
 drohne.penup()
 drohne.goto(0, -210)
-drohne.speed(0)
+drohne.speed(4)
 inventar = []
 
 drohne.goto(-250, 60)
@@ -50,28 +50,28 @@ drohne = turtle.Turtle()
 drohne.speed(0)
 drohne.penup()
 drohne.goto(0, -210)
-drohne.speed(0)
+drohne.speed(4)
 turtle.Screen().delay(30)
 inventar = []
 
-def gehe_zu(x, y):
-    drohne.goto(x, y)
+def melde_inventar(liste):
+    print("INVENTARLISTE: " + ",".join(liste))
 
 def alarm_hacken(code):
     print("ALARM_HACK|" + code)
 
-gehe_zu(-250, 60)
+drohne.goto(-250, 60)
 fund = drohne.suche_hier()
 inventar.append(fund)
 
-gehe_zu(-390, 45)
+drohne.goto(-390, 45)
 fund = drohne.suche_hier()
 inventar.append(fund)
 
-gehe_zu(250, -60)
+drohne.goto(250, -60)
 alarm_hacken("SERU-7")
-gehe_zu(0, 115)
-print("INVENTARLISTE: " + ",".join(inventar))`;
+drohne.goto(0, 115)
+melde_inventar(inventar)`;
 
 const OWN_BRIEFING_CODE = `import turtle
 
@@ -81,19 +81,19 @@ drohne.penup()
 drohne.goto(260, -170)
 inventar = []
 
-def gehe_zu(x, y):
-    drohne.goto(x, y)
+def melde_inventar(liste):
+    print("INVENTARLISTE: " + ",".join(liste))
 
 # Mein eigener Briefing-Plan
-gehe_zu(-250, 60)
+drohne.goto(-250, 60)
 fund = drohne.suche_hier()
 inventar.append(fund)
 
-gehe_zu(-390, 45)
+drohne.goto(-390, 45)
 fund = drohne.suche_hier()
 inventar.append(fund)
 
-print("INVENTARLISTE: " + ",".join(inventar))`;
+melde_inventar(inventar)`;
 
 test("@ipad Pixelmuseum briefing rejects invented items and rewards the real ordered chain", async ({ page }) => {
     const pageErrors = [];
@@ -147,10 +147,10 @@ test("successful personal briefing code becomes the finale baseline and survives
     await openFinale(page);
     const inheritedCode = await page.evaluate(() => window.finalePrototype.editor.getValue());
     expect(inheritedCode).toContain("# Mein eigener Briefing-Plan");
-    expect(inheritedCode).toContain("gehe_zu(-250, 60)");
-    expect(inheritedCode).toContain("gehe_zu(-390, 45)");
-    expect(inheritedCode).toContain("def alarm_hacken(code):");
-    expect(inheritedCode.match(/def alarm_hacken\(code\):/g)).toHaveLength(1);
+    expect(inheritedCode).toContain("drohne.goto(-250, 60)");
+    expect(inheritedCode).toContain("drohne.goto(-390, 45)");
+    expect(inheritedCode).toContain("def melde_inventar(liste):");
+    expect(inheritedCode).not.toContain("def alarm_hacken(code):");
 
     await page.evaluate(() => {
         window.finalePrototype.editor.setValue('print("nur eine vorläufige Änderung")');
@@ -158,6 +158,51 @@ test("successful personal briefing code becomes the finale baseline and survives
     });
     await expect.poll(() => page.evaluate(() => window.finalePrototype.editor.getValue())).toBe(inheritedCode);
     expect(pageErrors).toEqual([]);
+});
+
+test("Pixelmuseum central help explains drohne, fund and the function argument exactly", async ({ page }) => {
+    await openBriefing(page);
+    const helpButton = page.locator("#museum-help-btn");
+    const helpPanel = page.locator("#museum-help-panel");
+
+    await runBriefingCode(page, `import turtle
+drohne = turtle.Turtle()
+suche_hier()`);
+    await helpButton.click();
+    await expect(helpPanel).toHaveAttribute("data-help-issue", "SEARCH_NEEDS_DRONE");
+    await expect(page.locator("#museum-help-message")).toContainText("Namen der Drohne");
+
+    await runBriefingCode(page, `import turtle
+drohne = turtle.Turtle()
+inventar = []
+drohne.goto(-250, 60)
+drohne.suche_hier()
+inventar.append(fund)`);
+    await helpButton.click();
+    await expect(helpPanel).toHaveAttribute("data-help-issue", "FUND_NOT_STORED");
+    await expect(page.locator("#museum-help-message")).toContainText("Variablen fund");
+
+    const completeWithoutReport = `import turtle
+drohne = turtle.Turtle()
+drohne.speed(0)
+inventar = []
+def melde_inventar(liste):
+    print("INVENTARLISTE: " + ",".join(liste))
+drohne.goto(-250, 60)
+fund = drohne.suche_hier()
+inventar.append(fund)
+drohne.goto(-390, 45)
+fund = drohne.suche_hier()
+inventar.append(fund)`;
+    await runBriefingCode(page, completeWithoutReport);
+    await helpButton.click();
+    await expect(helpPanel).toHaveAttribute("data-help-issue", "INVENTORY_OUTPUT");
+    await expect(page.locator("#museum-help-message")).toContainText("melde_inventar(liste)");
+
+    await runBriefingCode(page, `${completeWithoutReport}\nmelde_inventar(liste)`);
+    await helpButton.click();
+    await expect(helpPanel).toHaveAttribute("data-help-issue", "INVENTORY_PARAMETER");
+    await expect(page.locator("#museum-help-message")).toContainText("Parametername");
 });
 
 test("Pixelmuseum central help follows runtime evidence, marks edited code stale and persists its count", async ({ page }) => {
@@ -211,7 +256,7 @@ print("Fund:", fund)`);
     expect(pageErrors).toEqual([]);
 });
 
-test("Pixelmuseum finale accepts the direct first-action strategy and hands off to the canonical escape", async ({ page }) => {
+test("Pixelmuseum alarm starts immediately and blocks a direct escape without a hack", async ({ page }) => {
     const pageErrors = [];
     page.on("pageerror", error => pageErrors.push(String(error)));
     await page.addInitScript(() => {
@@ -226,15 +271,12 @@ test("Pixelmuseum finale accepts the direct first-action strategy and hands off 
     await expect(page.locator("#next-level-btn")).toBeHidden();
 
     await runFinaleCode(page, DIRECT_ESCAPE_CODE);
-
-    await expect(page.locator("#museum-success")).toHaveText("MISSION ERFOLGREICH – DU BIST ENTKOMMEN!");
-    await expect(page.locator("body")).toHaveClass(/validation-passed/);
-    await expect(page.locator("#checks-list")).toContainText("Portal mit der ersten Alarmaktion erreicht");
-    await expect(page.locator("#success-overlay")).toBeVisible({ timeout: 7_000 });
-    await expect(page.locator("#success-overlay .success-coin")).toHaveCount(3);
-    await expect(page.locator("#success-overlay .success-btn")).toHaveAttribute("href", "helikopter_flucht.html");
-    await expect(page.locator("#next-level-btn")).toHaveAttribute("href", "helikopter_flucht.html");
-    await expect(page.locator("#next-level-btn")).toBeVisible();
+    await expect.poll(() => page.evaluate(() => window.FINALE_CONFIG.alarmLevel)).toBeGreaterThan(0);
+    await expect.poll(() => page.evaluate(() => window.FINALE_CONFIG.portalReached)).toBe(true);
+    await expect.poll(() => page.evaluate(() => window.FINALE_CONFIG.escaped)).toBe(false);
+    await expect(page.locator("#checks-list")).toContainText("Alarm an der Konsole gehackt");
+    await expect(page.locator("body")).not.toHaveClass(/validation-passed/);
+    await expect(page.locator("#next-level-btn")).toBeHidden();
     expect(pageErrors).toEqual([]);
 });
 
@@ -245,6 +287,20 @@ test("Pixelmuseum production finale completes the touch-accessible hack strategy
         localStorage.removeItem("completedLevelCode_v1");
     });
     await openFinale(page, "");
+
+    await expect(page.locator("#alarm-helper-code")).toContainText("def alarm_hacken(code):");
+    await expect.poll(() => page.evaluate(() => window.PixelmuseumFinaleTools?.ALARM_HELPER)).toContain("ALARM_HACK|");
+    await page.locator(".museum-tool-card summary").click();
+    await expect(page.locator(".museum-tool-card")).toHaveAttribute("open", "");
+    await page.evaluate(() => {
+        Object.defineProperty(navigator, "clipboard", {
+            configurable: true,
+            value: { writeText: async text => { window.__copiedAlarmHelper = text; } }
+        });
+    });
+    await page.locator("#copy-alarm-helper").click();
+    await expect(page.locator("#copy-alarm-status")).toContainText("Funktion kopiert");
+    await expect.poll(() => page.evaluate(() => window.__copiedAlarmHelper)).toContain("def alarm_hacken(code):");
 
     const sourceInspector = page.locator(".museum-source-inspector");
     await expect(sourceInspector).not.toHaveAttribute("open", "");
@@ -369,7 +425,7 @@ test("Pixelmuseum never rewards or stores code edited during its active run", as
 test("reset cancels the delayed Pixelmuseum reward UI", async ({ page }) => {
     await page.addInitScript(() => localStorage.removeItem("completedLevelCode_v1"));
     await openFinale(page);
-    await runFinaleCode(page, DIRECT_ESCAPE_CODE);
+    await runFinaleCode(page, HACK_ESCAPE_CODE);
 
     await expect(page.locator("#next-level-btn")).toBeVisible();
     await page.evaluate(() => window.finalePrototype.reset());

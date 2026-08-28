@@ -216,6 +216,103 @@
     background: rgba(126, 247, 255, 0.045);
 }
 
+.museum-tool-card {
+    overflow: hidden;
+    margin-bottom: 14px;
+    border: 1px solid rgba(126, 247, 255, 0.24);
+    border-radius: 15px;
+    background: linear-gradient(145deg, rgba(18, 34, 58, 0.94), rgba(8, 18, 34, 0.96));
+}
+
+.museum-tool-card summary {
+    display: flex;
+    min-height: 52px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+    cursor: pointer;
+    list-style: none;
+}
+
+.museum-tool-card summary::-webkit-details-marker {
+    display: none;
+}
+
+.museum-tool-card summary > span:first-child {
+    display: grid;
+    gap: 3px;
+}
+
+.museum-tool-card summary strong {
+    color: #fff;
+    font-size: 0.8rem;
+}
+
+.museum-tool-card summary code {
+    color: #bdfbff;
+}
+
+.museum-tool-toggle::after {
+    content: "anzeigen +";
+    color: #bdfbff;
+    font-size: 0.68rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.museum-tool-card[open] .museum-tool-toggle::after {
+    content: "schließen −";
+}
+
+.museum-tool-card[open] summary {
+    border-bottom: 1px solid rgba(126, 247, 255, 0.15);
+}
+
+.museum-tool-body {
+    display: grid;
+    gap: 8px;
+    padding: 10px 12px 12px;
+}
+
+.museum-tool-body p {
+    margin-top: 3px;
+    margin-bottom: 0;
+    color: #aebfcd;
+    font-size: 0.7rem;
+    line-height: 1.4;
+}
+
+.museum-tool-card pre {
+    margin: 0;
+    padding: 9px 11px;
+    overflow-x: auto;
+    border: 1px solid rgba(255, 120, 243, 0.2);
+    border-radius: 10px;
+    color: #dffcff;
+    background: rgba(1, 8, 19, 0.78);
+    font-size: 0.68rem;
+    line-height: 1.45;
+}
+
+.museum-copy-action {
+    min-height: 40px;
+    padding: 8px 12px;
+    white-space: nowrap;
+}
+
+.museum-tool-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.museum-copy-status {
+    min-height: 1em;
+    color: #86ffc3;
+    font-size: 0.66rem;
+}
+
 .museum-help-card {
     display: grid;
     gap: 13px;
@@ -421,9 +518,21 @@
     }
 }
 
+@media (max-width: 1100px) {
+    .code-column > .finale-control-quick,
+    .code-column > .museum-tool-card {
+        grid-column: 1 / -1;
+    }
+}
+
 @media (max-width: 460px) {
     .museum-final-plan {
         grid-template-columns: 1fr;
+    }
+
+    .museum-tool-actions {
+        align-items: stretch;
+        flex-direction: column;
     }
 }
 

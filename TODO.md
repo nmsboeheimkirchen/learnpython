@@ -8,12 +8,19 @@
   - [x] Helikopter modern, kantig und facettiert wie in Variante B gestalten
   - [x] Teaser mit „Der Lord kommt zurück.“ beginnen
   - [x] Auftrag auf Bordcomputer, Zugangscode, Startsysteme und Flucht ausrichten
-  - [ ] Stufe 1 „Das Seruianer-Signal“: Bordcomputer mit JSON-Daten und begrenzter Kandidatensuche entsperren
-    - [ ] Lokalen, auf `loads()` begrenzten JSON-Shim für die vorhandene Skulpt-Version ergänzen
-    - [ ] Wartungspaket `{"kennung":"SERU","pruefziffern":"135790"}` mit `json.loads()` einlesen
-    - [ ] Mit einer terminierenden `while`-Schleife `SERU1`, `SERU3`, `SERU5`, `SERU7` prüfen
-    - [ ] Bordcomputer-API auf fünf ASCII-Zeichen und höchstens zwölf Versuche begrenzen
-    - [ ] Nach `SERU7` den Bordcomputer entsperren und die weiterhin offline geschalteten Startsysteme als nächste Stufe zeigen
+  - [ ] Stufe 1 „Das Seruianer-Signal“: Bordcomputer mit begrenzter Kandidatensuche entsperren
+    - [ ] Abgefangenes Signal mit Kennung `SERU` und Prüfziffern `135790` zeigen
+    - [ ] Mit einer terminierenden `while`-Schleife `SERU1`, `SERU3`, `SERU5`, `SERU7` über `bordcomputer.pruefe(code)` prüfen
+    - [ ] Bordcomputer-API auf genau fünf alphanumerische ASCII-Zeichen und höchstens zwölf Versuche begrenzen
+    - [ ] Vollständigen Brute-Force über 36⁵ Kombinationen ausdrücklich vermeiden, damit der Browser nicht blockiert
+    - [ ] Nach `SERU7` nur den Zugang entsperren; Navigation, Rotor und Hangartor bleiben sichtbar offline
+  - [ ] Stufe 2 „Cockpit-Systeme booten“: beschädigte Startkonfiguration mit `json.loads()` reparieren
+    - [ ] Erfolgreichen Code aus Stufe 1 als Ausgangslage übernehmen
+    - [ ] Lokalen, auf `loads()` und kurze Strings begrenzten JSON-Shim für die vorhandene Skulpt-Version ergänzen
+    - [ ] JSON-Text in das Python-Dictionary `daten` laden und erst danach die verschachtelte Struktur verändern
+    - [ ] `daten["systeme"]["navigation"]["online"]`, Rotor, Hangartor und `startfreigabe` gezielt auf `True` setzen
+    - [ ] `cockpit.booten(daten)` nur mit dem tatsächlich von `json.loads()` erzeugten Dictionary akzeptieren
+    - [ ] Erst nach korrekter Struktur Rotor und Navigation starten, das Hangartor öffnen und die Abfluganimation freigeben
   - [ ] Finale ohne Echtzeitdruck als nachvollziehbare Zustandsmission bauen
 - [ ] A/B-Varianten entfernen und je eine kanonische Start- und Fluchtseite festlegen
   - [x] Fluchtseite vereinheitlichen; alte B-Adresse auf die kanonische Seite weiterleiten

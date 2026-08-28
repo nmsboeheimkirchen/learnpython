@@ -63,6 +63,8 @@
             dirty: runtime.isCodeDirty(),
             lastError: runtime.getLastError(),
             runtimeInventory: inventory,
+            pendingItem: state.pendingItem,
+            searchFound: Boolean(state.searchFound),
             lastSearchFailure: state.lastSearchFailure,
             artifactBeforeKeycard: state.lastSearchFailure === "KEYCARD_REQUIRED",
             artifactSecured: Boolean(state.starFragmentCollected),

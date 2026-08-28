@@ -37,7 +37,11 @@ test("Pixelmuseum help routes the most specific current runtime blocker", () => 
         [{ hasRun: false, dirty: true, pythonError: "SyntaxError" }, "RUN_FIRST"],
         [{ ...completedRun, dirty: true, pythonError: "SyntaxError" }, "RUN_AGAIN"],
         [{ ...completedRun, editorRevision: 3, runRevision: 2 }, "RUN_AGAIN"],
-        [{ hasRun: true, runtimeInventory: [], pythonError: "NameError: fund" }, "PYTHON_ERROR"],
+        [{ hasRun: true, runtimeInventory: [], pythonError: "NameError: name 'suche_hier' is not defined on line 20" }, "SEARCH_NEEDS_DRONE"],
+        [{ hasRun: true, runtimeInventory: [], pythonError: "NameError: name 'fund' is not defined on line 21" }, "FUND_NOT_STORED"],
+        [{ hasRun: true, runtimeInventory: [], pythonError: "NameError: name 'liste' is not defined on line 26" }, "INVENTORY_PARAMETER"],
+        [{ hasRun: true, runtimeInventory: [], pendingItem: "Schlüsselkarte", searchFound: true }, "FUND_NOT_STORED"],
+        [{ hasRun: true, runtimeInventory: [], pythonError: "SyntaxError: bad input" }, "PYTHON_ERROR"],
         [{ hasRun: true, runtimeInventory: [], lastSearchFailure: "KEYCARD_REQUIRED" }, "KEYCARD_ORDER"],
         [{ hasRun: true, runtimeInventory: [], orderFailure: true }, "KEYCARD_ORDER"],
         [{ hasRun: true, runtimeInventory: [] }, "KEYCARD_MISSING"],
@@ -62,6 +66,43 @@ test("Pixelmuseum help routes the most specific current runtime blocker", () => 
         assert.equal(issue.id, expectedId, JSON.stringify(context));
         assert.equal(issue.levels.length, 3, `${expectedId} braucht drei Hilfestufen`);
     }
+});
+
+test("Pixelmuseum help gives the exact function and return-value hints", () => {
+    const help = loadHelpCore();
+
+    const searchIssue = help.resolveIssue({
+        hasRun: true,
+        pythonError: "NameError: name 'suche_hier' is not defined on line 24"
+    });
+    assert.equal(searchIssue.id, "SEARCH_NEEDS_DRONE");
+    assert.match(searchIssue.levels[1], /drohne\.suche_hier\(\)/);
+    assert.match(searchIssue.levels[2], /fund = drohne\.suche_hier\(\)/);
+
+    const fundIssue = help.resolveIssue({
+        hasRun: true,
+        pythonError: "NameError: name 'fund' is not defined on line 25"
+    });
+    assert.equal(fundIssue.id, "FUND_NOT_STORED");
+    assert.match(fundIssue.levels[1], /fund = drohne\.suche_hier\(\)/);
+
+    const parameterIssue = help.resolveIssue({
+        hasRun: true,
+        pythonError: "NameError: name 'liste' is not defined on line 26"
+    });
+    assert.equal(parameterIssue.id, "INVENTORY_PARAMETER");
+    assert.match(parameterIssue.levels[0], /nur der Parametername/);
+    assert.match(parameterIssue.levels[2], /melde_inventar\(inventar\)/);
+
+    const outputIssue = help.resolveIssue({
+        ...completedRun,
+        stage: "briefing",
+        escaped: false,
+        inventoryOutputPassed: false
+    });
+    assert.equal(outputIssue.id, "INVENTORY_OUTPUT");
+    assert.match(outputIssue.levels[0], /melde_inventar\(liste\)/);
+    assert.match(outputIssue.levels[2], /melde_inventar\(inventar\)/);
 });
 
 test("Pixelmuseum help does not hide an exact failure behind a generic later hint", () => {

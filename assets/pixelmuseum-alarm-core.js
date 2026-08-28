@@ -36,7 +36,10 @@
         }
 
         function start() {
-            if (!failed && !disabled) started = true;
+            if (!failed && !disabled) {
+                started = true;
+                level = Math.max(1, level);
+            }
             return snapshot();
         }
 

@@ -6,13 +6,13 @@
     <meta name="color-scheme" content="dark">
     <meta name="description" content="Offene Pixelmuseum-Mission: Sichere das Sternenfragment und entkomme mit deiner eigenen Drohnenstrategie.">
     <title>Pixelmuseum – Das gestohlene Sternenfragment</title>
-    <script src="assets/runner.js?v=20260828-2"></script>
-    <script src="assets/teacher-solutions.js?v=20260828-3"></script>
+    <script src="assets/runner.js?v=20260829-1"></script>
+    <script src="assets/teacher-solutions.js?v=20260829-1"></script>
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
     <link rel="stylesheet" href="assets/style.css?v=20260722-2">
     <link rel="stylesheet" href="prototypes/finale.css?v=cockpit-scroll-v2">
-    <link rel="stylesheet" href="assets/pixelmuseum.css?v=20260828-3">
+    <link rel="stylesheet" href="assets/pixelmuseum.css?v=20260829-1">
 </head>
 <body class="prototype-page museum-theme museum-path-page" data-mission-level="pixelmuseum_finale" data-pixelmuseum-stage="finale">
     <a class="skip-link" href="#editor-panel">Zum Python-Editor</a>
@@ -44,18 +44,18 @@
             <div>
                 <span class="eyebrow">Finale · Galerie nach Mitternacht</span>
                 <h2 id="museum-briefing-title">Der böse Lord darf das Sternenfragment nicht behalten.</h2>
-                <p>Plane den Weg, fülle deine Inventarliste und entscheide selbst: Alarm hacken oder mit einer direkten Flugaktion entkommen.</p>
+                <p>Plane den Weg, fülle deine Inventarliste, hacke den ausgelösten Alarm und entkomme danach durch das Portal.</p>
                 <ol class="museum-final-plan" aria-label="Vier Missionsziele">
                     <li><strong>01 · Schlüsselkarte</strong>Mit <code>suche_hier()</code> finden und aufnehmen.</li>
                     <li><strong>02 · Sternenfragment</strong>Erst danach sicherstellen.</li>
-                    <li><strong>03 · Strategie</strong>Hacken oder rechtzeitig fliehen.</li>
+                    <li><strong>03 · Alarm</strong>An der Konsole hacken.</li>
                     <li><strong>04 · Bericht</strong>Inventarliste ausgeben.</li>
                 </ol>
             </div>
             <ul class="concept-strip" aria-label="Python-Ziele">
                 <li>Inventarliste</li>
                 <li>Entscheidungen</li>
-                <li>Alarm-Aktionen</li>
+                <li>Alarm-Timing</li>
                 <li>Funktion · vorbereitet</li>
             </ul>
         </section>
@@ -148,6 +148,22 @@
                     <button class="secondary-action" type="button" data-finale-reset>↺ Startcode laden</button>
                 </div>
 
+                <details class="museum-tool-card">
+                    <summary>
+                        <span><span class="eyebrow">Nachricht der Zentrale</span><strong>Funktion <code>alarm_hacken()</code> erhalten</strong></span>
+                        <span class="museum-tool-toggle" aria-hidden="true"></span>
+                    </summary>
+                    <div class="museum-tool-body">
+                        <p>Kopiere diese Funktion in deinen Code, wenn du den Alarm hacken möchtest.</p>
+                        <pre><code id="alarm-helper-code">def alarm_hacken(code):
+    print("ALARM_HACK|" + code)</code></pre>
+                        <div class="museum-tool-actions">
+                            <button id="copy-alarm-helper" class="secondary-action museum-copy-action" type="button">Funktion kopieren</button>
+                            <small id="copy-alarm-status" class="museum-copy-status" role="status" aria-live="polite"></small>
+                        </div>
+                    </div>
+                </details>
+
                 <div class="editor-card">
                     <label class="sr-only" for="python-editor">Python-Code für das Pixelmuseum</label>
                     <span id="editor-shortcut-hint" class="sr-only">Mit Steuerung und Enter startest du das Programm.</span>
@@ -168,14 +184,8 @@ turtle.Screen().delay(30)
 
 inventar = []
 
-def gehe_zu(x, y):
-    drohne.goto(x, y)
-
-def markiere():
-    drohne.dot(18, "#ff78f3")
-
-def alarm_hacken(code):
-    print("ALARM_HACK|" + code)
+def melde_inventar(liste):
+    print("INVENTARLISTE: " + ",".join(liste))
 </textarea>
 
                     <div class="control-bar" aria-label="Programmaktionen">
@@ -215,7 +225,7 @@ def alarm_hacken(code):
     <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
     <script src="assets/vendor/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="assets/vendor/codemirror/5.65.2/python.min.js"></script>
-    <script src="assets/pixelmuseum-alarm-core.js?v=20260828-1"></script>
+    <script src="assets/pixelmuseum-alarm-core.js?v=20260829-1"></script>
     <script>
         window.FINALE_CONFIG = {
             levelId: "pixelmuseum_finale",
@@ -353,8 +363,12 @@ def alarm_hacken(code):
                 });
             },
             stopMissionTimers() {
+                window.clearInterval(this.alarmTimer);
+                window.clearTimeout(this.hackFinishTimer);
                 window.clearTimeout(this.portalWarningTimer);
                 window.clearTimeout(this.validationRefreshTimer);
+                this.alarmTimer = null;
+                this.hackFinishTimer = null;
                 this.portalWarningTimer = null;
                 this.validationRefreshTimer = null;
             },
@@ -448,6 +462,13 @@ def alarm_hacken(code):
                 if (this.alarmStarted) return;
                 this.applyAlarmSnapshot(this.alarmState.start());
                 this.playOneShotSound("alarm");
+                const generation = this.missionGeneration;
+                this.alarmTimer = window.setInterval(() => {
+                    if (generation !== this.missionGeneration) return;
+                    if (this.alarmDisabled || this.alarmFailed || this.escaped) return;
+                    const snapshot = this.applyAlarmSnapshot(this.alarmState.advance());
+                    if (snapshot.failed) this.failAlarm(snapshot);
+                }, 1000);
             },
             applyAlarmSnapshot(snapshot) {
                 this.alarmStarted = snapshot.started;
@@ -456,17 +477,6 @@ def alarm_hacken(code):
                 this.renderAlarm(snapshot.level);
                 this.updateExitState();
                 return snapshot;
-            },
-            advanceAlarmAction() {
-                if (!this.alarmStarted || this.alarmDisabled || this.alarmFailed || this.escaped) {
-                    return this.alarmState.snapshot();
-                }
-                const snapshot = this.applyAlarmSnapshot(this.alarmState.advance());
-                if (snapshot.failed) this.failAlarm(snapshot);
-                return snapshot;
-            },
-            onTurtleMoveComplete() {
-                this.advanceAlarmAction();
             },
             requestAlarmHack(code) {
                 const label = document.getElementById("alarm-console-label");
@@ -484,22 +494,28 @@ def alarm_hacken(code):
                 if (code !== expectedCode) {
                     this.lastHackFailure = "WRONG_CODE";
                     label.innerHTML = '<span aria-hidden="true">×</span> Hackcode falsch';
-                    this.advanceAlarmAction();
                     return;
                 }
                 if (!this.atAlarmConsole) {
                     this.lastHackFailure = "WRONG_PLACE";
                     label.innerHTML = '<span aria-hidden="true">!</span> Hack nicht möglich';
-                    this.advanceAlarmAction();
                     return;
                 }
 
                 this.lastHackFailure = null;
                 this.hackCodeCorrect = true;
                 this.hackRequested = true;
-                label.innerHTML = '<span aria-hidden="true">⌁</span> Hack wird geprüft …';
-                const snapshot = this.advanceAlarmAction();
-                if (!snapshot.failed) this.finishAlarmHack();
+                label.innerHTML = '<span aria-hidden="true">⌁</span> Hack läuft …';
+                this.scheduleHackCompletion();
+            },
+            scheduleHackCompletion() {
+                if (this.hackFinishTimer || this.alarmDisabled || this.alarmFailed) return;
+                const generation = this.missionGeneration;
+                this.hackFinishTimer = window.setTimeout(() => {
+                    if (generation !== this.missionGeneration) return;
+                    this.hackFinishTimer = null;
+                    this.finishAlarmHack();
+                }, 1000);
             },
             finishAlarmHack() {
                 if (this.alarmFailed) return;
@@ -510,14 +526,21 @@ def alarm_hacken(code):
                 }
                 const snapshot = this.alarmState.disable();
                 if (!snapshot.disabled) return;
+                this.invalidateMissionTimers();
                 this.clearPortalWarning();
                 this.hackCompleted = true;
                 this.applyAlarmSnapshot(snapshot);
                 document.body.classList.add("alarm-disabled");
                 document.getElementById("alarm-console-label").innerHTML = '<span aria-hidden="true">✓</span> Alarm gehackt';
+                if (this.atPortal) {
+                    this.escaped = true;
+                    this.showEscapeSuccess();
+                    this.updateExitState();
+                }
                 this.scheduleValidationRefresh();
             },
             failAlarm(snapshot = this.alarmState.fail()) {
+                this.invalidateMissionTimers();
                 this.applyAlarmSnapshot(snapshot);
                 if (this.hackRequested) this.lastHackFailure = "TOO_LATE";
                 document.body.classList.add("alarm-failed");
@@ -591,9 +614,9 @@ def alarm_hacken(code):
             },
             getAutomaticStop() {
                 if (!this.alarmFailed) return null;
-                let message = "Kein gültiger Hack wurde gestartet. Hacke an der Alarmkonsole oder fliege als erste Alarmaktion direkt zum Portal.";
+                let message = "Kein gültiger Hack wurde rechtzeitig abgeschlossen. Fliege nach dem Sternenfragment direkt zur Alarmkonsole.";
                 if (this.hackRequested) {
-                    message = "Der richtige Hack kam erst nach dem Aktionslimit. Vermeide zusätzliche Flugbewegungen vor der Konsole.";
+                    message = "Der richtige Hack wurde gestartet, kam aber zu spät. Erreiche die Alarmkonsole früher.";
                 } else if (this.lastHackFailure === "WRONG_CODE") {
                     message = "Der Hackcode war falsch. Suche die Spur im HTML-Quelltext und versuche es erneut.";
                 } else if (this.lastHackFailure === "WRONG_PLACE") {
@@ -609,10 +632,8 @@ def alarm_hacken(code):
                 };
             },
             validate(_code, output = "") {
-                const strategy = this.alarmDisabled
-                    ? "hack"
-                    : (this.escaped && this.alarmLevel < 1 ? "sprint" : null);
-                const securityStrategyPassed = Boolean(this.escaped && strategy);
+                const strategy = this.alarmDisabled ? "hack" : null;
+                const securityStrategyPassed = Boolean(this.escaped && this.alarmDisabled);
                 const expectedInventoryOutput = "INVENTARLISTE: " + this.runtimeInventory.join(",");
                 const inventoryOutputPassed = String(output).split(/\r?\n/).some(line => line.trim() === expectedInventoryOutput);
                 this.inventoryOutputPassed = inventoryOutputPassed;
@@ -621,7 +642,7 @@ def alarm_hacken(code):
                     { label: "Schlüsselkarte selbst aufgenommen", passed: this.runtimeInventory.includes("Schlüsselkarte") },
                     { label: "Gestohlenes Sternenfragment gesichert", passed: this.artifactSecured },
                     {
-                        label: strategy === "hack" ? "Alarm an der Konsole gehackt" : "Portal mit der ersten Alarmaktion erreicht",
+                        label: "Alarm an der Konsole gehackt",
                         passed: securityStrategyPassed
                     },
                     { label: "Inventarliste korrekt ausgegeben", passed: inventoryOutputPassed },
@@ -640,7 +661,8 @@ def alarm_hacken(code):
             }
         };
     </script>
-    <script src="prototypes/finale.js?v=action-alarm-v2"></script>
+    <script src="prototypes/finale.js?v=timed-alarm-v1"></script>
+    <script src="assets/pixelmuseum-finale-tools.js?v=20260829-1"></script>
     <script src="assets/pixelmuseum-path.js?v=20260828-1"></script>
 </body>
 </html>

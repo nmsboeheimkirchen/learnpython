@@ -8,13 +8,13 @@
     <title>Pixelmuseum – Einsatzbriefing</title>
     <script src="assets/vendor/skulpt/1.2.0/skulpt.min.js"></script>
     <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
-    <script src="assets/runner.js?v=20260828-1"></script>
-    <script src="assets/teacher-solutions.js?v=20260828-3"></script>
+    <script src="assets/runner.js?v=20260829-1"></script>
+    <script src="assets/teacher-solutions.js?v=20260829-1"></script>
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
     <link rel="stylesheet" href="assets/style.css?v=20260722-2">
     <link rel="stylesheet" href="assets/drone-mission.css?v=20260721-5">
-    <link rel="stylesheet" href="assets/pixelmuseum.css?v=20260828-3">
+    <link rel="stylesheet" href="assets/pixelmuseum.css?v=20260829-1">
 </head>
 <body class="drone-mission-page pixelmuseum-mission-theme" data-mission-level="pixelmuseum_briefing" data-pixelmuseum-stage="briefing">
     <a class="skip-link" href="#python-editor">Zum Python-Editor</a>
@@ -33,7 +33,7 @@
             <div>
                 <p class="mission-kicker">Pixelmuseum · Pflichtbriefing</p>
                 <h1 id="mission-title">Briefing</h1>
-                <p>Sammle zuerst die Schlüsselkarte ein, damit du das gestohlene Sternenfragment zurückholen kannst. In diesem Briefing übst du diese Reihenfolge noch ohne Alarm. Im anschließenden Einsatz musst du den Alarm ausschalten oder rechtzeitig das Portal erreichen.</p>
+                <p>Sammle zuerst die Schlüsselkarte ein, damit du das gestohlene Sternenfragment zurückholen kannst. In diesem Briefing übst du diese Reihenfolge noch ohne Alarm. Im anschließenden Einsatz musst du den Alarm ausschalten und danach das Portal erreichen.</p>
             </div>
             <ul class="mission-concepts" aria-label="Werkzeuge dieses Briefings"><li>suche_hier()</li><li>append()</li><li>Inventarliste</li></ul>
         </section>
@@ -120,9 +120,6 @@ turtle.Screen().delay(30)
 
 inventar = []
 
-def gehe_zu(x, y):
-    drohne.goto(x, y)
-
 def melde_inventar(liste):
     print("INVENTARLISTE: " + ",".join(liste))
 
@@ -146,7 +143,7 @@ def melde_inventar(liste):
     <script src="assets/pixelmuseum-briefing-core.js?v=20260828-2"></script>
     <script src="assets/pixelmuseum-briefing.js?v=20260828-3"></script>
     <script src="assets/drone-mission.js?v=20260828-2"></script>
-    <script src="assets/pixelmuseum-help-core.js?v=20260828-2"></script>
-    <script src="assets/pixelmuseum-briefing-help.js?v=20260828-1"></script>
+    <script src="assets/pixelmuseum-help-core.js?v=20260829-1"></script>
+    <script src="assets/pixelmuseum-briefing-help.js?v=20260829-1"></script>
 </body>
 </html>

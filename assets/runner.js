@@ -276,21 +276,11 @@ function addMission4FinaleBonuses(source) {
 }
 
 function preparePixelmuseumFinaleCode(source) {
-    const lines = migrateSavedLevelCode("pixelmuseum_finale", source)
+    return migrateSavedLevelCode("pixelmuseum_finale", source)
         .replace(/\r\n/g, "\n")
         .split("\n")
-        .filter(line => !/^\s*#\s*Ziele:\s*Schlüsselkarte\b/.test(line));
-
-    if (!lines.some(line => /^\s*def\s+alarm_hacken\s*\(/.test(line))) {
-        while (lines.length && lines.at(-1) === "") lines.pop();
-        lines.push(
-            "",
-            "def alarm_hacken(code):",
-            '    print("ALARM_HACK|" + code)'
-        );
-    }
-
-    return lines.join("\n");
+        .filter(line => !/^\s*#\s*Ziele:\s*Schlüsselkarte\b/.test(line))
+        .join("\n");
 }
 
 function buildInheritedLevelCode(levelId) {

@@ -47,6 +47,33 @@
             ],
             { countable: false }
         ),
+        SEARCH_NEEDS_DRONE: issue(
+            "SEARCH_NEEDS_DRONE",
+            "suche_hier() gehört zur Drohne",
+            [
+                "suche_hier() ist ein Befehl der Drohne. Schreibe deshalb den Namen der Drohne davor.",
+                "Rufe die Suche am Fundort mit drohne.suche_hier() auf.",
+                "Ersetze suche_hier() durch fund = drohne.suche_hier(). So speicherst du zugleich den Rückgabewert."
+            ]
+        ),
+        FUND_NOT_STORED: issue(
+            "FUND_NOT_STORED",
+            "Speichere den gefundenen Gegenstand",
+            [
+                "drohne.suche_hier() liefert den gefundenen Gegenstand zurück. Speichere dieses Ergebnis in der Variablen fund.",
+                "Schreibe am Fundort: fund = drohne.suche_hier()",
+                "Hänge den gespeicherten Fund danach mit inventar.append(fund) an dein Inventar."
+            ]
+        ),
+        INVENTORY_PARAMETER: issue(
+            "INVENTORY_PARAMETER",
+            "liste ist nur der Funktionsparameter",
+            [
+                "liste ist nur der Parametername innerhalb von melde_inventar(). Außerhalb der Funktion gibt es diese Variable nicht.",
+                "Beim Aufruf musst du die Liste übergeben, die du wirklich angelegt und gefüllt hast: inventar.",
+                "Rufe melde_inventar(inventar) auf. Dann erhält der Parameter liste innerhalb der Funktion dein inventar."
+            ]
+        ),
         PYTHON_ERROR: issue(
             "PYTHON_ERROR",
             "Der Python-Code wurde gestoppt",
@@ -112,38 +139,38 @@
         ),
         HACK_TOO_LATE: issue(
             "HACK_TOO_LATE",
-            "Der Hack kam nach dem Aktionslimit",
+            "Der Hack kam zu spät",
             [
-                "Der Alarm hatte seine letzte Stufe bereits durch abgeschlossene Aktionen erreicht.",
-                "Prüfe, ob zwischen Sternenfragment und Alarmkonsole unnötige Flugbewegungen liegen.",
-                "Fliege nach der Aufnahme direkt zur Konsole und rufe dort alarm_hacken(...) auf. Die Animationsgeschwindigkeit ändert das Aktionslimit nicht."
+                "Der Alarm hatte seine letzte Stufe erreicht, bevor der Hack abgeschlossen war.",
+                "Prüfe, ob zwischen Sternenfragment und Alarmkonsole unnötige Flugwege liegen.",
+                "Fliege nach der Aufnahme direkt zur Konsole und starte dort sofort alarm_hacken(...). Der Hack braucht eine Sekunde."
             ]
         ),
         PORTAL_LOCKED: issue(
             "PORTAL_LOCKED",
             "Das Portal war bereits verriegelt",
             [
-                "Die Drohne hat das Portal erst nach einer bereits abgeschlossenen Alarmaktion erreicht.",
-                "Entscheide dich für einen Hack oder für genau eine direkte Flugbewegung vom Sternenfragment zum Portal.",
-                "Hacke nach der Aufnahme an der Konsole – oder fliege als erste Alarmaktion direkt zum Portal. drohne.speed(...) beeinflusst nur die Animation."
+                "Mit der Aufnahme des Sternenfragments startet der Alarm und verriegelt das Portal.",
+                "Bevor du zum Portal fliegst, musst du den Alarm an der Konsole ausschalten.",
+                "Fliege nach der Aufnahme zu (250, -60), rufe dort alarm_hacken(code) auf und steuere erst danach das Portal an."
             ]
         ),
         ALARM_TOO_SLOW: issue(
             "ALARM_TOO_SLOW",
-            "Das Aktionsbudget ist aufgebraucht",
+            "Die Alarmzeit ist abgelaufen",
             [
                 "Der Alarm erreichte die letzte Stufe, ohne dass eine gültige Fluchtstrategie abgeschlossen war.",
-                "Prüfe, ob dein Plan unnötige Wege enthält und ob du wirklich hacken oder rechtzeitig fliehen willst.",
-                "Wähle genau eine klare Strategie: Konsole mit gültigem Hack erreichen oder das Portal vor Alarmstufe 1 erreichen."
+                "Nach dem Sternenfragment zählt die Zeit sichtbar hoch. Vermeide unnötige Wege.",
+                "Fliege direkt zur Alarmkonsole, starte dort den gültigen Hack und warte auf die Freigabe des Portals."
             ]
         ),
         ALARM_STRATEGY: issue(
             "ALARM_STRATEGY",
             "Eine Alarmstrategie fehlt noch",
             [
-                "Das Sternenfragment ist gesichert. Jetzt muss die Drohne den Alarm hacken oder mit der ersten Flugbewegung das Portal erreichen.",
-                "Für den Hack brauchst du den richtigen Ort, den Code aus dem Quelltext und einen Aufruf nach Alarmbeginn. Die direkte Flucht braucht keinen Hack.",
-                "Programmiere entweder Alarmkonsole → alarm_hacken(code) → Portal oder genau eine direkte Flugbewegung zum Portal."
+                "Das Sternenfragment ist gesichert. Jetzt muss die Drohne den Alarm an der Konsole hacken.",
+                "Für den Hack brauchst du den richtigen Ort, den Code aus dem Quelltext und einen Aufruf nach Alarmbeginn.",
+                "Programmiere: Alarmkonsole → alarm_hacken(code) → Portal."
             ]
         ),
         PORTAL_NOT_REACHED: issue(
@@ -159,9 +186,9 @@
             "INVENTORY_OUTPUT",
             "Die echte Inventarliste fehlt in der Ausgabe",
             [
-                "Die Gegenstände sind gesichert, aber der Missionsbericht enthält noch nicht das tatsächlich gesammelte Inventar.",
-                "Erzeuge die Ausgabe aus der Variablen inventar, statt die erwarteten Gegenstände als fertigen Text zu schreiben.",
-                "Nutze am Ende print(\"INVENTARLISTE: \" + \",\".join(inventar))."
+                "Schau dir die vorbereitete Funktion melde_inventar(liste) an. Sie erzeugt die passende Ausgabe aus einer Liste.",
+                "Beim Aufruf übergibst du deine gefüllte Liste inventar.",
+                "Rufe am Ende melde_inventar(inventar) auf."
             ]
         ),
         COMPLETE: issue(
@@ -206,11 +233,23 @@
 
         const pythonError = context.pythonError ?? context.runtimeError ?? context.lastError;
         if (pythonError) {
+            const detail = String(pythonError?.message || pythonError);
+            if (/\bname\s+['\"]suche_hier['\"]\s+is not defined\b/i.test(detail)) {
+                return ISSUES.SEARCH_NEEDS_DRONE;
+            }
+            if (/\bname\s+['\"]fund['\"]\s+is not defined\b/i.test(detail)) {
+                return ISSUES.FUND_NOT_STORED;
+            }
+            if (/\bname\s+['\"]liste['\"]\s+is not defined\b/i.test(detail)) {
+                return ISSUES.INVENTORY_PARAMETER;
+            }
             return Object.freeze({
                 ...ISSUES.PYTHON_ERROR,
-                detail: String(pythonError?.message || pythonError)
+                detail
             });
         }
+
+        if (context.pendingItem) return ISSUES.FUND_NOT_STORED;
 
         const inventory = Array.isArray(context.runtimeInventory)
             ? context.runtimeInventory

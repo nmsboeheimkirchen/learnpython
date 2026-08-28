@@ -597,7 +597,7 @@ test("mission 4 carries successful code forward without discarding student lines
     );
 });
 
-test("Pixelmuseum finale inherits the successful briefing code and adds only its missing tool", () => {
+test("Pixelmuseum finale inherits only the successful student code", () => {
     const briefingCode = [
         "# Mein eigener Museumsweg",
         "inventar = []",
@@ -616,13 +616,13 @@ test("Pixelmuseum finale inherits the successful briefing code and adds only its
     assert.match(inherited, /gehe_zu\(-250, 60\)/);
     assert.match(inherited, /gehe_zu\(-390, 45\)/);
     assert.doesNotMatch(inherited, /^# Ziele:/m);
-    assert.equal((inherited.match(/def alarm_hacken\(code\):/g) ?? []).length, 1);
+    assert.doesNotMatch(inherited, /def alarm_hacken\(code\):/);
 
     context.inheritedMuseumCode = inherited;
     assert.equal(
         vm.runInContext("preparePixelmuseumFinaleCode(inheritedMuseumCode)", context),
         inherited,
-        "der Finale-Helfer darf beim erneuten Laden nicht doppelt ergänzt werden"
+        "die Codeübergabe muss beim erneuten Laden unverändert bleiben"
     );
 });
 
@@ -1481,8 +1481,8 @@ const teacherSolutionExpectations = new Map([
     ["pico_level2a", /status\["TRANSPONDER"\] = "aufgeladen"/],
     ["pico_level3", /signal_erfolgreich = drohne\.sende\(\)/],
     ["pico_level4", /if signal_erfolgreich:[\s\S]*status\["DROHNE"\] = "self-destroy"[\s\S]*status\["TRANSPONDER"\] = "delete"/],
-    ["pixelmuseum_briefing", /gehe_zu\(-250, 60\)[\s\S]*inventar\.append\(fund\)[\s\S]*gehe_zu\(-390, 45\)/],
-    ["pixelmuseum_finale", /gehe_zu\(-390, 45\)[\s\S]*gehe_zu\(250, -60\)[\s\S]*alarm_hacken\("SERU-7"\)[\s\S]*gehe_zu\(0, 115\)/]
+    ["pixelmuseum_briefing", /def melde_inventar\(liste\):[\s\S]*drohne\.goto\(-250, 60\)[\s\S]*inventar\.append\(fund\)[\s\S]*drohne\.goto\(-390, 45\)[\s\S]*melde_inventar\(inventar\)/],
+    ["pixelmuseum_finale", /def melde_inventar\(liste\):[\s\S]*drohne\.goto\(-390, 45\)[\s\S]*drohne\.goto\(250, -60\)[\s\S]*alarm_hacken\("SERU-7"\)[\s\S]*drohne\.goto\(0, 115\)[\s\S]*melde_inventar\(inventar\)/]
 ]);
 
 test("teacher solutions are centralized and available for every level", () => {
@@ -2427,6 +2427,8 @@ test("finale prototypes stay isolated while the production Pixelmuseum path is p
     assert.doesNotMatch(productionBriefing, /und melde am Ende die Liste|Schleifen, Hilfsfunktionen/);
     assert.doesNotMatch(productionBriefing, /museum-world-rules|<details class="museum-briefing-help"|Python-Einsatzzentrale/);
     const productionBriefingCode = productionBriefing.match(/<textarea id="python-editor"[^>]*>([\s\S]*?)<\/textarea>/)?.[1] ?? "";
+    assert.doesNotMatch(productionBriefingCode, /def gehe_zu|\bgehe_zu\(/);
+    assert.match(productionBriefingCode, /def melde_inventar\(liste\):/);
     assert.deepEqual(
         productionBriefingCode.match(/^#.*$/gm),
         ["# Ziele: Schlüsselkarte (-250, 60), Sternenfragment (-390, 45)"]
@@ -2443,6 +2445,8 @@ test("finale prototypes stay isolated while the production Pixelmuseum path is p
     assert.match(productionFinale, /Gestohlenes Sternenfragment \(-390, 45\)/);
     assert.match(productionFinale, /inheritCode: true/);
     assert.match(productionFinale, /data-teacher-solution="pixelmuseum_finale"/);
+    assert.match(productionFinale, /id="copy-alarm-helper"/);
+    assert.match(productionFinale, /pixelmuseum-finale-tools\.js/);
     const productionFinaleCode = productionFinale.match(/<textarea id="python-editor"[^>]*>([\s\S]*?)<\/textarea>/)?.[1] ?? "";
     assert.deepEqual(productionFinaleCode.match(/^\s*#.*$/gm), null);
     assert.match(productionFinale, /data-finale-run/);
@@ -2450,7 +2454,7 @@ test("finale prototypes stay isolated while the production Pixelmuseum path is p
         productionFinale.indexOf("data-finale-run") < productionFinale.indexOf('id="python-editor"'),
         "der zusätzliche Finale-Startknopf steht vor dem Python-Code"
     );
-    assert.doesNotMatch(productionFinale, /window\.setInterval/);
+    assert.match(productionFinale, /window\.setInterval/);
     assert.doesNotMatch(productionFinale, /getTurtleSpeedMultiplier/);
     assert.match(productionFinale, /helikopter_flucht\.html/);
     assert.doesNotMatch(productionFinale, /analysis\.hasIf/);
