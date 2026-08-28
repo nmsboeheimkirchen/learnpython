@@ -597,6 +597,35 @@ test("mission 4 carries successful code forward without discarding student lines
     );
 });
 
+test("Pixelmuseum finale inherits the successful briefing code and adds only its missing tool", () => {
+    const briefingCode = [
+        "# Mein eigener Museumsweg",
+        "inventar = []",
+        "gehe_zu(-230, 70)",
+        "fund = drohne.suche_hier()",
+        "inventar.append(fund)",
+        "gehe_zu(-70, -75)",
+        "# Ziele: Schlüsselkarte (-230, 70), Sternenfragment (-70, -75)"
+    ].join("\n");
+    const { context } = createRunnerContext({
+        completedLevelCode_v1: JSON.stringify({ pixelmuseum_briefing: briefingCode })
+    });
+
+    const inherited = vm.runInContext('buildInheritedLevelCode("pixelmuseum_finale")', context);
+    assert.match(inherited, /# Mein eigener Museumsweg/);
+    assert.match(inherited, /gehe_zu\(-250, 60\)/);
+    assert.match(inherited, /gehe_zu\(-390, 45\)/);
+    assert.doesNotMatch(inherited, /^# Ziele:/m);
+    assert.equal((inherited.match(/def alarm_hacken\(code\):/g) ?? []).length, 1);
+
+    context.inheritedMuseumCode = inherited;
+    assert.equal(
+        vm.runInContext("preparePixelmuseumFinaleCode(inheritedMuseumCode)", context),
+        inherited,
+        "der Finale-Helfer darf beim erneuten Laden nicht doppelt ergänzt werden"
+    );
+});
+
 test("PICO carries code through optional level 2a without making it a gate", () => {
     const level2Code = '# Level 2\nstatus["TRANSPONDER"] = "suche"';
     const level2aCode = '# Level 2a\nstatus["TRANSPONDER"] = "aufgeladen"';
@@ -1452,7 +1481,8 @@ const teacherSolutionExpectations = new Map([
     ["pico_level2a", /status\["TRANSPONDER"\] = "aufgeladen"/],
     ["pico_level3", /signal_erfolgreich = drohne\.sende\(\)/],
     ["pico_level4", /if signal_erfolgreich:[\s\S]*status\["DROHNE"\] = "self-destroy"[\s\S]*status\["TRANSPONDER"\] = "delete"/],
-    ["pixelmuseum_briefing", /gehe_zu\(-250, 60\)[\s\S]*inventar\.append\(fund\)[\s\S]*gehe_zu\(-390, 45\)/]
+    ["pixelmuseum_briefing", /gehe_zu\(-250, 60\)[\s\S]*inventar\.append\(fund\)[\s\S]*gehe_zu\(-390, 45\)/],
+    ["pixelmuseum_finale", /gehe_zu\(-390, 45\)[\s\S]*gehe_zu\(250, -60\)[\s\S]*alarm_hacken\("SERU-7"\)[\s\S]*gehe_zu\(0, 115\)/]
 ]);
 
 test("teacher solutions are centralized and available for every level", () => {
@@ -2390,8 +2420,12 @@ test("finale prototypes stay isolated while the production Pixelmuseum path is p
     assert.match(productionBriefing, /pixelmuseum-briefing-core\.js/);
     assert.match(productionBriefing, /INVENTARLISTE/);
     assert.match(productionBriefing, /data-mission-run/);
+    assert.match(productionBriefing, /Fordere von deiner Zentrale Hilfe an/);
+    assert.match(productionBriefing, /pixelmuseum-briefing-help\.js/);
+    assert.match(productionBriefing, /pixelmuseum-help-core\.js/);
     assert.doesNotMatch(productionBriefing, /museum-alarm-preview|Vorschau aufs Finale/);
     assert.doesNotMatch(productionBriefing, /und melde am Ende die Liste|Schleifen, Hilfsfunktionen/);
+    assert.doesNotMatch(productionBriefing, /museum-world-rules|<details class="museum-briefing-help"|Python-Einsatzzentrale/);
     const productionBriefingCode = productionBriefing.match(/<textarea id="python-editor"[^>]*>([\s\S]*?)<\/textarea>/)?.[1] ?? "";
     assert.deepEqual(
         productionBriefingCode.match(/^#.*$/gm),
@@ -2402,13 +2436,15 @@ test("finale prototypes stay isolated while the production Pixelmuseum path is p
         "der zusätzliche Briefing-Startknopf steht vor dem Python-Code"
     );
     assert.match(productionFinale, /data-mission-level="pixelmuseum_finale"/);
-    assert.match(productionFinale, /Fordere von deiner Zentrale Hilfe an/);
-    assert.match(productionFinale, /pixelmuseum-help-core\.js/);
+    assert.doesNotMatch(productionFinale, /Fordere von deiner Zentrale Hilfe an|museum-help-card|Python-Einsatzzentrale/);
     assert.match(productionFinale, /pixelmuseum-alarm-core\.js/);
     assert.doesNotMatch(productionFinale, /museum-rules-card|Klare Weltregeln, freie Lösung/);
-    assert.match(productionFinale, /Schlüsselkarte \(−250, 60\)/);
-    assert.match(productionFinale, /Gestohlenes Sternenfragment \(−390, 45\)/);
-    assert.match(productionFinale, /Fundorte: Schlüsselkarte \(-250, 60\), Sternenfragment \(-390, 45\)/);
+    assert.match(productionFinale, /Schlüsselkarte \(-250, 60\)/);
+    assert.match(productionFinale, /Gestohlenes Sternenfragment \(-390, 45\)/);
+    assert.match(productionFinale, /inheritCode: true/);
+    assert.match(productionFinale, /data-teacher-solution="pixelmuseum_finale"/);
+    const productionFinaleCode = productionFinale.match(/<textarea id="python-editor"[^>]*>([\s\S]*?)<\/textarea>/)?.[1] ?? "";
+    assert.deepEqual(productionFinaleCode.match(/^\s*#.*$/gm), null);
     assert.match(productionFinale, /data-finale-run/);
     assert.ok(
         productionFinale.indexOf("data-finale-run") < productionFinale.indexOf('id="python-editor"'),

@@ -8,6 +8,12 @@
   - [x] Helikopter modern, kantig und facettiert wie in Variante B gestalten
   - [x] Teaser mit „Der Lord kommt zurück.“ beginnen
   - [x] Auftrag auf Bordcomputer, Zugangscode, Startsysteme und Flucht ausrichten
+  - [ ] Stufe 1 „Das Seruianer-Signal“: Bordcomputer mit JSON-Daten und begrenzter Kandidatensuche entsperren
+    - [ ] Lokalen, auf `loads()` begrenzten JSON-Shim für die vorhandene Skulpt-Version ergänzen
+    - [ ] Wartungspaket `{"kennung":"SERU","pruefziffern":"135790"}` mit `json.loads()` einlesen
+    - [ ] Mit einer terminierenden `while`-Schleife `SERU1`, `SERU3`, `SERU5`, `SERU7` prüfen
+    - [ ] Bordcomputer-API auf fünf ASCII-Zeichen und höchstens zwölf Versuche begrenzen
+    - [ ] Nach `SERU7` den Bordcomputer entsperren und die weiterhin offline geschalteten Startsysteme als nächste Stufe zeigen
   - [ ] Finale ohne Echtzeitdruck als nachvollziehbare Zustandsmission bauen
 - [ ] A/B-Varianten entfernen und je eine kanonische Start- und Fluchtseite festlegen
   - [x] Fluchtseite vereinheitlichen; alte B-Adresse auf die kanonische Seite weiterleiten

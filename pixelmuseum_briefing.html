@@ -9,12 +9,12 @@
     <script src="assets/vendor/skulpt/1.2.0/skulpt.min.js"></script>
     <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
     <script src="assets/runner.js?v=20260828-1"></script>
-    <script src="assets/teacher-solutions.js?v=20260828-2"></script>
+    <script src="assets/teacher-solutions.js?v=20260828-3"></script>
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
     <link rel="stylesheet" href="assets/style.css?v=20260722-2">
     <link rel="stylesheet" href="assets/drone-mission.css?v=20260721-5">
-    <link rel="stylesheet" href="assets/pixelmuseum.css?v=20260828-2">
+    <link rel="stylesheet" href="assets/pixelmuseum.css?v=20260828-3">
 </head>
 <body class="drone-mission-page pixelmuseum-mission-theme" data-mission-level="pixelmuseum_briefing" data-pixelmuseum-stage="briefing">
     <a class="skip-link" href="#python-editor">Zum Python-Editor</a>
@@ -53,9 +53,9 @@
                         <circle class="mission-target-pulse museum-fragment-pulse" cx="90" cy="225" r="32"></circle>
                     </svg>
                     <div id="museum-briefing-turtle" class="mission-turtle-target" aria-hidden="true"></div>
-                    <div class="mission-stage-label museum-briefing-start"><span aria-hidden="true">⬒</span> Start (260, −170)</div>
-                    <div id="briefing-card-label" class="mission-stage-label museum-briefing-card"><span aria-hidden="true">▣</span> Schlüsselkarte (−250, 60)</div>
-                    <div id="briefing-fragment-label" class="mission-stage-label museum-briefing-fragment"><span aria-hidden="true">✦</span> Sternenfragment (−390, 45)</div>
+                    <div class="mission-stage-label museum-briefing-start"><span aria-hidden="true">⬒</span> Start (260, -170)</div>
+                    <div id="briefing-card-label" class="mission-stage-label museum-briefing-card"><span aria-hidden="true">▣</span> Schlüsselkarte (-250, 60)</div>
+                    <div id="briefing-fragment-label" class="mission-stage-label museum-briefing-fragment"><span aria-hidden="true">✦</span> Sternenfragment (-390, 45)</div>
 
                     <div class="museum-briefing-hud" aria-label="Briefingstatus">
                         <small>REIHENFOLGE</small>
@@ -67,8 +67,8 @@
                 </div>
 
                 <div class="mission-target-legend museum-briefing-legend">
-                    <span><strong>1</strong> Schlüsselkarte (−250, 60)</span>
-                    <span><strong>2</strong> Sternenfragment (−390, 45)</span>
+                    <span><strong>1</strong> Schlüsselkarte (-250, 60)</span>
+                    <span><strong>2</strong> Sternenfragment (-390, 45)</span>
                     <span><strong>Regel</strong> Nur Funde aus <code>suche_hier()</code> zählen</span>
                 </div>
 
@@ -78,31 +78,30 @@
                 </section>
             </section>
 
-            <section class="mission-code-panel" id="editor-panel" aria-labelledby="code-title">
-                <div class="mission-section-heading"><div><span class="mission-eyebrow">Offene Vorbereitung</span><h2 id="code-title">Python-Einsatzzentrale</h2></div><span class="mission-save-note">Erfolg wird gespeichert</span></div>
-
+            <section class="mission-code-panel" id="editor-panel" aria-label="Python-Code für das Briefing">
                 <div class="mission-task-card museum-mission-plan">
                     <h2>Dein Ziel – deinen Weg bestimmst du</h2>
                     <p>Bringe beide mit <code>suche_hier()</code> gefundenen Gegenstände in das <code>inventar</code>.</p>
-                    <ul class="museum-world-rules">
-                        <li><strong>Schlüsselkarte:</strong> bei <code>(−250, 60)</code>.</li>
-                        <li><strong>Sternenfragment:</strong> bei <code>(−390, 45)</code>; es reagiert erst, wenn die Schlüsselkarte wirklich in <code>inventar</code> liegt.</li>
-                        <li><strong>Suche:</strong> <code>drohne.suche_hier()</code> liefert am Fundort einen normalen Python-Rückgabewert. Du darfst ihn auch nach einem Weiterflug noch an die Liste anhängen.</li>
-                        <li><strong>Protokoll:</strong> Gib aus deiner Liste exakt <code>INVENTARLISTE: Schlüsselkarte,Sternenfragment</code> aus.</li>
-                    </ul>
-                    <details class="museum-briefing-help">
-                        <summary>Hilfe auf Wunsch: Python-Bausteine</summary>
-                        <p>Steuere einen Zielpunkt an, speichere dort den Suchwert und hänge genau diesen Wert an:</p>
-                        <pre><code>fund = drohne.suche_hier()
-inventar.append(fund)</code></pre>
-                        <p>Die beiden Zielkoordinaten und ihre notwendige Reihenfolge stehen oben; deine Route bleibt offen.</p>
-                    </details>
                 </div>
 
                 <div class="mission-control-bar mission-control-quick" aria-label="Programmaktionen oberhalb des Python-Codes">
                     <button class="mission-primary-action" type="button" data-mission-run><span aria-hidden="true">▶</span> Briefing testen</button>
                     <button class="mission-secondary-action" type="button" data-mission-reset>↺ Briefing-Code laden</button>
                 </div>
+
+                <aside class="museum-help-card museum-briefing-help-card" aria-labelledby="museum-help-heading">
+                    <div class="museum-help-heading">
+                        <div><span class="mission-eyebrow">Deine Zentrale</span><h3 id="museum-help-heading">Du entscheidest, wann du Hilfe brauchst.</h3></div>
+                        <span id="museum-help-count" class="museum-help-count">Zentrale kontaktiert: 0-mal</span>
+                    </div>
+                    <button id="museum-help-btn" class="mission-secondary-action museum-help-action" type="button" aria-controls="museum-help-panel" aria-expanded="false">Fordere von deiner Zentrale Hilfe an</button>
+                    <div id="museum-help-panel" class="museum-help-panel" role="status" aria-live="polite" data-help-issue="" hidden>
+                        <div class="museum-help-panel-header"><h3 id="museum-help-title">Hinweis der Zentrale</h3><span id="museum-help-level" class="museum-help-level"></span></div>
+                        <p id="museum-help-message"></p>
+                        <small id="museum-help-detail" class="museum-help-detail" hidden></small>
+                    </div>
+                    <p class="museum-help-footnote">Gezählt werden nur neu aufgedeckte Hinweise. Die Zahl beeinflusst weder Erfolg noch Goldmünzen.</p>
+                </aside>
 
                 <label class="mission-editor-label" for="python-editor"><span>Python-Code für deine Drohne</span><small id="editor-shortcut-hint">Strg/⌘ + Enter startet</small></label>
                 <textarea id="python-editor" spellcheck="false">import turtle
@@ -145,7 +144,9 @@ def melde_inventar(liste):
     <script src="assets/vendor/codemirror/5.65.2/python.min.js"></script>
     <script src="assets/drone-mission-core.js?v=20260721-2"></script>
     <script src="assets/pixelmuseum-briefing-core.js?v=20260828-2"></script>
-    <script src="assets/pixelmuseum-briefing.js?v=20260828-2"></script>
-    <script src="assets/drone-mission.js?v=20260828-1"></script>
+    <script src="assets/pixelmuseum-briefing.js?v=20260828-3"></script>
+    <script src="assets/drone-mission.js?v=20260828-2"></script>
+    <script src="assets/pixelmuseum-help-core.js?v=20260828-2"></script>
+    <script src="assets/pixelmuseum-briefing-help.js?v=20260828-1"></script>
 </body>
 </html>

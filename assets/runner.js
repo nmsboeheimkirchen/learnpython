@@ -214,7 +214,9 @@ function migrateSavedLevelCode(levelId, savedCode) {
             .replace(/Zugangskarte/g, "Schlüsselkarte")
             .replace(/Testfragment/g, "Sternenfragment")
             .replace(/Seruianer-Artefakt/g, "Sternenfragment")
-            .replace(/\bArtefakt\b/g, "Sternenfragment");
+            .replace(/\bArtefakt\b/g, "Sternenfragment")
+            .replace(/\(-230,\s*70\)/g, "(-250, 60)")
+            .replace(/\(-70,\s*-75\)/g, "(-390, 45)");
     }
     return migratedCode;
 }
@@ -268,6 +270,24 @@ function addMission4FinaleBonuses(source) {
             insertAt -= 1;
         }
         lines.splice(insertAt, 0, "", "print(geheimtext)  # Startbonus");
+    }
+
+    return lines.join("\n");
+}
+
+function preparePixelmuseumFinaleCode(source) {
+    const lines = migrateSavedLevelCode("pixelmuseum_finale", source)
+        .replace(/\r\n/g, "\n")
+        .split("\n")
+        .filter(line => !/^\s*#\s*Ziele:\s*Schlüsselkarte\b/.test(line));
+
+    if (!lines.some(line => /^\s*def\s+alarm_hacken\s*\(/.test(line))) {
+        while (lines.length && lines.at(-1) === "") lines.pop();
+        lines.push(
+            "",
+            "def alarm_hacken(code):",
+            '    print("ALARM_HACK|" + code)'
+        );
     }
 
     return lines.join("\n");
@@ -1099,7 +1119,11 @@ const LEVEL_CODE_INHERITANCE = Object.freeze({
     pico_level2: Object.freeze({ from: "pico_level1_navigation" }),
     pico_level2a: Object.freeze({ from: "pico_level2" }),
     pico_level3: Object.freeze({ from: Object.freeze(["pico_level2a", "pico_level2"]) }),
-    pico_level4_memory: Object.freeze({ from: "pico_level3" })
+    pico_level4_memory: Object.freeze({ from: "pico_level3" }),
+    pixelmuseum_finale: Object.freeze({
+        from: "pixelmuseum_briefing",
+        prepare: preparePixelmuseumFinaleCode
+    })
 });
 
 function validateLevelSolution(levelId, code, output, evidence = {}) {

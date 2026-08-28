@@ -60,6 +60,15 @@
     let running = false;
     let activeTurtle = null;
     let cancelRequested = false;
+    let hasRun = false;
+    let lastRunCode = null;
+    let lastErrorMessage = null;
+
+    function emitMissionEvent(name, detail) {
+        const EventConstructor = window.CustomEvent;
+        if (typeof document.dispatchEvent !== "function" || typeof EventConstructor !== "function") return;
+        document.dispatchEvent(new EventConstructor(name, { detail }));
+    }
 
     function revealLiveCockpit() {
         const cockpit = document.querySelector(".mission-stage-panel");
@@ -98,6 +107,7 @@
                 ? (cancelRequested ? "Wird gestoppt …" : "■ Mission stoppen")
                 : (config.resetLabel || "↺ Startcode laden");
         });
+        emitMissionEvent("drone:running", { running: nextRunning });
     }
 
     function appendOutput(text) {
@@ -351,7 +361,11 @@
         if (running) return;
         revealLiveCockpit();
         const generation = ++runGeneration;
+        const code = editor.getValue();
         cancelRequested = false;
+        hasRun = true;
+        lastRunCode = code;
+        lastErrorMessage = null;
         outputText = "";
         consoleOutput.textContent = "";
         consoleOutput.classList.remove("is-error");
@@ -360,7 +374,6 @@
         renderChecks(initialResult("Simulation läuft – die Missionszustände werden live geprüft."));
         setRunning(true);
         setStatus(config.runningLabel || "Drohne unterwegs", "running");
-        const code = editor.getValue();
         if (config.levelId) window.saveAttemptedLevelCode?.(config.levelId, code);
 
         try {
@@ -373,8 +386,9 @@
             return result;
         } catch (error) {
             if (generation !== runGeneration || cancelRequested) return null;
+            lastErrorMessage = friendlyError(error);
             config.onRunError?.(error);
-            consoleOutput.textContent = "FEHLER: " + friendlyError(error);
+            consoleOutput.textContent = "FEHLER: " + lastErrorMessage;
             consoleOutput.classList.add("is-error");
             renderChecks(initialResult("Behebe den Python-Fehler und starte die Mission erneut."));
             validationTitle.textContent = "Programm gestoppt";
@@ -401,6 +415,9 @@
             return;
         }
         runGeneration += 1;
+        hasRun = false;
+        lastRunCode = null;
+        lastErrorMessage = null;
         editor.setValue(resetCode);
         editor.clearHistory?.();
         outputText = "";
@@ -411,6 +428,7 @@
         clearTurtle();
         renderChecks(initialResult());
         setStatus(config.readyLabel || "Bereit", "ready");
+        emitMissionEvent("drone:reset", {});
         editor.focus();
     }
 
@@ -431,6 +449,11 @@
         if (event.key === "Escape" && document.body.classList.contains("presentation-mode")) {
             setPresentationMode(false);
         }
+    });
+    editor.on?.("change", () => {
+        emitMissionEvent("drone:codechange", {
+            dirty: hasRun && editor.getValue() !== lastRunCode
+        });
     });
 
     config.resetHud?.({ reason: "initial" });
@@ -459,6 +482,10 @@
         editor,
         getOutput: () => outputText,
         getState: () => config.getState?.() || null,
+        getLastError: () => lastErrorMessage,
+        hasRun: () => hasRun,
+        isRunning: () => running,
+        isCodeDirty: () => hasRun && editor.getValue() !== lastRunCode,
         reset: resetMission,
         run: runProgram,
         refresh() {

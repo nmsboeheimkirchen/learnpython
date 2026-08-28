@@ -33,7 +33,7 @@
             [
                 "Starte zuerst deinen Code. Danach kann die Zentrale sehen, an welcher Stelle deine Mission stockt.",
                 "Ohne Laufzeitdaten kennt die Zentrale weder den Standort der Drohne noch den Inhalt deines Inventars.",
-                "Klicke auf „Flucht starten“ und fordere nach dem beendeten Lauf erneut Hilfe an."
+                "Starte dein Programm und fordere nach dem beendeten Lauf erneut Hilfe an."
             ],
             { countable: false }
         ),
@@ -43,7 +43,7 @@
             [
                 "Starte den geänderten Code, damit die Zentrale nicht mit veralteten Beobachtungen hilft.",
                 "Der letzte Missionszustand gehört noch zur vorherigen Codefassung.",
-                "Klicke erneut auf „Flucht starten“. Erst der neue Lauf zeigt, welches Problem noch besteht."
+                "Starte dein Programm erneut. Erst der neue Lauf zeigt, welches Problem noch besteht."
             ],
             { countable: false }
         ),
@@ -159,7 +159,7 @@
             "INVENTORY_OUTPUT",
             "Die echte Inventarliste fehlt in der Ausgabe",
             [
-                "Die Flucht ist gelungen, aber der Missionsbericht enthält noch nicht das tatsächlich gesammelte Inventar.",
+                "Die Gegenstände sind gesichert, aber der Missionsbericht enthält noch nicht das tatsächlich gesammelte Inventar.",
                 "Erzeuge die Ausgabe aus der Variablen inventar, statt die erwarteten Gegenstände als fertigen Text zu schreiben.",
                 "Nutze am Ende print(\"INVENTARLISTE: \" + \",\".join(inventar))."
             ]
@@ -236,6 +236,10 @@
             ? Boolean(inventory?.includes("Sternenfragment"))
             : artifactFlag;
         if (!hasArtifact) return ISSUES.ARTIFACT_MISSING;
+
+        if (context.stage === "briefing") {
+            return context.inventoryOutputPassed === true ? ISSUES.COMPLETE : ISSUES.INVENTORY_OUTPUT;
+        }
 
         const escaped = booleanFrom(context, ["escaped", "exitUnlocked"]) === true;
         const hackFailure = normalizedFailure(context.lastHackFailure);

@@ -66,6 +66,7 @@
     let lastRunCode = null;
     let lastErrorMessage = null;
     let lastResult = null;
+    let resetCode = config.defaultCode;
 
     function emitFinaleEvent(name, detail) {
         const EventConstructor = window.CustomEvent;
@@ -510,7 +511,7 @@
             return;
         }
         runGeneration += 1;
-        editor.setValue(config.defaultCode);
+        editor.setValue(resetCode);
         editor.clearHistory();
         outputText = "";
         hasRun = false;
@@ -559,7 +560,12 @@
     config.resetHud?.();
     if (config.levelId) {
         const attempted = window.restoreAttemptedLevelCode?.(config.levelId);
-        if (!attempted) window.restoreCompletedLevelCode?.(config.levelId);
+        const restored = !attempted && window.restoreCompletedLevelCode?.(config.levelId);
+        const inherited = !attempted && !restored && config.inheritCode &&
+            window.restoreLevelCode?.(config.levelId);
+        if ((attempted || restored || inherited) && config.resetToLoadedCode) {
+            resetCode = editor.getValue();
+        }
     }
     setStatus("Bereit", "ready");
     window.finalePrototype = {

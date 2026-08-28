@@ -42,6 +42,8 @@ test("Pixelmuseum help routes the most specific current runtime blocker", () => 
         [{ hasRun: true, runtimeInventory: [], orderFailure: true }, "KEYCARD_ORDER"],
         [{ hasRun: true, runtimeInventory: [] }, "KEYCARD_MISSING"],
         [{ hasRun: true, runtimeInventory: ["Schlüsselkarte"] }, "ARTIFACT_MISSING"],
+        [{ ...completedRun, stage: "briefing", escaped: false, inventoryOutputPassed: false }, "INVENTORY_OUTPUT"],
+        [{ ...completedRun, stage: "briefing", escaped: false }, "COMPLETE"],
         [{ ...completedRun, escaped: false, lastHackFailure: "TOO_EARLY" }, "HACK_TOO_EARLY"],
         [{ ...completedRun, escaped: false, lastHackFailure: "WRONG_PLACE" }, "HACK_WRONG_PLACE"],
         [{ ...completedRun, escaped: false, lastHackFailure: "WRONG_CODE" }, "HACK_WRONG_CODE"],

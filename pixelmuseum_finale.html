@@ -6,12 +6,13 @@
     <meta name="color-scheme" content="dark">
     <meta name="description" content="Offene Pixelmuseum-Mission: Sichere das Sternenfragment und entkomme mit deiner eigenen Drohnenstrategie.">
     <title>Pixelmuseum – Das gestohlene Sternenfragment</title>
-    <script src="assets/runner.js?v=20260828-1"></script>
+    <script src="assets/runner.js?v=20260828-2"></script>
+    <script src="assets/teacher-solutions.js?v=20260828-3"></script>
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
     <link rel="stylesheet" href="assets/style.css?v=20260722-2">
     <link rel="stylesheet" href="prototypes/finale.css?v=cockpit-scroll-v2">
-    <link rel="stylesheet" href="assets/pixelmuseum.css?v=20260828-2">
+    <link rel="stylesheet" href="assets/pixelmuseum.css?v=20260828-3">
 </head>
 <body class="prototype-page museum-theme museum-path-page" data-mission-level="pixelmuseum_finale" data-pixelmuseum-stage="finale">
     <a class="skip-link" href="#editor-panel">Zum Python-Editor</a>
@@ -103,9 +104,9 @@
 
                         <div id="museum-turtle" class="turtle-target" aria-hidden="true"></div>
 
-                        <div id="keycard-label" class="stage-label keycard-label"><span aria-hidden="true">▣</span> Schlüsselkarte (−250, 60)</div>
-                        <div id="artifact-label" class="stage-label artifact-label"><span aria-hidden="true">✦</span> Gestohlenes Sternenfragment (−390, 45)</div>
-                        <div id="alarm-console-label" class="stage-label alarm-console-label"><span aria-hidden="true">◈</span> Alarm ausschalten (250, −60)</div>
+                        <div id="keycard-label" class="stage-label keycard-label"><span aria-hidden="true">▣</span> Schlüsselkarte (-250, 60)</div>
+                        <div id="artifact-label" class="stage-label artifact-label"><span aria-hidden="true">✦</span> Gestohlenes Sternenfragment (-390, 45)</div>
+                        <div id="alarm-console-label" class="stage-label alarm-console-label"><span aria-hidden="true">◈</span> Alarm ausschalten (250, -60)</div>
                         <div id="portal-label" class="stage-label portal-label"><span aria-hidden="true">⬡</span> Ausgang offen (0, 115)</div>
                         <div id="museum-warning" class="museum-warning" role="status" aria-live="assertive"></div>
                         <div id="museum-success" class="museum-success" role="status" aria-live="polite"></div>
@@ -119,9 +120,9 @@
                 </div>
 
                 <ul class="mobile-target-legend" aria-label="Ziele im Pixelmuseum">
-                    <li>Schlüsselkarte <span>(−250, 60)</span></li>
-                    <li>Sternenfragment <span>(−390, 45)</span></li>
-                    <li>Alarmkonsole <span>(250, −60)</span></li>
+                    <li>Schlüsselkarte <span>(-250, 60)</span></li>
+                    <li>Sternenfragment <span>(-390, 45)</span></li>
+                    <li>Alarmkonsole <span>(250, -60)</span></li>
                     <li>Portal <span>(0, 115)</span></li>
                 </ul>
 
@@ -141,29 +142,7 @@
                 </div>
             </section>
 
-            <section class="code-column" id="editor-panel" aria-labelledby="museum-code-title">
-                <div class="section-heading">
-                    <div>
-                        <span class="eyebrow">Dein eigener Einsatzplan</span>
-                        <h2 id="museum-code-title">Python-Einsatzzentrale</h2>
-                    </div>
-                    <span class="autosave-note">Erfolg wird gespeichert</span>
-                </div>
-
-                <aside class="museum-help-card" aria-labelledby="museum-help-heading">
-                    <div class="museum-help-heading">
-                        <div><span class="eyebrow">Deine Zentrale</span><h3 id="museum-help-heading">Du entscheidest, wann du Hilfe brauchst.</h3></div>
-                        <span id="museum-help-count" class="museum-help-count">Zentrale kontaktiert: 0-mal</span>
-                    </div>
-                    <button id="museum-help-btn" class="secondary-action museum-help-action" type="button" aria-controls="museum-help-panel" aria-expanded="false">Fordere von deiner Zentrale Hilfe an</button>
-                    <div id="museum-help-panel" class="museum-help-panel" role="status" aria-live="polite" data-help-issue="" hidden>
-                        <div class="museum-help-panel-header"><h3 id="museum-help-title">Hinweis der Zentrale</h3><span id="museum-help-level" class="museum-help-level"></span></div>
-                        <p id="museum-help-message"></p>
-                        <small id="museum-help-detail" class="museum-help-detail" hidden></small>
-                    </div>
-                    <p class="museum-help-footnote">Gezählt werden nur neu aufgedeckte Hinweise. Die Zahl beeinflusst weder Erfolg noch Goldmünzen.</p>
-                </aside>
-
+            <section class="code-column" id="editor-panel" aria-label="Python-Code für das Pixelmuseum">
                 <div class="control-bar finale-control-quick" aria-label="Programmaktionen oberhalb des Python-Codes">
                     <button class="primary-action" type="button" data-finale-run><span aria-hidden="true">▶</span> Flucht starten</button>
                     <button class="secondary-action" type="button" data-finale-reset>↺ Startcode laden</button>
@@ -196,13 +175,7 @@ def markiere():
     drohne.dot(18, "#ff78f3")
 
 def alarm_hacken(code):
-    # Das Museum prüft Code, Ort und Zeitpunkt automatisch.
     print("ALARM_HACK|" + code)
-
-# Dein Fluchtplan beginnt hier.
-# Fundorte: Schlüsselkarte (-250, 60), Sternenfragment (-390, 45)
-# Fluchtpunkte: Alarmkonsole (250, -60), Portal (0, 115)
-# Sichere die gefundenen Gegenstände in inventar und gib die INVENTARLISTE aus.
 </textarea>
 
                     <div class="control-bar" aria-label="Programmaktionen">
@@ -210,6 +183,7 @@ def alarm_hacken(code):
                         <button id="reset-btn" class="secondary-action" type="button">↺ Startcode laden</button>
                         <button id="presentation-btn" class="secondary-action" type="button">◫ Präsentieren</button>
                     </div>
+                    <button class="test-btn" type="button" data-teacher-solution="pixelmuseum_finale">Musterlösung (Für Lehrer)</button>
                 </div>
 
                 <div class="console-card">
@@ -249,8 +223,10 @@ def alarm_hacken(code):
             runningLabel: "Drohne unterwegs",
             resetLabel: "↺ Startcode laden",
             resetTitle: "Startcode wiederhergestellt",
-            resetMessage: "Die Missionswerkzeuge sind bereit. Route, Fundkette und Strategie programmierst du selbst.",
+            resetMessage: "Dein Code aus dem Briefing ist wiederhergestellt. Ergänze jetzt deine Fluchtstrategie.",
             defaultCode: document.getElementById("python-editor").value,
+            inheritCode: true,
+            resetToLoadedCode: true,
             onRunStart() {
                 this.prepareAudio();
             },
@@ -438,9 +414,9 @@ def alarm_hacken(code):
                 this.currentPoint = null;
                 this.renderAlarm(0);
                 this.renderInventory();
-                document.getElementById("keycard-label").innerHTML = '<span aria-hidden="true">▣</span> Schlüsselkarte (−250, 60)';
-                document.getElementById("artifact-label").innerHTML = '<span aria-hidden="true">✦</span> Gestohlenes Sternenfragment (−390, 45)';
-                document.getElementById("alarm-console-label").innerHTML = '<span aria-hidden="true">◈</span> Alarm ausschalten (250, −60)';
+                document.getElementById("keycard-label").innerHTML = '<span aria-hidden="true">▣</span> Schlüsselkarte (-250, 60)';
+                document.getElementById("artifact-label").innerHTML = '<span aria-hidden="true">✦</span> Gestohlenes Sternenfragment (-390, 45)';
+                document.getElementById("alarm-console-label").innerHTML = '<span aria-hidden="true">◈</span> Alarm ausschalten (250, -60)';
                 document.getElementById("museum-warning").textContent = "";
                 document.getElementById("museum-success").textContent = "";
                 document.body.classList.remove(
@@ -664,8 +640,7 @@ def alarm_hacken(code):
             }
         };
     </script>
-    <script src="prototypes/finale.js?v=action-alarm-v1"></script>
-    <script src="assets/pixelmuseum-help-core.js?v=20260828-1"></script>
-    <script src="assets/pixelmuseum-path.js?v=20260722-2"></script>
+    <script src="prototypes/finale.js?v=action-alarm-v2"></script>
+    <script src="assets/pixelmuseum-path.js?v=20260828-1"></script>
 </body>
 </html>

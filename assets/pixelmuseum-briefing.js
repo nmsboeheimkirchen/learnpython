@@ -28,10 +28,10 @@
             : (snapshot.keycardCollected ? "Karte ✓ → Fragment" : "Karte → Fragment");
         byId("briefing-card-label").innerHTML = snapshot.keycardCollected
             ? '<span aria-hidden="true">✓</span> Schlüsselkarte gesichert'
-            : '<span aria-hidden="true">▣</span> Schlüsselkarte (−250, 60)';
+            : '<span aria-hidden="true">▣</span> Schlüsselkarte (-250, 60)';
         byId("briefing-fragment-label").innerHTML = snapshot.starFragmentCollected
             ? '<span aria-hidden="true">✓</span> Sternenfragment gesichert'
-            : '<span aria-hidden="true">✦</span> Sternenfragment (−390, 45)';
+            : '<span aria-hidden="true">✦</span> Sternenfragment (-390, 45)';
         document.body.classList.toggle("museum-card-collected", snapshot.keycardCollected);
         document.body.classList.toggle("museum-fragment-collected", snapshot.starFragmentCollected);
         return snapshot;
