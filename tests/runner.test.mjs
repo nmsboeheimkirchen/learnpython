@@ -1452,7 +1452,7 @@ const teacherSolutionExpectations = new Map([
     ["pico_level2a", /status\["TRANSPONDER"\] = "aufgeladen"/],
     ["pico_level3", /signal_erfolgreich = drohne\.sende\(\)/],
     ["pico_level4", /if signal_erfolgreich:[\s\S]*status\["DROHNE"\] = "self-destroy"[\s\S]*status\["TRANSPONDER"\] = "delete"/],
-    ["pixelmuseum_briefing", /gehe_zu\(-230, 70\)[\s\S]*inventar\.append\(fund\)[\s\S]*gehe_zu\(-70, -75\)/]
+    ["pixelmuseum_briefing", /gehe_zu\(-250, 60\)[\s\S]*inventar\.append\(fund\)[\s\S]*gehe_zu\(-390, 45\)/]
 ]);
 
 test("teacher solutions are centralized and available for every level", () => {
@@ -2186,16 +2186,16 @@ test("both homepage options keep distinct light moods and one shared logo while 
     assert.equal(heroTexts[0], heroTexts[1], "A und B sollen dieselbe Hero-Erzählung verwenden");
 });
 
-test("the public index is the complete A homepage instead of a redirect", () => {
+test("the public index is the selected complete B homepage instead of a redirect", () => {
     const root = readFileSync(new URL("../index.html", import.meta.url), "utf8");
-    const optionA = readFileSync(new URL("../index-a.html", import.meta.url), "utf8");
+    const optionB = readFileSync(new URL("../index-b.html", import.meta.url), "utf8");
 
-    assert.match(root, /<body class="course-home home-path"/);
+    assert.match(root, /<body class="course-home home-agent-path"/);
     assert.match(root, /Entdecke,/);
-    assert.match(root, /href="index-b\.html"/);
-    assert.match(root, /agent-path-cyan-moon\.webp/);
+    assert.match(root, /href="index-a\.html"/);
+    assert.match(root, /agent-path-magenta-portal\.webp/);
     assert.doesNotMatch(root, /window\.location|http-equiv=["']refresh/i);
-    assert.equal(root, optionA);
+    assert.equal(root, optionB);
 });
 
 test("both homepage hero renders are valid optimized WebP assets", () => {
@@ -2390,6 +2390,13 @@ test("finale prototypes stay isolated while the production Pixelmuseum path is p
     assert.match(productionBriefing, /pixelmuseum-briefing-core\.js/);
     assert.match(productionBriefing, /INVENTARLISTE/);
     assert.match(productionBriefing, /data-mission-run/);
+    assert.doesNotMatch(productionBriefing, /museum-alarm-preview|Vorschau aufs Finale/);
+    assert.doesNotMatch(productionBriefing, /und melde am Ende die Liste|Schleifen, Hilfsfunktionen/);
+    const productionBriefingCode = productionBriefing.match(/<textarea id="python-editor"[^>]*>([\s\S]*?)<\/textarea>/)?.[1] ?? "";
+    assert.deepEqual(
+        productionBriefingCode.match(/^#.*$/gm),
+        ["# Ziele: Schlüsselkarte (-250, 60), Sternenfragment (-390, 45)"]
+    );
     assert.ok(
         productionBriefing.indexOf("data-mission-run") < productionBriefing.indexOf('id="python-editor"'),
         "der zusätzliche Briefing-Startknopf steht vor dem Python-Code"
@@ -2398,6 +2405,10 @@ test("finale prototypes stay isolated while the production Pixelmuseum path is p
     assert.match(productionFinale, /Fordere von deiner Zentrale Hilfe an/);
     assert.match(productionFinale, /pixelmuseum-help-core\.js/);
     assert.match(productionFinale, /pixelmuseum-alarm-core\.js/);
+    assert.doesNotMatch(productionFinale, /museum-rules-card|Klare Weltregeln, freie Lösung/);
+    assert.match(productionFinale, /Schlüsselkarte \(−250, 60\)/);
+    assert.match(productionFinale, /Gestohlenes Sternenfragment \(−390, 45\)/);
+    assert.match(productionFinale, /Fundorte: Schlüsselkarte \(-250, 60\), Sternenfragment \(-390, 45\)/);
     assert.match(productionFinale, /data-finale-run/);
     assert.ok(
         productionFinale.indexOf("data-finale-run") < productionFinale.indexOf('id="python-editor"'),

@@ -17,14 +17,14 @@ function loadBriefingCore() {
     return window.PixelmuseumBriefingCore;
 }
 
-test("Pixelmuseum briefing starts at the rehearsal coordinates with an empty inventory", () => {
+test("Pixelmuseum briefing uses the real exhibit coordinates with an empty inventory", () => {
     const briefing = loadBriefingCore();
     const state = briefing.createState();
     const snapshot = state.snapshot();
 
     assert.deepEqual({ ...briefing.START }, { x: 260, y: -170 });
-    assert.deepEqual({ ...briefing.KEYCARD }, { x: -230, y: 70 });
-    assert.deepEqual({ ...briefing.STAR_FRAGMENT }, { x: -70, y: -75 });
+    assert.deepEqual({ ...briefing.KEYCARD }, { x: -250, y: 60 });
+    assert.deepEqual({ ...briefing.STAR_FRAGMENT }, { x: -390, y: 45 });
     assert.deepEqual({ ...snapshot.current }, { x: 260, y: -170 });
     assert.deepEqual([...snapshot.collectedItems], []);
     assert.equal(snapshot.pendingItem, null);

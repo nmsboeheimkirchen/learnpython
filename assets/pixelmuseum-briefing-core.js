@@ -5,8 +5,8 @@
     if (!core) throw new Error("Der gemeinsame Drohnen-Missionskern fehlt.");
 
     const START = Object.freeze({ x: 260, y: -170 });
-    const KEYCARD = Object.freeze({ x: -230, y: 70 });
-    const STAR_FRAGMENT = Object.freeze({ x: -70, y: -75 });
+    const KEYCARD = Object.freeze({ x: -250, y: 60 });
+    const STAR_FRAGMENT = Object.freeze({ x: -390, y: 45 });
     const SEARCH_RADIUS = 16;
     const KEYCARD_ITEM = "Schlüsselkarte";
     const STAR_FRAGMENT_ITEM = "Sternenfragment";

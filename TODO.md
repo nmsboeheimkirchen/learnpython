@@ -11,7 +11,8 @@
   - [ ] Finale ohne Echtzeitdruck als nachvollziehbare Zustandsmission bauen
 - [ ] A/B-Varianten entfernen und je eine kanonische Start- und Fluchtseite festlegen
   - [x] Fluchtseite vereinheitlichen; alte B-Adresse auf die kanonische Seite weiterleiten
-  - [ ] Startseitenvariante auswählen und die übrige Variante entfernen oder weiterleiten
+  - [x] Startseitenvariante B auswählen und als öffentliche `index.html` festlegen
+  - [ ] Alte Startseitenvarianten entfernen oder auf die kanonische Seite weiterleiten
 - [ ] Startseite nach Fertigstellung des gesamten Lernpfads aktualisieren
 - [ ] Optional: vollständigen Hell-/Dunkelmodus mit Kontrast- und Beamerprüfung entwickeln
 

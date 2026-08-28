@@ -134,7 +134,7 @@ test("the mission home button uses the supplied logo compactly on phones and ret
     expect(dockRect.right).toBeLessThanOrEqual(390);
 
     await page.locator("#agent-py-home").click();
-    await expect(page.locator("body")).toHaveClass(/home-path/);
+    await expect(page.locator("body")).toHaveClass(/home-agent-path/);
     await expect(page.locator("h1")).toContainText("Entdecke,");
 });
 

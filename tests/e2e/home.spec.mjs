@@ -50,14 +50,14 @@ function durationInMilliseconds(value) {
     return Number.POSITIVE_INFINITY;
 }
 
-test("the public root is the complete A homepage and keeps B reachable", async ({ page }) => {
+test("the public root is the selected complete B homepage and keeps A reachable", async ({ page }) => {
     const pageErrors = capturePageErrors(page);
     await page.goto("/");
 
-    await expect(page.locator("body")).toHaveClass(/home-path/);
+    await expect(page.locator("body")).toHaveClass(/home-agent-path/);
     await expect(page.locator("h1")).toContainText("Entdecke,");
-    await expect(page.locator('.variant-switch a[aria-current="page"]')).toHaveText("A");
-    await expect(page.locator('.variant-switch a[href="index-b.html"]')).toBeVisible();
+    await expect(page.locator('.variant-switch a[aria-current="page"]')).toHaveText("B");
+    await expect(page.locator('.variant-switch a[href="index-a.html"]')).toBeVisible();
     await expect(page.locator(".course-brand")).toHaveAttribute("href", "index.html");
     await expect(page.locator(".course-brand-logo")).toHaveAttribute("src", `assets/brand/agent-py-logo.png?v=${assetVersion}`);
     const logoResponse = await page.request.get(`/assets/brand/agent-py-logo.png?v=${assetVersion}`);

@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
     <link rel="stylesheet" href="assets/style.css?v=20260722-2">
     <link rel="stylesheet" href="prototypes/finale.css?v=cockpit-scroll-v2">
-    <link rel="stylesheet" href="assets/pixelmuseum.css?v=20260828-1">
+    <link rel="stylesheet" href="assets/pixelmuseum.css?v=20260828-2">
 </head>
 <body class="prototype-page museum-theme museum-path-page" data-mission-level="pixelmuseum_finale" data-pixelmuseum-stage="finale">
     <a class="skip-link" href="#editor-panel">Zum Python-Editor</a>
@@ -103,10 +103,10 @@
 
                         <div id="museum-turtle" class="turtle-target" aria-hidden="true"></div>
 
-                        <div id="keycard-label" class="stage-label keycard-label"><span aria-hidden="true">▣</span> Schlüsselkarte</div>
-                        <div id="artifact-label" class="stage-label artifact-label"><span aria-hidden="true">✦</span> Gestohlenes Sternenfragment</div>
-                        <div id="alarm-console-label" class="stage-label alarm-console-label"><span aria-hidden="true">◈</span> Alarm ausschalten</div>
-                        <div id="portal-label" class="stage-label portal-label"><span aria-hidden="true">⬡</span> Ausgang offen</div>
+                        <div id="keycard-label" class="stage-label keycard-label"><span aria-hidden="true">▣</span> Schlüsselkarte (−250, 60)</div>
+                        <div id="artifact-label" class="stage-label artifact-label"><span aria-hidden="true">✦</span> Gestohlenes Sternenfragment (−390, 45)</div>
+                        <div id="alarm-console-label" class="stage-label alarm-console-label"><span aria-hidden="true">◈</span> Alarm ausschalten (250, −60)</div>
+                        <div id="portal-label" class="stage-label portal-label"><span aria-hidden="true">⬡</span> Ausgang offen (0, 115)</div>
                         <div id="museum-warning" class="museum-warning" role="status" aria-live="assertive"></div>
                         <div id="museum-success" class="museum-success" role="status" aria-live="polite"></div>
 
@@ -164,19 +164,6 @@
                     <p class="museum-help-footnote">Gezählt werden nur neu aufgedeckte Hinweise. Die Zahl beeinflusst weder Erfolg noch Goldmünzen.</p>
                 </aside>
 
-                <aside class="creative-card museum-rules-card" aria-labelledby="museum-rules-title">
-                    <span aria-hidden="true">◈</span>
-                    <div>
-                        <strong id="museum-rules-title">Klare Weltregeln, freie Lösung</strong>
-                        <ul class="museum-world-rules">
-                            <li>Erst eine mit <code>suche_hier()</code> gefundene <strong>Schlüsselkarte</strong> entsperrt das Sternenfragment.</li>
-                            <li>Mit dem Sternenfragment startet der Alarm bei Stufe 0. Jede danach abgeschlossene Flugbewegung und jeder Hackversuch kostet eine Stufe.</li>
-                            <li>Die erste direkte Flugbewegung darf noch durchs offene Portal führen. Alternativ kannst du zur Konsole fliegen, den Alarm hacken und danach entkommen.</li>
-                            <li><code>drohne.speed(...)</code> ändert nur die Animation – nie die Missionsregeln.</li>
-                        </ul>
-                    </div>
-                </aside>
-
                 <div class="control-bar finale-control-quick" aria-label="Programmaktionen oberhalb des Python-Codes">
                     <button class="primary-action" type="button" data-finale-run><span aria-hidden="true">▶</span> Flucht starten</button>
                     <button class="secondary-action" type="button" data-finale-reset>↺ Startcode laden</button>
@@ -213,7 +200,8 @@ def alarm_hacken(code):
     print("ALARM_HACK|" + code)
 
 # Dein Fluchtplan beginnt hier.
-# Ziele und Koordinaten stehen in der Live-Missionsansicht.
+# Fundorte: Schlüsselkarte (-250, 60), Sternenfragment (-390, 45)
+# Fluchtpunkte: Alarmkonsole (250, -60), Portal (0, 115)
 # Sichere die gefundenen Gegenstände in inventar und gib die INVENTARLISTE aus.
 </textarea>
 
@@ -450,9 +438,9 @@ def alarm_hacken(code):
                 this.currentPoint = null;
                 this.renderAlarm(0);
                 this.renderInventory();
-                document.getElementById("keycard-label").innerHTML = '<span aria-hidden="true">▣</span> Schlüsselkarte';
-                document.getElementById("artifact-label").innerHTML = '<span aria-hidden="true">✦</span> Gestohlenes Sternenfragment';
-                document.getElementById("alarm-console-label").innerHTML = '<span aria-hidden="true">◈</span> Alarm ausschalten';
+                document.getElementById("keycard-label").innerHTML = '<span aria-hidden="true">▣</span> Schlüsselkarte (−250, 60)';
+                document.getElementById("artifact-label").innerHTML = '<span aria-hidden="true">✦</span> Gestohlenes Sternenfragment (−390, 45)';
+                document.getElementById("alarm-console-label").innerHTML = '<span aria-hidden="true">◈</span> Alarm ausschalten (250, −60)';
                 document.getElementById("museum-warning").textContent = "";
                 document.getElementById("museum-success").textContent = "";
                 document.body.classList.remove(
@@ -571,8 +559,8 @@ def alarm_hacken(code):
                     ? "entkommen"
                     : (this.portalOpen ? "offen" : "gesperrt");
                 document.getElementById("portal-label").innerHTML = this.portalOpen
-                    ? '<span aria-hidden="true">⬡</span> Ausgang offen'
-                    : '<span aria-hidden="true">▥</span> Portal verriegelt';
+                    ? '<span aria-hidden="true">⬡</span> Ausgang offen (0, 115)'
+                    : '<span aria-hidden="true">▥</span> Portal verriegelt (0, 115)';
             },
             showTrappedWarning() {
                 const warning = document.getElementById("museum-warning");

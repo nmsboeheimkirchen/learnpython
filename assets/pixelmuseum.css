@@ -50,8 +50,8 @@
 }
 
 .museum-briefing-fragment {
-    left: 37%;
-    bottom: 23%;
+    left: 2%;
+    top: 47%;
 }
 
 .museum-briefing-hud {
@@ -158,42 +158,6 @@
     gap: 10px;
 }
 
-.museum-alarm-preview {
-    display: grid;
-    grid-template-columns: 48px 1fr;
-    gap: 13px;
-    margin: 14px 0;
-    padding: 15px;
-    border: 1px solid rgba(255, 211, 111, 0.3);
-    border-radius: 16px;
-    background: linear-gradient(135deg, rgba(255, 211, 111, 0.08), rgba(255, 120, 243, 0.065));
-}
-
-.museum-alarm-preview h2 {
-    margin: 3px 0 5px;
-    color: #fff0c7;
-    font-size: 1rem;
-}
-
-.museum-alarm-preview p {
-    margin: 0;
-    color: #bac9d7;
-    font-size: 0.8rem;
-    line-height: 1.52;
-}
-
-.museum-alarm-icon {
-    display: grid;
-    width: 44px;
-    height: 44px;
-    place-items: center;
-    border: 1px solid rgba(255, 211, 111, 0.42);
-    border-radius: 14px;
-    color: #ffd36f;
-    background: rgba(255, 211, 111, 0.1);
-    font-size: 1.25rem;
-}
-
 /* Production finale additions; the original prototype remains untouched. */
 .museum-path-page .progress-container {
     width: min(1480px, calc(100% - 36px));
@@ -268,12 +232,6 @@
     border: 1px solid rgba(126, 247, 255, 0.2);
     border-radius: 15px;
     background: rgba(126, 247, 255, 0.045);
-}
-
-.museum-rules-card {
-    margin-bottom: 14px;
-    border-color: rgba(255, 120, 243, 0.2);
-    background: rgba(255, 120, 243, 0.045);
 }
 
 .museum-help-card {
@@ -471,10 +429,6 @@
 
 @media (max-width: 460px) {
     .museum-final-plan {
-        grid-template-columns: 1fr;
-    }
-
-    .museum-alarm-preview {
         grid-template-columns: 1fr;
     }
 }
