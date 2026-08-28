@@ -45,7 +45,7 @@ test("@ipad project choice opens PICO and the required Pixelmuseum briefing", as
     await page.goto("/projektwahl.html");
     await page.getByRole("link", { name: "Pixelmuseum-Briefing starten" }).click();
     await expect(page).toHaveURL(/\/pixelmuseum_briefing\.html$/);
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Zwei Funde. Eine echte Inventarkette.");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Briefing");
     await expect.poll(() => page.evaluate(() => Boolean(window.DroneMissionRuntime))).toBe(true);
     expect(pageErrors).toEqual([]);
 });

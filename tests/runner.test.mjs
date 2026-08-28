@@ -1881,7 +1881,7 @@ test("all progress link ids keep their established unlock routes", () => {
         "link-museum-title": "pixelmuseum_briefing.html",
         "link-museum-briefing": "pixelmuseum_briefing.html",
         "link-museum-finale": "pixelmuseum_finale.html",
-        "link-helicopter-escape": "helikopter_flucht-b.html"
+        "link-helicopter-escape": "helikopter_flucht.html"
     });
 });
 
@@ -2076,48 +2076,36 @@ test("the public PICO path shares one runtime and uses TRANSPONDER from level 1"
     assert.match(level4, /status\["TRANSPONDER"\] = "delete"/);
 });
 
-test("both helicopter escape landings use distinct optimized renders and a shared mission handoff", () => {
-    const variants = [
-        {
-            page: "helikopter_flucht.html",
-            artwork: "helicopter-hangar-a.webp",
-            heading: /Jetzt musst du selbst raus\./,
-            currentVariant: /href="helikopter_flucht\.html" aria-current="page"/
-        },
-        {
-            page: "helikopter_flucht-b.html",
-            artwork: "helicopter-rooftop-b.webp",
-            heading: /Der Lord kommt zurück\./,
-            currentVariant: /href="helikopter_flucht-b\.html" aria-current="page"/
-        }
-    ];
-    const hashes = [];
+test("the final helicopter escape uses the selected hangar render and approved briefing", () => {
+    const html = readFileSync(new URL("../helikopter_flucht.html", import.meta.url), "utf8");
+    const legacy = readFileSync(new URL("../helikopter_flucht-b.html", import.meta.url), "utf8");
+    const artwork = "helicopter-hangar-final.webp";
+    const artworkUrl = new URL(`../assets/images/escape/${artwork}`, import.meta.url);
+    const bytes = readFileSync(artworkUrl);
 
-    for (const variant of variants) {
-        const html = readFileSync(new URL(`../${variant.page}`, import.meta.url), "utf8");
-        const artworkUrl = new URL(`../assets/images/escape/${variant.artwork}`, import.meta.url);
-        const bytes = readFileSync(artworkUrl);
-
-        assert.match(html, variant.heading);
-        assert.match(html, variant.currentVariant);
-        assert.match(html, /echte Agent(?:in| oder die echte Agentin)/);
-        assert.match(html, /Basis des bösen Lords/);
-        assert.match(html, /Helikopter/);
-        assert.match(html, /(?:Hacke|Brich) /);
-        assert.match(html, new RegExp(`assets/images/escape/${variant.artwork.replace(".", "\\.")}`));
-        assert.doesNotMatch(html, /href="[^"]*(?:prototypes\/|finale)/i);
-        assert.equal(bytes.subarray(0, 4).toString("ascii"), "RIFF", `${variant.artwork} ist kein RIFF-WebP`);
-        assert.equal(bytes.subarray(8, 12).toString("ascii"), "WEBP", `${variant.artwork} ist kein WebP`);
-        assert.equal(bytes.subarray(12, 16).toString("ascii"), "VP8X", `${variant.artwork} braucht WebP-Metadaten`);
-        const width = bytes.readUIntLE(24, 3) + 1;
-        const height = bytes.readUIntLE(27, 3) + 1;
-        assert.match(html, new RegExp(`width="${width}" height="${height}"`));
-        assert.ok(bytes.length > 50_000, `${variant.artwork} ist unerwartet leer oder zu klein`);
-        assert.ok(statSync(artworkUrl).size < 300_000, `${variant.artwork} ist für die Landingpage zu groß`);
-        hashes.push(createHash("sha256").update(bytes).digest("hex"));
-    }
-
-    assert.notEqual(hashes[0], hashes[1], "A und B brauchen wirklich unterschiedliche Renderings");
+    assert.match(html, /Der Lord kommt zurück\./);
+    assert.match(html, /Die Drohne hat ihren Auftrag erfüllt\. Jetzt musst du schnell aus der Basis des bösen Lords verschwinden\./);
+    assert.match(html, /Im Hangar wartet sein neuer Helikopter\./);
+    assert.match(html, /Entschlüssle den Zugangscode/);
+    assert.match(html, /bevor die Hangartore verriegelt werden/);
+    assert.match(html, new RegExp(`assets/images/escape/${artwork.replace(".", "\\.")}`));
+    assert.doesNotMatch(html, /escape-variant-switch/);
+    assert.doesNotMatch(html, /href="[^"]*(?:prototypes\/|finale)/i);
+    assert.equal(bytes.subarray(0, 4).toString("ascii"), "RIFF", `${artwork} ist kein RIFF-WebP`);
+    assert.equal(bytes.subarray(8, 12).toString("ascii"), "WEBP", `${artwork} ist kein WebP`);
+    const webpChunk = bytes.subarray(12, 16).toString("ascii");
+    assert.ok(["VP8X", "VP8 "].includes(webpChunk), `${artwork} hat keinen unterstützten WebP-Bildblock`);
+    const width = webpChunk === "VP8X"
+        ? bytes.readUIntLE(24, 3) + 1
+        : bytes.readUInt16LE(26) & 0x3fff;
+    const height = webpChunk === "VP8X"
+        ? bytes.readUIntLE(27, 3) + 1
+        : bytes.readUInt16LE(28) & 0x3fff;
+    assert.match(html, new RegExp(`width="${width}" height="${height}"`));
+    assert.ok(bytes.length > 50_000, `${artwork} ist unerwartet leer oder zu klein`);
+    assert.ok(statSync(artworkUrl).size < 300_000, `${artwork} ist für die Landingpage zu groß`);
+    assert.match(legacy, /url=helikopter_flucht\.html/);
+    assert.match(legacy, /location\.replace\("helikopter_flucht\.html"/);
 });
 
 test("all four mission artworks are local, valid and web-sized", () => {
@@ -2400,11 +2388,24 @@ test("finale prototypes stay isolated while the production Pixelmuseum path is p
     const productionFinale = readFileSync(new URL("../pixelmuseum_finale.html", import.meta.url), "utf8");
     assert.match(productionBriefing, /data-mission-level="pixelmuseum_briefing"/);
     assert.match(productionBriefing, /pixelmuseum-briefing-core\.js/);
-    assert.match(productionBriefing, /BRIEFING-INVENTAR/);
+    assert.match(productionBriefing, /INVENTARLISTE/);
+    assert.match(productionBriefing, /data-mission-run/);
+    assert.ok(
+        productionBriefing.indexOf("data-mission-run") < productionBriefing.indexOf('id="python-editor"'),
+        "der zusätzliche Briefing-Startknopf steht vor dem Python-Code"
+    );
     assert.match(productionFinale, /data-mission-level="pixelmuseum_finale"/);
     assert.match(productionFinale, /Fordere von deiner Zentrale Hilfe an/);
     assert.match(productionFinale, /pixelmuseum-help-core\.js/);
-    assert.match(productionFinale, /helikopter_flucht-b\.html/);
+    assert.match(productionFinale, /pixelmuseum-alarm-core\.js/);
+    assert.match(productionFinale, /data-finale-run/);
+    assert.ok(
+        productionFinale.indexOf("data-finale-run") < productionFinale.indexOf('id="python-editor"'),
+        "der zusätzliche Finale-Startknopf steht vor dem Python-Code"
+    );
+    assert.doesNotMatch(productionFinale, /window\.setInterval/);
+    assert.doesNotMatch(productionFinale, /getTurtleSpeedMultiplier/);
+    assert.match(productionFinale, /helikopter_flucht\.html/);
     assert.doesNotMatch(productionFinale, /analysis\.hasIf/);
 
     const pico = readFileSync(new URL("../prototypes/pico_finale.html", import.meta.url), "utf8");
@@ -3134,13 +3135,14 @@ test("finale runtime guards creative code and optimized artwork stays small", ()
     assert.match(runtime, /lineWrapping:\s*true/);
     assert.match(runtime, /runGeneration/);
     assert.match(runtime, /classList\.toggle\("program-running", nextRunning\)/);
-    assert.match(runtime, /resetButton\.disabled = nextRunning && cancelRequested/);
+    assert.match(runtime, /button\.disabled = nextRunning && cancelRequested/);
     assert.match(runtime, /■ Mission stoppen/);
     assert.match(runtime, /Sk\.execStart = new Date\(0\)/);
     assert.match(runtime, /config\.onRunError\?\.\(error\)/);
     assert.match(runtime, /config\.onOutput\?\.\(chunk, outputText\)/);
     assert.match(runtime, /installTurtleObserver/);
     assert.match(runtime, /config\.getTurtleSpeedMultiplier/);
+    assert.match(runtime, /config\.onTurtleMoveComplete/);
     assert.match(runtime, /Teilbereich erfüllt/);
     assert.match(runtime, /Teilbereich prüfen/);
     assert.match(runtime, /installTurtleAgentApi/);

@@ -139,7 +139,7 @@
                 rewardCount: 3,
                 celebration: "coins",
                 closeLabel: "Zurück zum Editor",
-                primaryHref: "helikopter_flucht-b.html",
+                primaryHref: "helikopter_flucht.html",
                 primaryLabel: "Zur Flucht mit dem Helikopter",
                 statusLabel: "PIXELMUSEUM GESCHAFFT!"
             });

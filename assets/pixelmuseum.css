@@ -234,6 +234,48 @@
     color: #fff;
 }
 
+.museum-world-rules {
+    display: grid;
+    gap: 7px;
+    margin: 9px 0 0;
+    padding-left: 19px;
+    color: #c6d2de;
+    font-size: 0.74rem;
+    line-height: 1.5;
+}
+
+.museum-world-rules li::marker {
+    color: #7ef7ff;
+}
+
+.museum-world-rules code {
+    color: #bdfbff;
+}
+
+.mission-control-quick {
+    grid-template-columns: minmax(170px, 1.35fr) minmax(145px, 1fr);
+    margin: 0 0 12px;
+    padding: 10px;
+    border: 1px solid rgba(126, 247, 255, 0.2);
+    border-radius: 15px;
+    background: rgba(126, 247, 255, 0.045);
+}
+
+.control-bar.finale-control-quick {
+    grid-template-columns: minmax(170px, 1.35fr) minmax(145px, 1fr);
+    margin: 0 0 14px;
+    padding: 10px;
+    border: 1px solid rgba(126, 247, 255, 0.2);
+    border-radius: 15px;
+    background: rgba(126, 247, 255, 0.045);
+}
+
+.museum-rules-card {
+    margin-bottom: 14px;
+    border-color: rgba(255, 120, 243, 0.2);
+    background: rgba(255, 120, 243, 0.045);
+}
+
 .museum-help-card {
     display: grid;
     gap: 13px;
@@ -396,6 +438,11 @@
 }
 
 @media (max-width: 760px) {
+    .mission-control-quick,
+    .control-bar.finale-control-quick {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
     .museum-briefing-hud {
         top: 9px;
         right: 9px;

@@ -80,7 +80,7 @@ window.AgentNavigation = (() => {
             title: "Pixelmuseum: Sternenfragment",
             titleId: "link-museum-title",
             href: "pixelmuseum_briefing.html",
-            description: "Eine offene Museumsmission planen, bei Bedarf die Zentrale fragen und mit dem Artefakt entkommen.",
+            description: "Eine offene Museumsmission planen, bei Bedarf die Zentrale fragen und mit dem Sternenfragment entkommen.",
             unitLabel: "Phase",
             levels: [
                 { id: "link-museum-briefing", href: "pixelmuseum_briefing.html", number: "1", label: "Briefing" },
@@ -91,8 +91,8 @@ window.AgentNavigation = (() => {
             number: "FL",
             title: "Gemeinsame Flucht",
             titleId: "link-helicopter-escape",
-            href: "helikopter_flucht-b.html",
-            description: "Den Helikopter des Lords hacken, startklar machen und die Basis verlassen.",
+            href: "helikopter_flucht.html",
+            description: "Den Zugangscode entschlüsseln, den Helikopter übernehmen und die Basis verlassen.",
             unitLabel: "Phase",
             levels: []
         }

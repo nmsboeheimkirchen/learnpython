@@ -276,7 +276,7 @@ test("level 3 sends visibly and level 4 destroys the drone only after that signa
     await expect(page.locator("#pico-result-message")).toHaveCSS("color", "rgb(255, 98, 92)");
     await expect(page.locator("#pico-result-message")).toHaveCSS("animation-name", "pico-deleting-blink");
     await expect(page.locator("#checks-list .is-passed")).toHaveCount(5);
-    await expectReward(page, 7, "helikopter_flucht-b.html");
+    await expectReward(page, 7, "helikopter_flucht.html");
     expect(await page.evaluate(() => (
         window.__successTriggeredAt - window.__lastTeacherRun.resolvedAt
     ))).toBeGreaterThanOrEqual(3_900);
@@ -297,7 +297,7 @@ test("level 3 sends visibly and level 4 destroys the drone only after that signa
     expect(rewardPopup.scrollHeight).toBeGreaterThan(0);
 
     await page.locator("#success-overlay .success-btn").click();
-    await expect(page).toHaveURL(/\/helikopter_flucht-b\.html$/);
+    await expect(page).toHaveURL(/\/helikopter_flucht\.html$/);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Der Lord kommt zurück.");
     expect(pageErrors).toEqual([]);
 });

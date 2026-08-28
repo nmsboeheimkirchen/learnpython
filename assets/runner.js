@@ -37,11 +37,11 @@ const LEVEL_ROUTES = Object.freeze({
     "link-museum-title": "pixelmuseum_briefing.html",
     "link-museum-briefing": "pixelmuseum_briefing.html",
     "link-museum-finale": "pixelmuseum_finale.html",
-    "link-helicopter-escape": "helikopter_flucht-b.html"
+    "link-helicopter-escape": "helikopter_flucht.html"
 });
 
 function canonicalPageHref(href) {
-    return href === "helikopter_flucht.html"
+    return href === "helikopter_flucht-b.html"
         ? LEVEL_ROUTES["link-helicopter-escape"]
         : href;
 }
@@ -206,6 +206,15 @@ function migrateSavedLevelCode(levelId, savedCode) {
         if (!/print\s*\(\s*["']Willkommen im System,?["']\s*,\s*name\s*\)/.test(migratedCode)) {
             migratedCode = migratedCode.replace(/\s+$/, "") + '\nprint("Willkommen im System,", name)';
         }
+    }
+
+    if (levelId === "pixelmuseum_briefing" || levelId === "pixelmuseum_finale") {
+        migratedCode = migratedCode
+            .replace(/BRIEFING-INVENTAR:/g, "INVENTARLISTE:")
+            .replace(/Zugangskarte/g, "Schlüsselkarte")
+            .replace(/Testfragment/g, "Sternenfragment")
+            .replace(/Seruianer-Artefakt/g, "Sternenfragment")
+            .replace(/\bArtefakt\b/g, "Sternenfragment");
     }
     return migratedCode;
 }

@@ -23,51 +23,49 @@
     function renderState() {
         const snapshot = state.snapshot();
         renderInventory(snapshot.collectedItems);
-        byId("briefing-order-state").textContent = snapshot.testFragmentCollected
+        byId("briefing-order-state").textContent = snapshot.starFragmentCollected
             ? "Kette vollständig"
-            : (snapshot.accessCardCollected ? "Karte ✓ → Fragment" : "Karte → Fragment");
-        byId("briefing-card-label").innerHTML = snapshot.accessCardCollected
-            ? '<span aria-hidden="true">✓</span> Zugangskarte gesichert'
-            : '<span aria-hidden="true">▣</span> Zugangskarte (−230, 70)';
-        byId("briefing-fragment-label").innerHTML = snapshot.testFragmentCollected
-            ? '<span aria-hidden="true">✓</span> Testfragment gesichert'
-            : '<span aria-hidden="true">✦</span> Testfragment (−70, −75)';
-        document.body.classList.toggle("museum-card-collected", snapshot.accessCardCollected);
-        document.body.classList.toggle("museum-fragment-collected", snapshot.testFragmentCollected);
+            : (snapshot.keycardCollected ? "Karte ✓ → Fragment" : "Karte → Fragment");
+        byId("briefing-card-label").innerHTML = snapshot.keycardCollected
+            ? '<span aria-hidden="true">✓</span> Schlüsselkarte gesichert'
+            : '<span aria-hidden="true">▣</span> Schlüsselkarte (−230, 70)';
+        byId("briefing-fragment-label").innerHTML = snapshot.starFragmentCollected
+            ? '<span aria-hidden="true">✓</span> Sternenfragment gesichert'
+            : '<span aria-hidden="true">✦</span> Sternenfragment (−70, −75)';
+        document.body.classList.toggle("museum-card-collected", snapshot.keycardCollected);
+        document.body.classList.toggle("museum-fragment-collected", snapshot.starFragmentCollected);
         return snapshot;
     }
 
     function exactInventoryOutput(output, items) {
-        const expected = "BRIEFING-INVENTAR: " + items.join(",");
+        const expected = "INVENTARLISTE: " + items.join(",");
         return String(output).split(/\r?\n/).some(line => line.trim() === expected);
     }
 
     function validationResult(output) {
         const snapshot = state.snapshot();
         const outputPassed = exactInventoryOutput(output, snapshot.collectedItems) &&
-            snapshot.accessCardCollected && snapshot.testFragmentCollected;
+            snapshot.keycardCollected && snapshot.starFragmentCollected;
         const checks = [
-            { label: "Zugangskarte durch echte Suche aufgenommen", passed: snapshot.accessCardCollected },
-            { label: "Testfragment erst danach aufgenommen", passed: snapshot.testFragmentCollected },
+            { label: "Schlüsselkarte mit suche_hier() gefunden", passed: snapshot.keycardCollected },
+            { label: "Sternenfragment erst danach aufgenommen", passed: snapshot.starFragmentCollected },
             {
                 label: "Fundreihenfolge Karte → Fragment eingehalten",
-                passed: snapshot.collectionOrder.join("|") === `${briefing.ACCESS_CARD_ITEM}|${briefing.TEST_FRAGMENT_ITEM}`
+                passed: snapshot.collectionOrder.join("|") === `${briefing.KEYCARD_ITEM}|${briefing.STAR_FRAGMENT_ITEM}`
             },
-            { label: "Echtes Briefing-Inventar korrekt ausgegeben", passed: outputPassed }
+            { label: "Inventarliste korrekt ausgegeben", passed: outputPassed }
         ];
         const passed = checks.every(check => check.passed);
 
-        let message = "Suche zuerst die Zugangskarte und nimm genau den gefundenen Wert in dein Inventar auf.";
-        if (snapshot.lastSearchFailure === briefing.FAILURES.ACCESS_CARD_REQUIRED) {
-            message = "Das Testfragment bleibt gesperrt, bis die echte Zugangskarte im Inventar liegt.";
-        } else if (snapshot.lastSearchFailure === briefing.FAILURES.PENDING_EXPIRED) {
-            message = "Der Fund wurde nicht aufgenommen, bevor die Drohne den Fundort verlassen hat.";
-        } else if (snapshot.accessCardCollected && !snapshot.testFragmentCollected) {
-            message = "Die Zugangskarte stimmt. Sichere jetzt das Testfragment mit einer zweiten echten Suche.";
-        } else if (snapshot.testFragmentCollected && !outputPassed) {
-            message = "Beide Funde sind echt. Erzeuge jetzt die geforderte BRIEFING-INVENTAR-Zeile aus deiner Liste.";
+        let message = "Suche zuerst die Schlüsselkarte und nimm genau den Rückgabewert in dein Inventar auf.";
+        if (snapshot.lastSearchFailure === briefing.FAILURES.KEYCARD_REQUIRED) {
+            message = "Das Sternenfragment bleibt gesperrt, bis die Schlüsselkarte im Inventar liegt.";
+        } else if (snapshot.keycardCollected && !snapshot.starFragmentCollected) {
+            message = "Die Schlüsselkarte stimmt. Finde jetzt das Sternenfragment mit suche_hier().";
+        } else if (snapshot.starFragmentCollected && !outputPassed) {
+            message = "Beide Gegenstände sind gefunden. Erzeuge jetzt die geforderte INVENTARLISTE-Zeile aus deiner Liste.";
         } else if (passed) {
-            message = "Die Fundkette stimmt. Im Finale entscheidest du selbst zwischen Alarmhack und schneller Flucht.";
+            message = "Die Fundkette stimmt. Im Finale entscheidest du selbst zwischen Alarmhack und direkter Fluchtaktion.";
         }
 
         return {
@@ -95,7 +93,7 @@
         completionShown = true;
         completionTimer = window.setTimeout(() => {
             completionTimer = null;
-            window.triggerSuccess?.(false, "Die echte Fundkette sitzt. Jetzt beginnt deine offene Mission.", {
+            window.triggerSuccess?.(false, "Die Reihenfolge stimmt. Jetzt beginnt deine offene Mission.", {
                 title: "BRIEFING GESCHAFFT",
                 rewardCount: 3,
                 celebration: "coins",
@@ -109,10 +107,10 @@
 
     function restoreCompleteState() {
         const inventory = [];
-        const card = state.searchHere(briefing.ACCESS_CARD, inventory);
+        const card = state.searchHere(briefing.KEYCARD, inventory);
         inventory.push(card);
         state.syncInventory(inventory);
-        const fragment = state.searchHere(briefing.TEST_FRAGMENT, inventory);
+        const fragment = state.searchHere(briefing.STAR_FRAGMENT, inventory);
         inventory.push(fragment);
         state.syncInventory(inventory);
         renderState();
@@ -126,12 +124,12 @@
         readyLabel: "Bereit zum Planen",
         resetLabel: "↺ Briefing-Code laden",
         resetOutput: "Der Archiv-Vorraum wartet auf deine Drohne.",
-        initialMessage: "Finde beide Gegenstände in der richtigen Reihenfolge und gib dein echtes Inventar aus.",
+        initialMessage: "Finde beide Gegenstände nach den Weltregeln und gib deine Inventarliste aus.",
         initialChecks: [
-            "Zugangskarte durch echte Suche aufnehmen",
-            "Testfragment erst danach aufnehmen",
+            "Schlüsselkarte mit suche_hier() finden",
+            "Sternenfragment erst danach aufnehmen",
             "Fundreihenfolge einhalten",
-            "Echtes Briefing-Inventar ausgeben"
+            "Inventarliste ausgeben"
         ],
         defaultCode: byId("python-editor").value,
         unlocks: ["link-museum-finale"],
@@ -165,9 +163,9 @@
         },
         getRunNotice() {
             const snapshot = state.snapshot();
-            if (snapshot.testFragmentCollected) return "Zugangskarte und Testfragment wurden in der richtigen Reihenfolge gesichert.";
-            if (snapshot.accessCardCollected) return "Zugangskarte gesichert. Das Testfragment ist jetzt freigegeben.";
-            if (snapshot.lastSearchFailure === briefing.FAILURES.ACCESS_CARD_REQUIRED) return "Das Testfragment reagiert erst auf eine echte Zugangskarte.";
+            if (snapshot.starFragmentCollected) return "Schlüsselkarte und Sternenfragment wurden in der richtigen Reihenfolge gesichert.";
+            if (snapshot.keycardCollected) return "Schlüsselkarte gesichert. Das Sternenfragment ist jetzt freigegeben.";
+            if (snapshot.lastSearchFailure === briefing.FAILURES.KEYCARD_REQUIRED) return "Das Sternenfragment reagiert erst, wenn die Schlüsselkarte im Inventar liegt.";
             if (snapshot.searchAttempted) return "An dieser Stelle wurde kein freigegebener Fund aufgenommen.";
             return "Programm beendet – die Drohne hat noch keinen Gegenstand untersucht.";
         },
@@ -178,7 +176,7 @@
         restoreCompletedState: restoreCompleteState,
         getRestoredResult() {
             return {
-                ...validationResult(`BRIEFING-INVENTAR: ${briefing.ACCESS_CARD_ITEM},${briefing.TEST_FRAGMENT_ITEM}`),
+                ...validationResult(`INVENTARLISTE: ${briefing.KEYCARD_ITEM},${briefing.STAR_FRAGMENT_ITEM}`),
                 restored: true,
                 message: "Dein erfolgreiches Briefing wurde wiederhergestellt. Du kannst direkt ins Pixelmuseum weitergehen."
             };

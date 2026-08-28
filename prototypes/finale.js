@@ -9,6 +9,8 @@
     const textarea = document.getElementById("python-editor");
     const runButton = document.getElementById("run-btn");
     const resetButton = document.getElementById("reset-btn");
+    const runButtons = [runButton, ...document.querySelectorAll("[data-finale-run]")];
+    const resetButtons = [resetButton, ...document.querySelectorAll("[data-finale-reset]")];
     const presentationButton = document.getElementById("presentation-btn");
     const exitPresentationButton = document.getElementById("exit-presentation-btn");
     const consoleOutput = document.getElementById("console-output");
@@ -97,15 +99,19 @@
     function setRunning(nextRunning) {
         running = nextRunning;
         document.body.classList.toggle("program-running", nextRunning);
-        runButton.disabled = nextRunning;
-        resetButton.disabled = nextRunning && cancelRequested;
-        runButton.setAttribute("aria-busy", String(nextRunning));
-        runButton.innerHTML = nextRunning
-            ? '<span class="button-spinner" aria-hidden="true"></span> ' + (config.runningLabel || "Programm läuft")
-            : '<span aria-hidden="true">▶</span> ' + (document.body.classList.contains("museum-theme") ? "Flucht starten" : "Mission starten");
-        resetButton.textContent = nextRunning
-            ? (cancelRequested ? "Wird gestoppt …" : "■ Mission stoppen")
-            : (config.resetLabel || "↺ Beispiel laden");
+        runButtons.forEach(button => {
+            button.disabled = nextRunning;
+            button.setAttribute("aria-busy", String(nextRunning));
+            button.innerHTML = nextRunning
+                ? '<span class="button-spinner" aria-hidden="true"></span> ' + (config.runningLabel || "Programm läuft")
+                : '<span aria-hidden="true">▶</span> ' + (document.body.classList.contains("museum-theme") ? "Flucht starten" : "Mission starten");
+        });
+        resetButtons.forEach(button => {
+            button.disabled = nextRunning && cancelRequested;
+            button.textContent = nextRunning
+                ? (cancelRequested ? "Wird gestoppt …" : "■ Mission stoppen")
+                : (config.resetLabel || "↺ Beispiel laden");
+        });
         emitFinaleEvent("finale:running", { running: nextRunning });
     }
 
@@ -261,7 +267,10 @@
             };
         }
 
-        if (typeof originalTranslate === "function" && typeof config.limitTurtleMovement === "function") {
+        if (
+            typeof originalTranslate === "function" &&
+            (typeof config.limitTurtleMovement === "function" || typeof config.onTurtleMoveComplete === "function")
+        ) {
             prototype.translate = function (startX, startY, deltaX, deltaY, ...rest) {
                 if (cancelRequested) throw new Error("FINALE_RUN_CANCELLED");
                 activeTurtle = this;
@@ -276,11 +285,14 @@
                     return Promise.resolve([this._x, this._y]);
                 }
 
+                const start = { x: startX, y: startY };
                 const target = { x: startX + deltaX, y: startY + deltaY };
-                const limit = config.limitTurtleMovement({ x: startX, y: startY }, target);
-                if (!limit || !Number.isFinite(limit.x) || !Number.isFinite(limit.y)) {
-                    return originalTranslate.call(this, startX, startY, deltaX, deltaY, ...rest);
-                }
+                const requestedLimit = typeof config.limitTurtleMovement === "function"
+                    ? config.limitTurtleMovement(start, target)
+                    : target;
+                const limit = requestedLimit && Number.isFinite(requestedLimit.x) && Number.isFinite(requestedLimit.y)
+                    ? requestedLimit
+                    : target;
 
                 const movement = originalTranslate.call(
                     this,
@@ -291,6 +303,11 @@
                     ...rest
                 );
                 return Promise.resolve(movement).then(position => {
+                    const state = this.getState?.();
+                    const completedPoint = state && Number.isFinite(state.x) && Number.isFinite(state.y)
+                        ? { x: state.x, y: state.y }
+                        : { x: limit.x, y: limit.y };
+                    config.onTurtleMoveComplete?.(completedPoint, { start, target });
                     if (limit.stop) this.__finaleMovementBlocked = true;
                     return position;
                 });
@@ -522,8 +539,8 @@
         window.setTimeout(() => editor.refresh(), 0);
     }
 
-    runButton.addEventListener("click", runProgram);
-    resetButton.addEventListener("click", resetPrototype);
+    runButtons.forEach(button => button.addEventListener("click", runProgram));
+    resetButtons.forEach(button => button.addEventListener("click", resetPrototype));
     presentationButton.addEventListener("click", () => {
         setPresentationMode(!document.body.classList.contains("presentation-mode"));
     });

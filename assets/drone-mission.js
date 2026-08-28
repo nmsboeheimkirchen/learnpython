@@ -8,6 +8,8 @@
     const textarea = document.getElementById("python-editor");
     const runButton = document.getElementById("run-btn");
     const resetButton = document.getElementById("reset-btn");
+    const runButtons = [runButton, ...document.querySelectorAll("[data-mission-run]")];
+    const resetButtons = [resetButton, ...document.querySelectorAll("[data-mission-reset]")];
     const presentationButton = document.getElementById("presentation-btn");
     const exitPresentationButton = document.getElementById("exit-presentation-btn");
     const consoleOutput = document.getElementById("console-output");
@@ -84,14 +86,18 @@
     function setRunning(nextRunning) {
         running = nextRunning;
         document.body.classList.toggle("program-running", nextRunning);
-        runButton.disabled = nextRunning;
-        runButton.setAttribute("aria-busy", String(nextRunning));
-        runButton.innerHTML = nextRunning
-            ? '<span class="mission-spinner" aria-hidden="true"></span> ' + (config.runningLabel || "Drohne unterwegs")
-            : '<span aria-hidden="true">▶</span> ' + (config.runLabel || "Mission starten");
-        resetButton.textContent = nextRunning
-            ? (cancelRequested ? "Wird gestoppt …" : "■ Mission stoppen")
-            : (config.resetLabel || "↺ Startcode laden");
+        runButtons.forEach(button => {
+            button.disabled = nextRunning;
+            button.setAttribute("aria-busy", String(nextRunning));
+            button.innerHTML = nextRunning
+                ? '<span class="mission-spinner" aria-hidden="true"></span> ' + (config.runningLabel || "Drohne unterwegs")
+                : '<span aria-hidden="true">▶</span> ' + (config.runLabel || "Mission starten");
+        });
+        resetButtons.forEach(button => {
+            button.textContent = nextRunning
+                ? (cancelRequested ? "Wird gestoppt …" : "■ Mission stoppen")
+                : (config.resetLabel || "↺ Startcode laden");
+        });
     }
 
     function appendOutput(text) {
@@ -415,8 +421,8 @@
         window.setTimeout(() => editor.refresh(), 0);
     }
 
-    runButton.addEventListener("click", runProgram);
-    resetButton.addEventListener("click", resetMission);
+    runButtons.forEach(button => button.addEventListener("click", runProgram));
+    resetButtons.forEach(button => button.addEventListener("click", resetMission));
     presentationButton?.addEventListener("click", () => {
         setPresentationMode(!document.body.classList.contains("presentation-mode"));
     });

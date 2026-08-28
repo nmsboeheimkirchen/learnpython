@@ -24,7 +24,7 @@ function loadHelpCore() {
 
 const completedRun = Object.freeze({
     hasRun: true,
-    runtimeInventory: ["Schlüsselkarte", "Artefakt"],
+    runtimeInventory: ["Schlüsselkarte", "Sternenfragment"],
     artifactSecured: true,
     escaped: true,
     inventoryOutputPassed: true

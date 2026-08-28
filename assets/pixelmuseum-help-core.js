@@ -32,7 +32,7 @@
             "Die Zentrale braucht einen Programmlauf",
             [
                 "Starte zuerst deinen Code. Danach kann die Zentrale sehen, an welcher Stelle deine Mission stockt.",
-                "Ohne Laufzeitdaten kennt die Zentrale weder den Standort der Drohne noch dein echtes Inventar.",
+                "Ohne Laufzeitdaten kennt die Zentrale weder den Standort der Drohne noch den Inhalt deines Inventars.",
                 "Klicke auf „Flucht starten“ und fordere nach dem beendeten Lauf erneut Hilfe an."
             ],
             { countable: false }
@@ -58,28 +58,28 @@
         ),
         KEYCARD_ORDER: issue(
             "KEYCARD_ORDER",
-            "Die Reihenfolge blockiert das Artefakt",
+            "Die Reihenfolge blockiert das Sternenfragment",
             [
-                "Die Drohne hat das Artefakt gesucht, bevor eine Schlüsselkarte im echten Inventar lag.",
+                "Die Drohne hat das Sternenfragment gesucht, bevor eine mit suche_hier() gefundene Schlüsselkarte im Inventar lag.",
                 "Suche zuerst bei der Schlüsselkarte und speichere genau den Rückgabewert von drohne.suche_hier().",
-                "Baue zuerst fund = drohne.suche_hier() und inventar.append(fund) an der Schlüsselkarte ein. Fliege erst danach zum Artefakt."
+                "Baue zuerst fund = drohne.suche_hier() und inventar.append(fund) an der Schlüsselkarte ein. Fliege erst danach zum Sternenfragment."
             ]
         ),
         KEYCARD_MISSING: issue(
             "KEYCARD_MISSING",
             "Die Schlüsselkarte fehlt",
             [
-                "Im beobachteten Lauf ist noch keine echte Schlüsselkarte im Inventar angekommen.",
+                "Im beobachteten Lauf ist noch keine mit suche_hier() gefundene Schlüsselkarte im Inventar angekommen.",
                 "Fliege zum Ort der Schlüsselkarte, rufe dort drohne.suche_hier() auf und bewahre den Fund in einer Variablen auf.",
-                "Ergänze nach der Suche inventar.append(fund). Ein selbst geschriebener Text wie \"Schlüsselkarte\" zählt nicht als echter Fund."
+                "Ergänze nach der Suche inventar.append(fund). Ein selbst geschriebener Text wie \"Schlüsselkarte\" zählt nicht als Fund aus suche_hier()."
             ]
         ),
         ARTIFACT_MISSING: issue(
             "ARTIFACT_MISSING",
-            "Das Artefakt fehlt",
+            "Das Sternenfragment fehlt",
             [
-                "Die Schlüsselkarte ist gesichert, aber das echte Artefakt liegt noch nicht im Inventar.",
-                "Fliege nach der Schlüsselkarte zum Artefakt und rufe auch dort drohne.suche_hier() auf.",
+                "Die Schlüsselkarte ist gesichert, aber das Sternenfragment wurde noch nicht mit suche_hier() gefunden und aufgenommen.",
+                "Fliege nach der Schlüsselkarte zum Sternenfragment und rufe auch dort drohne.suche_hier() auf.",
                 "Speichere den neuen Rückgabewert wieder in fund und hänge genau fund mit inventar.append(fund) an."
             ]
         ),
@@ -87,9 +87,9 @@
             "HACK_TOO_EARLY",
             "Der Hack kam zu früh",
             [
-                "Die Drohne hat den Hack versucht, bevor die Artefaktaufnahme den Alarm ausgelöst hatte.",
-                "Ordne den Hackaufruf hinter der erfolgreichen Artefaktsuche ein.",
-                "Sichere zuerst das Artefakt, fliege danach zur Alarmkonsole und rufe erst dort alarm_hacken(...) auf."
+                "Die Drohne hat den Hack versucht, bevor die Aufnahme des Sternenfragments den Alarm ausgelöst hatte.",
+                "Ordne den Hackaufruf hinter der erfolgreichen Suche nach dem Sternenfragment ein.",
+                "Sichere zuerst das Sternenfragment, fliege danach zur Alarmkonsole und rufe erst dort alarm_hacken(...) auf."
             ]
         ),
         HACK_WRONG_PLACE: issue(
@@ -112,25 +112,25 @@
         ),
         HACK_TOO_LATE: issue(
             "HACK_TOO_LATE",
-            "Der Hack wurde nicht rechtzeitig fertig",
+            "Der Hack kam nach dem Aktionslimit",
             [
-                "Der richtige Hack wurde begonnen, aber der Alarm erreichte vorher seine letzte Stufe.",
-                "Verkürze den Weg zwischen Artefakt und Alarmkonsole oder erhöhe die sinnvolle Drohnengeschwindigkeit.",
-                "Starte alarm_hacken(...) unmittelbar nach der Ankunft an der Konsole; der Hack selbst benötigt eine Sekunde."
+                "Der Alarm hatte seine letzte Stufe bereits durch abgeschlossene Aktionen erreicht.",
+                "Prüfe, ob zwischen Sternenfragment und Alarmkonsole unnötige Flugbewegungen liegen.",
+                "Fliege nach der Aufnahme direkt zur Konsole und rufe dort alarm_hacken(...) auf. Die Animationsgeschwindigkeit ändert das Aktionslimit nicht."
             ]
         ),
         PORTAL_LOCKED: issue(
             "PORTAL_LOCKED",
             "Das Portal war bereits verriegelt",
             [
-                "Die Drohne hat das Portal erreicht, nachdem der Alarm es gesperrt hatte.",
-                "Entscheide dich für einen rechtzeitigen Hack oder für eine Route, die das Portal noch vor der ersten Alarmstufe erreicht.",
-                "Hacke nach der Artefaktaufnahme an der Konsole – oder optimiere Geschwindigkeit und Weg so, dass du vor Alarmstufe 1 am Portal bist."
+                "Die Drohne hat das Portal erst nach einer bereits abgeschlossenen Alarmaktion erreicht.",
+                "Entscheide dich für einen Hack oder für genau eine direkte Flugbewegung vom Sternenfragment zum Portal.",
+                "Hacke nach der Aufnahme an der Konsole – oder fliege als erste Alarmaktion direkt zum Portal. drohne.speed(...) beeinflusst nur die Animation."
             ]
         ),
         ALARM_TOO_SLOW: issue(
             "ALARM_TOO_SLOW",
-            "Der Alarm war schneller als dein Fluchtplan",
+            "Das Aktionsbudget ist aufgebraucht",
             [
                 "Der Alarm erreichte die letzte Stufe, ohne dass eine gültige Fluchtstrategie abgeschlossen war.",
                 "Prüfe, ob dein Plan unnötige Wege enthält und ob du wirklich hacken oder rechtzeitig fliehen willst.",
@@ -141,9 +141,9 @@
             "ALARM_STRATEGY",
             "Eine Alarmstrategie fehlt noch",
             [
-                "Das Artefakt ist gesichert. Jetzt muss die Drohne den Alarm hacken oder rechtzeitig zum Portal gelangen.",
-                "Für den Hack brauchst du den richtigen Ort, den Code aus dem Quelltext und einen Aufruf nach Alarmbeginn. Die schnelle Flucht braucht keinen Hack.",
-                "Programmiere entweder Alarmkonsole → alarm_hacken(code) → Portal oder eine ausreichend schnelle direkte Route zum Portal."
+                "Das Sternenfragment ist gesichert. Jetzt muss die Drohne den Alarm hacken oder mit der ersten Flugbewegung das Portal erreichen.",
+                "Für den Hack brauchst du den richtigen Ort, den Code aus dem Quelltext und einen Aufruf nach Alarmbeginn. Die direkte Flucht braucht keinen Hack.",
+                "Programmiere entweder Alarmkonsole → alarm_hacken(code) → Portal oder genau eine direkte Flugbewegung zum Portal."
             ]
         ),
         PORTAL_NOT_REACHED: issue(
@@ -169,7 +169,7 @@
             "Die Mission ist vollständig",
             [
                 "Alle beobachteten Missionsziele sind erfüllt. Du brauchst für diesen Lauf keine weitere Hilfe.",
-                "Schlüsselkarte, Artefakt, Fluchtstrategie und Inventarausgabe wurden bestätigt.",
+                "Schlüsselkarte, Sternenfragment, Fluchtstrategie und Inventarausgabe wurden bestätigt.",
                 "Du kannst deinen erfolgreichen Fluchtplan jetzt abschließen und zur nächsten Mission weitergehen."
             ],
             { countable: false }
@@ -233,7 +233,7 @@
 
         const artifactFlag = booleanFrom(context, ["artifactSecured", "hasArtifact", "artifactCollected"]);
         const hasArtifact = artifactFlag === null
-            ? Boolean(inventory?.includes("Artefakt"))
+            ? Boolean(inventory?.includes("Sternenfragment"))
             : artifactFlag;
         if (!hasArtifact) return ISSUES.ARTIFACT_MISSING;
 

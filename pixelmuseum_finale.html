@@ -6,31 +6,31 @@
     <meta name="color-scheme" content="dark">
     <meta name="description" content="Offene Pixelmuseum-Mission: Sichere das Sternenfragment und entkomme mit deiner eigenen Drohnenstrategie.">
     <title>Pixelmuseum – Das gestohlene Sternenfragment</title>
-    <script src="assets/runner.js?v=20260827-2"></script>
+    <script src="assets/runner.js?v=20260828-1"></script>
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
     <link rel="stylesheet" href="assets/style.css?v=20260722-2">
     <link rel="stylesheet" href="prototypes/finale.css?v=cockpit-scroll-v2">
-    <link rel="stylesheet" href="assets/pixelmuseum.css?v=20260721-1">
+    <link rel="stylesheet" href="assets/pixelmuseum.css?v=20260828-1">
 </head>
 <body class="prototype-page museum-theme museum-path-page" data-mission-level="pixelmuseum_finale" data-pixelmuseum-stage="finale">
     <a class="skip-link" href="#editor-panel">Zum Python-Editor</a>
 
     <div id="navigation-root"></div>
-    <script src="assets/navigation.js?v=20260722-1"></script>
+    <script src="assets/navigation.js?v=20260828-1"></script>
 
     <div class="progress-container museum-progress">
         <span class="level-badge">Pixelmuseum · Phase 2 von 2</span>
         <div class="progress-bar-bg" aria-hidden="true"><div class="progress-bar-fill" id="progress-fill" style="width:100%"></div></div>
         <span id="status-text" role="status">Bereit für deine Strategie</span>
-        <a id="next-level-btn" class="next-level-btn museum-next-level-btn" href="helikopter_flucht-b.html" style="display:none">Weiter zur Helikopterflucht</a>
+        <a id="next-level-btn" class="next-level-btn museum-next-level-btn" href="helikopter_flucht.html" style="display:none">Weiter zur Helikopterflucht</a>
     </div>
 
     <header class="prototype-header">
         <div>
             <span class="prototype-kicker">Pixelmuseum · Offenes Finale</span>
             <h1>Pixelmuseum: Das gestohlene Sternenfragment</h1>
-            <p>Sichere das geraubte Artefakt der Seruianer und entkomme mit deiner eigenen Strategie durch das Portal.</p>
+            <p>Sichere das geraubte Sternenfragment der Seruianer und entkomme mit deiner eigenen Strategie durch das Portal.</p>
         </div>
         <div class="path-badge" aria-label="Lernpfad Pixelmuseum">
             <span class="path-badge-dot" aria-hidden="true"></span>
@@ -42,19 +42,19 @@
         <section class="briefing-card" aria-labelledby="museum-briefing-title">
             <div>
                 <span class="eyebrow">Finale · Galerie nach Mitternacht</span>
-                <h2 id="museum-briefing-title">Der böse Lord darf das Artefakt nicht behalten.</h2>
-                <p>Plane den Weg, fülle dein echtes Inventar und entscheide selbst: Alarm hacken oder schnell genug entkommen.</p>
+                <h2 id="museum-briefing-title">Der böse Lord darf das Sternenfragment nicht behalten.</h2>
+                <p>Plane den Weg, fülle deine Inventarliste und entscheide selbst: Alarm hacken oder mit einer direkten Flugaktion entkommen.</p>
                 <ol class="museum-final-plan" aria-label="Vier Missionsziele">
-                    <li><strong>01 · Schlüsselkarte</strong>Echt suchen und aufnehmen.</li>
-                    <li><strong>02 · Artefakt</strong>Erst danach sicherstellen.</li>
+                    <li><strong>01 · Schlüsselkarte</strong>Mit <code>suche_hier()</code> finden und aufnehmen.</li>
+                    <li><strong>02 · Sternenfragment</strong>Erst danach sicherstellen.</li>
                     <li><strong>03 · Strategie</strong>Hacken oder rechtzeitig fliehen.</li>
-                    <li><strong>04 · Bericht</strong>Echtes Inventar ausgeben.</li>
+                    <li><strong>04 · Bericht</strong>Inventarliste ausgeben.</li>
                 </ol>
             </div>
             <ul class="concept-strip" aria-label="Python-Ziele">
                 <li>Inventarliste</li>
                 <li>Entscheidungen</li>
-                <li>Alarm-Timing</li>
+                <li>Alarm-Aktionen</li>
                 <li>Funktion · vorbereitet</li>
             </ul>
         </section>
@@ -70,7 +70,7 @@
                 </div>
 
                 <div class="game-shell">
-                    <div class="game-stage" id="game-stage" aria-label="Nächtliches Pixelmuseum mit gestohlenem Artefakt, Alarmstation und leuchtendem Ausgang">
+                    <div class="game-stage" id="game-stage" aria-label="Nächtliches Pixelmuseum mit gestohlenem Sternenfragment, Alarmstation und leuchtendem Ausgang">
                         <div id="museum-system-log" data-alarm-code="SERU-7" hidden></div>
                         <img class="scene-image museum-scene-intact" src="assets/images/finales/pixel-museum.webp" alt="" fetchpriority="high">
                         <img class="scene-image museum-scene-recovered" src="assets/images/finales/pixel-museum-recovered.webp" alt="">
@@ -104,7 +104,7 @@
                         <div id="museum-turtle" class="turtle-target" aria-hidden="true"></div>
 
                         <div id="keycard-label" class="stage-label keycard-label"><span aria-hidden="true">▣</span> Schlüsselkarte</div>
-                        <div id="artifact-label" class="stage-label artifact-label"><span aria-hidden="true">✦</span> Gestohlenes Artefakt</div>
+                        <div id="artifact-label" class="stage-label artifact-label"><span aria-hidden="true">✦</span> Gestohlenes Sternenfragment</div>
                         <div id="alarm-console-label" class="stage-label alarm-console-label"><span aria-hidden="true">◈</span> Alarm ausschalten</div>
                         <div id="portal-label" class="stage-label portal-label"><span aria-hidden="true">⬡</span> Ausgang offen</div>
                         <div id="museum-warning" class="museum-warning" role="status" aria-live="assertive"></div>
@@ -120,7 +120,7 @@
 
                 <ul class="mobile-target-legend" aria-label="Ziele im Pixelmuseum">
                     <li>Schlüsselkarte <span>(−250, 60)</span></li>
-                    <li>Artefakt <span>(−390, 45)</span></li>
+                    <li>Sternenfragment <span>(−390, 45)</span></li>
                     <li>Alarmkonsole <span>(250, −60)</span></li>
                     <li>Portal <span>(0, 115)</span></li>
                 </ul>
@@ -133,9 +133,9 @@
                     </div>
                     <ul id="checks-list" class="checks-list" aria-label="Prüfergebnisse">
                         <li><span aria-hidden="true">○</span> Schlüsselkarte aufnehmen</li>
-                        <li><span aria-hidden="true">○</span> Artefakt sichern</li>
-                        <li><span aria-hidden="true">○</span> Echte Alarmstrategie ausführen</li>
-                        <li><span aria-hidden="true">○</span> Echtes Inventar ausgeben</li>
+                        <li><span aria-hidden="true">○</span> Sternenfragment sichern</li>
+                        <li><span aria-hidden="true">○</span> Alarmstrategie ausführen</li>
+                        <li><span aria-hidden="true">○</span> Inventarliste ausgeben</li>
                         <li><span aria-hidden="true">○</span> Gültiger Fluchtweg</li>
                     </ul>
                 </div>
@@ -163,6 +163,24 @@
                     </div>
                     <p class="museum-help-footnote">Gezählt werden nur neu aufgedeckte Hinweise. Die Zahl beeinflusst weder Erfolg noch Goldmünzen.</p>
                 </aside>
+
+                <aside class="creative-card museum-rules-card" aria-labelledby="museum-rules-title">
+                    <span aria-hidden="true">◈</span>
+                    <div>
+                        <strong id="museum-rules-title">Klare Weltregeln, freie Lösung</strong>
+                        <ul class="museum-world-rules">
+                            <li>Erst eine mit <code>suche_hier()</code> gefundene <strong>Schlüsselkarte</strong> entsperrt das Sternenfragment.</li>
+                            <li>Mit dem Sternenfragment startet der Alarm bei Stufe 0. Jede danach abgeschlossene Flugbewegung und jeder Hackversuch kostet eine Stufe.</li>
+                            <li>Die erste direkte Flugbewegung darf noch durchs offene Portal führen. Alternativ kannst du zur Konsole fliegen, den Alarm hacken und danach entkommen.</li>
+                            <li><code>drohne.speed(...)</code> ändert nur die Animation – nie die Missionsregeln.</li>
+                        </ul>
+                    </div>
+                </aside>
+
+                <div class="control-bar finale-control-quick" aria-label="Programmaktionen oberhalb des Python-Codes">
+                    <button class="primary-action" type="button" data-finale-run><span aria-hidden="true">▶</span> Flucht starten</button>
+                    <button class="secondary-action" type="button" data-finale-reset>↺ Startcode laden</button>
+                </div>
 
                 <div class="editor-card">
                     <label class="sr-only" for="python-editor">Python-Code für das Pixelmuseum</label>
@@ -196,7 +214,7 @@ def alarm_hacken(code):
 
 # Dein Fluchtplan beginnt hier.
 # Ziele und Koordinaten stehen in der Live-Missionsansicht.
-# Sichere echte Funde in inventar und gib die echte INVENTARLISTE aus.
+# Sichere die gefundenen Gegenstände in inventar und gib die INVENTARLISTE aus.
 </textarea>
 
                     <div class="control-bar" aria-label="Programmaktionen">
@@ -213,7 +231,7 @@ def alarm_hacken(code):
 
                 <aside class="creative-card museum-creative">
                     <span aria-hidden="true">✦</span>
-                    <div><strong>Du steuerst die Drohne – das Museum reagiert.</strong><p>Schlüsselkarte und Artefakt müssen in dein Inventar. Für die Hackstrategie kannst du den Museum-Quelltext direkt hier untersuchen.</p></div>
+                    <div><strong>Du steuerst die Drohne – das Museum reagiert.</strong><p>Schlüsselkarte und Sternenfragment müssen in dein Inventar. Für die Hackstrategie kannst du den Museum-Quelltext direkt hier untersuchen.</p></div>
                 </aside>
 
                 <details class="museum-source-inspector">
@@ -235,6 +253,7 @@ def alarm_hacken(code):
     <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
     <script src="assets/vendor/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="assets/vendor/codemirror/5.65.2/python.min.js"></script>
+    <script src="assets/pixelmuseum-alarm-core.js?v=20260828-1"></script>
     <script>
         window.FINALE_CONFIG = {
             levelId: "pixelmuseum_finale",
@@ -244,11 +263,6 @@ def alarm_hacken(code):
             resetTitle: "Startcode wiederhergestellt",
             resetMessage: "Die Missionswerkzeuge sind bereit. Route, Fundkette und Strategie programmierst du selbst.",
             defaultCode: document.getElementById("python-editor").value,
-            getTurtleSpeedMultiplier(speed) {
-                // Speed 8 ist die bewusst schnelle Alternativstrategie. Der deutliche Faktor
-                // hält sie auch bei langsameren iPad-Frames sicher vor dem ersten Alarmtick.
-                return Number(speed) >= 8 ? 12 : 1;
-            },
             onRunStart() {
                 this.prepareAudio();
             },
@@ -312,7 +326,7 @@ def alarm_hacken(code):
                     } else if (this.distanceTo(context, artifact) <= 12 && !this.artifactSecured) {
                         this.artifactSearchAttempted = true;
                         if (this.runtimeInventory.includes("Schlüsselkarte")) {
-                            item = "Artefakt";
+                            item = "Sternenfragment";
                         } else {
                             this.lastSearchFailure = "KEYCARD_REQUIRED";
                             document.getElementById("artifact-label").innerHTML = '<span aria-hidden="true">⌧</span> Schlüsselkarte fehlt';
@@ -346,7 +360,7 @@ def alarm_hacken(code):
 
                 const item = this.pendingFind.item;
                 this.pendingFind = null;
-                if (item === "Artefakt" && !this.runtimeInventory.includes("Schlüsselkarte")) {
+                if (item === "Sternenfragment" && !this.runtimeInventory.includes("Schlüsselkarte")) {
                     return null;
                 }
                 this.collectItem(item);
@@ -375,12 +389,8 @@ def alarm_hacken(code):
                 });
             },
             stopMissionTimers() {
-                window.clearInterval(this.alarmTimer);
-                window.clearTimeout(this.hackFinishTimer);
                 window.clearTimeout(this.portalWarningTimer);
                 window.clearTimeout(this.validationRefreshTimer);
-                this.alarmTimer = null;
-                this.hackFinishTimer = null;
                 this.portalWarningTimer = null;
                 this.validationRefreshTimer = null;
             },
@@ -410,7 +420,8 @@ def alarm_hacken(code):
             },
             resetHud() {
                 this.invalidateMissionTimers();
-                this.alarmMax = 8;
+                this.alarmMax = window.PixelmuseumAlarmCore.DEFAULT_MAX_LEVEL;
+                this.alarmState = window.PixelmuseumAlarmCore.createState(this.alarmMax);
                 this.alarmLevel = 0;
                 this.alarmStarted = false;
                 this.alarmDisabled = false;
@@ -440,7 +451,7 @@ def alarm_hacken(code):
                 this.renderAlarm(0);
                 this.renderInventory();
                 document.getElementById("keycard-label").innerHTML = '<span aria-hidden="true">▣</span> Schlüsselkarte';
-                document.getElementById("artifact-label").innerHTML = '<span aria-hidden="true">✦</span> Gestohlenes Artefakt';
+                document.getElementById("artifact-label").innerHTML = '<span aria-hidden="true">✦</span> Gestohlenes Sternenfragment';
                 document.getElementById("alarm-console-label").innerHTML = '<span aria-hidden="true">◈</span> Alarm ausschalten';
                 document.getElementById("museum-warning").textContent = "";
                 document.getElementById("museum-success").textContent = "";
@@ -465,28 +476,33 @@ def alarm_hacken(code):
                 this.portalReached = false;
                 this.atPortal = false;
                 document.body.classList.add("artifact-secured");
-                document.getElementById("artifact-label").innerHTML = '<span aria-hidden="true">✓</span> Artefakt sichergestellt';
+                document.getElementById("artifact-label").innerHTML = '<span aria-hidden="true">✓</span> Sternenfragment sichergestellt';
                 this.updateExitState();
                 this.startAlarm();
             },
             startAlarm() {
                 if (this.alarmStarted) return;
-                this.alarmStarted = true;
-                this.renderAlarm(0);
-                this.updateExitState();
+                this.applyAlarmSnapshot(this.alarmState.start());
                 this.playOneShotSound("alarm");
-                const generation = this.missionGeneration;
-                this.alarmTimer = window.setInterval(() => {
-                    if (generation !== this.missionGeneration) return;
-                    if (this.alarmDisabled || this.alarmFailed) return;
-                    const nextLevel = this.alarmLevel + 1;
-                    this.renderAlarm(nextLevel);
-                    this.updateExitState();
-
-                    if (nextLevel >= this.alarmMax) {
-                        this.failAlarm();
-                    }
-                }, 1000);
+            },
+            applyAlarmSnapshot(snapshot) {
+                this.alarmStarted = snapshot.started;
+                this.alarmDisabled = snapshot.disabled;
+                this.alarmFailed = snapshot.failed;
+                this.renderAlarm(snapshot.level);
+                this.updateExitState();
+                return snapshot;
+            },
+            advanceAlarmAction() {
+                if (!this.alarmStarted || this.alarmDisabled || this.alarmFailed || this.escaped) {
+                    return this.alarmState.snapshot();
+                }
+                const snapshot = this.applyAlarmSnapshot(this.alarmState.advance());
+                if (snapshot.failed) this.failAlarm(snapshot);
+                return snapshot;
+            },
+            onTurtleMoveComplete() {
+                this.advanceAlarmAction();
             },
             requestAlarmHack(code) {
                 const label = document.getElementById("alarm-console-label");
@@ -496,51 +512,49 @@ def alarm_hacken(code):
                     label.innerHTML = '<span aria-hidden="true">!</span> Noch kein Alarm ausgelöst – Hack nicht möglich!';
                     return;
                 }
-                if (code !== expectedCode) {
-                    this.lastHackFailure = "WRONG_CODE";
-                    label.innerHTML = '<span aria-hidden="true">×</span> Hackcode falsch';
-                    return;
-                }
                 if (this.alarmFailed) {
                     this.lastHackFailure = "TOO_LATE";
                     label.innerHTML = '<span aria-hidden="true">×</span> Hack zu spät';
                     return;
                 }
+                if (code !== expectedCode) {
+                    this.lastHackFailure = "WRONG_CODE";
+                    label.innerHTML = '<span aria-hidden="true">×</span> Hackcode falsch';
+                    this.advanceAlarmAction();
+                    return;
+                }
                 if (!this.atAlarmConsole) {
                     this.lastHackFailure = "WRONG_PLACE";
                     label.innerHTML = '<span aria-hidden="true">!</span> Hack nicht möglich';
+                    this.advanceAlarmAction();
                     return;
                 }
 
                 this.lastHackFailure = null;
                 this.hackCodeCorrect = true;
                 this.hackRequested = true;
-                label.innerHTML = '<span aria-hidden="true">⌁</span> Hack läuft …';
-                this.scheduleHackCompletion();
-            },
-            scheduleHackCompletion() {
-                if (this.hackFinishTimer || this.alarmDisabled || this.alarmFailed) return;
-                const generation = this.missionGeneration;
-                this.hackFinishTimer = window.setTimeout(() => {
-                    if (generation !== this.missionGeneration) return;
-                    this.finishAlarmHack();
-                }, 1000);
+                label.innerHTML = '<span aria-hidden="true">⌁</span> Hack wird geprüft …';
+                const snapshot = this.advanceAlarmAction();
+                if (!snapshot.failed) this.finishAlarmHack();
             },
             finishAlarmHack() {
                 if (this.alarmFailed) return;
-                this.invalidateMissionTimers();
+                if (this.alarmDisabled) {
+                    this.clearPortalWarning();
+                    this.updateExitState();
+                    return;
+                }
+                const snapshot = this.alarmState.disable();
+                if (!snapshot.disabled) return;
                 this.clearPortalWarning();
-                this.alarmDisabled = true;
                 this.hackCompleted = true;
-                this.renderAlarm(0);
+                this.applyAlarmSnapshot(snapshot);
                 document.body.classList.add("alarm-disabled");
                 document.getElementById("alarm-console-label").innerHTML = '<span aria-hidden="true">✓</span> Alarm gehackt';
-                this.updateExitState();
                 this.scheduleValidationRefresh();
             },
-            failAlarm() {
-                this.invalidateMissionTimers();
-                this.alarmFailed = true;
+            failAlarm(snapshot = this.alarmState.fail()) {
+                this.applyAlarmSnapshot(snapshot);
                 if (this.hackRequested) this.lastHackFailure = "TOO_LATE";
                 document.body.classList.add("alarm-failed");
                 document.getElementById("alarm-console-label").innerHTML = '<span aria-hidden="true">×</span> Alarm ausgelöst';
@@ -548,7 +562,9 @@ def alarm_hacken(code):
                 this.scheduleValidationRefresh();
             },
             renderPortal() {
-                this.portalOpen = !this.artifactSecured || this.alarmLevel < 1 || this.alarmDisabled;
+                this.portalOpen = this.alarmState
+                    ? this.alarmState.isPortalOpen(this.artifactSecured)
+                    : (!this.artifactSecured || this.alarmLevel < 1 || this.alarmDisabled);
                 document.body.classList.toggle("portal-open", this.portalOpen);
                 document.body.classList.toggle("portal-locked", !this.portalOpen);
                 document.getElementById("exit-state").textContent = this.exitUnlocked
@@ -594,11 +610,6 @@ def alarm_hacken(code):
                 this.currentPoint = { ...point };
                 this.atAlarmConsole = distance(alarmConsole) <= 22;
 
-                if (this.pendingFind && this.distanceTo(point, this.pendingFind) > 14) {
-                    this.pendingFind = null;
-                    this.lastSearchFailure = "PENDING_EXPIRED";
-                }
-
                 const atPortal = distance(portal) <= 28;
                 if (atPortal && !this.atPortal && this.artifactSecured) {
                     this.portalReached = true;
@@ -616,15 +627,15 @@ def alarm_hacken(code):
             },
             getAutomaticStop() {
                 if (!this.alarmFailed) return null;
-                let message = "Kein gültiger Hack wurde gestartet. Hacke an der Alarmkonsole oder nutze einen schnelleren Fluchtweg.";
+                let message = "Kein gültiger Hack wurde gestartet. Hacke an der Alarmkonsole oder fliege als erste Alarmaktion direkt zum Portal.";
                 if (this.hackRequested) {
-                    message = "Der richtige Hack wurde gestartet, kam aber zu spät. Erreiche die Alarmkonsole früher.";
+                    message = "Der richtige Hack kam erst nach dem Aktionslimit. Vermeide zusätzliche Flugbewegungen vor der Konsole.";
                 } else if (this.lastHackFailure === "WRONG_CODE") {
                     message = "Der Hackcode war falsch. Suche die Spur im HTML-Quelltext und versuche es erneut.";
                 } else if (this.lastHackFailure === "WRONG_PLACE") {
                     message = "Der Hack wurde nicht an der Alarmkonsole gestartet. Prüfe Ort und Route.";
                 } else if (this.lastHackFailure === "TOO_EARLY") {
-                    message = "Der Hack wurde vor dem Alarm versucht. Starte ihn nach der Artefaktaufnahme erneut.";
+                    message = "Der Hack wurde vor dem Alarm versucht. Starte ihn nach der Aufnahme des Sternenfragments erneut.";
                 }
                 return {
                     title: "Alarm ausgelöst",
@@ -644,12 +655,12 @@ def alarm_hacken(code):
                 this.completedStrategy = strategy;
                 const checks = [
                     { label: "Schlüsselkarte selbst aufgenommen", passed: this.runtimeInventory.includes("Schlüsselkarte") },
-                    { label: "Gestohlenes Artefakt gesichert", passed: this.artifactSecured },
+                    { label: "Gestohlenes Sternenfragment gesichert", passed: this.artifactSecured },
                     {
-                        label: strategy === "hack" ? "Alarm an der Konsole gehackt" : "Portal rechtzeitig vor Alarmstufe 1 erreicht",
+                        label: strategy === "hack" ? "Alarm an der Konsole gehackt" : "Portal mit der ersten Alarmaktion erreicht",
                         passed: securityStrategyPassed
                     },
-                    { label: "Echte Inventarliste korrekt ausgegeben", passed: inventoryOutputPassed },
+                    { label: "Inventarliste korrekt ausgegeben", passed: inventoryOutputPassed },
                     { label: "Gültiger Fluchtweg", passed: this.exitUnlocked }
                 ];
                 const passed = checks.every(check => check.passed);
@@ -660,13 +671,13 @@ def alarm_hacken(code):
                     strategy,
                     message: passed
                         ? "Mission bestätigt: Deine selbst gewählte Strategie hat die Drohne sicher aus dem Museum gebracht."
-                        : "Mindestens ein echter Laufzeitbaustein fehlt noch in deinem Fluchtplan."
+                        : "Mindestens ein Missionsschritt fehlt noch in deinem Fluchtplan."
                 };
             }
         };
     </script>
-    <script src="prototypes/finale.js?v=attempt-save-v1"></script>
-    <script src="assets/pixelmuseum-help-core.js?v=20260721-1"></script>
+    <script src="prototypes/finale.js?v=action-alarm-v1"></script>
+    <script src="assets/pixelmuseum-help-core.js?v=20260828-1"></script>
     <script src="assets/pixelmuseum-path.js?v=20260722-2"></script>
 </body>
 </html>

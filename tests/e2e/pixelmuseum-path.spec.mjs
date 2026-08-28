@@ -24,12 +24,12 @@ async function runFinaleCode(page, code) {
     }, code);
 }
 
-const FAST_ESCAPE_CODE = `import turtle
+const DIRECT_ESCAPE_CODE = `import turtle
 drohne = turtle.Turtle()
 drohne.speed(0)
 drohne.penup()
 drohne.goto(0, -210)
-drohne.speed(8)
+drohne.speed(0)
 inventar = []
 
 drohne.goto(-250, 60)
@@ -48,7 +48,7 @@ drohne = turtle.Turtle()
 drohne.speed(0)
 drohne.penup()
 drohne.goto(0, -210)
-drohne.speed(4)
+drohne.speed(0)
 turtle.Screen().delay(30)
 inventar = []
 
@@ -80,16 +80,18 @@ test("@ipad Pixelmuseum briefing rejects invented items and rewards the real ord
 drohne = turtle.Turtle()
 drohne.speed(0)
 drohne.penup()
-inventar = ["Zugangskarte", "Testfragment"]
-print("BRIEFING-INVENTAR: " + ",".join(inventar))`);
+inventar = ["Schlüsselkarte", "Sternenfragment"]
+print("INVENTARLISTE: " + ",".join(inventar))`);
 
     await expect(page.locator("body")).not.toHaveClass(/mission-passed/);
     await expect(page.locator("#next-level-btn")).toBeHidden();
-    await expect(page.locator("#checks-list")).toContainText("Zugangskarte durch echte Suche aufgenommen");
+    await expect(page.locator("#checks-list")).toContainText("Schlüsselkarte mit suche_hier() gefunden");
+    await expect(page.locator("[data-mission-run]")).toBeVisible();
+    await expect(page.locator("[data-mission-reset]")).toBeVisible();
 
     const solutionLoaded = await page.evaluate(() => window.TeacherSolutions.load("pixelmuseum_briefing"));
     expect(solutionLoaded).toBe(true);
-    await page.evaluate(async () => window.DroneMissionRuntime.run());
+    await page.locator("[data-mission-run]").click();
 
     await expect(page.locator("body")).toHaveClass(/mission-passed/);
     await expect(page.locator("#briefing-stage-message")).toHaveText("BRIEFING BEREIT");
@@ -154,7 +156,7 @@ print("Fund:", fund)`);
     expect(pageErrors).toEqual([]);
 });
 
-test("Pixelmuseum finale accepts a real fast strategy without source-shape checks and hands off to escape B", async ({ page }) => {
+test("Pixelmuseum finale accepts the direct first-action strategy and hands off to the canonical escape", async ({ page }) => {
     const pageErrors = [];
     page.on("pageerror", error => pageErrors.push(String(error)));
     await page.addInitScript(() => {
@@ -162,20 +164,22 @@ test("Pixelmuseum finale accepts a real fast strategy without source-shape check
         localStorage.removeItem("completedLevelCode_v1");
     });
     await openFinale(page);
+    await expect(page.locator("[data-finale-run]")).toBeVisible();
+    await expect(page.locator("[data-finale-reset]")).toBeVisible();
 
     await page.evaluate(async () => window.finalePrototype.run());
     await expect(page.locator("body")).not.toHaveClass(/validation-passed/);
     await expect(page.locator("#next-level-btn")).toBeHidden();
 
-    await runFinaleCode(page, FAST_ESCAPE_CODE);
+    await runFinaleCode(page, DIRECT_ESCAPE_CODE);
 
     await expect(page.locator("#museum-success")).toHaveText("MISSION ERFOLGREICH – DU BIST ENTKOMMEN!");
     await expect(page.locator("body")).toHaveClass(/validation-passed/);
-    await expect(page.locator("#checks-list")).toContainText("Portal rechtzeitig vor Alarmstufe 1 erreicht");
+    await expect(page.locator("#checks-list")).toContainText("Portal mit der ersten Alarmaktion erreicht");
     await expect(page.locator("#success-overlay")).toBeVisible({ timeout: 7_000 });
     await expect(page.locator("#success-overlay .success-coin")).toHaveCount(3);
-    await expect(page.locator("#success-overlay .success-btn")).toHaveAttribute("href", "helikopter_flucht-b.html");
-    await expect(page.locator("#next-level-btn")).toHaveAttribute("href", "helikopter_flucht-b.html");
+    await expect(page.locator("#success-overlay .success-btn")).toHaveAttribute("href", "helikopter_flucht.html");
+    await expect(page.locator("#next-level-btn")).toHaveAttribute("href", "helikopter_flucht.html");
     await expect(page.locator("#next-level-btn")).toBeVisible();
     expect(pageErrors).toEqual([]);
 });
@@ -208,7 +212,7 @@ test("Pixelmuseum production runtime reports exact hack blockers and clears an o
         const armMuseum = () => {
             mission.resetHud();
             mission.collectItem("Schlüsselkarte");
-            mission.collectItem("Artefakt");
+            mission.collectItem("Sternenfragment");
         };
 
         mission.resetHud();
@@ -294,7 +298,7 @@ test("Pixelmuseum never rewards or stores code edited during its active run", as
 test("reset cancels the delayed Pixelmuseum reward UI", async ({ page }) => {
     await page.addInitScript(() => localStorage.removeItem("completedLevelCode_v1"));
     await openFinale(page);
-    await runFinaleCode(page, FAST_ESCAPE_CODE);
+    await runFinaleCode(page, DIRECT_ESCAPE_CODE);
 
     await expect(page.locator("#next-level-btn")).toBeVisible();
     await page.evaluate(() => window.finalePrototype.reset());
