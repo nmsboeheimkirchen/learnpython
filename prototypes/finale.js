@@ -140,6 +140,10 @@
         config.onOutput?.(chunk, outputText);
     }
 
+    function reportMessage(message) {
+        appendOutput((outputText && !outputText.endsWith("\n") ? "\n" : "") + String(message) + "\n");
+    }
+
     function clearTurtle() {
         try {
             if (turtleTarget.turtleInstance && typeof turtleTarget.turtleInstance.reset === "function") {
@@ -363,7 +367,7 @@
         };
     }
 
-    function renderChecks(result) {
+    function renderChecks(result, notifyResult = true) {
         lastResult = result;
         checksList.textContent = "";
         result.checks.forEach(check => {
@@ -386,11 +390,13 @@
         validationTitle.textContent = result.passed ? "Bereit zur Präsentation" : "Noch nicht ganz bereit";
         validationMessage.textContent = result.message;
         document.body.classList.toggle("validation-passed", result.passed);
-        config.onResult?.(result, {
-            code: lastRunCode || editor.getValue(),
-            output: outputText,
-            dirty: hasRun && editor.getValue() !== lastRunCode
-        });
+        if (notifyResult) {
+            config.onResult?.(result, {
+                code: lastRunCode || editor.getValue(),
+                output: outputText,
+                dirty: hasRun && editor.getValue() !== lastRunCode
+            });
+        }
     }
 
     function renderPendingChecks(label = "Prüfung läuft …") {
@@ -425,7 +431,15 @@
     }
 
     function refreshValidation() {
-        if (running) return;
+        if (running) {
+            if (config.liveChecks) {
+                const result = config.validate(lastRunCode, outputText);
+                // Teilziele dürfen live grün werden; den gesamten Lauf erst nach Python-Ende belohnen.
+                renderChecks({ ...result, passed: false, message: "Die Mission läuft. Erledigte Schritte sind bereits grün markiert." }, false);
+                validationTitle.textContent = "Mission läuft";
+            }
+            return;
+        }
         const code = editor.getValue();
         syncPythonState();
         const hudData = config.parseOutput?.(outputText);
@@ -498,7 +512,11 @@
             }
             const message = friendlyError(error);
             lastErrorMessage = message;
-            consoleOutput.textContent = "FEHLER: " + message;
+            if (config.preserveOutputOnError) {
+                reportMessage("FEHLER: " + message);
+            } else {
+                consoleOutput.textContent = "FEHLER: " + message;
+            }
             consoleOutput.classList.add("is-error");
             validationTitle.textContent = "Programm gestoppt";
             validationMessage.textContent = "Verbessere den markierten Code und starte erneut.";
@@ -577,7 +595,10 @@
     });
 
     config.resetHud?.();
-    if (config.levelId) {
+    const configuredInitialCode = config.getInitialCode?.();
+    if (typeof configuredInitialCode === "string") {
+        editor.setValue(configuredInitialCode);
+    } else if (config.levelId) {
         const attempted = window.restoreAttemptedLevelCode?.(config.levelId);
         const restored = !attempted && window.restoreCompletedLevelCode?.(config.levelId);
         const inherited = !attempted && !restored && config.inheritCode &&
@@ -596,6 +617,7 @@
         run: runProgram,
         reset: resetPrototype,
         refresh: refreshValidation,
+        reportMessage,
         getOutput: () => outputText,
         getLastError: () => lastErrorMessage,
         getLastResult: () => lastResult,

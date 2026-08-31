@@ -8,11 +8,31 @@
     const hintPanel = document.getElementById("alarm-help-panel");
     const hintLevelLabel = document.getElementById("alarm-help-level");
     const hintMessage = document.getElementById("alarm-help-message");
+    const restoreAttemptButton = document.getElementById("restore-finale-attempt");
+    const runtime = window.finalePrototype;
+    const previousAttempt = window.getAttemptedLevelCode?.("pixelmuseum_finale")
+        ?? window.getCompletedLevelCode?.("pixelmuseum_finale");
     const hints = Object.freeze([
         "code ist nur der Platzhalter! Du musst ein Passwort unter Anführungszeichen eingeben.",
         "Suche das Passwort im Quelltext der Seite!"
     ]);
     let hintLevel = 0;
+
+    function restoreFinaleAttempt() {
+        if (!runtime || runtime.isRunning() || typeof previousAttempt !== "string") return false;
+        runtime.reset();
+        runtime.editor.setValue(previousAttempt);
+        runtime.editor.focus();
+        return true;
+    }
+
+    if (restoreAttemptButton && runtime) {
+        restoreAttemptButton.hidden = typeof previousAttempt !== "string" || previousAttempt === runtime.editor.getValue();
+        restoreAttemptButton.addEventListener("click", restoreFinaleAttempt);
+        document.addEventListener("finale:running", event => {
+            restoreAttemptButton.disabled = Boolean(event.detail?.running);
+        });
+    }
 
     function requestAlarmHint() {
         if (!hintButton || !hintPanel || !hintLevelLabel || !hintMessage) return false;
@@ -62,6 +82,7 @@
     window.PixelmuseumFinaleTools = Object.freeze({
         ALARM_HELPER: helperCode,
         copyAlarmHelper,
-        requestAlarmHint
+        requestAlarmHint,
+        restoreFinaleAttempt
     });
 })();

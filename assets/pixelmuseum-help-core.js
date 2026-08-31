@@ -150,7 +150,7 @@
             "PORTAL_LOCKED",
             "Das Portal war bereits verriegelt",
             [
-                "Mit der Aufnahme des Sternenfragments startet der Alarm. Ab Alarmstufe 3 ist das Portal verriegelt.",
+                "Mit der Aufnahme des Sternenfragments startet der Alarm. Ab Alarmstufe 2 ist das Portal verriegelt.",
                 "Bevor du zum Portal fliegst, musst du den Alarm an der Konsole ausschalten.",
                 "Fliege nach der Aufnahme zu (250, -60), rufe dort alarm_hacken(...) mit deinem Passwort auf und steuere erst danach das Portal an."
             ]

@@ -2,7 +2,7 @@
     "use strict";
 
     const DEFAULT_MAX_LEVEL = 8;
-    const PORTAL_LOCK_LEVEL = 3;
+    const PORTAL_LOCK_LEVEL = 2;
 
     function normalizedMaximum(value) {
         const numeric = Number(value);

@@ -161,7 +161,7 @@ test("successful personal briefing code becomes the finale baseline and survives
     expect(pageErrors).toEqual([]);
 });
 
-test("finale preserves a saved attempt but resets to the briefing without an added portal flight", async ({ page }) => {
+test("finale starts with the briefing even when an older finale attempt includes a portal flight", async ({ page }) => {
     const attemptedCode = `${OWN_BRIEFING_CODE}\ndrohne.goto(0, 115)`;
     await page.addInitScript(({ briefing, attempt }) => {
         localStorage.setItem("completedLevelCode_v1", JSON.stringify({ pixelmuseum_briefing: briefing }));
@@ -169,6 +169,8 @@ test("finale preserves a saved attempt but resets to the briefing without an add
     }, { briefing: OWN_BRIEFING_CODE, attempt: attemptedCode });
     await openFinale(page);
 
+    expect(await page.evaluate(() => window.finalePrototype.editor.getValue())).toBe(OWN_BRIEFING_CODE);
+    await page.locator("#restore-finale-attempt").click();
     expect(await page.evaluate(() => window.finalePrototype.editor.getValue())).toBe(attemptedCode);
     await page.locator("[data-finale-reset]").click();
     expect(await page.evaluate(() => window.finalePrototype.editor.getValue())).toBe(OWN_BRIEFING_CODE);
@@ -297,7 +299,7 @@ test("Pixelmuseum alarm starts immediately and blocks a direct escape without a 
     expect(pageErrors).toEqual([]);
 });
 
-test("Pixelmuseum keeps the portal unbarred until alarm level 3 without prematurely awarding success", async ({ page }) => {
+test("Pixelmuseum locks the portal at alarm level 2 without prematurely awarding success", async ({ page }) => {
     await openFinale(page);
     const states = await page.evaluate(() => {
         const mission = window.FINALE_CONFIG;
@@ -326,9 +328,56 @@ test("Pixelmuseum keeps the portal unbarred until alarm level 3 without prematur
 
     expect(states.first).toEqual({ level: 1, open: true, alarmVisible: true, barred: false, escaped: false, successVisible: false });
     expect(states.earlyArrival).toMatchObject({ open: true, barred: false, escaped: false, successVisible: false });
-    expect(states.earlyArrival.message).toContain("schalte zuerst den Alarm");
-    expect(states.second).toMatchObject({ level: 2, open: true, barred: false });
+    expect(states.earlyArrival.message).toContain("Du bist gefangen!");
+    expect(states.second).toMatchObject({ level: 2, open: false, barred: true });
     expect(states.third).toMatchObject({ level: 3, open: false, barred: true });
+});
+
+test("a direct escape reports being trapped and keeps that output after a following Python error", async ({ page }) => {
+    await openFinale(page);
+    await runFinaleCode(page, `${DIRECT_ESCAPE_CODE}
+def alarm_hacken(code):
+    print("ALARM_HACK|" + code)
+alarm_hacken(code)`);
+
+    await expect(page.locator("#museum-warning")).toHaveText("DU BIST GEFANGEN!");
+    await expect(page.locator("#console-output")).toContainText("DU BIST GEFANGEN!");
+    await expect(page.locator("#console-output")).toContainText("NameError");
+    await expect(page.locator("#console-output")).toContainText("INVENTARLISTE:");
+    expect((await page.evaluate(() => window.finalePrototype.getOutput())).match(/DU BIST GEFANGEN!/g)).toHaveLength(1);
+    await expect(page.locator("body")).not.toHaveClass(/validation-passed|escape-success/);
+    await expect(page.locator("#next-level-btn")).toBeHidden();
+});
+
+test("the hack check turns green at the console before the drone escapes", async ({ page }) => {
+    await openFinale(page);
+    const hackOnly = HACK_ESCAPE_CODE.replace("drohne.goto(0, 115)\n", "");
+    await runFinaleCode(page, hackOnly);
+
+    await expect(page.locator("#alarm-console-label")).toContainText("Alarm gehackt");
+    const hackCheck = page.locator("#checks-list li").filter({ hasText: "Alarm an der Konsole gehackt" });
+    await expect(hackCheck).toHaveClass(/is-passed/);
+    await expect(page.locator("#checks-list li").filter({ hasText: "Gültiger Fluchtweg" })).toHaveClass(/is-missing/);
+    await expect(page.locator("body")).not.toHaveClass(/validation-passed|escape-success/);
+    await expect(page.locator("#next-level-btn")).toBeHidden();
+});
+
+test("a completed hack is shown live during a running program without awarding the whole mission", async ({ page }) => {
+    await openFinale(page);
+    const liveHack = `import time\n${HACK_ESCAPE_CODE.replace("drohne.goto(0, 115)\n", "")}\ntime.sleep(2.5)`;
+    await page.evaluate(source => {
+        window.finalePrototype.editor.setValue(source);
+        window.liveHackPromise = window.finalePrototype.run();
+    }, liveHack);
+
+    await expect(page.locator("#alarm-console-label")).toContainText("Alarm gehackt");
+    await expect(page.locator("body")).toHaveClass(/program-running/);
+    await expect(page.locator("#checks-list li").filter({ hasText: "Alarm an der Konsole gehackt" })).toHaveClass(/is-passed/);
+    await expect(page.locator("#checks-list li").filter({ hasText: "Gültiger Fluchtweg" })).toHaveClass(/is-missing/);
+    await expect(page.locator("body")).not.toHaveClass(/validation-passed/);
+    await expect(page.locator("#next-level-btn")).toBeHidden();
+    await page.evaluate(() => window.liveHackPromise);
+    await expect(page.locator("#checks-list li").filter({ hasText: "Alarm an der Konsole gehackt" })).toHaveClass(/is-passed/);
 });
 
 test("the central message reveals the password hints in order without changing student code", async ({ page }) => {
@@ -380,6 +429,7 @@ test("Pixelmuseum production finale completes the touch-accessible hack strategy
     await expect(page.locator("#alarm-console-label")).toContainText("Alarm gehackt");
     await expect(page.locator("body")).toHaveClass(/validation-passed/);
     await expect.poll(() => page.evaluate(() => window.FINALE_CONFIG.completedStrategy)).toBe("hack");
+    await expect(page.locator("#console-output")).not.toContainText("DU BIST GEFANGEN!");
     await expect(page.locator("#success-overlay")).toBeVisible({ timeout: 7_000 });
     expect(pageErrors).toEqual([]);
 });

@@ -301,6 +301,16 @@
     white-space: nowrap;
 }
 
+.museum-resume-action {
+    margin-top: 10px;
+    padding: 8px 12px;
+    font-size: 0.75rem;
+}
+
+.museum-resume-action[hidden] {
+    display: none;
+}
+
 .museum-tool-actions {
     display: flex;
     flex-wrap: wrap;

@@ -29,7 +29,7 @@ test("Pixelmuseum alarm starts visibly at level 1 and advances in controlled ste
     assert.equal(alarm.advance(2).level, 4);
 });
 
-test("the alarm starts immediately but the portal stays open until level 3", () => {
+test("the alarm starts immediately and the portal locks at level 2", () => {
     const alarm = loadAlarmCore().createState();
     alarm.start();
 
@@ -37,7 +37,7 @@ test("the alarm starts immediately but the portal stays open until level 3", () 
     assert.equal(alarm.isPortalOpen(true), true);
     alarm.advance();
     assert.equal(alarm.snapshot().level, 2);
-    assert.equal(alarm.isPortalOpen(true), true);
+    assert.equal(alarm.isPortalOpen(true), false);
     alarm.advance();
     assert.equal(alarm.snapshot().level, 3);
     assert.equal(alarm.isPortalOpen(true), false);

@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
     <link rel="stylesheet" href="assets/style.css?v=20260722-2">
     <link rel="stylesheet" href="prototypes/finale.css?v=20260831-1">
-    <link rel="stylesheet" href="assets/pixelmuseum.css?v=20260831-1">
+    <link rel="stylesheet" href="assets/pixelmuseum.css?v=20260831-2">
 </head>
 <body class="prototype-page museum-theme museum-path-page" data-mission-level="pixelmuseum_finale" data-pixelmuseum-stage="finale">
     <a class="skip-link" href="#editor-panel">Zum Python-Editor</a>
@@ -199,6 +199,7 @@ def melde_inventar(liste):
                         <button id="presentation-btn" class="secondary-action" type="button">◫ Präsentieren</button>
                     </div>
                     <button class="test-btn" type="button" data-teacher-solution="pixelmuseum_finale">Musterlösung (Für Lehrer)</button>
+                    <button id="restore-finale-attempt" class="secondary-action museum-resume-action" type="button" hidden>Letzten Finale-Versuch laden</button>
                 </div>
 
                 <div class="console-card">
@@ -230,7 +231,7 @@ def melde_inventar(liste):
     <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
     <script src="assets/vendor/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="assets/vendor/codemirror/5.65.2/python.min.js"></script>
-    <script src="assets/pixelmuseum-alarm-core.js?v=20260831-1"></script>
+    <script src="assets/pixelmuseum-alarm-core.js?v=20260831-2"></script>
     <script>
         window.FINALE_CONFIG = {
             levelId: "pixelmuseum_finale",
@@ -242,8 +243,13 @@ def melde_inventar(liste):
             defaultCode: document.getElementById("python-editor").value,
             inheritCode: true,
             resetToLoadedCode: true,
+            liveChecks: true,
+            preserveOutputOnError: true,
+            getInitialCode() {
+                return this.getResetCode();
+            },
             getResetCode() {
-                return window.buildInheritedLevelCode?.(this.levelId) ?? this.defaultCode;
+                return window.getCompletedLevelCode?.("pixelmuseum_briefing") ?? this.defaultCode;
             },
             onRunStart() {
                 this.prepareAudio();
@@ -392,6 +398,7 @@ def melde_inventar(liste):
                 document.body.classList.remove("portal-trapped");
             },
             scheduleValidationRefresh() {
+                window.clearTimeout(this.validationRefreshTimer);
                 const generation = this.missionGeneration;
                 this.validationRefreshTimer = window.setTimeout(() => {
                     if (generation !== this.missionGeneration) return;
@@ -401,7 +408,6 @@ def melde_inventar(liste):
             },
             onRunError() {
                 this.invalidateMissionTimers();
-                this.clearPortalWarning();
                 document.body.classList.remove("alarm-active");
             },
             resetHud() {
@@ -428,6 +434,7 @@ def melde_inventar(liste):
                 this.atPortal = false;
                 this.portalOpen = true;
                 this.portalTrapped = false;
+                this.trappedMessageReported = false;
                 this.exitUnlocked = false;
                 this.escaped = false;
                 this.inventoryOutputPassed = false;
@@ -455,6 +462,7 @@ def melde_inventar(liste):
 
                 if (item === "Schlüsselkarte") {
                     document.getElementById("keycard-label").innerHTML = '<span aria-hidden="true">✓</span> Schlüsselkarte genommen';
+                    this.scheduleValidationRefresh();
                     return;
                 }
 
@@ -465,6 +473,7 @@ def melde_inventar(liste):
                 document.getElementById("artifact-label").innerHTML = '<span aria-hidden="true">✓</span> Sternenfragment sichergestellt';
                 this.updateExitState();
                 this.startAlarm();
+                this.scheduleValidationRefresh();
             },
             startAlarm() {
                 if (this.alarmStarted) return;
@@ -569,7 +578,7 @@ def melde_inventar(liste):
                 document.getElementById("portal-label").innerHTML = this.portalOpen
                     ? '<span aria-hidden="true">⬡</span> Ausgang offen (0, 115)'
                     : '<span aria-hidden="true">▥</span> Portal verriegelt (0, 115)';
-                if (wasOpen && !this.portalOpen && this.atPortal && !this.escaped) {
+                if (wasOpen && !this.portalOpen && this.atPortal && !this.escaped && !this.hackRequested) {
                     this.showTrappedWarning();
                 }
             },
@@ -577,6 +586,10 @@ def melde_inventar(liste):
                 const warning = document.getElementById("museum-warning");
                 this.portalTrapped = true;
                 warning.textContent = "DU BIST GEFANGEN!";
+                if (!this.trappedMessageReported) {
+                    window.finalePrototype?.reportMessage?.("DU BIST GEFANGEN!");
+                    this.trappedMessageReported = true;
+                }
                 document.body.classList.add("portal-trapped");
                 this.playOneShotSound("trapped");
                 window.clearTimeout(this.portalWarningTimer);
@@ -615,10 +628,11 @@ def melde_inventar(liste):
                     if (this.portalOpen && this.alarmDisabled) {
                         this.escaped = true;
                         this.showEscapeSuccess();
-                    } else if (!this.portalOpen) {
+                    } else if (!this.hackRequested) {
                         this.showTrappedWarning();
                     }
                     this.updateExitState();
+                    this.scheduleValidationRefresh();
                 }
                 this.atPortal = atPortal;
 
@@ -645,7 +659,7 @@ def melde_inventar(liste):
             },
             validate(_code, output = "") {
                 const strategy = this.alarmDisabled ? "hack" : null;
-                const securityStrategyPassed = Boolean(this.escaped && this.alarmDisabled);
+                const securityStrategyPassed = Boolean(this.hackCompleted && this.alarmDisabled);
                 const expectedInventoryOutput = "INVENTARLISTE: " + this.runtimeInventory.join(",");
                 const inventoryOutputPassed = String(output).split(/\r?\n/).some(line => line.trim() === expectedInventoryOutput);
                 this.inventoryOutputPassed = inventoryOutputPassed;
@@ -668,15 +682,17 @@ def melde_inventar(liste):
                     strategy,
                     message: passed
                         ? "Mission bestätigt: Deine selbst gewählte Strategie hat die Drohne sicher aus dem Museum gebracht."
-                        : (this.portalReached && !this.alarmDisabled && this.portalOpen
-                            ? "Ausgang erreicht – schalte zuerst den Alarm an der Konsole aus, um die Mission abzuschließen."
-                            : "Mindestens ein Missionsschritt fehlt noch in deinem Fluchtplan.")
+                        : (this.hackRequested && !this.hackCompleted && !this.alarmFailed
+                            ? "Der Hack läuft. Warte auf die Freigabe des Portals."
+                            : (this.portalTrapped && !this.alarmDisabled
+                                ? "Du bist gefangen! Hacke den Alarm an der Konsole, um das Portal freizugeben."
+                                : "Mindestens ein Missionsschritt fehlt noch in deinem Fluchtplan."))
                 };
             }
         };
     </script>
-    <script src="prototypes/finale.js?v=20260831-1"></script>
-    <script src="assets/pixelmuseum-finale-tools.js?v=20260831-1"></script>
+    <script src="prototypes/finale.js?v=20260831-2"></script>
+    <script src="assets/pixelmuseum-finale-tools.js?v=20260831-2"></script>
     <script src="assets/pixelmuseum-path.js?v=20260828-1"></script>
 </body>
 </html>
