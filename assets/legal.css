@@ -1,0 +1,56 @@
+.course-home.legal-page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    min-height: 100dvh;
+}
+
+.legal-page .course-header {
+    grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.legal-back-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 12px;
+    border-radius: 14px;
+    color: var(--home-cyan);
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.legal-back-link:hover {
+    background: rgba(var(--home-cyan-rgb), 0.08);
+    text-decoration: underline;
+}
+
+.legal-main {
+    flex: 1;
+    padding-block: 132px 64px;
+}
+
+.legal-card {
+    max-width: 720px;
+    padding: clamp(24px, 5vw, 48px);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    background: linear-gradient(155deg, rgba(13, 28, 46, 0.96), rgba(5, 14, 25, 0.97));
+}
+
+.legal-card h1 {
+    margin-bottom: 28px;
+    font-size: clamp(2rem, 5vw, 3rem);
+}
+
+.legal-address {
+    color: var(--ink-muted);
+    font-style: normal;
+    line-height: 1.85;
+    overflow-wrap: anywhere;
+}
+
+.legal-address strong {
+    color: var(--ink);
+}
