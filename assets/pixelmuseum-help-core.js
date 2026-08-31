@@ -125,7 +125,7 @@
             [
                 "Der Hackaufruf wurde beobachtet, die Drohne stand dabei aber nicht an der Alarmkonsole.",
                 "Prüfe, ob der Flug zur Alarmkonsole wirklich vor alarm_hacken(...) beendet wird.",
-                "Steuere zuerst die Koordinaten der Alarmkonsole an und rufe unmittelbar danach alarm_hacken(code) auf."
+                "Steuere zuerst die Koordinaten der Alarmkonsole an und rufe unmittelbar danach alarm_hacken(...) mit deinem Passwort auf."
             ]
         ),
         HACK_WRONG_CODE: issue(
@@ -150,9 +150,9 @@
             "PORTAL_LOCKED",
             "Das Portal war bereits verriegelt",
             [
-                "Mit der Aufnahme des Sternenfragments startet der Alarm und verriegelt das Portal.",
+                "Mit der Aufnahme des Sternenfragments startet der Alarm. Ab Alarmstufe 3 ist das Portal verriegelt.",
                 "Bevor du zum Portal fliegst, musst du den Alarm an der Konsole ausschalten.",
-                "Fliege nach der Aufnahme zu (250, -60), rufe dort alarm_hacken(code) auf und steuere erst danach das Portal an."
+                "Fliege nach der Aufnahme zu (250, -60), rufe dort alarm_hacken(...) mit deinem Passwort auf und steuere erst danach das Portal an."
             ]
         ),
         ALARM_TOO_SLOW: issue(
@@ -170,7 +170,7 @@
             [
                 "Das Sternenfragment ist gesichert. Jetzt muss die Drohne den Alarm an der Konsole hacken.",
                 "Für den Hack brauchst du den richtigen Ort, den Code aus dem Quelltext und einen Aufruf nach Alarmbeginn.",
-                "Programmiere: Alarmkonsole → alarm_hacken(code) → Portal."
+                "Programmiere: Alarmkonsole → alarm_hacken(...) mit deinem Passwort → Portal."
             ]
         ),
         PORTAL_NOT_REACHED: issue(
@@ -187,7 +187,7 @@
             "Die echte Inventarliste fehlt in der Ausgabe",
             [
                 "Schau dir die vorbereitete Funktion melde_inventar(liste) an. Sie erzeugt die passende Ausgabe aus einer Liste.",
-                "Beim Aufruf übergibst du deine gefüllte Liste inventar.",
+                "Schau dir die Funktion melde_inventar an und setze sie ein!",
                 "Rufe am Ende melde_inventar(inventar) auf."
             ]
         ),

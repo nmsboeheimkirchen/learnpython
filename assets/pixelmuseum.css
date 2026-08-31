@@ -303,14 +303,33 @@
 
 .museum-tool-actions {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 10px;
 }
 
 .museum-copy-status {
+    flex-basis: 100%;
     min-height: 1em;
     color: #86ffc3;
     font-size: 0.66rem;
+}
+
+.museum-alarm-hint {
+    padding: 10px 12px;
+    border: 1px solid rgba(255, 120, 243, 0.25);
+    border-radius: 12px;
+    background: rgba(255, 120, 243, 0.06);
+}
+
+.museum-alarm-hint small {
+    color: #7ef7ff;
+    font-size: 0.66rem;
+}
+
+.museum-alarm-hint p {
+    color: #dce8f0;
+    font-size: 0.76rem;
 }
 
 .museum-help-card {

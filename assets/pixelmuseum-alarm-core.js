@@ -2,6 +2,7 @@
     "use strict";
 
     const DEFAULT_MAX_LEVEL = 8;
+    const PORTAL_LOCK_LEVEL = 3;
 
     function normalizedMaximum(value) {
         const numeric = Number(value);
@@ -71,7 +72,7 @@
         }
 
         function isPortalOpen(artifactSecured = false) {
-            return !artifactSecured || level < 1 || disabled;
+            return !artifactSecured || disabled || (!failed && level < PORTAL_LOCK_LEVEL);
         }
 
         reset();
@@ -88,6 +89,7 @@
 
     window.PixelmuseumAlarmCore = Object.freeze({
         DEFAULT_MAX_LEVEL,
+        PORTAL_LOCK_LEVEL,
         createState
     });
 })();

@@ -102,6 +102,7 @@ test("Pixelmuseum help gives the exact function and return-value hints", () => {
     });
     assert.equal(outputIssue.id, "INVENTORY_OUTPUT");
     assert.match(outputIssue.levels[0], /melde_inventar\(liste\)/);
+    assert.equal(outputIssue.levels[1], "Schau dir die Funktion melde_inventar an und setze sie ein!");
     assert.match(outputIssue.levels[2], /melde_inventar\(inventar\)/);
 });
 

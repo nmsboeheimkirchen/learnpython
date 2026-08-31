@@ -29,6 +29,24 @@
         throw new Error("CodeMirror oder Skulpt konnte nicht geladen werden.");
     }
 
+    // Die Editor-Spalte wird beim Präsentieren ausgeblendet; die Bedienung bleibt außerhalb.
+    let presentationRunButton = null;
+    if (presentationButton && exitPresentationButton) {
+        const controls = document.createElement("div");
+        controls.className = "presentation-controls";
+        controls.setAttribute("role", "group");
+        controls.setAttribute("aria-label", "Präsentation steuern");
+        presentationRunButton = document.createElement("button");
+        presentationRunButton.id = "presentation-run-btn";
+        presentationRunButton.type = "button";
+        presentationRunButton.className = "mission-primary-action";
+        presentationRunButton.innerHTML = runButton.innerHTML;
+        presentationRunButton.disabled = runButton.disabled;
+        runButtons.push(presentationRunButton);
+        controls.append(presentationRunButton, exitPresentationButton);
+        document.body.appendChild(controls);
+    }
+
     const editor = window.CodeMirror.fromTextArea(textarea, {
         mode: "python",
         theme: "monokai",
@@ -436,6 +454,10 @@
         document.body.classList.toggle("presentation-mode", enabled);
         presentationButton?.setAttribute("aria-pressed", String(enabled));
         if (presentationButton) presentationButton.textContent = enabled ? "Editor anzeigen" : "◫ Präsentieren";
+        const focusTarget = enabled
+            ? (presentationRunButton?.disabled ? exitPresentationButton : presentationRunButton)
+            : presentationButton;
+        focusTarget?.focus({ preventScroll: true });
         window.setTimeout(() => editor.refresh(), 0);
     }
 

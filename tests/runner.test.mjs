@@ -2403,10 +2403,10 @@ test("finale prototypes stay isolated while the production Pixelmuseum path is p
         assert.match(html, /src="\.\.\/assets\/brand\/agent-py-logo\.png\?v=20260720-2"/);
         assert.match(html, /class="prototype-path-token"/);
         assert.doesNotMatch(html, /class="prototype-path-token"[^>]*(?:href=|onclick=)/);
-        assert.match(html, /href="finale\.css\?v=cockpit-scroll-v1"/);
+        assert.match(html, /href="finale\.css\?v=20260831-1"/);
         assert.match(html, /class="turtle-target"/);
         assert.match(html, /window\.FINALE_CONFIG/);
-        assert.match(html, /src="finale\.js\?v=cockpit-scroll-v1"/);
+        assert.match(html, /src="finale\.js\?v=20260831-1"/);
         assert.match(html, /src="finale-analysis\.js\?v=drone-status-v2"/);
         assert.match(html, /assets\/images\/finales\/.+\.webp/);
         assert.match(html, /assets\/vendor\/skulpt\/1\.2\.0\/skulpt\.min\.js/);

@@ -32,6 +32,21 @@
         throw new Error("CodeMirror oder Skulpt konnte nicht geladen werden.");
     }
 
+    // Die Starttaste muss auch bei ausgeblendeter Editor-Spalte bedienbar bleiben.
+    const presentationControls = document.createElement("div");
+    presentationControls.className = "presentation-controls";
+    presentationControls.setAttribute("role", "group");
+    presentationControls.setAttribute("aria-label", "Präsentation steuern");
+    const presentationRunButton = document.createElement("button");
+    presentationRunButton.id = "presentation-run-btn";
+    presentationRunButton.type = "button";
+    presentationRunButton.className = "primary-action";
+    presentationRunButton.innerHTML = runButton.innerHTML;
+    presentationRunButton.disabled = runButton.disabled;
+    runButtons.push(presentationRunButton);
+    presentationControls.append(presentationRunButton, exitPresentationButton);
+    document.body.appendChild(presentationControls);
+
     const editor = window.CodeMirror.fromTextArea(textarea, {
         mode: "python",
         theme: "monokai",
@@ -537,6 +552,10 @@
         document.body.classList.toggle("presentation-mode", enabled);
         presentationButton.setAttribute("aria-pressed", String(enabled));
         presentationButton.textContent = enabled ? "Editor anzeigen" : "◫ Präsentieren";
+        const focusTarget = enabled
+            ? (presentationRunButton.disabled ? exitPresentationButton : presentationRunButton)
+            : presentationButton;
+        focusTarget.focus({ preventScroll: true });
         window.setTimeout(() => editor.refresh(), 0);
     }
 
@@ -566,6 +585,10 @@
         if ((attempted || restored || inherited) && config.resetToLoadedCode) {
             resetCode = editor.getValue();
         }
+    }
+    if (typeof config.getResetCode === "function") {
+        const configuredResetCode = config.getResetCode();
+        if (typeof configuredResetCode === "string") resetCode = configuredResetCode;
     }
     setStatus("Bereit", "ready");
     window.finalePrototype = {

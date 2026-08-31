@@ -11,8 +11,8 @@
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
     <link rel="stylesheet" href="assets/style.css?v=20260722-2">
-    <link rel="stylesheet" href="prototypes/finale.css?v=cockpit-scroll-v2">
-    <link rel="stylesheet" href="assets/pixelmuseum.css?v=20260829-1">
+    <link rel="stylesheet" href="prototypes/finale.css?v=20260831-1">
+    <link rel="stylesheet" href="assets/pixelmuseum.css?v=20260831-1">
 </head>
 <body class="prototype-page museum-theme museum-path-page" data-mission-level="pixelmuseum_finale" data-pixelmuseum-stage="finale">
     <a class="skip-link" href="#editor-panel">Zum Python-Editor</a>
@@ -159,7 +159,12 @@
     print("ALARM_HACK|" + code)</code></pre>
                         <div class="museum-tool-actions">
                             <button id="copy-alarm-helper" class="secondary-action museum-copy-action" type="button">Funktion kopieren</button>
+                            <button id="alarm-help-btn" class="secondary-action museum-copy-action" type="button" aria-controls="alarm-help-panel">Hinweis anfordern</button>
                             <small id="copy-alarm-status" class="museum-copy-status" role="status" aria-live="polite"></small>
+                        </div>
+                        <div id="alarm-help-panel" class="museum-alarm-hint" role="status" aria-live="polite" aria-atomic="true" hidden>
+                            <small id="alarm-help-level"></small>
+                            <p id="alarm-help-message"></p>
                         </div>
                     </div>
                 </details>
@@ -225,7 +230,7 @@ def melde_inventar(liste):
     <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
     <script src="assets/vendor/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="assets/vendor/codemirror/5.65.2/python.min.js"></script>
-    <script src="assets/pixelmuseum-alarm-core.js?v=20260829-1"></script>
+    <script src="assets/pixelmuseum-alarm-core.js?v=20260831-1"></script>
     <script>
         window.FINALE_CONFIG = {
             levelId: "pixelmuseum_finale",
@@ -237,6 +242,9 @@ def melde_inventar(liste):
             defaultCode: document.getElementById("python-editor").value,
             inheritCode: true,
             resetToLoadedCode: true,
+            getResetCode() {
+                return window.buildInheritedLevelCode?.(this.levelId) ?? this.defaultCode;
+            },
             onRunStart() {
                 this.prepareAudio();
             },
@@ -549,9 +557,10 @@ def melde_inventar(liste):
                 this.scheduleValidationRefresh();
             },
             renderPortal() {
+                const wasOpen = this.portalOpen;
                 this.portalOpen = this.alarmState
                     ? this.alarmState.isPortalOpen(this.artifactSecured)
-                    : (!this.artifactSecured || this.alarmLevel < 1 || this.alarmDisabled);
+                    : (!this.artifactSecured || this.alarmLevel < window.PixelmuseumAlarmCore.PORTAL_LOCK_LEVEL || this.alarmDisabled);
                 document.body.classList.toggle("portal-open", this.portalOpen);
                 document.body.classList.toggle("portal-locked", !this.portalOpen);
                 document.getElementById("exit-state").textContent = this.exitUnlocked
@@ -560,6 +569,9 @@ def melde_inventar(liste):
                 document.getElementById("portal-label").innerHTML = this.portalOpen
                     ? '<span aria-hidden="true">⬡</span> Ausgang offen (0, 115)'
                     : '<span aria-hidden="true">▥</span> Portal verriegelt (0, 115)';
+                if (wasOpen && !this.portalOpen && this.atPortal && !this.escaped) {
+                    this.showTrappedWarning();
+                }
             },
             showTrappedWarning() {
                 const warning = document.getElementById("museum-warning");
@@ -600,10 +612,10 @@ def melde_inventar(liste):
                 const atPortal = distance(portal) <= 28;
                 if (atPortal && !this.atPortal && this.artifactSecured) {
                     this.portalReached = true;
-                    if (this.portalOpen) {
+                    if (this.portalOpen && this.alarmDisabled) {
                         this.escaped = true;
                         this.showEscapeSuccess();
-                    } else {
+                    } else if (!this.portalOpen) {
                         this.showTrappedWarning();
                     }
                     this.updateExitState();
@@ -656,13 +668,15 @@ def melde_inventar(liste):
                     strategy,
                     message: passed
                         ? "Mission bestätigt: Deine selbst gewählte Strategie hat die Drohne sicher aus dem Museum gebracht."
-                        : "Mindestens ein Missionsschritt fehlt noch in deinem Fluchtplan."
+                        : (this.portalReached && !this.alarmDisabled && this.portalOpen
+                            ? "Ausgang erreicht – schalte zuerst den Alarm an der Konsole aus, um die Mission abzuschließen."
+                            : "Mindestens ein Missionsschritt fehlt noch in deinem Fluchtplan.")
                 };
             }
         };
     </script>
-    <script src="prototypes/finale.js?v=timed-alarm-v1"></script>
-    <script src="assets/pixelmuseum-finale-tools.js?v=20260829-1"></script>
+    <script src="prototypes/finale.js?v=20260831-1"></script>
+    <script src="assets/pixelmuseum-finale-tools.js?v=20260831-1"></script>
     <script src="assets/pixelmuseum-path.js?v=20260828-1"></script>
 </body>
 </html>

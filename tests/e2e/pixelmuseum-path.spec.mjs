@@ -151,6 +151,7 @@ test("successful personal briefing code becomes the finale baseline and survives
     expect(inheritedCode).toContain("drohne.goto(-390, 45)");
     expect(inheritedCode).toContain("def melde_inventar(liste):");
     expect(inheritedCode).not.toContain("def alarm_hacken(code):");
+    expect(inheritedCode).not.toContain("drohne.goto(0, 115)");
 
     await page.evaluate(() => {
         window.finalePrototype.editor.setValue('print("nur eine vorläufige Änderung")');
@@ -158,6 +159,20 @@ test("successful personal briefing code becomes the finale baseline and survives
     });
     await expect.poll(() => page.evaluate(() => window.finalePrototype.editor.getValue())).toBe(inheritedCode);
     expect(pageErrors).toEqual([]);
+});
+
+test("finale preserves a saved attempt but resets to the briefing without an added portal flight", async ({ page }) => {
+    const attemptedCode = `${OWN_BRIEFING_CODE}\ndrohne.goto(0, 115)`;
+    await page.addInitScript(({ briefing, attempt }) => {
+        localStorage.setItem("completedLevelCode_v1", JSON.stringify({ pixelmuseum_briefing: briefing }));
+        localStorage.setItem("attemptedLevelCode_v1", JSON.stringify({ pixelmuseum_finale: attempt }));
+    }, { briefing: OWN_BRIEFING_CODE, attempt: attemptedCode });
+    await openFinale(page);
+
+    expect(await page.evaluate(() => window.finalePrototype.editor.getValue())).toBe(attemptedCode);
+    await page.locator("[data-finale-reset]").click();
+    expect(await page.evaluate(() => window.finalePrototype.editor.getValue())).toBe(OWN_BRIEFING_CODE);
+    await expect(page.locator("#validation-message")).toContainText("Dein Code aus dem Briefing");
 });
 
 test("Pixelmuseum central help explains drohne, fund and the function argument exactly", async ({ page }) => {
@@ -198,6 +213,8 @@ inventar.append(fund)`;
     await helpButton.click();
     await expect(helpPanel).toHaveAttribute("data-help-issue", "INVENTORY_OUTPUT");
     await expect(page.locator("#museum-help-message")).toContainText("melde_inventar(liste)");
+    await helpButton.click();
+    await expect(page.locator("#museum-help-message")).toHaveText("Schau dir die Funktion melde_inventar an und setze sie ein!");
 
     await runBriefingCode(page, `${completeWithoutReport}\nmelde_inventar(liste)`);
     await helpButton.click();
@@ -278,6 +295,55 @@ test("Pixelmuseum alarm starts immediately and blocks a direct escape without a 
     await expect(page.locator("body")).not.toHaveClass(/validation-passed/);
     await expect(page.locator("#next-level-btn")).toBeHidden();
     expect(pageErrors).toEqual([]);
+});
+
+test("Pixelmuseum keeps the portal unbarred until alarm level 3 without prematurely awarding success", async ({ page }) => {
+    await openFinale(page);
+    const states = await page.evaluate(() => {
+        const mission = window.FINALE_CONFIG;
+        mission.resetHud();
+        mission.collectItem("Schlüsselkarte");
+        mission.collectItem("Sternenfragment");
+        mission.stopMissionTimers();
+        const snapshot = () => ({
+            level: mission.alarmLevel,
+            open: mission.portalOpen,
+            alarmVisible: document.body.classList.contains("alarm-active"),
+            barred: document.body.classList.contains("portal-locked"),
+            escaped: mission.escaped,
+            successVisible: document.body.classList.contains("escape-success")
+        });
+        const first = snapshot();
+        mission.onTurtleFrame({ x: 0, y: 115 });
+        const earlyArrival = { ...snapshot(), message: mission.validate("", "").message };
+        mission.applyAlarmSnapshot(mission.alarmState.advance());
+        const second = snapshot();
+        mission.applyAlarmSnapshot(mission.alarmState.advance());
+        const third = snapshot();
+        mission.stopMissionTimers();
+        return { first, earlyArrival, second, third };
+    });
+
+    expect(states.first).toEqual({ level: 1, open: true, alarmVisible: true, barred: false, escaped: false, successVisible: false });
+    expect(states.earlyArrival).toMatchObject({ open: true, barred: false, escaped: false, successVisible: false });
+    expect(states.earlyArrival.message).toContain("schalte zuerst den Alarm");
+    expect(states.second).toMatchObject({ level: 2, open: true, barred: false });
+    expect(states.third).toMatchObject({ level: 3, open: false, barred: true });
+});
+
+test("the central message reveals the password hints in order without changing student code", async ({ page }) => {
+    await openFinale(page);
+    const originalCode = await page.evaluate(() => window.finalePrototype.editor.getValue());
+    await page.locator(".museum-tool-card summary").click();
+    await expect(page.locator("#alarm-help-panel")).toBeHidden();
+    await page.locator("#alarm-help-btn").click();
+    await expect(page.locator("#alarm-help-level")).toHaveText("Hinweis 1 von 2");
+    await expect(page.locator("#alarm-help-message")).toHaveText("code ist nur der Platzhalter! Du musst ein Passwort unter Anführungszeichen eingeben.");
+    await page.locator("#alarm-help-btn").click();
+    await expect(page.locator("#alarm-help-level")).toHaveText("Hinweis 2 von 2");
+    await expect(page.locator("#alarm-help-message")).toHaveText("Suche das Passwort im Quelltext der Seite!");
+    await expect(page.locator("#alarm-help-btn")).toBeDisabled();
+    expect(await page.evaluate(() => window.finalePrototype.editor.getValue())).toBe(originalCode);
 });
 
 test("Pixelmuseum production finale completes the touch-accessible hack strategy", async ({ page }) => {
