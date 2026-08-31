@@ -44,11 +44,11 @@
             <div>
                 <span class="eyebrow">Finale · Galerie nach Mitternacht</span>
                 <h2 id="museum-briefing-title">Der böse Lord darf das Sternenfragment nicht behalten.</h2>
-                <p>Plane den Weg, fülle deine Inventarliste, hacke den ausgelösten Alarm und entkomme danach durch das Portal.</p>
+                <p>Plane den Weg, fülle deine Inventarliste und entkomme durch das Portal. Hacke den Alarm oder sei schneller als die Verriegelung.</p>
                 <ol class="museum-final-plan" aria-label="Vier Missionsziele">
                     <li><strong>01 · Schlüsselkarte</strong>Mit <code>suche_hier()</code> finden und aufnehmen.</li>
                     <li><strong>02 · Sternenfragment</strong>Erst danach sicherstellen.</li>
-                    <li><strong>03 · Alarm</strong>An der Konsole hacken.</li>
+                    <li><strong>03 · Flucht</strong>Rechtzeitig entkommen oder Alarm hacken.</li>
                     <li><strong>04 · Bericht</strong>Inventarliste ausgeben.</li>
                 </ol>
             </div>
@@ -435,6 +435,7 @@ def melde_inventar(liste):
                 this.portalOpen = true;
                 this.portalTrapped = false;
                 this.trappedMessageReported = false;
+                this.escapeMessageReported = false;
                 this.exitUnlocked = false;
                 this.escaped = false;
                 this.inventoryOutputPassed = false;
@@ -496,6 +497,7 @@ def melde_inventar(liste):
                 return snapshot;
             },
             requestAlarmHack(code) {
+                if (this.escaped) return;
                 const label = document.getElementById("alarm-console-label");
                 const expectedCode = document.getElementById("museum-system-log")?.dataset.alarmCode || "";
                 if (!this.alarmStarted) {
@@ -607,6 +609,10 @@ def melde_inventar(liste):
                 this.portalTrapped = false;
                 const success = document.getElementById("museum-success");
                 success.textContent = "MISSION ERFOLGREICH – DU BIST ENTKOMMEN!";
+                if (!this.escapeMessageReported) {
+                    window.finalePrototype?.reportMessage?.("DU BIST ENTKOMMEN!");
+                    this.escapeMessageReported = true;
+                }
                 document.body.classList.remove("portal-trapped");
                 document.body.classList.add("escape-success");
             },
@@ -623,9 +629,9 @@ def melde_inventar(liste):
                 this.atAlarmConsole = distance(alarmConsole) <= 22;
 
                 const atPortal = distance(portal) <= 28;
-                if (atPortal && !this.atPortal && this.artifactSecured) {
+                if (atPortal && !this.atPortal && this.artifactSecured && !this.escaped) {
                     this.portalReached = true;
-                    if (this.portalOpen && this.alarmDisabled) {
+                    if (this.portalOpen) {
                         this.escaped = true;
                         this.showEscapeSuccess();
                     } else if (!this.hackRequested) {
@@ -640,7 +646,7 @@ def melde_inventar(liste):
             },
             getAutomaticStop() {
                 if (!this.alarmFailed) return null;
-                let message = "Kein gültiger Hack wurde rechtzeitig abgeschlossen. Fliege nach dem Sternenfragment direkt zur Alarmkonsole.";
+                let message = "Du hast das Museum nicht rechtzeitig verlassen. Erreiche das Portal vor der Verriegelung oder hacke den Alarm an der Konsole.";
                 if (this.hackRequested) {
                     message = "Der richtige Hack wurde gestartet, kam aber zu spät. Erreiche die Alarmkonsole früher.";
                 } else if (this.lastHackFailure === "WRONG_CODE") {
@@ -658,8 +664,8 @@ def melde_inventar(liste):
                 };
             },
             validate(_code, output = "") {
-                const strategy = this.alarmDisabled ? "hack" : null;
-                const securityStrategyPassed = Boolean(this.hackCompleted && this.alarmDisabled);
+                const strategy = this.alarmDisabled ? "hack" : (this.escaped ? "sprint" : null);
+                const alarmHackPassed = Boolean(this.hackCompleted && this.alarmDisabled);
                 const expectedInventoryOutput = "INVENTARLISTE: " + this.runtimeInventory.join(",");
                 const inventoryOutputPassed = String(output).split(/\r?\n/).some(line => line.trim() === expectedInventoryOutput);
                 this.inventoryOutputPassed = inventoryOutputPassed;
@@ -669,12 +675,14 @@ def melde_inventar(liste):
                     { label: "Gestohlenes Sternenfragment gesichert", passed: this.artifactSecured },
                     {
                         label: "Alarm an der Konsole gehackt",
-                        passed: securityStrategyPassed
+                        passed: alarmHackPassed,
+                        required: false
                     },
                     { label: "Inventarliste korrekt ausgegeben", passed: inventoryOutputPassed },
                     { label: "Gültiger Fluchtweg", passed: this.exitUnlocked }
                 ];
-                const passed = checks.every(check => check.passed);
+                // Ein rechtzeitig erreichtes, offenes Portal zählt auch ohne Alarmhack.
+                const passed = checks.every(check => check.passed || check.required === false);
                 this.lastValidationPassed = passed;
                 return {
                     passed,

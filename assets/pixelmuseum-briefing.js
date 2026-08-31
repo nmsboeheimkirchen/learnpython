@@ -65,7 +65,7 @@
         } else if (snapshot.starFragmentCollected && !outputPassed) {
             message = "Beide Gegenstände sind gefunden. Erzeuge jetzt die geforderte INVENTARLISTE-Zeile aus deiner Liste.";
         } else if (passed) {
-            message = "Die Fundkette stimmt. Übernimm deinen Code ins Finale, hacke dort den Alarm und erreiche das Portal.";
+            message = "Die Fundkette stimmt. Übernimm deinen Code ins Finale und entkomme durch das Portal – mit Alarmhack oder vor der Verriegelung.";
         }
 
         return {

@@ -151,7 +151,7 @@
             "Das Portal war bereits verriegelt",
             [
                 "Mit der Aufnahme des Sternenfragments startet der Alarm. Ab Alarmstufe 2 ist das Portal verriegelt.",
-                "Bevor du zum Portal fliegst, musst du den Alarm an der Konsole ausschalten.",
+                "Um das verriegelte Portal wieder zu öffnen, musst du den Alarm an der Konsole ausschalten.",
                 "Fliege nach der Aufnahme zu (250, -60), rufe dort alarm_hacken(...) mit deinem Passwort auf und steuere erst danach das Portal an."
             ]
         ),
@@ -168,7 +168,7 @@
             "ALARM_STRATEGY",
             "Eine Alarmstrategie fehlt noch",
             [
-                "Das Sternenfragment ist gesichert. Jetzt muss die Drohne den Alarm an der Konsole hacken.",
+                "Das Sternenfragment ist gesichert. Entkomme vor der Verriegelung durch das Portal oder hacke den Alarm an der Konsole.",
                 "Für den Hack brauchst du den richtigen Ort, den Code aus dem Quelltext und einen Aufruf nach Alarmbeginn.",
                 "Programmiere: Alarmkonsole → alarm_hacken(...) mit deinem Passwort → Portal."
             ]

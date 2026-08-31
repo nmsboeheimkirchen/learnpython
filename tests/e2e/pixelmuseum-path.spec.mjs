@@ -30,8 +30,10 @@ const DIRECT_ESCAPE_CODE = `import turtle
 drohne = turtle.Turtle()
 drohne.speed(0)
 drohne.penup()
-drohne.goto(0, -210)
+drohne.goto(260, -170)
 drohne.speed(4)
+drohne.pendown()
+turtle.Screen().delay(30)
 inventar = []
 
 drohne.goto(-250, 60)
@@ -42,8 +44,15 @@ drohne.goto(-390, 45)
 fund = drohne.suche_hier()
 inventar.append(fund)
 
-drohne.goto(0, 115)
-print("INVENTARLISTE: " + ",".join(inventar))`;
+print("INVENTARLISTE: " + ",".join(inventar))
+drohne.speed(20)
+drohne.goto(0, 115)`;
+
+const INVENTORY_REPORT = 'print("INVENTARLISTE: " + ",".join(inventar))';
+const LATE_ESCAPE_CODE = `import time\n${DIRECT_ESCAPE_CODE.replace(
+    "drohne.speed(20)\ndrohne.goto(0, 115)",
+    "time.sleep(1.25)\ndrohne.speed(20)\ndrohne.goto(0, 115)"
+)}`;
 
 const HACK_ESCAPE_CODE = `import turtle
 drohne = turtle.Turtle()
@@ -275,27 +284,47 @@ print("Fund:", fund)`);
     expect(pageErrors).toEqual([]);
 });
 
-test("Pixelmuseum alarm starts immediately and blocks a direct escape without a hack", async ({ page }) => {
+test("@ipad a fast direct escape through the open portal succeeds without falsely completing the hack", async ({ page }) => {
     const pageErrors = [];
     page.on("pageerror", error => pageErrors.push(String(error)));
     await page.addInitScript(() => {
         localStorage.removeItem("completedLevelCode_v1");
     });
-    await openFinale(page);
+    // Exercise real Turtle animation, including the student's speed(20) change.
+    await openFinale(page, "");
     await expect(page.locator("[data-finale-run]")).toBeVisible();
     await expect(page.locator("[data-finale-reset]")).toBeVisible();
 
-    await page.evaluate(async () => window.finalePrototype.run());
-    await expect(page.locator("body")).not.toHaveClass(/validation-passed/);
-    await expect(page.locator("#next-level-btn")).toBeHidden();
-
     await runFinaleCode(page, DIRECT_ESCAPE_CODE);
-    await expect.poll(() => page.evaluate(() => window.FINALE_CONFIG.alarmLevel)).toBeGreaterThan(0);
-    await expect.poll(() => page.evaluate(() => window.FINALE_CONFIG.portalReached)).toBe(true);
-    await expect.poll(() => page.evaluate(() => window.FINALE_CONFIG.escaped)).toBe(false);
-    await expect(page.locator("#checks-list")).toContainText("Alarm an der Konsole gehackt");
-    await expect(page.locator("body")).not.toHaveClass(/validation-passed/);
-    await expect(page.locator("#next-level-btn")).toBeHidden();
+    await expect(page.locator("body")).toHaveClass(/validation-passed/);
+    await expect(page.locator("body")).not.toHaveClass(/portal-trapped|portal-locked|alarm-failed/);
+    await expect(page.locator("#checks-list li").filter({ hasText: "Alarm an der Konsole gehackt" })).toHaveClass(/is-missing/);
+    await expect(page.locator("#checks-list li").filter({ hasText: "Gültiger Fluchtweg" })).toHaveClass(/is-passed/);
+    await expect(page.locator("#checks-list li").filter({ hasText: "Inventarliste korrekt ausgegeben" })).toHaveClass(/is-passed/);
+    await expect(page.locator("#console-output")).toContainText("INVENTARLISTE: Schlüsselkarte,Sternenfragment");
+    await expect(page.locator("#console-output")).toContainText("DU BIST ENTKOMMEN!");
+    await expect(page.locator("#museum-success")).toContainText("DU BIST ENTKOMMEN!");
+    await expect(page.locator("#exit-state")).toHaveText("entkommen");
+    await expect(page.locator("#console-output")).not.toContainText("DU BIST GEFANGEN!");
+    await expect(page.locator("#next-level-btn")).toBeVisible();
+    const escapeState = await page.evaluate(() => ({
+        level: window.FINALE_CONFIG.alarmLevel,
+        timer: window.FINALE_CONFIG.alarmTimer,
+        escaped: window.FINALE_CONFIG.escaped,
+        reached: window.FINALE_CONFIG.portalReached,
+        hacked: window.FINALE_CONFIG.hackCompleted,
+        disabled: window.FINALE_CONFIG.alarmDisabled,
+        strategy: window.FINALE_CONFIG.completedStrategy
+    }));
+    expect(escapeState).toEqual({ level: 1, timer: null, escaped: true, reached: true, hacked: false, disabled: false, strategy: "sprint" });
+    expect(await page.evaluate(() => JSON.parse(
+        localStorage.getItem("completedLevelCode_v1") || "{}"
+    ).pixelmuseum_finale)).toBe(DIRECT_ESCAPE_CODE);
+
+    await expect(page.locator("#success-overlay")).toBeVisible({ timeout: 7_000 });
+    await expect(page.locator("#success-overlay .success-coin")).toHaveCount(3);
+    expect(await page.evaluate(() => window.FINALE_CONFIG.alarmLevel)).toBe(escapeState.level);
+    expect(await page.evaluate(() => window.FINALE_CONFIG.alarmTimer)).toBeNull();
     expect(pageErrors).toEqual([]);
 });
 
@@ -316,26 +345,40 @@ test("Pixelmuseum locks the portal at alarm level 2 without prematurely awarding
             successVisible: document.body.classList.contains("escape-success")
         });
         const first = snapshot();
-        mission.onTurtleFrame({ x: 0, y: 115 });
-        const earlyArrival = { ...snapshot(), message: mission.validate("", "").message };
         mission.applyAlarmSnapshot(mission.alarmState.advance());
         const second = snapshot();
+        mission.onTurtleFrame({ x: 0, y: 115 });
+        const lateArrival = { ...snapshot(), message: mission.validate("", "").message };
         mission.applyAlarmSnapshot(mission.alarmState.advance());
         const third = snapshot();
         mission.stopMissionTimers();
-        return { first, earlyArrival, second, third };
+        return { first, second, lateArrival, third };
     });
 
     expect(states.first).toEqual({ level: 1, open: true, alarmVisible: true, barred: false, escaped: false, successVisible: false });
-    expect(states.earlyArrival).toMatchObject({ open: true, barred: false, escaped: false, successVisible: false });
-    expect(states.earlyArrival.message).toContain("Du bist gefangen!");
     expect(states.second).toMatchObject({ level: 2, open: false, barred: true });
+    expect(states.lateArrival).toMatchObject({ open: false, barred: true, escaped: false, successVisible: false });
+    expect(states.lateArrival.message).toContain("Du bist gefangen!");
     expect(states.third).toMatchObject({ level: 3, open: false, barred: true });
 });
 
-test("a direct escape reports being trapped and keeps that output after a following Python error", async ({ page }) => {
+test("a delayed direct escape is trapped after the portal locks", async ({ page }) => {
     await openFinale(page);
-    await runFinaleCode(page, `${DIRECT_ESCAPE_CODE}
+    await runFinaleCode(page, LATE_ESCAPE_CODE);
+
+    await expect(page.locator("#console-output")).toContainText("DU BIST GEFANGEN!");
+    await expect(page.locator("#exit-state")).toHaveText("gesperrt");
+    await expect(page.locator("#checks-list li").filter({ hasText: "Gültiger Fluchtweg" })).toHaveClass(/is-missing/);
+    await expect(page.locator("#checks-list li").filter({ hasText: "Alarm an der Konsole gehackt" })).toHaveClass(/is-missing/);
+    await expect(page.locator("body")).not.toHaveClass(/validation-passed|escape-success/);
+    await expect(page.locator("#next-level-btn")).toBeHidden();
+    expect(await page.evaluate(() => window.FINALE_CONFIG.escaped)).toBe(false);
+    expect(await page.evaluate(() => window.FINALE_CONFIG.completedStrategy)).toBeNull();
+});
+
+test("a late direct escape keeps its trapped output after a following Python error", async ({ page }) => {
+    await openFinale(page);
+    await runFinaleCode(page, `${LATE_ESCAPE_CODE}
 def alarm_hacken(code):
     print("ALARM_HACK|" + code)
 alarm_hacken(code)`);
@@ -347,6 +390,39 @@ alarm_hacken(code)`);
     expect((await page.evaluate(() => window.finalePrototype.getOutput())).match(/DU BIST GEFANGEN!/g)).toHaveLength(1);
     await expect(page.locator("body")).not.toHaveClass(/validation-passed|escape-success/);
     await expect(page.locator("#next-level-btn")).toBeHidden();
+});
+
+test("a fast escape without the inventory report does not award or save a completed mission", async ({ page }) => {
+    await openFinale(page);
+    await runFinaleCode(page, DIRECT_ESCAPE_CODE.replace(`\n${INVENTORY_REPORT}`, ""));
+
+    expect(await page.evaluate(() => window.FINALE_CONFIG.escaped)).toBe(true);
+    await expect(page.locator("#checks-list li").filter({ hasText: "Gültiger Fluchtweg" })).toHaveClass(/is-passed/);
+    await expect(page.locator("#checks-list li").filter({ hasText: "Inventarliste korrekt ausgegeben" })).toHaveClass(/is-missing/);
+    await expect(page.locator("body")).not.toHaveClass(/validation-passed/);
+    await expect(page.locator("#next-level-btn")).toBeHidden();
+    await page.waitForTimeout(4_150);
+    await expect(page.locator("#success-overlay")).toBeHidden();
+    expect(await page.evaluate(() => JSON.parse(
+        localStorage.getItem("completedLevelCode_v1") || "{}"
+    ).pixelmuseum_finale)).toBeUndefined();
+});
+
+test("a Python error after a fast escape cancels every pending reward", async ({ page }) => {
+    await openFinale(page);
+    await runFinaleCode(page, `import time\n${DIRECT_ESCAPE_CODE}\ntime.sleep(0.2)\nprint(nicht_definiert)`);
+
+    await expect(page.locator("#console-output")).toContainText("INVENTARLISTE: Schlüsselkarte,Sternenfragment");
+    await expect(page.locator("#console-output")).toContainText("NameError");
+    await expect(page.locator("#console-output")).not.toContainText("DU BIST GEFANGEN!");
+    await expect(page.locator("#validation-title")).toHaveText("Programm gestoppt");
+    await expect(page.locator("body")).not.toHaveClass(/validation-passed/);
+    await expect(page.locator("#next-level-btn")).toBeHidden();
+    await page.waitForTimeout(4_150);
+    await expect(page.locator("#success-overlay")).toBeHidden();
+    expect(await page.evaluate(() => JSON.parse(
+        localStorage.getItem("completedLevelCode_v1") || "{}"
+    ).pixelmuseum_finale)).toBeUndefined();
 });
 
 test("the hack check turns green at the console before the drone escapes", async ({ page }) => {
@@ -437,7 +513,7 @@ test("Pixelmuseum production finale completes the touch-accessible hack strategy
 test("Pixelmuseum finale teacher solution loads from its button and completes the hack route", async ({ page }) => {
     const pageErrors = [];
     page.on("pageerror", error => pageErrors.push(String(error)));
-    await openFinale(page, "?e2e#l");
+    await openFinale(page, "#l");
 
     const solutionButton = page.locator('[data-teacher-solution="pixelmuseum_finale"]');
     await expect(solutionButton).toBeVisible();
@@ -447,7 +523,7 @@ test("Pixelmuseum finale teacher solution loads from its button and completes th
     );
 
     await page.locator("[data-finale-run]").click();
-    await expect.poll(() => page.evaluate(() => window.FINALE_CONFIG.hackCompleted)).toBe(true);
+    await expect.poll(() => page.evaluate(() => window.FINALE_CONFIG.hackCompleted), { timeout: 15_000 }).toBe(true);
     await expect(page.locator("body")).toHaveClass(/validation-passed/);
     await expect(page.locator("#next-level-btn")).toBeVisible();
     expect(pageErrors).toEqual([]);
