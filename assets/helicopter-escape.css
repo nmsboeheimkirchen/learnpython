@@ -1,0 +1,622 @@
+.helicopter-access-page {
+    --heli-cyan: #58f4ff;
+    --heli-cyan-rgb: 88, 244, 255;
+    --heli-violet: #a273ff;
+    --heli-success: #69f3a2;
+    --heli-danger: #ff6d7c;
+    min-height: 100%;
+    background:
+        radial-gradient(circle at 84% 8%, rgba(138, 73, 255, 0.13), transparent 30rem),
+        radial-gradient(circle at 14% 72%, rgba(var(--heli-cyan-rgb), 0.08), transparent 34rem),
+        #05030d;
+    color: #f5fbff;
+}
+
+.helicopter-access-page::before,
+.helicopter-access-page::after {
+    display: none;
+}
+
+.helicopter-access-main {
+    width: min(1460px, calc(100% - 34px)) !important;
+    min-height: 100vh;
+    margin-inline: auto;
+    padding: clamp(86px, 8vw, 112px) 0 max(54px, env(safe-area-inset-bottom)) !important;
+}
+
+.helicopter-access-hero {
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(330px, 0.75fr);
+    gap: clamp(24px, 5vw, 74px);
+    align-items: center;
+    min-height: clamp(330px, 38vw, 470px);
+    overflow: hidden;
+    padding: clamp(28px, 5vw, 68px);
+    border: 1px solid rgba(var(--heli-cyan-rgb), 0.28);
+    border-radius: 32px;
+    background: #070715;
+    box-shadow: 0 34px 95px rgba(0, 0, 0, 0.48), inset 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.helicopter-access-hero > img,
+.helicopter-hero-shade,
+.helicopter-terminal-glow {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.helicopter-access-hero > img {
+    z-index: -3;
+    object-fit: cover;
+    object-position: 55% 81%;
+}
+
+.helicopter-hero-shade {
+    z-index: -2;
+    background:
+        linear-gradient(90deg, rgba(2, 2, 9, 0.91) 0%, rgba(2, 3, 13, 0.72) 43%, rgba(4, 2, 15, 0.58) 100%),
+        linear-gradient(0deg, rgba(1, 3, 10, 0.64), rgba(3, 2, 12, 0.2));
+}
+
+.helicopter-terminal-glow {
+    z-index: -1;
+    opacity: 0;
+    background: radial-gradient(circle at 61% 85%, rgba(105, 243, 162, 0.56), transparent 25%);
+    mix-blend-mode: screen;
+    transition: opacity 280ms ease;
+}
+
+.helicopter-hero-title,
+.agent-briefing {
+    position: relative;
+    z-index: 1;
+}
+
+.helicopter-hero-title > p,
+.helicopter-card-kicker {
+    margin: 0 0 12px;
+    color: var(--heli-cyan);
+    font-size: 0.75rem;
+    font-weight: 850;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+}
+
+.helicopter-hero-title h1 {
+    max-width: 780px;
+    margin: 0 0 20px;
+    background: linear-gradient(105deg, #fff 4%, #a9faff 54%, #c9a7ff 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-size: clamp(2.8rem, 6vw, 6.7rem);
+    font-weight: 840;
+    letter-spacing: -0.065em;
+    line-height: 0.9;
+}
+
+.helicopter-hero-title > span {
+    display: inline-flex;
+    gap: 7px;
+    align-items: center;
+    padding: 8px 12px;
+    border: 1px solid rgba(var(--heli-cyan-rgb), 0.28);
+    border-radius: 999px;
+    background: rgba(5, 17, 27, 0.58);
+    color: #c6dce8;
+    font-size: 0.75rem;
+}
+
+.helicopter-hero-title code,
+.agent-briefing code {
+    color: #d7fdff;
+}
+
+.agent-briefing {
+    align-self: center;
+    max-width: 530px;
+    padding: clamp(20px, 3vw, 30px);
+    border: 1px solid rgba(223, 243, 255, 0.19);
+    border-left-color: rgba(var(--heli-cyan-rgb), 0.78);
+    border-radius: 22px;
+    background: rgba(5, 8, 22, 0.76);
+    box-shadow: 0 20px 54px rgba(0, 0, 0, 0.3), inset 0 1px rgba(255, 255, 255, 0.07);
+    -webkit-backdrop-filter: blur(18px) saturate(130%);
+    backdrop-filter: blur(18px) saturate(130%);
+}
+
+.agent-briefing > p {
+    margin: 0 0 11px;
+    color: var(--heli-cyan);
+    font-size: 0.69rem;
+    font-weight: 850;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+}
+
+.agent-briefing blockquote {
+    margin: 0;
+    color: #d2e0eb;
+    font-size: clamp(0.92rem, 1.3vw, 1.06rem);
+    line-height: 1.65;
+}
+
+.access-display {
+    position: absolute;
+    z-index: 3;
+    right: clamp(24px, 4vw, 58px);
+    bottom: clamp(20px, 3vw, 34px);
+    display: flex;
+    gap: 11px;
+    align-items: center;
+    min-width: 220px;
+    padding: 10px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.17);
+    border-radius: 14px;
+    background: rgba(2, 7, 15, 0.88);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+    font-family: "SFMono-Regular", Consolas, monospace;
+}
+
+.access-display-light {
+    flex: 0 0 auto;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: #75808d;
+    box-shadow: 0 0 11px rgba(180, 194, 210, 0.4);
+}
+
+.access-display span:last-child {
+    display: grid;
+    gap: 2px;
+}
+
+.access-display small {
+    color: #8394a6;
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.access-display strong {
+    color: #d9e4ed;
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+}
+
+.helicopter-access-workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(300px, 0.7fr);
+    gap: clamp(18px, 2.5vw, 32px);
+    align-items: start;
+    margin-top: clamp(20px, 3vw, 32px);
+}
+
+.helicopter-code-panel,
+.helicopter-hint-card,
+.helicopter-help-card {
+    border: 1px solid rgba(222, 242, 255, 0.15);
+    border-radius: 26px;
+    background: linear-gradient(145deg, rgba(11, 20, 36, 0.94), rgba(5, 10, 22, 0.97));
+    box-shadow: 0 24px 65px rgba(0, 0, 0, 0.3), inset 0 1px rgba(255, 255, 255, 0.07);
+}
+
+.helicopter-code-panel {
+    min-width: 0;
+    padding: clamp(19px, 3vw, 30px);
+}
+
+.helicopter-section-heading {
+    display: flex;
+    gap: 18px;
+    align-items: end;
+    justify-content: space-between;
+    margin-bottom: 18px;
+}
+
+.helicopter-section-heading span,
+.helicopter-editor-label {
+    color: var(--heli-cyan);
+    font-size: 0.75rem;
+    font-weight: 830;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+}
+
+.helicopter-section-heading h2 {
+    margin: 4px 0 0;
+    font-size: clamp(1.35rem, 2.2vw, 1.8rem);
+    letter-spacing: -0.035em;
+}
+
+.helicopter-section-heading small {
+    color: #8294a6;
+    font-size: 0.7rem;
+}
+
+.helicopter-editor-label {
+    display: block;
+    margin: 0 2px 8px;
+    color: #b9cbd7;
+}
+
+.helicopter-code-panel .CodeMirror {
+    height: clamp(300px, 38vh, 430px);
+    border: 1px solid rgba(var(--heli-cyan-rgb), 0.24);
+    border-radius: 17px;
+    background: #06101b;
+    box-shadow: inset 0 1px 22px rgba(0, 0, 0, 0.32);
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: clamp(0.76rem, 1.05vw, 0.88rem);
+    line-height: 1.55;
+}
+
+.helicopter-code-panel .CodeMirror-gutters {
+    border-right-color: rgba(255, 255, 255, 0.08);
+    background: #071522;
+}
+
+.helicopter-controls {
+    display: grid;
+    grid-template-columns: minmax(190px, 1fr) auto;
+    gap: 10px;
+    margin-top: 13px;
+}
+
+.helicopter-controls button {
+    min-height: 50px;
+    padding: 11px 17px;
+    border-radius: 14px;
+    font-size: 0.78rem;
+    font-weight: 840;
+    cursor: pointer;
+}
+
+.helicopter-top-run {
+    width: 100%;
+    min-height: 50px;
+    margin: 0 0 14px;
+    padding: 11px 17px;
+    border-radius: 14px;
+    font-size: 0.78rem;
+    font-weight: 840;
+    cursor: pointer;
+}
+
+.helicopter-run-button {
+    border: 1px solid rgba(var(--heli-cyan-rgb), 0.85);
+    background: linear-gradient(135deg, #6af6ff, #37c5d6);
+    box-shadow: 0 13px 33px rgba(var(--heli-cyan-rgb), 0.17);
+    color: #031118;
+}
+
+.helicopter-reset-button {
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.045);
+    color: #d6e5ef;
+}
+
+.helicopter-run-button:hover {
+    filter: brightness(1.08);
+}
+
+.helicopter-reset-button:hover {
+    border-color: rgba(var(--heli-cyan-rgb), 0.42);
+    background: rgba(var(--heli-cyan-rgb), 0.08);
+}
+
+.helicopter-output-card {
+    margin-top: 13px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    background: rgba(1, 7, 14, 0.78);
+}
+
+.helicopter-output-card > header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    color: #8fa5b6;
+    font-size: 0.72rem;
+    font-weight: 820;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.helicopter-output-card > header span:last-child {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #70808d;
+}
+
+.helicopter-output-card pre {
+    min-height: 88px;
+    max-height: 180px;
+    margin: 0;
+    overflow: auto;
+    padding: 13px;
+    color: #bcd0dc;
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 0.75rem;
+    line-height: 1.55;
+    white-space: pre-wrap;
+}
+
+.helicopter-output-card pre.is-error {
+    color: #ffb8c0;
+}
+
+.helicopter-access-page[data-access-state="granted"] .helicopter-terminal-glow,
+.helicopter-access-page[data-access-state="denied"] .helicopter-terminal-glow {
+    opacity: 0.78;
+}
+
+.helicopter-access-page[data-access-state="denied"] .helicopter-terminal-glow {
+    background: radial-gradient(circle at 61% 85%, rgba(255, 68, 92, 0.48), transparent 24%);
+}
+
+.access-display.is-granted {
+    border-color: rgba(105, 243, 162, 0.7);
+    box-shadow: 0 0 32px rgba(105, 243, 162, 0.22), 0 15px 40px rgba(0, 0, 0, 0.4);
+}
+
+.access-display.is-granted .access-display-light,
+.helicopter-access-page[data-access-state="granted"] .helicopter-output-card > header span:last-child {
+    background: var(--heli-success);
+    box-shadow: 0 0 14px var(--heli-success);
+}
+
+.access-display.is-granted strong {
+    color: var(--heli-success);
+}
+
+.access-display.is-denied {
+    border-color: rgba(255, 109, 124, 0.68);
+    box-shadow: 0 0 30px rgba(255, 109, 124, 0.18), 0 15px 40px rgba(0, 0, 0, 0.4);
+}
+
+.access-display.is-denied .access-display-light,
+.helicopter-access-page[data-access-state="denied"] .helicopter-output-card > header span:last-child {
+    background: var(--heli-danger);
+    box-shadow: 0 0 14px var(--heli-danger);
+}
+
+.access-display.is-denied strong {
+    color: #ff9ba6;
+}
+
+.helicopter-run-button:disabled,
+.helicopter-reset-button:disabled {
+    cursor: wait;
+    opacity: 0.72;
+}
+
+.helicopter-spinner {
+    display: inline-block;
+    width: 11px;
+    height: 11px;
+    margin-right: 6px;
+    border: 2px solid rgba(3, 17, 24, 0.3);
+    border-top-color: #031118;
+    border-radius: 50%;
+    animation: helicopter-spin 700ms linear infinite;
+}
+
+@keyframes helicopter-spin {
+    to { transform: rotate(360deg); }
+}
+
+.helicopter-help-column {
+    display: grid;
+    gap: 16px;
+}
+
+.helicopter-hint-card,
+.helicopter-help-card {
+    padding: clamp(19px, 2.5vw, 26px);
+}
+
+.helicopter-hint-card h2 {
+    margin: 0 0 10px;
+    font-size: 1.22rem;
+    letter-spacing: -0.025em;
+}
+
+.helicopter-hint-card p,
+.helicopter-help-card p {
+    margin: 0;
+    color: #aebfcd;
+    font-size: 0.85rem;
+    line-height: 1.62;
+}
+
+.helicopter-hint-card > pre,
+.helicopter-help-card pre {
+    margin: 14px 0;
+    overflow-x: auto;
+    padding: 13px;
+    border: 1px solid rgba(var(--heli-cyan-rgb), 0.18);
+    border-radius: 13px;
+    background: #05101b;
+    color: #c8f9fc;
+    font-size: 0.74rem;
+    line-height: 1.55;
+}
+
+.helicopter-example-card > pre {
+    margin-top: 0;
+}
+
+.helicopter-help-card {
+    padding: 0;
+    overflow: hidden;
+}
+
+.helicopter-help-card summary {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 18px 21px;
+    color: #e7faff;
+    font-size: 0.86rem;
+    font-weight: 830;
+    cursor: pointer;
+    list-style: none;
+}
+
+.helicopter-help-card summary::-webkit-details-marker {
+    display: none;
+}
+
+.helicopter-help-card summary > span {
+    display: grid;
+    place-items: center;
+    width: 25px;
+    height: 25px;
+    border: 1px solid rgba(var(--heli-cyan-rgb), 0.4);
+    border-radius: 50%;
+    color: var(--heli-cyan);
+}
+
+.helicopter-help-card[open] summary {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+    background: rgba(var(--heli-cyan-rgb), 0.055);
+}
+
+.helicopter-help-card > div {
+    padding: 19px 21px 22px;
+}
+
+.helicopter-help-card pre {
+    margin-block: 13px;
+}
+
+.helicopter-access-page :focus-visible {
+    outline: 3px solid var(--heli-cyan);
+    outline-offset: 3px;
+}
+
+@media (max-width: 1100px) {
+    .helicopter-access-hero {
+        grid-template-columns: minmax(0, 1fr) minmax(290px, 0.75fr);
+    }
+
+    .helicopter-access-workspace {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .access-display {
+        position: relative;
+        right: auto;
+        bottom: auto;
+        grid-column: 1 / -1;
+        justify-self: end;
+    }
+
+    .helicopter-help-column {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .helicopter-help-card {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 720px) {
+    .helicopter-access-main {
+        width: min(100% - 20px, 620px) !important;
+        padding-top: 88px !important;
+    }
+
+    .helicopter-access-hero {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 18px;
+        min-height: 540px;
+        padding: 27px 20px;
+        border-radius: 24px;
+    }
+
+    .helicopter-access-hero > img {
+        object-position: 61% 79%;
+    }
+
+    .helicopter-hero-shade {
+        background: linear-gradient(0deg, rgba(2, 3, 11, 0.94), rgba(4, 2, 14, 0.65));
+    }
+
+    .helicopter-hero-title h1 {
+        font-size: clamp(2.65rem, 14vw, 4.7rem);
+    }
+
+    .agent-briefing {
+        padding: 19px;
+    }
+
+    .access-display {
+        right: auto;
+        bottom: auto;
+        left: auto;
+        width: 100%;
+        min-width: 0;
+    }
+
+    .helicopter-section-heading {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .helicopter-help-column {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .helicopter-help-card {
+        grid-column: auto;
+    }
+}
+
+@media (min-width: 1001px) and (max-height: 820px) {
+    .helicopter-access-main {
+        padding-top: 82px !important;
+    }
+
+    .helicopter-access-hero {
+        min-height: 370px;
+        padding-block: 34px 58px;
+    }
+}
+
+@media (max-width: 480px) {
+    .helicopter-controls {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .helicopter-code-panel,
+    .helicopter-hint-card,
+    .helicopter-help-card {
+        border-radius: 21px;
+    }
+
+    .helicopter-code-panel {
+        padding: 17px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .helicopter-access-page *,
+    .helicopter-access-page *::before,
+    .helicopter-access-page *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
+}

@@ -1482,7 +1482,8 @@ const teacherSolutionExpectations = new Map([
     ["pico_level3", /signal_erfolgreich = drohne\.sende\(\)/],
     ["pico_level4", /if signal_erfolgreich:[\s\S]*status\["DROHNE"\] = "self-destroy"[\s\S]*status\["TRANSPONDER"\] = "delete"/],
     ["pixelmuseum_briefing", /def melde_inventar\(liste\):[\s\S]*drohne\.goto\(-250, 60\)[\s\S]*inventar\.append\(fund\)[\s\S]*drohne\.goto\(-390, 45\)[\s\S]*melde_inventar\(inventar\)/],
-    ["pixelmuseum_finale", /def melde_inventar\(liste\):[\s\S]*drohne\.goto\(-390, 45\)[\s\S]*drohne\.goto\(250, -60\)[\s\S]*alarm_hacken\("SERU-7"\)[\s\S]*drohne\.goto\(0, 115\)[\s\S]*melde_inventar\(inventar\)/]
+    ["pixelmuseum_finale", /def melde_inventar\(liste\):[\s\S]*drohne\.goto\(-390, 45\)[\s\S]*drohne\.goto\(250, -60\)[\s\S]*alarm_hacken\("SERU-7"\)[\s\S]*drohne\.goto\(0, 115\)[\s\S]*melde_inventar\(inventar\)/],
+    ["helikopter_flucht_level1", /signal = bordcomputer\.receive\(\)[\s\S]*passwort = signal\.replace\("\?", ""\)[\s\S]*bordcomputer\.pruefe\(passwort\)/]
 ]);
 
 test("teacher solutions are centralized and available for every level", () => {
@@ -2106,36 +2107,77 @@ test("the public PICO path shares one runtime and uses TRANSPONDER from level 1"
     assert.match(level4, /status\["TRANSPONDER"\] = "delete"/);
 });
 
-test("the final helicopter escape uses the selected hangar render and approved briefing", () => {
+test("the helicopter starts behind a closed gate and keeps matching open and closed artwork", () => {
     const html = readFileSync(new URL("../helikopter_flucht.html", import.meta.url), "utf8");
     const legacy = readFileSync(new URL("../helikopter_flucht-b.html", import.meta.url), "utf8");
-    const artwork = "helicopter-hangar-final.webp";
-    const artworkUrl = new URL(`../assets/images/escape/${artwork}`, import.meta.url);
-    const bytes = readFileSync(artworkUrl);
-
     assert.match(html, /Der Lord kommt zurück\./);
     assert.match(html, /Die Drohne hat ihren Auftrag erfüllt\. Jetzt musst du schnell aus der Basis des bösen Lords verschwinden\./);
     assert.match(html, /Im Hangar wartet sein neuer Helikopter\./);
-    assert.match(html, /Entschlüssle den Zugangscode/);
-    assert.match(html, /bevor die Hangartore verriegelt werden/);
-    assert.match(html, new RegExp(`assets/images/escape/${artwork.replace(".", "\\.")}`));
+    assert.match(html, /Entsperre den Bordcomputer/);
+    assert.match(html, /öffne das Hangartor\. Dann kannst du abheben/);
+    assert.match(html, /bevor der Lord den Hangar erreicht/);
+    assert.match(html, /data-hangar-state="closed"/);
+    assert.match(html, /<dt>Hangartor<\/dt><dd>geschlossen<\/dd>/);
+    assert.match(html, /src="assets\/images\/escape\/helicopter-hangar-closed\.webp/);
+    assert.match(html, /aria-label="Nächsten Auftrag starten: Bordcomputer entsperren"/);
+    assert.match(html, /href="helikopter_flucht_level1\.html"/);
+    assert.doesNotMatch(html, /Zur Projektwahl/);
+    assert.doesNotMatch(html, /Hangartore verriegelt|<dd>schließen<\/dd>/);
     assert.doesNotMatch(html, /escape-variant-switch/);
     assert.doesNotMatch(html, /href="[^"]*(?:prototypes\/|finale)/i);
-    assert.equal(bytes.subarray(0, 4).toString("ascii"), "RIFF", `${artwork} ist kein RIFF-WebP`);
-    assert.equal(bytes.subarray(8, 12).toString("ascii"), "WEBP", `${artwork} ist kein WebP`);
-    const webpChunk = bytes.subarray(12, 16).toString("ascii");
-    assert.ok(["VP8X", "VP8 "].includes(webpChunk), `${artwork} hat keinen unterstützten WebP-Bildblock`);
-    const width = webpChunk === "VP8X"
-        ? bytes.readUIntLE(24, 3) + 1
-        : bytes.readUInt16LE(26) & 0x3fff;
-    const height = webpChunk === "VP8X"
-        ? bytes.readUIntLE(27, 3) + 1
-        : bytes.readUInt16LE(28) & 0x3fff;
-    assert.match(html, new RegExp(`width="${width}" height="${height}"`));
-    assert.ok(bytes.length > 50_000, `${artwork} ist unerwartet leer oder zu klein`);
-    assert.ok(statSync(artworkUrl).size < 300_000, `${artwork} ist für die Landingpage zu groß`);
+    for (const artwork of ["helicopter-hangar-closed.webp", "helicopter-hangar-final.webp"]) {
+        const artworkUrl = new URL(`../assets/images/escape/${artwork}`, import.meta.url);
+        const bytes = readFileSync(artworkUrl);
+        assert.equal(bytes.subarray(0, 4).toString("ascii"), "RIFF", `${artwork} ist kein RIFF-WebP`);
+        assert.equal(bytes.subarray(8, 12).toString("ascii"), "WEBP", `${artwork} ist kein WebP`);
+        const webpChunk = bytes.subarray(12, 16).toString("ascii");
+        assert.ok(["VP8X", "VP8 "].includes(webpChunk), `${artwork} hat keinen unterstützten WebP-Bildblock`);
+        const width = webpChunk === "VP8X"
+            ? bytes.readUIntLE(24, 3) + 1
+            : bytes.readUInt16LE(26) & 0x3fff;
+        const height = webpChunk === "VP8X"
+            ? bytes.readUIntLE(27, 3) + 1
+            : bytes.readUInt16LE(28) & 0x3fff;
+        assert.match(html, new RegExp(`width="${width}" height="${height}"`), `${artwork} passt nicht zu den gemeinsamen Bildmaßen`);
+        assert.ok(bytes.length > 50_000, `${artwork} ist unerwartet leer oder zu klein`);
+        assert.ok(statSync(artworkUrl).size < 300_000, `${artwork} ist für die Landingpage zu groß`);
+    }
     assert.match(legacy, /url=helikopter_flucht\.html/);
     assert.match(legacy, /location\.replace\("helikopter_flucht\.html"/);
+});
+
+test("the first helicopter level uses a runtime signal and one replace-based access result", () => {
+    const html = readFileSync(new URL("../helikopter_flucht_level1.html", import.meta.url), "utf8");
+    const runtime = readFileSync(new URL("../assets/helicopter-access.js", import.meta.url), "utf8");
+    const core = readFileSync(new URL("../assets/helicopter-access-core.js", import.meta.url), "utf8");
+    const runner = readFileSync(new URL("../assets/runner.js", import.meta.url), "utf8");
+    const learnerFacingSource = `${html}\n${runtime}\n${core}`;
+
+    assert.match(html, /<h1 id="mission-title">Entsperre den Bordcomputer<\/h1>/);
+    assert.match(html, /signal = bordcomputer\.receive\(\)/);
+    assert.match(html, /passwort = signal\s*\n/);
+    assert.match(html, /passwort\.replace\("alt", "neu"\)/);
+    assert.match(html, /das Ergebnis wieder in <code>passwort<\/code> speicherst/);
+    assert.doesNotMatch(html, /passwort = signal\.replace\("\?", ""\)/);
+    assert.match(html, /id="access-display"[^>]+role="status"/);
+    assert.match(html, /id="access-message">ACCESS LOCKED<\/strong>/);
+    assert.equal((html.match(/Bordcomputer starten<\/button>/g) ?? []).length, 2);
+    assert.doesNotMatch(html, /mission-checks|checks-list|Zur Projektwahl/);
+    assert.doesNotMatch(html, /C\?O\?D\?E|Auch für Umlaute|verschwindet das alte Zeichen/);
+    assert.match(html, /ort = "Böheimkirchen"[\s\S]*ort = ort\.replace\("ö", "oe"\)/);
+    assert.match(html, /Dasselbe Werkzeug kann Texte für Dateinamen, URLs oder ältere Systeme anpassen\./);
+    assert.doesNotMatch(learnerFacingSource, /seru#7/i);
+    assert.match(runtime, /issuedSignalTokens\.has\(source\)/);
+    assert.match(runtime, /derivedPasswordTokens\.has\(candidate\)/);
+    assert.match(runtime, /oldText !== core\.NOISE_CHARACTER \|\| newText !== ""/);
+    assert.doesNotMatch(runtime, /HINWEIS: Entferne alle \? mit replace/);
+    assert.match(runtime, /if \(passed\) \{[\s\S]*revealResult\(\);[\s\S]*\} else \{/);
+    assert.doesNotMatch(runtime, /lastResult = Object\.freeze\(\{ passed: false, error:[\s\S]{0,220}revealResult\(\)/);
+    assert.match(runner, /helikopter_flucht_level1:\s*\{\s*unlocks:\s*\[\],\s*successMessage:\s*"Der Bordcomputer ist entsperrt\."/);
+    assert.match(html, /assets\/runner\.js\?v=20260901-1/);
+    assert.match(html, /assets\/teacher-solutions\.js\?v=20260901-1/);
+    assert.match(html, /assets\/helicopter-access-core\.js/);
+    assert.match(html, /assets\/helicopter-access\.js/);
 });
 
 test("all four mission artworks are local, valid and web-sized", () => {
@@ -2380,6 +2422,7 @@ test("finale prototypes stay isolated while the production Pixelmuseum path is p
         "pico_level4.html",
         "helikopter_flucht.html",
         "helikopter_flucht-b.html",
+        "helikopter_flucht_level1.html",
         ...missionPages
     ];
 

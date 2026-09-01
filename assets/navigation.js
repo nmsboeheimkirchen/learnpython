@@ -92,7 +92,7 @@ window.AgentNavigation = (() => {
             title: "Gemeinsame Flucht",
             titleId: "link-helicopter-escape",
             href: "helikopter_flucht.html",
-            description: "Den Zugangscode entschlüsseln, den Helikopter übernehmen und die Basis verlassen.",
+            description: "Den Bordcomputer entsperren, die Systeme booten, das Hangartor öffnen und entkommen.",
             unitLabel: "Phase",
             levels: []
         }
@@ -122,13 +122,14 @@ window.AgentNavigation = (() => {
         const isPico = /^pico_level/.test(pageName);
         const isMuseum = /^pixelmuseum_(?:briefing|finale)\.html$/.test(pageName);
         const isEscape = /^helikopter_flucht/.test(pageName);
+        const isEscapeLanding = /^helikopter_flucht(?:-b)?\.html$/.test(pageName);
         const themeClass = isAgentTraining
             ? "agent-training"
             : (isPico
                 ? "pico-project"
                 : (isMuseum ? "museum-project" : (isEscape ? "escape-project" : `mission-${missionIndex + 1}`)));
         body.classList.add("learning-page", themeClass);
-        body.classList.add(pageName.includes("_start") || isEscape ? "mission-start-page" : "mission-level-page");
+        body.classList.add(pageName.includes("_start") || isEscapeLanding ? "mission-start-page" : "mission-level-page");
         body.dataset.mission = isAgentTraining
             ? "agent-training"
             : (isPico ? "pico" : (isMuseum ? "museum" : (isEscape ? "escape" : String(missionIndex + 1))));

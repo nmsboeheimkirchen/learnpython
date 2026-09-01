@@ -1097,6 +1097,10 @@ const LEVEL_OUTCOMES = {
     pixelmuseum_finale: {
         unlocks: ["link-helicopter-escape"],
         successMessage: "Das Sternenfragment ist gesichert und die Flucht aus dem Museum gelungen."
+    },
+    helikopter_flucht_level1: {
+        unlocks: [],
+        successMessage: "Der Bordcomputer ist entsperrt."
     }
 };
 

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Helikopterflucht Stufe 1: Empfange ein gestörtes Signal, entferne Störzeichen mit replace() und entsperre den Bordcomputer.">
+    <meta name="color-scheme" content="dark">
+    <title>Helikopterflucht 1 – Bordcomputer entsperren</title>
+    <link rel="preload" href="assets/images/escape/helicopter-hangar-closed.webp?v=20260831-1" as="image" type="image/webp">
+    <script src="assets/vendor/skulpt/1.2.0/skulpt.min.js"></script>
+    <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
+    <script src="assets/runner.js?v=20260901-1"></script>
+    <script src="assets/teacher-solutions.js?v=20260901-1"></script>
+    <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
+    <link rel="stylesheet" href="assets/style.css?v=20260722-2">
+    <link rel="stylesheet" href="assets/helicopter-escape.css?v=20260901-2">
+</head>
+<body class="helicopter-access-page" data-hangar-state="closed" data-access-state="locked">
+    <a class="skip-link" href="#code-panel">Zum Python-Editor</a>
+
+    <div id="navigation-root"></div>
+    <script src="assets/navigation.js?v=20260901-1"></script>
+
+    <main id="main-content" class="helicopter-access-main">
+        <section id="access-hero" class="helicopter-access-hero" aria-labelledby="mission-title">
+            <img src="assets/images/escape/helicopter-hangar-closed.webp?v=20260831-1" alt="" width="1717" height="916" fetchpriority="high">
+            <div class="helicopter-hero-shade" aria-hidden="true"></div>
+            <div class="helicopter-terminal-glow" aria-hidden="true"></div>
+
+            <header class="helicopter-hero-title">
+                <p>Helikopterflucht · Stufe 1</p>
+                <h1 id="mission-title">Entsperre den Bordcomputer</h1>
+                <span>Python-Werkzeug: <code>replace()</code></span>
+            </header>
+
+            <aside class="agent-briefing" aria-label="Nachricht von Agent PY">
+                <p><span aria-hidden="true">◉</span> Agent PY</p>
+                <blockquote>Der Bordcomputer sendet nur ein gestörtes Signal. Hole es direkt mit <code>receive()</code>, entferne die Störzeichen und schicke das Ergebnis zurück. Das Passwort darf nicht im Klartext in deinem Programm stehen.</blockquote>
+            </aside>
+
+            <div id="access-display" class="access-display is-locked" role="status" aria-live="assertive">
+                <span class="access-display-light" aria-hidden="true"></span>
+                <span><small>Bordcomputer</small><strong id="access-message">ACCESS LOCKED</strong></span>
+            </div>
+        </section>
+
+        <div class="helicopter-access-workspace">
+            <section id="code-panel" class="helicopter-code-panel" aria-labelledby="code-title" tabindex="-1">
+                <div class="helicopter-section-heading">
+                    <div>
+                        <span>Signal-Konsole</span>
+                        <h2 id="code-title">Code und Ausgabe</h2>
+                    </div>
+                    <small>Strg/⌘ + Enter startet</small>
+                </div>
+
+                <button class="helicopter-run-button helicopter-top-run" type="button" data-helicopter-run><span aria-hidden="true">▶</span> Bordcomputer starten</button>
+
+                <label class="helicopter-editor-label" for="python-editor">Python-Code</label>
+                <textarea id="python-editor" spellcheck="false">import bordcomputer
+
+signal = bordcomputer.receive()
+
+# Entferne alle ? aus dem empfangenen Signal:
+passwort = signal
+
+# Prüfe dein Ergebnis:
+bordcomputer.pruefe(passwort)
+</textarea>
+
+                <section class="helicopter-output-card" aria-labelledby="output-title">
+                    <header><span id="output-title">Systemausgabe</span><span aria-hidden="true"></span></header>
+                    <pre id="console-output" aria-live="polite">Der Bordcomputer wartet auf dein Programm.</pre>
+                </section>
+
+                <div class="helicopter-controls" aria-label="Programmaktionen">
+                    <button id="run-btn" class="helicopter-run-button" type="button"><span aria-hidden="true">▶</span> Bordcomputer starten</button>
+                    <button id="reset-btn" class="helicopter-reset-button" type="button">↺ Startcode laden</button>
+                </div>
+                <button class="test-btn" type="button" data-teacher-solution="helikopter_flucht_level1">Musterlösung (Für Lehrer)</button>
+            </section>
+
+            <aside class="helicopter-help-column" aria-label="Hinweise und Hilfe">
+                <section class="helicopter-hint-card">
+                    <span class="helicopter-card-kicker">Hinweis</span>
+                    <h2>Text gezielt ersetzen</h2>
+                    <p><code>replace(alt, neu)</code> erzeugt einen neuen Text.</p>
+                </section>
+
+                <section class="helicopter-hint-card helicopter-example-card" aria-label="Weiteres Beispiel für replace">
+                    <pre><code>ort = "Böheimkirchen"
+ort = ort.replace("ö", "oe")</code></pre>
+                    <p>Dasselbe Werkzeug kann Texte für Dateinamen, URLs oder ältere Systeme anpassen.</p>
+                </section>
+
+                <details class="helicopter-help-card">
+                    <summary><span aria-hidden="true">?</span> Hilfe anzeigen</summary>
+                    <div>
+                        <p>Wende <code>replace("alt", "neu")</code> auf dein Passwort an, indem du <code>passwort.replace("alt", "neu")</code> aufrufst und das Ergebnis wieder in <code>passwort</code> speicherst.</p>
+                    </div>
+                </details>
+            </aside>
+        </div>
+    </main>
+
+    <script src="assets/vendor/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="assets/vendor/codemirror/5.65.2/python.min.js"></script>
+    <script src="assets/helicopter-access-core.js?v=20260901-1"></script>
+    <script src="assets/helicopter-access.js?v=20260901-2"></script>
+</body>
+</html>

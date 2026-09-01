@@ -124,7 +124,7 @@
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 9px;
-    margin: 0 0 22px;
+    margin: 22px 0 0;
 }
 
 .escape-status-grid div {
@@ -159,6 +159,7 @@
     flex-wrap: wrap;
     gap: 10px;
     align-items: center;
+    margin: 0 0 20px;
 }
 
 .escape-coming-action,
@@ -175,10 +176,33 @@
 }
 
 .escape-coming-action {
-    border: 1px solid rgba(var(--escape-cyan-rgb), 0.64);
-    background: linear-gradient(130deg, rgba(88, 244, 255, 0.18), rgba(82, 90, 255, 0.12));
-    box-shadow: 0 0 28px rgba(var(--escape-cyan-rgb), 0.12);
-    color: #d8fdff;
+    gap: 9px;
+    border: 1px solid rgba(var(--escape-cyan-rgb), 0.92);
+    background: linear-gradient(135deg, #6af6ff, #37c5d6);
+    box-shadow: 0 13px 33px rgba(var(--escape-cyan-rgb), 0.23);
+    color: #031118;
+    cursor: pointer;
+    text-decoration: none;
+    transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.escape-coming-action span:first-child {
+    color: rgba(3, 17, 24, 0.72);
+    font-size: 0.64rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.escape-coming-action strong {
+    color: #031118;
+    font-size: 0.82rem;
+}
+
+.escape-coming-action:hover {
+    border-color: #d6fdff;
+    box-shadow: 0 0 38px rgba(var(--escape-cyan-rgb), 0.32);
+    filter: brightness(1.07);
+    transform: translateY(-2px);
 }
 
 .escape-secondary-action {
