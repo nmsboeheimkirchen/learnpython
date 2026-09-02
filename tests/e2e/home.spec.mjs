@@ -116,7 +116,10 @@ for (const variant of variants) {
         await expect(page.locator(".course-future")).toContainText("PICO");
         await expect(page.locator(".course-future")).toContainText("Pixelmuseum");
         await expect(page.locator("#future-title")).toHaveText("Die 5. Mission wählst du.");
+        await expect(page.locator("#future-title .course-no-break")).toHaveCSS("white-space", "nowrap");
         await expect(page.locator(".course-route-card")).toHaveCount(3);
+        await expect(page.locator(".course-route-training .course-route-card-copy > span")).toHaveText("Vorbereitung");
+        await expect(page.locator(".course-route-training h3")).toHaveText("Drohne");
         await expect(page.locator(".course-route-training .course-card-action"))
             .toHaveAttribute("href", "agent_training_start.html");
         await expect(page.locator(".course-route-training .course-card-action"))
@@ -127,18 +130,54 @@ for (const variant of variants) {
         await expect(projectActions).toHaveCount(2);
         expect(await projectActions.evaluateAll(links => links.map(link => link.getAttribute("href"))))
             .toEqual(["projektwahl.html", "projektwahl.html"]);
-        for (const image of await page.locator(".course-route-visual img").all()) {
+        const routeImages = page.locator(".course-route-visual img");
+        await expect(routeImages).toHaveCount(3);
+        const trainingImage = page.locator(".course-route-training .course-route-visual img");
+        await expect(trainingImage).toHaveAttribute("src", /drone-signals-marked\.png/);
+        await expect(trainingImage).toHaveAttribute("width", "1063");
+        await expect(trainingImage).toHaveAttribute("height", "604");
+        await expect(trainingImage).toHaveAttribute("alt", "");
+        for (const image of await routeImages.all()) {
             await expect(image).toHaveAttribute("loading", "lazy");
             await expect(image).toHaveAttribute("decoding", "async");
             await expect(image).toHaveAttribute("fetchpriority", "low");
         }
+
+        const routeMetrics = await page.locator(".course-route-card").evaluateAll(cards =>
+            cards.map(card => {
+                const box = card.getBoundingClientRect();
+                return { width: box.width, height: box.height };
+            })
+        );
+        expect(Math.max(...routeMetrics.map(card => card.height)) - Math.min(...routeMetrics.map(card => card.height)))
+            .toBeLessThanOrEqual(2);
+        expect(routeMetrics[0].width).toBeGreaterThan(routeMetrics[1].width);
+
         const finaleBackground = page.locator(".course-home-finale-image");
         await expect(finaleBackground).toHaveAttribute("loading", "lazy");
         await expect(finaleBackground).toHaveAttribute("decoding", "async");
         await expect(finaleBackground).toHaveAttribute("fetchpriority", "low");
         await expect(finaleBackground).toHaveAttribute("src", /helicopter-hangar-closed\.webp/);
+        await page.locator(".course-learning").scrollIntoViewIfNeeded();
+        await expect(finaleBackground).toBeVisible();
+        await expect.poll(() => finaleBackground.evaluate(image => image.complete && image.naturalWidth > 0)).toBe(true);
+        const finaleImageMetrics = await finaleBackground.evaluate(image => {
+            const imageBox = image.getBoundingClientRect();
+            const wrapperBox = image.closest(".course-home-finale").getBoundingClientRect();
+            return {
+                height: imageBox.height,
+                opacity: Number.parseFloat(getComputedStyle(image).opacity),
+                wrapperHeight: wrapperBox.height
+            };
+        });
+        expect(finaleImageMetrics.opacity).toBeGreaterThanOrEqual(0.85);
+        expect(finaleImageMetrics.height).toBeLessThan(finaleImageMetrics.wrapperHeight);
 
         const visibleCopy = await body.innerText();
+        await expect(page.locator("#learning-title")).toHaveText("So kommst du voran");
+        await expect(page.locator("#learning-title")).toHaveCSS("font-size", "11.2px");
+        await expect(page.locator(".course-method-grid > li")).toHaveCount(3);
+        expect(visibleCopy).not.toContain("Ein Auftrag nach dem anderen.");
         expect(visibleCopy).not.toMatch(/checkpoint|observatorium|observation|beobacht/i);
         expect(visibleCopy).not.toContain("Diese nächsten Abschnitte werden später freigeschaltet.");
 

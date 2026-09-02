@@ -7,7 +7,7 @@
     <title>Python Agenten-Training – Startseite B</title>
     <link rel="preload" href="assets/images/home/agent-path-magenta-portal.webp?v=20260720-2" as="image" type="image/webp">
     <link rel="stylesheet" href="assets/style.css?v=20260722-2">
-    <link rel="stylesheet" href="assets/home.css?v=20260902-1">
+    <link rel="stylesheet" href="assets/home.css?v=20260902-2">
 </head>
 <body class="course-home home-agent-path" data-home-variant="B">
     <a class="skip-link" href="#home-main">Zum Hauptinhalt</a>
@@ -113,14 +113,17 @@
                 <div class="course-future" aria-labelledby="future-title">
                     <div class="course-future-copy">
                         <p class="course-kicker">Mission 5</p>
-                        <h2 id="future-title">Die 5. Mission wählst du.</h2>
+                        <h2 id="future-title">Die 5. Mission <span class="course-no-break">wählst du.</span></h2>
                         <p>Bringst du das gestohlene Artefakt der Seruianer aus dem Pixelmuseum zurück, oder sendest du an der Funkbase den Rettungscode zur Basis? In jedem Fall musst du den Helikopter des bösen Lords hacken, um rechtzeitig zu entkommen!</p>
                     </div>
                     <div class="course-route-grid" aria-label="Vorbereitung und fünfte Mission">
                         <article class="course-route-card course-route-training">
+                            <div class="course-route-visual" aria-hidden="true">
+                                <img src="assets/images/finales/drone-signals-marked.png?v=20260902-1" alt="" width="1063" height="604" loading="lazy" decoding="async" fetchpriority="low">
+                            </div>
                             <div class="course-route-card-copy">
                                 <span>Vorbereitung</span>
-                                <h3>Drohnensteuerung</h3>
+                                <h3>Drohne</h3>
                                 <p>Steuere eine Drohne über Koordinaten, markiere Ziele und baue eigene Funktionen.</p>
                                 <a class="course-card-action" href="agent_training_start.html">Drohnensteuerung ansehen <span aria-hidden="true">→</span></a>
                             </div>
@@ -154,11 +157,8 @@
 
         <section class="course-section course-learning" id="lernweg" aria-labelledby="learning-title">
             <div class="course-shell">
-                <div class="course-section-heading">
-                    <div>
-                        <p class="course-kicker">So kommst du voran</p>
-                        <h2 id="learning-title">Ein Auftrag nach dem anderen.</h2>
-                    </div>
+                <div class="course-section-heading course-section-heading-compact">
+                    <h2 class="course-kicker course-learning-title" id="learning-title">So kommst du voran</h2>
                 </div>
                 <ol class="course-method-grid">
                     <li><span>01</span><h3>Mission starten</h3><p>Ein kurzes Briefing zeigt dir das Ziel und genau ein neues Python-Werkzeug.</p></li>

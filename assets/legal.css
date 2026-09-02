@@ -71,3 +71,7 @@
     color: var(--ink-muted);
     line-height: 1.7;
 }
+
+.legal-credit strong {
+    color: var(--ink);
+}
