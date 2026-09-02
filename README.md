@@ -1,101 +1,104 @@
-# Python Agenten-Training
+# AGENT PY – Python Agenten-Training
 
-> **Direkt im Browser starten:**  
-> [https://nmsboeheimkirchen.github.io/learnpython](https://nmsboeheimkirchen.github.io/learnpython)
+Eine browserbasierte Lernplattform, mit der Schüler:innen die Grundlagen von Python in aufeinander aufbauenden Agentenmissionen kennenlernen. Erklärungen, Editor, Programmausführung und Rückmeldungen befinden sich direkt auf der jeweiligen Aufgabenseite.
 
-Eine browserbasierte Python-Lernplattform für Schüler:innen. In kurzen Agenten-Missionen werden grundlegende Programmierkonzepte Schritt für Schritt erklärt, direkt ausprobiert und automatisch überprüft.
+**Direkt starten:** [nmsboeheimkirchen.github.io/learnpython](https://nmsboeheimkirchen.github.io/learnpython/)
 
 ## Was bietet das Projekt?
 
-- Python-Code direkt im Browser schreiben und ausführen
-- Editor mit Syntaxhervorhebung auf Basis von CodeMirror
-- Python-Ausführung mit Skulpt, ohne lokale Python-Installation
-- Konkrete Rückmeldungen zu noch fehlenden Lösungsschritten
-- Automatisch freigeschaltete Level und gespeicherter Lernfortschritt
-- Vier Missionen mit insgesamt zwölf Leveln
+- Python-Code ohne Installation direkt im Browser schreiben und ausführen
+- Schrittweise Aufgaben mit unmittelbaren, auf den aktuellen Lösungsstand bezogenen Rückmeldungen
+- Ein durchgehender Lernpfad von ersten Ausgaben bis zu Schleifen, Funktionen, Turtle-Grafik und JSON
+- Zwei größere Projektmissionen mit unterschiedlichen Graden an Führung
+- Automatische Freischaltung der nächsten Etappen
+- Lokale, versionsfest eingebundene Browserbibliotheken statt externer CDNs
+- Bedienung auf Schul-Laptops und Tablets
 
 ## Lernpfad
 
-| Mission | Thema | Inhalte |
+| Abschnitt | Mission | Python-Inhalte |
 | --- | --- | --- |
-| 1 – System Access | Erste Python-Befehle | `print()`, `import`, Pausen, Variablen und `input()` |
-| 2 – Bombe entschärfen | Entscheidungen | Vergleiche, `if`, `elif` und `else` |
-| 3 – Safe-Knacker | Wiederholungen und Zufall | `while`-Schleifen, Zahleneingaben und `random.randint()` |
-| 4 – Geheimdienst-Chat | Zeichen und Verschlüsselung | `for`-Schleifen über Strings, `ord()`, `chr()` und Caesar-Verschiebung |
+| 1 | System Access | `print()`, Pausen, Variablen und `input()` |
+| 2 | Bombe entschärfen | Vergleiche, `if`, `elif` und `else` |
+| 3 | Safe-Knacker | `while`, Zahleneingaben und `random.randint()` |
+| 4 | Geheimdienst-Chat | `for`, Strings, `ord()`, `chr()` und Caesar-Verschiebung |
+| Training | Drohnensteuerung | Turtle, Koordinaten, eigene Funktionen, Suchen und Sammeln |
+| Projekt | PICO: Rettungssignal | Zustände, Energieplanung und eine mehrstufige Rettungsmission |
+| Projekt | Pixelmuseum: Sternenfragment | Offene Routenplanung, Inventar und eine Fluchtmission |
+| Abschluss | Gemeinsame Helikopterflucht | Bordcomputer, Zugangscode und JSON-Konfiguration – in Weiterentwicklung |
 
-Die Aufgaben bauen aufeinander auf. Nach erfolgreicher Ausführung wird das nächste Level freigeschaltet. Der Fortschritt und der zuletzt erfolgreich ausgeführte Code jedes bestandenen Levels werden im jeweiligen Browser gespeichert. Beim erneuten Öffnen eines Levels erscheint dadurch wieder genau die bestandene Lösung. In Mission 4 wird der bestandene Code außerdem in das nächste Level übernommen und dort weiterentwickelt. Über **Fortschritt zurücksetzen** am Ende der Navigation können Fortschritt und gespeicherter Code gelöscht werden.
+Die ersten vier Missionen führen neue Python-Werkzeuge nacheinander ein. Anschließend verbindet die Drohnensteuerung diese Grundlagen mit Turtle, Koordinaten und eigenen Funktionen. Danach wählen die Lernenden zwischen der geführteren PICO-Mission und dem offeneren Pixelmuseum. Beide Wege münden in die gemeinsame Helikopterflucht.
 
-## Verwendung
+## Fortschritt und Daten
 
-Am einfachsten wird die veröffentlichte Version geöffnet:
+Die Anwendung benötigt derzeit weder Benutzerkonto noch Backend. Lernfortschritt und Code werden ausschließlich im lokalen Browserspeicher des verwendeten Geräts gespeichert.
 
-[Python Agenten-Training starten](https://nmsboeheimkirchen.github.io/learnpython)
+Das bedeutet:
 
-Danach:
+- Auf demselben Gerät und im selben Browser kann später weitergearbeitet werden.
+- Zwischen verschiedenen Geräten oder Browsern findet keine Synchronisierung statt.
+- Das Löschen der Browserdaten entfernt auch den gespeicherten Fortschritt.
+- Über **Fortschritt zurücksetzen** in der Navigation können die lokal gespeicherten Lerndaten gezielt gelöscht werden.
 
-1. Mission auswählen und die Aufgabenbeschreibung lesen.
-2. Den Python-Code im Editor ergänzen.
-3. **Code ausführen** anklicken.
-4. Die Rückmeldung beachten und den Code bei Bedarf verbessern.
-5. Nach bestandener Aufgabe mit dem nächsten Level fortfahren.
+## Technischer Aufbau
 
-Alle benötigten Browserbibliotheken liegen versionsfest im Repository. Die veröffentlichte Website benötigt daher keine zusätzlichen Verbindungen zu externen CDNs. Die Anwendung ist für aktuelle Versionen von Chrome, Edge, Firefox und Safari ausgelegt.
-
-## Lokal ausführen
-
-Das Projekt ist eine statische Website und benötigt keinen Build-Prozess. Ein kleiner lokaler Webserver genügt:
-
-```bash
-python -m http.server 8000
-```
-
-Anschließend im Browser öffnen:
-
-```text
-http://localhost:8000
-```
-
-Alternativ kann jeder andere statische Webserver verwendet werden.
-
-## Projektstruktur
+Die Anwendung ist eine statische Website aus HTML, CSS und JavaScript. Python läuft mit [Skulpt](https://skulpt.org/) im Browser; [CodeMirror](https://codemirror.net/5/) stellt den Codeeditor bereit. Beide Bibliotheken sowie weitere benötigte Abhängigkeiten werden aus dem Repository ausgeliefert.
 
 ```text
 .
-├── index.html                 # Einstieg und Weiterleitung zur ersten Mission
-├── mission1_*.html            # Mission 1 mit drei Leveln (Level 4 leitet aus alten Links auf Level 3 um)
-├── mission2_*.html            # Mission 2 mit drei Leveln
-├── mission3_*.html            # Mission 3 mit drei Leveln
-├── mission4_*.html            # Mission 4 mit drei aufeinander aufbauenden Leveln
-├── assets/
-│   ├── vendor/                # Browserbibliotheken, Lizenzen und Prüfsummen
-│   ├── style.css              # Gemeinsames Layout und Design
-│   ├── editor.js              # Gemeinsame Einrichtung des Python-Editors
-│   ├── navigation.js          # Gemeinsame Navigation aller Missionen
-│   └── runner.js              # Python-Ausführung, Fortschritt und Validierung
-├── tests/
-│   ├── all.test.mjs           # Einstiegspunkt für die Unit-Tests
-│   ├── runner.test.mjs        # Tests der Lernpfad- und Fortschrittslogik
-│   ├── drone-mission-core.test.mjs
-│   └── pico-mission-core.test.mjs
-│                              # Tests der gemeinsamen Drohnen-Laufzeitlogik
-└── .github/workflows/pages.yml
-                               # Veröffentlichung über GitHub Pages
+├── index.html                      # Startseite
+├── mission1_*.html … mission4_*.html
+│                                      Grundlagenmissionen
+├── agent_training_*.html          # Drohnen- und Turtle-Training
+├── projektwahl.html               # Auswahl der Projektmission
+├── pico_*.html                    # PICO-Projekt
+├── pixelmuseum_*.html             # Pixelmuseum-Projekt
+├── helikopter_flucht*.html        # Gemeinsamer Abschluss
+├── impressum.html                 # Impressum
+├── assets/                        # Gestaltung, Laufzeitlogik, Bilder und Bibliotheken
+├── tests/                         # Unit- und Browser-Tests
+└── .github/workflows/pages.yml    # Tests und GitHub-Pages-Veröffentlichung
 ```
+
+## Lokal ausführen
+
+Für die Lernplattform selbst ist kein Build-Schritt erforderlich. Nach dem Klonen genügt ein lokaler Webserver, zum Beispiel mit Python:
+
+```bash
+git clone https://github.com/nmsboeheimkirchen/learnpython.git
+cd learnpython
+python -m http.server 8000
+```
+
+Danach ist die Startseite unter [http://localhost:8000](http://localhost:8000/) erreichbar.
 
 ## Tests
 
-Die Unit-Tests verwenden ausschließlich die in Node.js integrierten Testwerkzeuge. Mit Node.js 18 oder neuer können sie so ausgeführt werden:
+Für die automatisierten Tests werden Node.js und die im Projekt festgeschriebenen npm-Abhängigkeiten benötigt:
 
 ```bash
+npm ci
 npm test
 ```
 
-Geprüft werden unter anderem die Level-Validatoren, die sichere Konsolenausgabe, der Erfolgsdialog und die gemeinsame Drohnen-Laufzeitlogik.
+Die Browser-Tests mit Playwright werden so gestartet:
+
+```bash
+npm run test:e2e
+```
+
+Die Tests prüfen unter anderem Lernpfad und Freischaltungen, Aufgabenvalidierung, gespeicherten Fortschritt, sichere Programmausgabe, die Drohnenmissionen sowie wichtige Abläufe auf Laptop- und Tablet-Größen.
 
 ## Veröffentlichung
 
-Jeder Push auf den Branch `main` startet den GitHub-Actions-Workflow und veröffentlicht den aktuellen Stand automatisch über GitHub Pages.
+Ein Push auf `main` startet den Workflow in [`.github/workflows/pages.yml`](.github/workflows/pages.yml). Nach erfolgreichen Logik- und Browser-Tests wird der aktuelle Stand über GitHub Pages veröffentlicht und anschließend mit einem Smoke-Test überprüft.
 
-## Lizenz
+Offene Arbeit und geplante Erweiterungen stehen in der [Roadmap](TODO.md).
 
-Dieses Projekt steht unter der [MIT-Lizenz](LICENSE).
+## Lizenz und Impressum
+
+Das Projekt steht unter der [MIT-Lizenz](LICENSE). Urheber ist Dipl. Ing. Michael Bieglmayer.
+
+Idee und Beratung: Ioannis Männl
+
+Zum [Impressum](impressum.html)

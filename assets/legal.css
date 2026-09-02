@@ -44,6 +44,17 @@
     font-size: clamp(2rem, 5vw, 3rem);
 }
 
+.legal-card h2 {
+    margin: 32px 0 10px;
+    color: var(--home-cyan);
+    font-size: clamp(1rem, 2.4vw, 1.2rem);
+    letter-spacing: -0.015em;
+}
+
+.legal-card h1 + h2 {
+    margin-top: 0;
+}
+
 .legal-address {
     color: var(--ink-muted);
     font-style: normal;
@@ -53,4 +64,10 @@
 
 .legal-address strong {
     color: var(--ink);
+}
+
+.legal-credit {
+    margin: 0;
+    color: var(--ink-muted);
+    line-height: 1.7;
 }

@@ -36,6 +36,8 @@ test("the imprint shows only the supplied identity and address with a route home
     assert.match(html, /<html lang="de">/);
     assert.match(html, /<title>Impressum – Python Agenten-Training<\/title>/);
     assert.match(html, /<h1 id="impressum-title">Impressum<\/h1>/);
+    assert.match(html, /<h2>Umsetzung und für den Inhalt verantwortlich<\/h2>/);
+    assert.match(html, /<h2>Idee und Beratung<\/h2>\s*<p class="legal-credit">Ioannis Männl<\/p>/);
     assert.match(html, /href="#impressum-main"/);
     assert.match(html, /<main id="impressum-main"/);
     assert.match(html, /href="index\.html">Zurück zur Startseite<\/a>/);

@@ -8,7 +8,7 @@ const variants = [
         bodyClass: "home-path",
         artwork: "agent-path-cyan-moon.webp",
         heroText: "Entdecke,",
-        leadText: "Vier Missionen und dein Weg beginnt hier.",
+        leadText: "5 Missionen und dein Weg beginnt hier.",
         brandLabel: "Agent PY – Startseite",
         currentVariant: "A"
     },
@@ -17,7 +17,7 @@ const variants = [
         bodyClass: "home-agent-path",
         artwork: "agent-path-magenta-portal.webp",
         heroText: "Entdecke,",
-        leadText: "Vier Missionen und dein Weg beginnt hier.",
+        leadText: "5 Missionen und dein Weg beginnt hier.",
         brandLabel: "Agent PY – Startseite",
         currentVariant: "B"
     }
@@ -115,9 +115,32 @@ for (const variant of variants) {
         await expect(currentVariant).toHaveText(variant.currentVariant);
         await expect(page.locator(".course-future")).toContainText("PICO");
         await expect(page.locator(".course-future")).toContainText("Pixelmuseum");
+        await expect(page.locator("#future-title")).toHaveText("Die 5. Mission wählst du.");
+        await expect(page.locator(".course-route-card")).toHaveCount(3);
+        await expect(page.locator(".course-route-training .course-card-action"))
+            .toHaveAttribute("href", "agent_training_start.html");
+        await expect(page.locator(".course-route-training .course-card-action"))
+            .toHaveText(/Drohnensteuerung ansehen/);
+        const projectActions = page.locator(
+            ".course-route-pico .course-card-action, .course-route-museum .course-card-action"
+        );
+        await expect(projectActions).toHaveCount(2);
+        expect(await projectActions.evaluateAll(links => links.map(link => link.getAttribute("href"))))
+            .toEqual(["projektwahl.html", "projektwahl.html"]);
+        for (const image of await page.locator(".course-route-visual img").all()) {
+            await expect(image).toHaveAttribute("loading", "lazy");
+            await expect(image).toHaveAttribute("decoding", "async");
+            await expect(image).toHaveAttribute("fetchpriority", "low");
+        }
+        const finaleBackground = page.locator(".course-home-finale-image");
+        await expect(finaleBackground).toHaveAttribute("loading", "lazy");
+        await expect(finaleBackground).toHaveAttribute("decoding", "async");
+        await expect(finaleBackground).toHaveAttribute("fetchpriority", "low");
+        await expect(finaleBackground).toHaveAttribute("src", /helicopter-hangar-closed\.webp/);
 
         const visibleCopy = await body.innerText();
         expect(visibleCopy).not.toMatch(/checkpoint|observatorium|observation|beobacht/i);
+        expect(visibleCopy).not.toContain("Diese nächsten Abschnitte werden später freigeschaltet.");
 
         const sectionOrder = await page.evaluate(() => {
             const branch = document.querySelector(".course-branches");

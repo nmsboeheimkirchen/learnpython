@@ -2314,14 +2314,14 @@ test("both homepage options keep distinct light moods and one shared logo while 
             page: "index-a.html",
             bodyClass: "home-path",
             artwork: "agent-path-cyan-moon.webp",
-            concept: /Entdecke,|Vier Missionen und dein Weg beginnt hier\./,
+            concept: /Entdecke,|5 Missionen und dein Weg beginnt hier\./,
             brand: /aria-label="Agent PY – Startseite"/
         },
         {
             page: "index-b.html",
             bodyClass: "home-agent-path",
             artwork: "agent-path-magenta-portal.webp",
-            concept: /Entdecke,|Vier Missionen und dein Weg beginnt hier\./,
+            concept: /Entdecke,|5 Missionen und dein Weg beginnt hier\./,
             brand: /aria-label="Agent PY – Startseite"/
         }
     ];
@@ -2348,7 +2348,7 @@ test("both homepage options keep distinct light moods and one shared logo while 
         assert.match(html, variant.brand);
         assert.match(html, /src="assets\/brand\/agent-py-logo\.png\?v=20260720-2"/);
         assert.match(html, /href="assets\/style\.css\?v=20260722-2"/);
-        assert.match(html, /href="assets\/home\.css\?v=20260720-2"/);
+        assert.match(html, /href="assets\/home\.css\?v=20260902-1"/);
         assert.match(html, /href="index\.html" aria-label="Agent PY – Startseite"/);
         assert.deepEqual(missionTargets, expectedMissionTargets);
         assert.equal((html.match(/<main\b/gi) ?? []).length, 1);
@@ -2357,6 +2357,17 @@ test("both homepage options keep distinct light moods and one shared logo while 
         assert.doesNotMatch(html, /href="[^"]*(?:prototypes\/|finale)/i);
         assert.doesNotMatch(html, /https?:\/\//i);
         assert.doesNotMatch(html, /checkpoint|observatorium|observation|beobacht/i);
+        assert.match(html, /<h2 id="future-title">Die 5\. Mission wählst du\.<\/h2>/);
+        assert.match(html, /Artefakt der Seruianer/);
+        assert.match(html, /Rettungscode zur Basis/);
+        assert.match(html, /Helikopter des bösen Lords hacken/);
+        assert.doesNotMatch(html, /Diese nächsten Abschnitte werden später freigeschaltet/);
+        assert.equal((html.match(/class="course-route-card(?:\s[^"]*)?"/g) ?? []).length, 3);
+        assert.match(html, /href="agent_training_start\.html">Drohnensteuerung ansehen/);
+        assert.equal((html.match(/href="projektwahl\.html">Mission ansehen/g) ?? []).length, 2);
+        assert.match(html, /pico-rescue-station\.webp[^>]+loading="lazy"[^>]+decoding="async"[^>]+fetchpriority="low"/);
+        assert.match(html, /pixel-museum\.webp[^>]+loading="lazy"[^>]+decoding="async"[^>]+fetchpriority="low"/);
+        assert.match(html, /class="course-home-finale-image"[^>]+helicopter-hangar-closed\.webp[^>]+loading="lazy"[^>]+fetchpriority="low"/);
         assert.ok(
             html.indexOf('class="course-future"') < html.indexOf('class="course-method-grid"'),
             `${variant.page}: Die Weggabelung muss vor „So kommst du voran“ stehen`
