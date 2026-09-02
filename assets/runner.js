@@ -37,7 +37,9 @@ const LEVEL_ROUTES = Object.freeze({
     "link-museum-title": "pixelmuseum_briefing.html",
     "link-museum-briefing": "pixelmuseum_briefing.html",
     "link-museum-finale": "pixelmuseum_finale.html",
-    "link-helicopter-escape": "helikopter_flucht.html"
+    "link-helicopter-escape": "helikopter_flucht.html",
+    "link-helicopter-level1": "helikopter_flucht_level1.html",
+    "link-helicopter-level2": "helikopter_flucht_level2.html"
 });
 
 function canonicalPageHref(href) {
@@ -1087,7 +1089,7 @@ const LEVEL_OUTCOMES = {
         successMessage: "Das Rettungssignal wurde an der Funkbase bestätigt."
     },
     pico_level4_memory: {
-        unlocks: ["link-helicopter-escape"],
+        unlocks: ["link-helicopter-escape", "link-helicopter-level1"],
         successMessage: "PICO hat gesendet und danach sein Memory gelöscht."
     },
     pixelmuseum_briefing: {
@@ -1095,12 +1097,16 @@ const LEVEL_OUTCOMES = {
         successMessage: "Das Briefing ist abgeschlossen. Das Pixelmuseum ist bereit."
     },
     pixelmuseum_finale: {
-        unlocks: ["link-helicopter-escape"],
+        unlocks: ["link-helicopter-escape", "link-helicopter-level1"],
         successMessage: "Das Sternenfragment ist gesichert und die Flucht aus dem Museum gelungen."
     },
     helikopter_flucht_level1: {
-        unlocks: [],
+        unlocks: ["link-helicopter-level2"],
         successMessage: "Der Bordcomputer ist entsperrt."
+    },
+    helikopter_flucht_level2: {
+        unlocks: [],
+        successMessage: "Helikopterzugang und Hangartor sind offen."
     }
 };
 

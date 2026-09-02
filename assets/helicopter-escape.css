@@ -55,6 +55,22 @@
     object-position: 55% 81%;
 }
 
+.helicopter-config-page .hangar-state-image {
+    transition: opacity 420ms ease;
+}
+
+.helicopter-config-page .hangar-open-image {
+    opacity: 0;
+}
+
+.helicopter-config-page[data-hangar-state="open"] .hangar-closed-image {
+    opacity: 0;
+}
+
+.helicopter-config-page[data-hangar-state="open"] .hangar-open-image {
+    opacity: 1;
+}
+
 .helicopter-hero-shade {
     z-index: -2;
     background:
@@ -97,6 +113,10 @@
     font-weight: 840;
     letter-spacing: -0.065em;
     line-height: 0.9;
+}
+
+.helicopter-config-page .helicopter-hero-title h1 {
+    font-size: clamp(2.55rem, 5vw, 5.6rem);
 }
 
 .helicopter-hero-title > span {
@@ -228,6 +248,36 @@
     text-transform: uppercase;
 }
 
+.helicopter-file-bar {
+    display: flex;
+    gap: 9px;
+    align-items: center;
+    margin: 0 0 9px;
+    padding: 9px 12px;
+    border: 1px solid rgba(var(--heli-cyan-rgb), 0.18);
+    border-radius: 12px 12px 5px 5px;
+    background: rgba(4, 17, 29, 0.86);
+    color: #c9dce8;
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 0.75rem;
+}
+
+.helicopter-file-bar > span {
+    color: var(--heli-cyan);
+    font-weight: 850;
+}
+
+.helicopter-file-bar > small {
+    margin-left: auto;
+    color: #8195a5;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+}
+
+.helicopter-config-page .helicopter-file-bar + .helicopter-editor-label {
+    margin-top: 12px;
+}
+
 .helicopter-section-heading h2 {
     margin: 4px 0 0;
     font-size: clamp(1.35rem, 2.2vw, 1.8rem);
@@ -355,6 +405,51 @@
     color: #ffb8c0;
 }
 
+.helicopter-next-mission {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 3px 14px;
+    align-items: center;
+    min-height: 58px;
+    margin-top: 13px;
+    padding: 12px 17px;
+    border: 1px solid rgba(105, 243, 162, 0.72);
+    border-radius: 15px;
+    background: linear-gradient(135deg, rgba(105, 243, 162, 0.2), rgba(88, 244, 255, 0.12));
+    box-shadow: 0 14px 35px rgba(105, 243, 162, 0.12);
+    color: #eafff2;
+    text-decoration: none;
+}
+
+.helicopter-next-mission[hidden] {
+    display: none;
+}
+
+.helicopter-next-mission > span:first-child {
+    color: var(--heli-success);
+    font-size: 0.68rem;
+    font-weight: 850;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.helicopter-next-mission > strong {
+    grid-column: 1;
+    font-size: 0.92rem;
+}
+
+.helicopter-next-mission > span:last-child {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    font-size: 1.5rem;
+}
+
+.helicopter-next-mission:hover {
+    border-color: var(--heli-success);
+    background: linear-gradient(135deg, rgba(105, 243, 162, 0.29), rgba(88, 244, 255, 0.17));
+    transform: translateY(-1px);
+}
+
 .helicopter-access-page[data-access-state="granted"] .helicopter-terminal-glow,
 .helicopter-access-page[data-access-state="denied"] .helicopter-terminal-glow {
     opacity: 0.78;
@@ -454,6 +549,43 @@
 
 .helicopter-example-card > pre {
     margin-top: 0;
+}
+
+.helicopter-config-status {
+    display: grid;
+    gap: 0;
+    margin: 14px 0 0;
+}
+
+.helicopter-config-status > div {
+    display: grid;
+    gap: 4px;
+    padding: 12px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.helicopter-config-status dt {
+    color: #8296a8;
+    font-size: 0.67rem;
+    font-weight: 850;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.helicopter-config-status dd {
+    margin: 0;
+    color: #d6e7f1;
+    font-size: 0.8rem;
+    line-height: 1.48;
+}
+
+.helicopter-config-page[data-access-state="granted"] #heli-status,
+.helicopter-config-page[data-access-state="granted"] #hangar-status {
+    color: var(--heli-success);
+}
+
+.helicopter-config-page[data-access-state="granted"] #console-output {
+    color: var(--heli-success);
 }
 
 .helicopter-help-card {

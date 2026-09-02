@@ -98,7 +98,7 @@
         "2": Object.freeze(["link-pico-l2a", "link-pico-l3"]),
         "2a": Object.freeze(["link-pico-l3"]),
         "3": Object.freeze(["link-pico-l4"]),
-        "4": Object.freeze(["link-helicopter-escape"])
+        "4": Object.freeze(["link-helicopter-escape", "link-helicopter-level1"])
     });
 
     const LEVEL_COMPLETIONS = Object.freeze({

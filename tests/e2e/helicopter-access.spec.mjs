@@ -44,6 +44,7 @@ test("@ipad the Bordcomputer layout keeps the mission, editor and help clear", a
     await expect(page.getByText("das Ergebnis wieder in passwort speicherst", { exact: false })).toBeVisible();
     await expect(page.getByText('passwort = signal.replace("?", "")', { exact: false })).toHaveCount(0);
     await expect(page.locator(".mission-checks, .checks-list, .mission-feedback")).toHaveCount(0);
+    await expect(page.locator("#next-level-btn")).toBeHidden();
     await expect(page.locator(".helicopter-access-hero > img")).toHaveJSProperty("naturalWidth", 1717);
     await expect(page.locator(".helicopter-access-hero > img")).toHaveJSProperty("naturalHeight", 916);
 
@@ -122,7 +123,17 @@ test("the real receive and replace chain grants access", async ({ page }) => {
     await expect(page.locator("#access-message")).toHaveText("ACCESS GRANTED!");
     await expect(page.locator("#access-message")).toHaveCSS("color", "rgb(105, 243, 162)");
     await expect(glow).toHaveCSS("opacity", "0.78");
+    const nextMission = page.locator("#next-level-btn");
+    await expect(nextMission).toBeVisible();
+    await expect(nextMission).toContainText("Nächster Auftrag");
+    await expect(nextMission).toContainText("Startkonfiguration reparieren");
+    await expect(nextMission).toHaveAttribute("href", "helikopter_flucht_level2.html");
+    expect((await nextMission.boundingBox())?.height).toBeGreaterThanOrEqual(44);
     expect(await page.evaluate(() => window.scrollY)).toBeLessThan(scrollBeforeRun - 1);
+
+    await nextMission.click();
+    await expect(page).toHaveURL(/helikopter_flucht_level2\.html$/);
+    await expect.poll(() => page.evaluate(() => Boolean(window.HelicopterConfigRuntime))).toBe(true);
 });
 
 test("the starter failure does not reveal the replace arguments in its output", async ({ page }) => {

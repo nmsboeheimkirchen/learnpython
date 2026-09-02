@@ -36,6 +36,7 @@
         showNext(true);
         window.saveCompletedLevelCode?.("pixelmuseum_finale", meta.code || runtime.editor.getValue());
         window.unlockLevel?.("link-helicopter-escape");
+        window.unlockLevel?.("link-helicopter-level1");
 
         completionTimer = window.setTimeout(() => {
             completionTimer = null;

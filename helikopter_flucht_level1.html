@@ -9,18 +9,18 @@
     <link rel="preload" href="assets/images/escape/helicopter-hangar-closed.webp?v=20260831-1" as="image" type="image/webp">
     <script src="assets/vendor/skulpt/1.2.0/skulpt.min.js"></script>
     <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
-    <script src="assets/runner.js?v=20260901-1"></script>
-    <script src="assets/teacher-solutions.js?v=20260901-1"></script>
+    <script src="assets/runner.js?v=20260902-1"></script>
+    <script src="assets/teacher-solutions.js?v=20260902-1"></script>
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
     <link rel="stylesheet" href="assets/style.css?v=20260722-2">
-    <link rel="stylesheet" href="assets/helicopter-escape.css?v=20260902-1">
+    <link rel="stylesheet" href="assets/helicopter-escape.css?v=20260902-2">
 </head>
 <body class="helicopter-access-page" data-hangar-state="closed" data-access-state="locked">
     <a class="skip-link" href="#code-panel">Zum Python-Editor</a>
 
     <div id="navigation-root"></div>
-    <script src="assets/navigation.js?v=20260901-1"></script>
+    <script src="assets/navigation.js?v=20260902-1"></script>
 
     <main id="main-content" class="helicopter-access-main">
         <section id="access-hero" class="helicopter-access-hero" aria-labelledby="mission-title">
@@ -78,6 +78,11 @@ bordcomputer.pruefe(passwort)
                     <button id="run-btn" class="helicopter-run-button" type="button"><span aria-hidden="true">▶</span> Bordcomputer starten</button>
                     <button id="reset-btn" class="helicopter-reset-button" type="button">↺ Startcode laden</button>
                 </div>
+                <a id="next-level-btn" class="helicopter-next-mission next-level-btn" href="helikopter_flucht_level2.html" hidden>
+                    <span>Nächster Auftrag</span>
+                    <strong>Startkonfiguration reparieren</strong>
+                    <span aria-hidden="true">→</span>
+                </a>
                 <button class="test-btn" type="button" data-teacher-solution="helikopter_flucht_level1">Musterlösung (Für Lehrer)</button>
             </section>
 

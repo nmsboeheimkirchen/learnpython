@@ -5,9 +5,9 @@ Stand: 2026-08-31.
 - **Geschlossen / Missionsbeginn:** `helicopter-hangar-closed.webp`.
 - **Offen / Fluchtweg frei:** `helicopter-hangar-final.webp` (vorhandenes Original, unverändert).
 - Beide WebP-Bilder haben 1717 × 916 Pixel und dieselbe Bildaufteilung. Die offene Variante bleibt unter ihrem bisherigen Dateinamen erhalten, damit vorhandene Verweise nicht brechen.
-- Die Landingpage verwendet den geschlossenen Zustand. Der spätere Wechsel auf „offen“ soll erst nach erfolgreicher Cockpit-Konfiguration erfolgen; die Rätsel-/Boot-Laufzeit ist noch nicht implementiert.
+- Die Landingpage und Stufe 2 verwenden zunächst den geschlossenen Zustand. Nach einer erfolgreichen JSON-Konfiguration wechselt Stufe 2 auf die offene Variante.
 - Das Hangartor startet geschlossen und muss **geöffnet** werden. Es schließt nicht als Countdown.
-- Geplanter JSON-Eintrag: `daten["hangartor"]["offen"] = True`. Navigation und Rotor haben davon getrennte Online-Zustände.
+- JSON-Eintrag: `daten["hangar"]["tor_offen"] = True`. Navigation und Rotor haben davon getrennte Online-Zustände in `daten["cockpit"]`.
 
 ## Erstellung
 

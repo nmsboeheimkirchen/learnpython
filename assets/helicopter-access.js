@@ -13,6 +13,7 @@
     const accessHero = byId("access-hero");
     const accessDisplay = byId("access-display");
     const accessMessage = byId("access-message");
+    const nextLevelButton = byId("next-level-btn");
     const runButtons = [...document.querySelectorAll("[data-helicopter-run], #run-btn")];
     if (!textarea || !consoleOutput || !resetButton || !accessHero || !accessDisplay || !accessMessage || !runButtons.length) {
         throw new Error("Die Oberfläche der Bordcomputer-Mission ist unvollständig.");
@@ -94,6 +95,7 @@ var $builtinmodule = function () {
         document.body.dataset.accessState = accessState;
         accessDisplay.className = "access-display is-" + accessState;
         accessMessage.textContent = message;
+        if (nextLevelButton) nextLevelButton.hidden = accessState !== "granted";
     }
 
     function setRunning(nextRunning) {
@@ -135,6 +137,7 @@ var $builtinmodule = function () {
         if (passed) {
             setAccessState("granted", "ACCESS GRANTED!");
             window.saveCompletedLevelCode?.("helikopter_flucht_level1", code);
+            window.unlockLevel?.("link-helicopter-level2");
             revealResult();
         } else {
             setAccessState("denied", "ACCESS DENIED!");

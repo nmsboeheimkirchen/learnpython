@@ -33,12 +33,24 @@ async function verifyDeployment() {
     const marker = (await (await fetchLive(`deploy-meta/${expectedSha}.txt`)).text()).trim();
     assert.equal(marker, expectedSha, `GitHub Pages liefert nicht den erwarteten Commit ${expectedSha}.`);
 
-    const [landingResponse, levelResponse, artworkResponse] = await Promise.all([
+    const [
+        landingResponse,
+        levelOneResponse,
+        levelTwoResponse,
+        closedArtworkResponse,
+        openArtworkResponse
+    ] = await Promise.all([
         fetchLive("helikopter_flucht.html"),
         fetchLive("helikopter_flucht_level1.html"),
-        fetchLive("assets/images/escape/helicopter-hangar-closed.webp")
+        fetchLive("helikopter_flucht_level2.html"),
+        fetchLive("assets/images/escape/helicopter-hangar-closed.webp"),
+        fetchLive("assets/images/escape/helicopter-hangar-final.webp")
     ]);
-    const [landing, level] = await Promise.all([landingResponse.text(), levelResponse.text()]);
+    const [landing, levelOne, levelTwo] = await Promise.all([
+        landingResponse.text(),
+        levelOneResponse.text(),
+        levelTwoResponse.text()
+    ]);
 
     requireText(landing, 'data-hangar-state="closed"', "helikopter_flucht.html");
     requireText(landing, "helicopter-hangar-closed.webp", "helikopter_flucht.html");
@@ -47,21 +59,42 @@ async function verifyDeployment() {
     assert.ok(!landing.includes("Zur Projektwahl"), "helikopter_flucht.html enthält weiterhin Zur Projektwahl.");
     assert.ok(!landing.includes("Hangartore verriegelt"), "helikopter_flucht.html beschreibt weiterhin das Verriegeln der Tore.");
 
-    requireText(level, "Entsperre den Bordcomputer", "helikopter_flucht_level1.html");
-    requireText(level, "signal = bordcomputer.receive()", "helikopter_flucht_level1.html");
-    requireText(level, "passwort.replace", "helikopter_flucht_level1.html");
-    requireText(level, "256 zufällige Passwortzeichen", "helikopter_flucht_level1.html");
-    requireText(level, "255 <code>?</code>", "helikopter_flucht_level1.html");
-    requireText(level, "Sonderzeichen", "helikopter_flucht_level1.html");
-    assert.ok(!level.includes("Das Passwort darf nicht im Klartext"), "Das alte Klartextverbot ist noch veröffentlicht.");
-    assert.match(artworkResponse.headers.get("content-type") ?? "", /^image\/webp(?:;|$)/i);
+    requireText(levelOne, "Entsperre den Bordcomputer", "helikopter_flucht_level1.html");
+    requireText(levelOne, "signal = bordcomputer.receive()", "helikopter_flucht_level1.html");
+    requireText(levelOne, "passwort.replace", "helikopter_flucht_level1.html");
+    requireText(levelOne, "256 zufällige Passwortzeichen", "helikopter_flucht_level1.html");
+    requireText(levelOne, "255 <code>?</code>", "helikopter_flucht_level1.html");
+    requireText(levelOne, "Sonderzeichen", "helikopter_flucht_level1.html");
+    requireText(levelOne, 'href="helikopter_flucht_level2.html"', "helikopter_flucht_level1.html");
+    requireText(levelOne, "Nächster Auftrag", "helikopter_flucht_level1.html");
+    assert.ok(!levelOne.includes("Das Passwort darf nicht im Klartext"), "Das alte Klartextverbot ist noch veröffentlicht.");
+
+    requireText(levelTwo, "Öffne Zugang und Hangartor", "helikopter_flucht_level2.html");
+    requireText(levelTwo, "Notzugang hergestellt. Startkonfiguration unvollständig. Manueller Systemstart erforderlich.", "helikopter_flucht_level2.html");
+    requireText(levelTwo, "heli_config.json", "helikopter_flucht_level2.html");
+    requireText(levelTwo, '"heli": {', "helikopter_flucht_level2.html");
+    requireText(levelTwo, '"zugang_offen": false', "helikopter_flucht_level2.html");
+    requireText(levelTwo, '"cockpit": {', "helikopter_flucht_level2.html");
+    requireText(levelTwo, '"hauptdisplay_online": true', "helikopter_flucht_level2.html");
+    requireText(levelTwo, '"navigation_online": false', "helikopter_flucht_level2.html");
+    requireText(levelTwo, '"rotor_online": false', "helikopter_flucht_level2.html");
+    requireText(levelTwo, '"hangar": {', "helikopter_flucht_level2.html");
+    requireText(levelTwo, '"tor_offen": false', "helikopter_flucht_level2.html");
+    requireText(levelTwo, "helicopter-hangar-closed.webp", "helikopter_flucht_level2.html");
+    requireText(levelTwo, "helicopter-hangar-final.webp", "helikopter_flucht_level2.html");
+    requireText(levelTwo, "assets/helicopter-config-core.js", "helikopter_flucht_level2.html");
+    requireText(levelTwo, "assets/helicopter-config.js", "helikopter_flucht_level2.html");
+    assert.ok(!levelTwo.includes("json.loads"), "Die reine JSON-Einstiegsstufe greift json.loads() vor.");
+
+    assert.match(closedArtworkResponse.headers.get("content-type") ?? "", /^image\/webp(?:;|$)/i);
+    assert.match(openArtworkResponse.headers.get("content-type") ?? "", /^image\/webp(?:;|$)/i);
 }
 
 let lastError;
 for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     try {
         await verifyDeployment();
-        console.log(`GitHub Pages liefert Commit ${expectedSha} und beide Helikopter-Seiten korrekt aus.`);
+        console.log(`GitHub Pages liefert Commit ${expectedSha}, alle drei Helikopter-Seiten und beide Hangarbilder korrekt aus.`);
         lastError = undefined;
         break;
     } catch (error) {

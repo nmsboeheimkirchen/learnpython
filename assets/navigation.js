@@ -94,7 +94,10 @@ window.AgentNavigation = (() => {
             href: "helikopter_flucht.html",
             description: "Den Bordcomputer entsperren, die Systeme booten, das Hangartor öffnen und entkommen.",
             unitLabel: "Phase",
-            levels: []
+            levels: [
+                { id: "link-helicopter-level1", href: "helikopter_flucht_level1.html", number: "1", label: "Bordcomputer entsperren" },
+                { id: "link-helicopter-level2", href: "helikopter_flucht_level2.html", number: "2", label: "Startkonfiguration reparieren" }
+            ]
         }
     ]);
 

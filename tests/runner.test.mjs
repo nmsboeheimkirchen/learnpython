@@ -1483,7 +1483,8 @@ const teacherSolutionExpectations = new Map([
     ["pico_level4", /if signal_erfolgreich:[\s\S]*status\["DROHNE"\] = "self-destroy"[\s\S]*status\["TRANSPONDER"\] = "delete"/],
     ["pixelmuseum_briefing", /def melde_inventar\(liste\):[\s\S]*drohne\.goto\(-250, 60\)[\s\S]*inventar\.append\(fund\)[\s\S]*drohne\.goto\(-390, 45\)[\s\S]*melde_inventar\(inventar\)/],
     ["pixelmuseum_finale", /def melde_inventar\(liste\):[\s\S]*drohne\.goto\(-390, 45\)[\s\S]*drohne\.goto\(250, -60\)[\s\S]*alarm_hacken\("SERU-7"\)[\s\S]*drohne\.goto\(0, 115\)[\s\S]*melde_inventar\(inventar\)/],
-    ["helikopter_flucht_level1", /signal = bordcomputer\.receive\(\)[\s\S]*passwort = signal\.replace\("\?", ""\)[\s\S]*bordcomputer\.pruefe\(passwort\)/]
+    ["helikopter_flucht_level1", /signal = bordcomputer\.receive\(\)[\s\S]*passwort = signal\.replace\("\?", ""\)[\s\S]*bordcomputer\.pruefe\(passwort\)/],
+    ["helikopter_flucht_level2", /"heli":\s*\{\s*"zugang_offen":\s*true[\s\S]*"cockpit":\s*\{[\s\S]*"hauptdisplay_online":\s*true[\s\S]*"navigation_online":\s*false[\s\S]*"rotor_online":\s*false[\s\S]*"hangar":\s*\{\s*"tor_offen":\s*true/]
 ]);
 
 test("teacher solutions are centralized and available for every level", () => {
@@ -1832,6 +1833,8 @@ test("mission navigation is rendered from one central definition", () => {
         "link-museum-briefing",
         "link-museum-finale",
         "link-helicopter-escape",
+        "link-helicopter-level1",
+        "link-helicopter-level2",
         "reset-progress-btn"
     ];
     for (const id of expectedNavigationIds) {
@@ -1912,7 +1915,9 @@ test("all progress link ids keep their established unlock routes", () => {
         "link-museum-title": "pixelmuseum_briefing.html",
         "link-museum-briefing": "pixelmuseum_briefing.html",
         "link-museum-finale": "pixelmuseum_finale.html",
-        "link-helicopter-escape": "helikopter_flucht.html"
+        "link-helicopter-escape": "helikopter_flucht.html",
+        "link-helicopter-level1": "helikopter_flucht_level1.html",
+        "link-helicopter-level2": "helikopter_flucht_level2.html"
     });
 });
 
@@ -2182,14 +2187,94 @@ test("the first helicopter level uses a runtime signal and one replace-based acc
     assert.doesNotMatch(runtime, /HINWEIS: Entferne alle \? mit replace/);
     assert.match(runtime, /if \(passed\) \{[\s\S]*revealResult\(\);[\s\S]*\} else \{/);
     assert.doesNotMatch(runtime, /lastResult = Object\.freeze\(\{ passed: false, error:[\s\S]{0,220}revealResult\(\)/);
-    assert.match(runner, /helikopter_flucht_level1:\s*\{\s*unlocks:\s*\[\],\s*successMessage:\s*"Der Bordcomputer ist entsperrt\."/);
-    assert.match(html, /assets\/runner\.js\?v=20260901-1/);
-    assert.match(html, /assets\/teacher-solutions\.js\?v=20260901-1/);
+    assert.match(runtime, /window\.unlockLevel\?\.\("link-helicopter-level2"\)/);
+    assert.match(runtime, /nextLevelButton\.hidden = accessState !== "granted"/);
+    assert.match(html, /id="next-level-btn"[^>]+href="helikopter_flucht_level2\.html"[^>]+hidden/);
+    assert.match(html, /<span>Nächster Auftrag<\/span>\s*<strong>Startkonfiguration reparieren<\/strong>/);
+    assert.match(runner, /helikopter_flucht_level1:\s*\{\s*unlocks:\s*\["link-helicopter-level2"\],\s*successMessage:\s*"Der Bordcomputer ist entsperrt\."/);
+    assert.match(html, /assets\/runner\.js\?v=20260902-1/);
+    assert.match(html, /assets\/teacher-solutions\.js\?v=20260902-1/);
     assert.match(html, /assets\/helicopter-access-core\.js/);
     assert.match(html, /assets\/helicopter-access\.js/);
 });
 
-test("the Pages deployment verifies the published commit and both helicopter pages", () => {
+test("the second helicopter level edits grouped JSON before Python and opens both access points", () => {
+    const html = readFileSync(new URL("../helikopter_flucht_level2.html", import.meta.url), "utf8");
+    const runtime = readFileSync(new URL("../assets/helicopter-config.js", import.meta.url), "utf8");
+    const coreSource = readFileSync(new URL("../assets/helicopter-config-core.js", import.meta.url), "utf8");
+    const css = readFileSync(new URL("../assets/helicopter-escape.css", import.meta.url), "utf8");
+    const navigation = readFileSync(new URL("../assets/navigation.js", import.meta.url), "utf8");
+    const { context } = createRunnerContext();
+    const outcomes = JSON.parse(vm.runInContext("JSON.stringify(LEVEL_OUTCOMES)", context));
+    const starterSource = html.match(/<textarea id="json-editor"[^>]*>([\s\S]*?)<\/textarea>/)?.[1]
+        .replace(/\r/g, "") ?? "";
+    const expectedStartConfig = {
+        heli: { zugang_offen: false },
+        cockpit: {
+            hauptdisplay_online: true,
+            navigation_online: false,
+            rotor_online: false
+        },
+        hangar: { tor_offen: false }
+    };
+
+    assert.deepEqual(JSON.parse(starterSource), expectedStartConfig);
+    assert.match(html, /<h1 id="mission-title">Öffne Zugang und Hangartor<\/h1>/);
+    assert.match(html, /Notzugang hergestellt\. Startkonfiguration unvollständig\. Manueller Systemstart erforderlich\./);
+    assert.match(html, /Du hast die Datei <code>heli_config\.json<\/code> im Bordcomputer gefunden\./);
+    assert.match(html, /Die Cockpit-Systeme bleiben in diesem Auftrag unverändert\./);
+    assert.match(html, /JSON-Dateieditor/);
+    assert.match(html, /<h2 id="config-title">heli_config\.json<\/h2>/);
+    assert.match(html, /Ändere nur <code>zugang_offen<\/code> und <code>tor_offen<\/code> von <code>false<\/code> auf <code>true<\/code>/);
+    assert.match(html, /Hauptdisplay online · Navigation offline · Rotor offline/);
+    assert.match(html, /data-hangar-state="closed"/);
+    assert.match(html, /helicopter-hangar-closed\.webp/);
+    assert.match(html, /helicopter-hangar-final\.webp/);
+    assert.match(html, /assets\/helicopter-config-core\.js\?v=20260902-1/);
+    assert.match(html, /assets\/helicopter-config\.js\?v=20260902-1/);
+    assert.equal((html.match(/Konfiguration anwenden<\/button>/g) ?? []).length, 2);
+    assert.doesNotMatch(html, /python-editor|python\.min\.js|skulpt|json\.loads/i);
+
+    const coreWindow = {};
+    vm.runInContext(coreSource, vm.createContext({ window: coreWindow }));
+    assert.equal(coreWindow.HelicopterConfigCore.START_CONFIG_TEXT, starterSource);
+    assert.equal(coreWindow.HelicopterConfigCore.validate(starterSource).passed, false);
+    const reorderedTarget = JSON.stringify({
+        hangar: { tor_offen: true },
+        cockpit: {
+            rotor_online: false,
+            navigation_online: false,
+            hauptdisplay_online: true
+        },
+        heli: { zugang_offen: true }
+    });
+    assert.equal(coreWindow.HelicopterConfigCore.validate(reorderedTarget).passed, true);
+
+    assert.match(coreSource, /JSON\.parse\(source\)/);
+    assert.match(coreSource, /hasExactKeys\(config, \["heli", "cockpit", "hangar"\]\)/);
+    assert.match(runtime, /mode:\s*null/);
+    assert.match(runtime, /window\.saveAttemptedLevelCode\?\.\("helikopter_flucht_level2", source\)/);
+    assert.match(runtime, /window\.saveCompletedLevelCode\?\.\("helikopter_flucht_level2", source\)/);
+    assert.match(runtime, /document\.body\.dataset\.hangarState = granted \? "open" : "closed"/);
+    assert.match(runtime, /if \(validation\.passed\) \{[\s\S]*setVisualState\("granted"\);[\s\S]*revealResult\(\);[\s\S]*\} else \{/);
+    assert.match(css, /\.helicopter-config-page\[data-hangar-state="open"\] \.hangar-closed-image\s*\{\s*opacity:\s*0/);
+    assert.match(css, /\.helicopter-config-page\[data-hangar-state="open"\] \.hangar-open-image\s*\{\s*opacity:\s*1/);
+
+    assert.deepEqual(outcomes.pico_level4_memory.unlocks, ["link-helicopter-escape", "link-helicopter-level1"]);
+    assert.deepEqual(outcomes.pixelmuseum_finale.unlocks, ["link-helicopter-escape", "link-helicopter-level1"]);
+    assert.deepEqual(outcomes.helikopter_flucht_level1, {
+        unlocks: ["link-helicopter-level2"],
+        successMessage: "Der Bordcomputer ist entsperrt."
+    });
+    assert.deepEqual(outcomes.helikopter_flucht_level2, {
+        unlocks: [],
+        successMessage: "Helikopterzugang und Hangartor sind offen."
+    });
+    assert.match(navigation, /id:\s*"link-helicopter-level1"[^\n]+label:\s*"Bordcomputer entsperren"/);
+    assert.match(navigation, /id:\s*"link-helicopter-level2"[^\n]+label:\s*"Startkonfiguration reparieren"/);
+});
+
+test("the Pages deployment verifies the published commit and all helicopter stages", () => {
     const workflow = readFileSync(new URL("../.github/workflows/pages.yml", import.meta.url), "utf8");
     const verifier = readFileSync(new URL("./verify-pages-deployment.mjs", import.meta.url), "utf8");
 
@@ -2200,7 +2285,9 @@ test("the Pages deployment verifies the published commit and both helicopter pag
     assert.match(verifier, /deploy-meta\/\$\{expectedSha\}\.txt/);
     assert.match(verifier, /fetchLive\("helikopter_flucht\.html"\)/);
     assert.match(verifier, /fetchLive\("helikopter_flucht_level1\.html"\)/);
+    assert.match(verifier, /fetchLive\("helikopter_flucht_level2\.html"\)/);
     assert.match(verifier, /fetchLive\("assets\/images\/escape\/helicopter-hangar-closed\.webp"\)/);
+    assert.match(verifier, /fetchLive\("assets\/images\/escape\/helicopter-hangar-final\.webp"\)/);
 });
 
 test("all four mission artworks are local, valid and web-sized", () => {
@@ -2446,6 +2533,7 @@ test("finale prototypes stay isolated while the production Pixelmuseum path is p
         "helikopter_flucht.html",
         "helikopter_flucht-b.html",
         "helikopter_flucht_level1.html",
+        "helikopter_flucht_level2.html",
         ...missionPages
     ];
 

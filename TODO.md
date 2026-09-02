@@ -17,19 +17,19 @@
     - [x] Das Signal ausschließlich über `signal = bordcomputer.receive()` zur Laufzeit bereitstellen
     - [x] Nach erfolgreichem Passwort nur den Zugang entsperren; Navigation und Rotor bleiben offline, das Hangartor bleibt geschlossen
   - [ ] Stufe 2 „Cockpit reparieren“: die beschädigte `heli_config.json` zuerst als Datei kennenlernen und danach mit `json.loads()` in Python verwenden
-    - [ ] Einstiegstext verwenden: „Notzugang hergestellt. Startkonfiguration unvollständig. Manueller Systemstart erforderlich.“
-    - [ ] Teil 2a „Helikoptertür entriegeln“ zunächst ausschließlich mit einem sichtbaren JSON-Dateieditor bauen
-      - [ ] `heli_config.json` mit `tuer.entriegelt: false` als erstem Eintrag sowie Hauptdisplay online, Navigation, Rotor und Hangartor offline anzeigen
-      - [ ] Auftrag: genau den Boolean bei `tuer.entriegelt` von `false` auf `true` ändern; JSON-Grundregeln vor Python erklären
-      - [ ] Semantisch mit `JSON.parse()` prüfen: Formatierung und Schlüsselreihenfolge sind frei, aber nur die Tür darf verändert sein und `true` muss ein Boolean sein
-      - [ ] Fehlerfeedback beim Editor belassen; nur bei Erfolg zum Hero-Status „TÜR ENTRIEGELT“ scrollen
-      - [ ] Nach Erfolg den deutlich klickbaren Auftrag „Cockpit betreten“ freigeben
+    - [x] Einstiegstext verwenden: „Notzugang hergestellt. Startkonfiguration unvollständig. Manueller Systemstart erforderlich.“
+    - [x] Teil 2a „Helikopterzugang und Hangartor öffnen“ ausschließlich mit einem sichtbaren JSON-Dateieditor bauen
+      - [x] `heli_config.json` mit den Gruppen `heli`, `cockpit` und `hangar` anzeigen; Hauptdisplay online, alle übrigen Systeme zunächst offline beziehungsweise geschlossen
+      - [x] Auftrag: genau `heli.zugang_offen` und `hangar.tor_offen` von `false` auf `true` ändern; JSON-Grundregeln vor Python erklären
+      - [x] Semantisch mit `JSON.parse()` prüfen: Formatierung und Schlüsselreihenfolge sind frei, beide Zielwerte müssen Booleans sein und die Cockpit-Werte unverändert bleiben
+      - [x] Fehlerfeedback beim Editor belassen; nur bei Erfolg zum Hero scrollen und das vorhandene Rendering mit offenem Hangartor zeigen
+      - [x] Stufe 2 nach erfolgreicher Stufe 1 als deutlich klickbaren nächsten Auftrag freigeben
     - [ ] Teil 2b „Systeme manuell starten“ mit nebeneinander geplantem JSON-Dateieditor und Python-Codefeld bauen
       - [ ] Den aktuellen Dateiinhalt über `bordcomputer.lese_datei("heli_config.json")` bereitstellen und mit `daten = json.loads(datei_text)` als Dictionary laden
       - [ ] Einen lokalen, auf `loads()` und kurze Strings begrenzten JSON-Shim für die vorhandene Skulpt-Version ergänzen
-      - [ ] Navigation, Rotor und `startfreigabe` gezielt auf `True` setzen; beim Hangartor ausdrücklich `daten["hangartor"]["offen"] = True` verwenden
+      - [ ] Navigation und Rotor über `daten["cockpit"]` gezielt auf `True` setzen; Zugang und Hangartor bleiben aus Teil 2a offen
       - [ ] Den tatsächlichen Endzustand prüfen statt eine einzige vorgeschriebene Codeform oder versteckte Provenienz zu erzwingen
-      - [ ] Erst nach korrekter Struktur Rotor und Navigation starten, das Hangartor öffnen und die Abfluganimation freigeben
+      - [ ] Erst nach korrekter Struktur Rotor und Navigation starten und die Abfluganimation freigeben
   - [ ] Finale ohne Echtzeitdruck als nachvollziehbare Zustandsmission bauen
 - [ ] A/B-Varianten entfernen und je eine kanonische Start- und Fluchtseite festlegen
   - [x] Fluchtseite vereinheitlichen; alte B-Adresse auf die kanonische Seite weiterleiten

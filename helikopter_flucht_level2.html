@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Helikopterflucht Stufe 2: Bearbeite die gefundene JSON-Konfiguration und öffne Helikopterzugang und Hangartor.">
+    <meta name="color-scheme" content="dark">
+    <title>Helikopterflucht 2 – Startkonfiguration reparieren</title>
+    <link rel="preload" href="assets/images/escape/helicopter-hangar-closed.webp?v=20260831-1" as="image" type="image/webp">
+    <link rel="preload" href="assets/images/escape/helicopter-hangar-final.webp?v=20260831-1" as="image" type="image/webp">
+    <script src="assets/runner.js?v=20260902-1"></script>
+    <script src="assets/teacher-solutions.js?v=20260902-1"></script>
+    <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
+    <link rel="stylesheet" href="assets/style.css?v=20260722-2">
+    <link rel="stylesheet" href="assets/helicopter-escape.css?v=20260902-2">
+</head>
+<body class="helicopter-access-page helicopter-config-page" data-hangar-state="closed" data-access-state="locked">
+    <a class="skip-link" href="#config-panel">Zum JSON-Editor</a>
+
+    <div id="navigation-root"></div>
+    <script src="assets/navigation.js?v=20260902-1"></script>
+
+    <main id="main-content" class="helicopter-access-main">
+        <section id="config-hero" class="helicopter-access-hero" aria-labelledby="mission-title">
+            <img class="hangar-state-image hangar-closed-image" src="assets/images/escape/helicopter-hangar-closed.webp?v=20260831-1" alt="" width="1717" height="916" fetchpriority="high">
+            <img class="hangar-state-image hangar-open-image" src="assets/images/escape/helicopter-hangar-final.webp?v=20260831-1" alt="" width="1717" height="916">
+            <div class="helicopter-hero-shade" aria-hidden="true"></div>
+            <div class="helicopter-terminal-glow" aria-hidden="true"></div>
+
+            <header class="helicopter-hero-title">
+                <p>Helikopterflucht · Stufe 2</p>
+                <h1 id="mission-title">Öffne Zugang und Hangartor</h1>
+                <span>Datei: <code>heli_config.json</code></span>
+            </header>
+
+            <aside class="agent-briefing" aria-label="Nachricht von Agent PY">
+                <p><span aria-hidden="true">◉</span> Agent PY</p>
+                <blockquote>Notzugang hergestellt. Startkonfiguration unvollständig. Manueller Systemstart erforderlich. Du hast die Datei <code>heli_config.json</code> im Bordcomputer gefunden. Öffne den Helikopterzugang und das Hangartor. Die Cockpit-Systeme bleiben in diesem Auftrag unverändert.</blockquote>
+            </aside>
+
+            <div id="config-display" class="access-display is-locked" role="status" aria-live="assertive">
+                <span class="access-display-light" aria-hidden="true"></span>
+                <span><small>Startkonfiguration</small><strong id="config-message">ZUGANG &amp; TOR GESPERRT</strong></span>
+            </div>
+        </section>
+
+        <div class="helicopter-access-workspace">
+            <section id="config-panel" class="helicopter-code-panel" aria-labelledby="config-title" tabindex="-1">
+                <div class="helicopter-section-heading">
+                    <div>
+                        <span>JSON-Dateieditor</span>
+                        <h2 id="config-title">heli_config.json</h2>
+                    </div>
+                    <small>Strg/⌘ + Enter prüft</small>
+                </div>
+
+                <button class="helicopter-run-button helicopter-top-run" type="button" data-config-run><span aria-hidden="true">▶</span> Konfiguration anwenden</button>
+
+                <div class="helicopter-file-bar" aria-label="Geöffnete Datei">
+                    <span aria-hidden="true">{ }</span>
+                    <strong>heli_config.json</strong>
+                    <small>JSON</small>
+                </div>
+                <label class="helicopter-editor-label" for="json-editor">Dateiinhalt</label>
+                <textarea id="json-editor" spellcheck="false">{
+  "heli": {
+    "zugang_offen": false
+  },
+  "cockpit": {
+    "hauptdisplay_online": true,
+    "navigation_online": false,
+    "rotor_online": false
+  },
+  "hangar": {
+    "tor_offen": false
+  }
+}</textarea>
+
+                <section class="helicopter-output-card" aria-labelledby="output-title">
+                    <header><span id="output-title">Dateiprüfung</span><span aria-hidden="true"></span></header>
+                    <pre id="console-output" aria-live="polite">Datei geladen. Helikopterzugang und Hangartor sind noch geschlossen.</pre>
+                </section>
+
+                <div class="helicopter-controls" aria-label="Dateiaktionen">
+                    <button id="run-btn" class="helicopter-run-button" type="button"><span aria-hidden="true">▶</span> Konfiguration anwenden</button>
+                    <button id="reset-btn" class="helicopter-reset-button" type="button">↺ Startdatei laden</button>
+                </div>
+                <button class="test-btn" type="button" data-teacher-solution="helikopter_flucht_level2">Musterlösung (Für Lehrer)</button>
+            </section>
+
+            <aside class="helicopter-help-column" aria-label="Systemstatus und Hilfe">
+                <section class="helicopter-hint-card helicopter-status-card">
+                    <span class="helicopter-card-kicker">Live-Systemstatus</span>
+                    <h2>Startsysteme</h2>
+                    <dl class="helicopter-config-status">
+                        <div><dt>Heli</dt><dd id="heli-status">Zugang geschlossen</dd></div>
+                        <div><dt>Cockpit</dt><dd id="cockpit-status">Hauptdisplay online · Navigation offline · Rotor offline</dd></div>
+                        <div><dt>Hangar</dt><dd id="hangar-status">Tor geschlossen</dd></div>
+                    </dl>
+                </section>
+
+                <section class="helicopter-hint-card">
+                    <span class="helicopter-card-kicker">JSON verstehen</span>
+                    <h2>Gruppen und Wahrheitswerte</h2>
+                    <p>Geschweifte Klammern bilden Gruppen. Hinter jedem Feldnamen steht nach dem Doppelpunkt sein Wert. <code>true</code> bedeutet wahr, <code>false</code> bedeutet falsch – beide stehen ohne Anführungszeichen.</p>
+                </section>
+
+                <details class="helicopter-help-card">
+                    <summary><span aria-hidden="true">?</span> Hilfe anzeigen</summary>
+                    <div>
+                        <p>Ändere nur <code>zugang_offen</code> und <code>tor_offen</code> von <code>false</code> auf <code>true</code>. Lasse alle Cockpit-Werte unverändert.</p>
+                    </div>
+                </details>
+            </aside>
+        </div>
+    </main>
+
+    <script src="assets/vendor/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="assets/helicopter-config-core.js?v=20260902-1"></script>
+    <script src="assets/helicopter-config.js?v=20260902-1"></script>
+</body>
+</html>
