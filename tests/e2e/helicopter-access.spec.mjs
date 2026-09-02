@@ -87,6 +87,12 @@ test("@ipad the Bordcomputer layout keeps the mission, editor and help clear", a
 test("the real receive and replace chain grants access", async ({ page }) => {
     await openLevel(page);
 
+    const glow = page.locator(".helicopter-terminal-glow");
+    await expect(glow).toHaveCSS("opacity", "0");
+    await page.locator("#console-output").scrollIntoViewIfNeeded();
+    const scrollBeforeRun = await page.evaluate(() => window.scrollY);
+    expect(scrollBeforeRun).toBeGreaterThan(0);
+
     const run = await runCode(page, correctCode);
     expect(run.result.passed).toBe(true);
     expect(run.state).toMatchObject({
@@ -100,8 +106,8 @@ test("the real receive and replace chain grants access", async ({ page }) => {
     await expect(page.locator("body")).toHaveAttribute("data-access-state", "granted");
     await expect(page.locator("#access-message")).toHaveText("ACCESS GRANTED!");
     await expect(page.locator("#access-message")).toHaveCSS("color", "rgb(105, 243, 162)");
-    expect(await page.locator(".helicopter-terminal-glow").evaluate(element => Number.parseFloat(getComputedStyle(element).opacity)))
-        .toBeGreaterThan(0.7);
+    await expect(glow).toHaveCSS("opacity", "0.78");
+    expect(await page.evaluate(() => window.scrollY)).toBeLessThan(scrollBeforeRun - 1);
 });
 
 test("the starter failure does not reveal the replace arguments in its output", async ({ page }) => {
@@ -114,7 +120,8 @@ test("the starter failure does not reveal the replace arguments in its output", 
     await expect(page.locator("#console-output")).toContainText("ACCESS DENIED!");
     await expect(page.locator("#console-output")).not.toContainText('replace("?", "")');
     await expect(page.locator("#console-output")).not.toContainText("Entferne alle ?");
-    expect(await page.evaluate(() => window.scrollY)).toBeGreaterThanOrEqual(scrollBeforeRun - 1);
+    const scrollAfterRun = await page.evaluate(() => window.scrollY);
+    expect(Math.abs(scrollAfterRun - scrollBeforeRun)).toBeLessThanOrEqual(1);
 });
 
 test("forged output and cleartext cannot bypass replace provenance", async ({ page }) => {

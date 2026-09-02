@@ -2180,6 +2180,20 @@ test("the first helicopter level uses a runtime signal and one replace-based acc
     assert.match(html, /assets\/helicopter-access\.js/);
 });
 
+test("the Pages deployment verifies the published commit and both helicopter pages", () => {
+    const workflow = readFileSync(new URL("../.github/workflows/pages.yml", import.meta.url), "utf8");
+    const verifier = readFileSync(new URL("./verify-pages-deployment.mjs", import.meta.url), "utf8");
+
+    assert.match(workflow, /printf '%s\\n' "\$GITHUB_SHA" > "deploy-meta\/\$\{GITHUB_SHA\}\.txt"/);
+    assert.match(workflow, /name: Verify published Pages deployment[\s\S]*needs: deploy/);
+    assert.match(workflow, /PAGES_URL: \$\{\{ needs\.deploy\.outputs\.page_url \}\}/);
+    assert.match(workflow, /EXPECTED_SHA: \$\{\{ github\.sha \}\}/);
+    assert.match(verifier, /deploy-meta\/\$\{expectedSha\}\.txt/);
+    assert.match(verifier, /fetchLive\("helikopter_flucht\.html"\)/);
+    assert.match(verifier, /fetchLive\("helikopter_flucht_level1\.html"\)/);
+    assert.match(verifier, /fetchLive\("assets\/images\/escape\/helicopter-hangar-closed\.webp"\)/);
+});
+
 test("all four mission artworks are local, valid and web-sized", () => {
     const artwork = [
         "mission-1-system-access.webp",

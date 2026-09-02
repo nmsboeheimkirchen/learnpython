@@ -88,6 +88,8 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -95,6 +97,12 @@ jobs:
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
+
+      - name: Add deployment version marker
+        shell: bash
+        run: |
+          mkdir -p deploy-meta
+          printf '%s\n' "$GITHUB_SHA" > "deploy-meta/${GITHUB_SHA}.txt"
 
       - name: Upload static site
         uses: actions/upload-pages-artifact@v3
@@ -104,3 +112,26 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  smoke:
+    name: Verify published Pages deployment
+    if: github.event_name != 'pull_request'
+    needs: deploy
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verify published commit and helicopter pages
+        env:
+          PAGES_URL: ${{ needs.deploy.outputs.page_url }}
+          EXPECTED_SHA: ${{ github.sha }}
+        run: node tests/verify-pages-deployment.mjs
