@@ -50,6 +50,10 @@ async function verifyDeployment() {
     requireText(level, "Entsperre den Bordcomputer", "helikopter_flucht_level1.html");
     requireText(level, "signal = bordcomputer.receive()", "helikopter_flucht_level1.html");
     requireText(level, "passwort.replace", "helikopter_flucht_level1.html");
+    requireText(level, "256 zufällige Passwortzeichen", "helikopter_flucht_level1.html");
+    requireText(level, "255 <code>?</code>", "helikopter_flucht_level1.html");
+    requireText(level, "Sonderzeichen", "helikopter_flucht_level1.html");
+    assert.ok(!level.includes("Das Passwort darf nicht im Klartext"), "Das alte Klartextverbot ist noch veröffentlicht.");
     assert.match(artworkResponse.headers.get("content-type") ?? "", /^image\/webp(?:;|$)/i);
 }
 

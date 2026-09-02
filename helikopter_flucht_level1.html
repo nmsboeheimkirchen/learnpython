@@ -36,7 +36,7 @@
 
             <aside class="agent-briefing" aria-label="Nachricht von Agent PY">
                 <p><span aria-hidden="true">◉</span> Agent PY</p>
-                <blockquote>Der Bordcomputer sendet nur ein gestörtes Signal. Hole es direkt mit <code>receive()</code>, entferne die Störzeichen und schicke das Ergebnis zurück. Das Passwort darf nicht im Klartext in deinem Programm stehen.</blockquote>
+                <blockquote>Der Bordcomputer sendet ein gestörtes Signal: 256 zufällige Passwortzeichen mit Sonderzeichen, getrennt durch 255 <code>?</code>. Hole es mit <code>receive()</code>, entferne die Störzeichen und schicke das Ergebnis zurück. Abtippen wäre Zeitverschwendung.</blockquote>
             </aside>
 
             <div id="access-display" class="access-display is-locked" role="status" aria-live="assertive">
@@ -106,7 +106,7 @@ ort = ort.replace("ö", "oe")</code></pre>
 
     <script src="assets/vendor/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="assets/vendor/codemirror/5.65.2/python.min.js"></script>
-    <script src="assets/helicopter-access-core.js?v=20260901-1"></script>
-    <script src="assets/helicopter-access.js?v=20260901-2"></script>
+    <script src="assets/helicopter-access-core.js?v=20260902-1"></script>
+    <script src="assets/helicopter-access.js?v=20260902-2"></script>
 </body>
 </html>

@@ -2,22 +2,53 @@
     "use strict";
 
     const NOISE_CHARACTER = "?";
-    const SIGNAL_PARTS = Object.freeze(["s?e?", "r?u?", "#?7"]);
+    const PASSWORD_LENGTH = 256;
+    const LOWERCASE_CHARACTERS = "abcdefghijklmnopqrstuvwxyz";
+    const UPPERCASE_CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const DIGIT_CHARACTERS = "0123456789";
+    const SPECIAL_CHARACTERS = "!#$%&()*+,-./:;<=>@[]^_{|}~";
+    const PASSWORD_CHARACTERS = LOWERCASE_CHARACTERS + UPPERCASE_CHARACTERS + DIGIT_CHARACTERS + SPECIAL_CHARACTERS;
     const FAILURES = Object.freeze({
         RECEIVE_REQUIRED: "RECEIVE_REQUIRED",
-        TRANSFORM_REQUIRED: "TRANSFORM_REQUIRED",
         WRONG_PASSWORD: "WRONG_PASSWORD"
     });
 
-    function interceptedSignal() {
-        return SIGNAL_PARTS.join("");
+    function pick(characters, value) {
+        return characters[value % characters.length];
     }
 
-    function decodedSignal() {
-        return interceptedSignal().split(NOISE_CHARACTER).join("");
+    function createRandomPassword(randomSource = window.crypto) {
+        if (!randomSource || typeof randomSource.getRandomValues !== "function") {
+            throw new Error("Sicherer Zufallsgenerator nicht verfügbar.");
+        }
+
+        const entropy = new Uint32Array(PASSWORD_LENGTH * 2 - 1);
+        randomSource.getRandomValues(entropy);
+        const password = [
+            pick(LOWERCASE_CHARACTERS, entropy[0]),
+            pick(UPPERCASE_CHARACTERS, entropy[1]),
+            pick(DIGIT_CHARACTERS, entropy[2]),
+            pick(SPECIAL_CHARACTERS, entropy[3])
+        ];
+        for (let index = password.length; index < PASSWORD_LENGTH; index += 1) {
+            password.push(pick(PASSWORD_CHARACTERS, entropy[index]));
+        }
+
+        let entropyIndex = PASSWORD_LENGTH;
+        for (let index = password.length - 1; index > 0; index -= 1) {
+            const swapIndex = entropy[entropyIndex] % (index + 1);
+            entropyIndex += 1;
+            [password[index], password[swapIndex]] = [password[swapIndex], password[index]];
+        }
+        return password.join("");
     }
 
-    function createState() {
+    function createState(password = createRandomPassword()) {
+        if (typeof password !== "string" || password.length !== PASSWORD_LENGTH || password.includes(NOISE_CHARACTER)) {
+            throw new TypeError(`Das Bordcomputer-Passwort muss aus ${PASSWORD_LENGTH} Zeichen ohne ${NOISE_CHARACTER} bestehen.`);
+        }
+
+        const signal = [...password].join(NOISE_CHARACTER);
         let sequence;
         let receiveCount;
         let checkAttempts;
@@ -47,17 +78,17 @@
         function receive() {
             sequence += 1;
             receiveCount += 1;
-            return interceptedSignal();
+            return signal;
         }
 
-        function check(candidate, trustedTransform = false) {
+        function check(candidate) {
             sequence += 1;
             let failure = null;
-            if (receiveCount < 1) {
+            if (candidate === password) {
+                failure = null;
+            } else if (receiveCount < 1) {
                 failure = FAILURES.RECEIVE_REQUIRED;
-            } else if (!trustedTransform) {
-                failure = FAILURES.TRANSFORM_REQUIRED;
-            } else if (candidate !== decodedSignal()) {
+            } else {
                 failure = FAILURES.WRONG_PASSWORD;
             }
 
@@ -66,8 +97,7 @@
             lastFailure = accepted ? null : failure;
             checkAttempts.push({
                 sequence,
-                accepted,
-                trustedTransform: Boolean(trustedTransform)
+                accepted
             });
             return accepted;
         }
@@ -79,6 +109,9 @@
     window.HelicopterAccessCore = Object.freeze({
         FAILURES,
         NOISE_CHARACTER,
+        PASSWORD_LENGTH,
+        SPECIAL_CHARACTERS,
+        createRandomPassword,
         createState
     });
 })();

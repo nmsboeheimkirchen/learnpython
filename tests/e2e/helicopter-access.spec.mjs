@@ -27,7 +27,12 @@ test("@ipad the Bordcomputer layout keeps the mission, editor and help clear", a
     await openLevel(page);
 
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Entsperre den Bordcomputer");
-    await expect(page.getByLabel("Nachricht von Agent PY")).toContainText("receive()");
+    const briefing = page.getByLabel("Nachricht von Agent PY");
+    await expect(briefing).toContainText("receive()");
+    await expect(briefing).toContainText("256");
+    await expect(briefing).toContainText("255");
+    await expect(briefing).toContainText("Sonderzeichen");
+    await expect(briefing).not.toContainText("darf nicht im Klartext");
     await expect(page.getByRole("status")).toHaveCount(1);
     await expect(page.getByRole("button", { name: "Bordcomputer starten" })).toHaveCount(2);
     await expect(page.locator(".helicopter-hint-card")).toHaveCount(2);
@@ -103,6 +108,16 @@ test("the real receive and replace chain grants access", async ({ page }) => {
     });
     expect(run.output).toContain("SIGNAL EMPFANGEN:");
     expect(run.output).toContain("BORDCOMPUTER: ACCESS GRANTED!");
+    const signal = run.output.match(/SIGNAL EMPFANGEN: ([^\n]+)/)?.[1] ?? "";
+    const password = signal.replaceAll("?", "");
+    expect(signal).toHaveLength(511);
+    expect(password).toHaveLength(256);
+    expect([...signal].filter(character => character === "?")).toHaveLength(255);
+    expect(signal).toBe([...password].join("?"));
+    expect(password).toMatch(/[a-z]/);
+    expect(password).toMatch(/[A-Z]/);
+    expect(password).toMatch(/[0-9]/);
+    expect(password).toMatch(/[^A-Za-z0-9]/);
     await expect(page.locator("body")).toHaveAttribute("data-access-state", "granted");
     await expect(page.locator("#access-message")).toHaveText("ACCESS GRANTED!");
     await expect(page.locator("#access-message")).toHaveCSS("color", "rgb(105, 243, 162)");
@@ -124,7 +139,7 @@ test("the starter failure does not reveal the replace arguments in its output", 
     expect(Math.abs(scrollAfterRun - scrollBeforeRun)).toBeLessThanOrEqual(1);
 });
 
-test("forged output and cleartext cannot bypass replace provenance", async ({ page }) => {
+test("forged output fails while the exact password remains technically valid", async ({ page }) => {
     await openLevel(page);
 
     const printed = await runCode(page, 'print("BORDCOMPUTER: ACCESS GRANTED!")');
@@ -132,23 +147,24 @@ test("forged output and cleartext cannot bypass replace provenance", async ({ pa
     expect(printed.state).toMatchObject({ receiveCount: 0, checkCount: 0, accessGranted: false });
     await expect(page.locator("#access-message")).toHaveText("ACCESS DENIED!");
 
-    const hardcoded = await runCode(page, `import bordcomputer
+    const intercepted = await runCode(page, `import bordcomputer
 signal = bordcomputer.receive()
-bordcomputer.pruefe("seru#7")`);
-    expect(hardcoded.result.passed).toBe(false);
-    expect(hardcoded.state).toMatchObject({
-        receiveCount: 1,
-        checkCount: 1,
-        accessGranted: false,
-        lastFailure: "TRANSFORM_REQUIRED"
-    });
+print(signal)`);
+    expect(intercepted.result.passed).toBe(false);
+    const signal = intercepted.output.match(/SIGNAL EMPFANGEN: ([^\n]+)/)?.[1] ?? "";
+    const password = signal.replaceAll("?", "");
+    expect(password).toHaveLength(256);
 
-    const assembled = await runCode(page, `import bordcomputer
-signal = bordcomputer.receive()
-bordcomputer.pruefe("seru" + "#7")`);
-    expect(assembled.result.passed).toBe(false);
-    expect(assembled.state.lastFailure).toBe("TRANSFORM_REQUIRED");
-    await expect(page.locator("body")).toHaveAttribute("data-access-state", "denied");
+    const hardcoded = await runCode(page, `import bordcomputer
+bordcomputer.pruefe(${JSON.stringify(password)})`);
+    expect(hardcoded.result.passed).toBe(true);
+    expect(hardcoded.state).toMatchObject({
+        receiveCount: 0,
+        checkCount: 1,
+        accessGranted: true,
+        lastFailure: null
+    });
+    await expect(page.locator("body")).toHaveAttribute("data-access-state", "granted");
 });
 
 test("every run starts fresh and a Python error cannot preserve access", async ({ page }) => {

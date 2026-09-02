@@ -35,6 +35,7 @@
 
     const defaultCode = textarea.value;
     const testMode = new URLSearchParams(window.location.search).has("e2e");
+    const missionPassword = core.createRandomPassword();
     const MODULE_PATH = "src/lib/bordcomputer.js";
     const MODULE_SOURCE = `
 var $builtinmodule = function () {
@@ -53,22 +54,12 @@ var $builtinmodule = function () {
     return module;
 };`;
 
-    let state = core.createState();
-    let issuedSignalTokens = new Set();
-    let derivedPasswordTokens = new Set();
+    let state = core.createState(missionPassword);
     let outputText = "";
     let running = false;
     let cancelRequested = false;
     let runGeneration = 0;
     let lastResult = null;
-
-    function uniquePythonString(value) {
-        const canonical = new Sk.builtin.str(value);
-        return Object.create(
-            Object.getPrototypeOf(canonical),
-            Object.getOwnPropertyDescriptors(canonical)
-        );
-    }
 
     function appendOutput(text) {
         const value = String(text);
@@ -84,54 +75,15 @@ var $builtinmodule = function () {
         return file;
     }
 
-    function observeSignalReplace(source, args, result) {
-        if (!issuedSignalTokens.has(source) || args.length < 2) return result;
-        const oldText = Sk.ffi.remapToJs(args[0]);
-        const newText = Sk.ffi.remapToJs(args[1]);
-        const resultText = Sk.ffi.remapToJs(result);
-        const expected = Sk.ffi.remapToJs(source).split(core.NOISE_CHARACTER).join("");
-        if (oldText !== core.NOISE_CHARACTER || newText !== "" || resultText !== expected) return result;
-
-        const derivedToken = uniquePythonString(resultText);
-        derivedPasswordTokens.add(derivedToken);
-        return derivedToken;
-    }
-
-    function installReplaceObserver() {
-        const descriptor = Sk.builtin.str?.prototype?.replace;
-        const definition = descriptor?.d$def;
-        if (!descriptor || !definition || typeof definition.$meth !== "function") {
-            throw new Error("replace() konnte nicht beobachtet werden.");
-        }
-
-        if (!descriptor.__helicopterReplaceWrapped) {
-            const originalReplace = definition.$meth;
-            const wrappedReplace = function (...args) {
-                const result = originalReplace.apply(this, args);
-                return descriptor.__helicopterReplaceObserver?.(this, args, result) ?? result;
-            };
-            definition.$meth = wrappedReplace;
-            descriptor.$meth = wrappedReplace;
-            Object.defineProperty(descriptor, "__helicopterReplaceWrapped", {
-                value: true,
-                configurable: false
-            });
-        }
-        descriptor.__helicopterReplaceObserver = observeSignalReplace;
-    }
-
     function createBridge() {
         return Object.freeze({
             receive() {
                 const signal = state.receive();
-                const token = uniquePythonString(signal);
-                issuedSignalTokens.add(token);
                 appendOutput("SIGNAL EMPFANGEN: " + signal + "\n");
-                return token;
+                return new Sk.builtin.str(signal);
             },
             check(candidate) {
-                const trustedTransform = derivedPasswordTokens.has(candidate);
-                const accepted = state.check(Sk.ffi.remapToJs(candidate), trustedTransform);
+                const accepted = state.check(Sk.ffi.remapToJs(candidate));
                 appendOutput("BORDCOMPUTER: " + (accepted ? "ACCESS GRANTED!" : "ACCESS DENIED!") + "\n");
                 return accepted;
             }
@@ -158,16 +110,13 @@ var $builtinmodule = function () {
     }
 
     function resetRunState() {
-        state = core.createState();
-        issuedSignalTokens = new Set();
-        derivedPasswordTokens = new Set();
+        state = core.createState(missionPassword);
         window.__HELICOPTER_ACCESS_BRIDGE__ = createBridge();
     }
 
     function deniedHint(snapshot) {
         if (snapshot.receiveCount < 1) return "HINWEIS: Empfange das Signal zuerst mit bordcomputer.receive().";
         if (snapshot.checkCount < 1) return "HINWEIS: Übergib dein Ergebnis an bordcomputer.pruefe(passwort).";
-        if (snapshot.lastFailure === core.FAILURES.TRANSFORM_REQUIRED) return "";
         return "HINWEIS: Prüfe, ob du wirklich alle Störzeichen aus dem empfangenen Signal entfernt hast.";
     }
 
@@ -207,7 +156,6 @@ var $builtinmodule = function () {
             killableFor: true,
             __future__: Sk.python3
         });
-        installReplaceObserver();
     }
 
     async function runProgram() {

@@ -11,17 +11,25 @@
   - [x] Passende Bildzustände „Hangartor geschlossen“ und „Hangartor offen“ bereitstellen; die Mission startet mit geschlossenem Tor (siehe `assets/images/escape/hangar-states.md`)
   - [x] Stufe 1 „Das Seruianer-Signal“: gestörtes Laufzeitsignal entschlüsseln und den Bordcomputer entsperren
     - [x] Störzeichen mit `replace()` entfernen; die Rückwärts-Variante als mögliche spätere Aufgabe vormerken
-    - [x] Einen neuen Seruianer-Code verwenden, ohne ihn im Lerncode im Klartext vorzugeben
+    - [x] Pro Seitenaufruf ein zufälliges Passwort aus 256 Zeichen einschließlich Sonderzeichen erzeugen und zwischen je zwei Passwortzeichen eines von genau 255 `?` setzen
+    - [x] Jede exakt richtige Passwortlösung akzeptieren; `replace()` durch Aufgabenstellung, Signallänge und Hilfen nahelegen, aber nicht über versteckte Code-Provenienz erzwingen
     - [x] Die frühere Brute-Force-Idee durch einen kurzen, praxisnahen Textbefehl ohne Indexzähler ersetzen
     - [x] Das Signal ausschließlich über `signal = bordcomputer.receive()` zur Laufzeit bereitstellen
     - [x] Nach erfolgreichem Passwort nur den Zugang entsperren; Navigation und Rotor bleiben offline, das Hangartor bleibt geschlossen
-  - [ ] Stufe 2 „Cockpit-Systeme booten“: beschädigte Startkonfiguration mit `json.loads()` reparieren
-    - [ ] Erfolgreichen Code aus Stufe 1 als Ausgangslage übernehmen
-    - [ ] Lokalen, auf `loads()` und kurze Strings begrenzten JSON-Shim für die vorhandene Skulpt-Version ergänzen
-    - [ ] JSON-Text in das Python-Dictionary `daten` laden und erst danach die verschachtelte Struktur verändern
-    - [ ] Navigation, Rotor und `startfreigabe` gezielt auf `True` setzen; beim Hangartor ausdrücklich `daten["hangartor"]["offen"] = True` verwenden
-    - [ ] `cockpit.booten(daten)` nur mit dem tatsächlich von `json.loads()` erzeugten Dictionary akzeptieren
-    - [ ] Erst nach korrekter Struktur Rotor und Navigation starten, das Hangartor öffnen und die Abfluganimation freigeben
+  - [ ] Stufe 2 „Cockpit reparieren“: die beschädigte `heli_config.json` zuerst als Datei kennenlernen und danach mit `json.loads()` in Python verwenden
+    - [ ] Einstiegstext verwenden: „Notzugang hergestellt. Startkonfiguration unvollständig. Manueller Systemstart erforderlich.“
+    - [ ] Teil 2a „Helikoptertür entriegeln“ zunächst ausschließlich mit einem sichtbaren JSON-Dateieditor bauen
+      - [ ] `heli_config.json` mit `tuer.entriegelt: false` als erstem Eintrag sowie Hauptdisplay online, Navigation, Rotor und Hangartor offline anzeigen
+      - [ ] Auftrag: genau den Boolean bei `tuer.entriegelt` von `false` auf `true` ändern; JSON-Grundregeln vor Python erklären
+      - [ ] Semantisch mit `JSON.parse()` prüfen: Formatierung und Schlüsselreihenfolge sind frei, aber nur die Tür darf verändert sein und `true` muss ein Boolean sein
+      - [ ] Fehlerfeedback beim Editor belassen; nur bei Erfolg zum Hero-Status „TÜR ENTRIEGELT“ scrollen
+      - [ ] Nach Erfolg den deutlich klickbaren Auftrag „Cockpit betreten“ freigeben
+    - [ ] Teil 2b „Systeme manuell starten“ mit nebeneinander geplantem JSON-Dateieditor und Python-Codefeld bauen
+      - [ ] Den aktuellen Dateiinhalt über `bordcomputer.lese_datei("heli_config.json")` bereitstellen und mit `daten = json.loads(datei_text)` als Dictionary laden
+      - [ ] Einen lokalen, auf `loads()` und kurze Strings begrenzten JSON-Shim für die vorhandene Skulpt-Version ergänzen
+      - [ ] Navigation, Rotor und `startfreigabe` gezielt auf `True` setzen; beim Hangartor ausdrücklich `daten["hangartor"]["offen"] = True` verwenden
+      - [ ] Den tatsächlichen Endzustand prüfen statt eine einzige vorgeschriebene Codeform oder versteckte Provenienz zu erzwingen
+      - [ ] Erst nach korrekter Struktur Rotor und Navigation starten, das Hangartor öffnen und die Abfluganimation freigeben
   - [ ] Finale ohne Echtzeitdruck als nachvollziehbare Zustandsmission bauen
 - [ ] A/B-Varianten entfernen und je eine kanonische Start- und Fluchtseite festlegen
   - [x] Fluchtseite vereinheitlichen; alte B-Adresse auf die kanonische Seite weiterleiten
