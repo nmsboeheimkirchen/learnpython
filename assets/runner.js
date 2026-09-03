@@ -1,12 +1,10 @@
 ﻿// --- SIDEBAR & PROGRESS LOGIC ---
 
-const PROGRESS_STORAGE_KEY = "unlockedLevels_v2";
-const COMPLETED_CODE_STORAGE_KEY = "completedLevelCode_v1";
-const ATTEMPTED_CODE_STORAGE_KEY = "attemptedLevelCode_v1";
-const TEACHER_MODE_STORAGE_KEY = "cheatMode";
 const SUCCESS_POPUP_DELAY_MS = 4000;
 window.SUCCESS_POPUP_DELAY_MS = SUCCESS_POPUP_DELAY_MS;
 const DEFAULT_UNLOCKED_LEVELS = Object.freeze(["link-level1"]);
+let learningData = null;
+let deviceSettings = null;
 const LEVEL_ROUTES = Object.freeze({
     "link-level1": "mission1_level1.html",
     "link-level2": "mission1_level2.html",
@@ -48,32 +46,6 @@ function canonicalPageHref(href) {
         : href;
 }
 
-function safeStorageGetItem(key) {
-    try {
-        return localStorage.getItem(key);
-    } catch (_error) {
-        return null;
-    }
-}
-
-function safeStorageSetItem(key, value) {
-    try {
-        localStorage.setItem(key, value);
-        return true;
-    } catch (_error) {
-        return false;
-    }
-}
-
-function safeStorageRemoveItem(key) {
-    try {
-        localStorage.removeItem(key);
-        return true;
-    } catch (_error) {
-        return false;
-    }
-}
-
 function normalizeUnlockedLevels(value) {
     const candidates = Array.isArray(value) ? value : [];
     const normalized = [...new Set(candidates.filter(levelId =>
@@ -88,22 +60,7 @@ function normalizeUnlockedLevels(value) {
 }
 
 function readUnlockedLevels() {
-    const storedValue = safeStorageGetItem(PROGRESS_STORAGE_KEY);
-    if (!storedValue) {
-        return [...DEFAULT_UNLOCKED_LEVELS];
-    }
-
-    try {
-        const parsedValue = JSON.parse(storedValue);
-        const normalized = normalizeUnlockedLevels(parsedValue);
-        if (JSON.stringify(parsedValue) !== JSON.stringify(normalized)) {
-            safeStorageSetItem(PROGRESS_STORAGE_KEY, JSON.stringify(normalized));
-        }
-        return normalized;
-    } catch (_error) {
-        safeStorageRemoveItem(PROGRESS_STORAGE_KEY);
-        return [...DEFAULT_UNLOCKED_LEVELS];
-    }
+    return learningData?.getUnlockedLevelIds() ?? [...DEFAULT_UNLOCKED_LEVELS];
 }
 
 function normalizeCompletedLevelCode(value) {
@@ -123,67 +80,38 @@ function normalizeCompletedLevelCode(value) {
     return normalized;
 }
 
-function readLevelCodeStorage(storageKey) {
-    const storedValue = safeStorageGetItem(storageKey);
-    if (!storedValue) {
-        return {};
-    }
-
-    try {
-        const parsedValue = JSON.parse(storedValue);
-        const normalized = normalizeCompletedLevelCode(parsedValue);
-        if (JSON.stringify(parsedValue) !== JSON.stringify(normalized)) {
-            safeStorageSetItem(storageKey, JSON.stringify(normalized));
-        }
-        return normalized;
-    } catch (_error) {
-        safeStorageRemoveItem(storageKey);
-        return {};
-    }
-}
-
-function saveLevelCode(storageKey, levelId, code) {
-    if (
-        !Object.prototype.hasOwnProperty.call(LEVEL_OUTCOMES, levelId) ||
-        typeof code !== "string"
-    ) {
-        return false;
-    }
-
-    const storedCode = readLevelCodeStorage(storageKey);
-    storedCode[levelId] = code;
-    return safeStorageSetItem(storageKey, JSON.stringify(storedCode));
-}
-
-function getLevelCode(storageKey, levelId) {
-    const storedCode = readLevelCodeStorage(storageKey);
-    return Object.prototype.hasOwnProperty.call(storedCode, levelId)
-        ? storedCode[levelId]
-        : null;
-}
-
 function readCompletedLevelCode() {
-    return readLevelCodeStorage(COMPLETED_CODE_STORAGE_KEY);
+    return learningData?.getCompletedLevelCodes() ?? {};
 }
 
 function saveCompletedLevelCode(levelId, code) {
-    return saveLevelCode(COMPLETED_CODE_STORAGE_KEY, levelId, code);
+    return learningData?.completeLevel({ levelId, code, unlockIds: [] }) ?? false;
 }
 
 function getCompletedLevelCode(levelId) {
-    return getLevelCode(COMPLETED_CODE_STORAGE_KEY, levelId);
+    return learningData?.getCompletedCode(levelId) ?? null;
 }
 
 function readAttemptedLevelCode() {
-    return readLevelCodeStorage(ATTEMPTED_CODE_STORAGE_KEY);
+    if (!learningData) return {};
+    const attempted = {};
+    Object.keys(LEVEL_OUTCOMES).forEach(levelId => {
+        const code = learningData.getAttemptedCode(levelId);
+        if (code !== null) attempted[levelId] = code;
+    });
+    return attempted;
 }
 
 function saveAttemptedLevelCode(levelId, code) {
-    return saveLevelCode(ATTEMPTED_CODE_STORAGE_KEY, levelId, code);
+    return learningData?.recordAttempt(levelId, code) ?? false;
 }
 
 function getAttemptedLevelCode(levelId) {
-    return getLevelCode(ATTEMPTED_CODE_STORAGE_KEY, levelId);
+    return learningData?.getAttemptedCode(levelId) ?? null;
+}
+
+function completeLevelProgress(levelId, code, unlockIds = []) {
+    return learningData?.completeLevel({ levelId, code, unlockIds }) ?? false;
 }
 
 function migrateSavedLevelCode(levelId, savedCode) {
@@ -329,12 +257,13 @@ function restoreLevelCode(levelId) {
 }
 
 function clearProgress() {
-    safeStorageRemoveItem(PROGRESS_STORAGE_KEY);
-    safeStorageRemoveItem(COMPLETED_CODE_STORAGE_KEY);
-    safeStorageRemoveItem(ATTEMPTED_CODE_STORAGE_KEY);
-    safeStorageRemoveItem(TEACHER_MODE_STORAGE_KEY);
-    safeStorageRemoveItem("pixelmuseumHelp_v1");
-    safeStorageRemoveItem("sidebarState");
+    const settingsResult = deviceSettings?.clear() ?? true;
+    if (!settingsResult) return false;
+    const learningResult = learningData?.resetLearningData() ?? false;
+    if (learningResult && typeof learningResult.then === "function") {
+        return learningResult.then(Boolean);
+    }
+    return Boolean(learningResult);
 }
 
 function setNavOpen(open, returnFocus = true) {
@@ -369,13 +298,15 @@ function unlockLevel(levelId) {
         return false;
     }
 
-    const unlockedLevels = readUnlockedLevels();
-    if (!unlockedLevels.includes(levelId)) {
-        unlockedLevels.push(levelId);
-        safeStorageSetItem(PROGRESS_STORAGE_KEY, JSON.stringify(unlockedLevels));
+    const result = learningData?.grantUnlocks([levelId]) ?? false;
+    if (result && typeof result.then === "function") {
+        return result.then(ok => {
+            if (ok) applyUnlocks();
+            return ok;
+        });
     }
-    applyUnlocks();
-    return true;
+    if (result) applyUnlocks();
+    return Boolean(result);
 }
 
 function unlockLink(levelId) {
@@ -415,14 +346,14 @@ function applyUnlocks() {
         });
     });
     if (restoredUnlock) {
-        safeStorageSetItem(PROGRESS_STORAGE_KEY, JSON.stringify(unlockedLevels));
+        learningData.grantUnlocks(unlockedLevels);
     }
 
     if (window.location.hash === "#l") {
-        safeStorageSetItem(TEACHER_MODE_STORAGE_KEY, "true");
+        deviceSettings?.enableTeacherMode();
     }
 
-    const levelsToUnlock = safeStorageGetItem(TEACHER_MODE_STORAGE_KEY) === "true"
+    const levelsToUnlock = deviceSettings?.isTeacherMode()
         ? Object.keys(LEVEL_ROUTES)
         : unlockedLevels;
     levelsToUnlock.forEach(unlockLink);
@@ -467,17 +398,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     document.querySelectorAll("[data-skip-unlocks]").forEach(link => {
-        link.addEventListener("click", () => {
-            link.dataset.skipUnlocks
+        link.addEventListener("click", async event => {
+            const unlockIds = link.dataset.skipUnlocks
                 .split(/\s+/)
-                .filter(Boolean)
-                .forEach(unlockLevel);
+                .filter(levelId => Object.prototype.hasOwnProperty.call(LEVEL_ROUTES, levelId));
+            if (!unlockIds.length) return;
+
+            event.preventDefault();
+            const destination = link.href;
+            const saved = await (learningData?.grantUnlocks(unlockIds) ?? false);
+            if (!saved) {
+                showLearningDataWarning(learningData?.getLastError());
+                return;
+            }
+            applyUnlocks();
+            if (destination) window.location.href = destination;
         });
     });
 
     const resetButton = document.getElementById("reset-progress-btn");
     if (resetButton) {
-        resetButton.addEventListener("click", () => {
+        resetButton.addEventListener("click", async () => {
             const confirmed = typeof window.confirm !== "function" || window.confirm(
                 "Möchtest du deinen gesamten Lernfortschritt wirklich zurücksetzen?"
             );
@@ -485,7 +426,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            clearProgress();
+            const cleared = await clearProgress();
+            if (!cleared) {
+                showLearningDataWarning({
+                    message: "Der Lernstand konnte nicht vollständig zurückgesetzt werden. Bitte lade die Seite nicht neu."
+                });
+                return;
+            }
             window.location.href = "mission1_start.html";
         });
     }
@@ -1126,6 +1073,66 @@ const LEVEL_CODE_INHERITANCE = Object.freeze({
     })
 });
 
+function showLearningDataWarning(error) {
+    const message = error?.message || "Der Lernstand konnte nicht gespeichert werden.";
+    const render = () => {
+        if (!document.body) return;
+        let warning = document.getElementById("learning-data-warning");
+        if (!warning) {
+            warning = document.createElement("div");
+            warning.id = "learning-data-warning";
+            warning.className = "learning-data-warning";
+            warning.setAttribute("role", "alert");
+            document.body.appendChild(warning);
+        }
+        warning.textContent = message;
+        warning.hidden = false;
+    };
+
+    if (document.body) render();
+    else document.addEventListener("DOMContentLoaded", render, { once: true });
+}
+
+function hideLearningDataWarning() {
+    const warning = document.getElementById("learning-data-warning");
+    if (warning) warning.hidden = true;
+}
+
+function initializeLearningData() {
+    if (window.AgentLearningData) {
+        learningData = window.AgentLearningData;
+        deviceSettings = window.AgentDeviceSettings || null;
+    } else {
+        const core = window.AgentLearningDataCore;
+        const local = window.AgentPyLocalLearningData;
+        if (!core || !local) {
+            throw new Error("Die Lernstands-Speicherung wurde nicht vor runner.js geladen.");
+        }
+
+        const stores = local.createLocalLearningStores({
+            defaultUnlockedLevelIds: DEFAULT_UNLOCKED_LEVELS,
+            isKnownLevel: levelId => Object.prototype.hasOwnProperty.call(LEVEL_OUTCOMES, levelId),
+            normalizeCodeMap: normalizeCompletedLevelCode,
+            normalizeUnlockedLevelIds: normalizeUnlockedLevels
+        });
+        learningData = core.createLearningSession({
+            context: { kind: "guest", profileId: "guest-local" },
+            ...stores
+        });
+        deviceSettings = core.createDeviceSettings(stores.settingsStore);
+        window.AgentLearningData = learningData;
+        window.AgentDeviceSettings = deviceSettings;
+    }
+
+    learningData.subscribe?.(event => {
+        if (event.type === "error") showLearningDataWarning(event.error);
+        if (event.type === "change") hideLearningDataWarning();
+        if (event.type === "external-change" && document.readyState !== "loading") applyUnlocks();
+    });
+}
+
+initializeLearningData();
+
 function validateLevelSolution(levelId, code, output, evidence = {}) {
     const validator = LEVEL_VALIDATORS[levelId];
     if (!validator) return { passed: false, message: "Für dieses Level fehlt die Prüfregel." };
@@ -1160,7 +1167,7 @@ function setupLevel(levelId) {
         if (typeof attemptedCode === "string") {
             saveAttemptedLevelCode(levelId, attemptedCode);
         }
-        runit((code, output, executionEvidence = {}) => {
+        runit(async (code, output, executionEvidence = {}) => {
             const result = validateLevelSolution(levelId, code, output, {
                 ...validationEvidence,
                 ...executionEvidence
@@ -1173,8 +1180,12 @@ function setupLevel(levelId) {
                 return;
             }
 
-            saveCompletedLevelCode(levelId, code);
-            outcome.unlocks.forEach(unlockLevel);
+            const saved = await completeLevelProgress(levelId, code, outcome.unlocks);
+            if (!saved) {
+                showLearningDataWarning(learningData?.getLastError());
+                return;
+            }
+            applyUnlocks();
             runButton.disabled = true;
             const statusText = document.getElementById("status-text");
             if (statusText) {

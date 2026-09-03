@@ -20,9 +20,9 @@ async function openLevel(page) {
 }
 
 async function applyConfig(page, source) {
-    return page.evaluate(configText => {
+    return page.evaluate(async configText => {
         window.HelicopterConfigRuntime.editor.setValue(configText);
-        const result = window.HelicopterConfigRuntime.run();
+        const result = await window.HelicopterConfigRuntime.run();
         return {
             output: document.getElementById("console-output").textContent,
             result,

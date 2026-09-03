@@ -72,17 +72,24 @@
         });
     }
 
-    function applyConfig() {
+    async function applyConfig() {
         const source = editor.getValue();
-        window.saveAttemptedLevelCode?.("helikopter_flucht_level2", source);
+        await window.saveAttemptedLevelCode?.("helikopter_flucht_level2", source);
         const validation = core.validate(source);
         lastResult = validation;
 
         if (validation.passed) {
+            const saved = await window.completeLevelProgress?.("helikopter_flucht_level2", source, []);
+            if (!saved) {
+                consoleOutput.classList.add("is-error");
+                consoleOutput.textContent = "NICHT GESPEICHERT: Prüfe den Browserspeicher und versuche es erneut.";
+                setVisualState("denied");
+                lastResult = { ...validation, persisted: false };
+                return lastResult;
+            }
             consoleOutput.classList.remove("is-error");
             consoleOutput.textContent = "KONFIGURATION ÜBERNOMMEN · HELIKOPTERZUGANG OFFEN · HANGARTOR OFFEN\n" +
                 "Hauptdisplay online · Navigation offline · Rotor offline";
-            window.saveCompletedLevelCode?.("helikopter_flucht_level2", source);
             setVisualState("granted");
             revealResult();
         } else {
@@ -93,10 +100,10 @@
         return validation;
     }
 
-    function resetMission() {
+    async function resetMission() {
         editor.setValue(defaultConfig);
         editor.clearHistory?.();
-        window.saveAttemptedLevelCode?.("helikopter_flucht_level2", defaultConfig);
+        await window.saveAttemptedLevelCode?.("helikopter_flucht_level2", defaultConfig);
         consoleOutput.textContent = "Datei geladen. Helikopterzugang und Hangartor sind noch geschlossen.";
         consoleOutput.classList.remove("is-error");
         lastResult = null;

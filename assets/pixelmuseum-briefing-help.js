@@ -7,7 +7,11 @@
         throw new Error("Die Zentralenhilfe für das Pixelmuseum-Briefing ist nicht vollständig geladen.");
     }
 
-    const STORAGE_KEY = "pixelmuseumHelp_v1";
+    const learningData = window.AgentLearningData;
+    if (!learningData) {
+        throw new Error("Die Lernstands-Speicherung für die Pixelmuseum-Hilfe fehlt.");
+    }
+
     const byId = id => document.getElementById(id);
     const helpButton = byId("museum-help-btn");
     const helpCount = byId("museum-help-count");
@@ -18,24 +22,8 @@
     const helpDetail = byId("museum-help-detail");
     let helpProgress = loadHelpProgress();
 
-    function safeStorageGet() {
-        try {
-            return window.localStorage?.getItem(STORAGE_KEY) ?? null;
-        } catch (_error) {
-            return null;
-        }
-    }
-
-    function safeStorageSet(progress) {
-        try {
-            window.localStorage?.setItem(STORAGE_KEY, JSON.stringify(progress));
-        } catch (_error) {
-            // Die Hilfe bleibt auch bei blockierter Browserspeicherung nutzbar.
-        }
-    }
-
     function loadHelpProgress() {
-        return helpCore.normalizeProgress(safeStorageGet());
+        return helpCore.normalizeProgress(learningData.getFeatureProgress("pixelmuseum"));
     }
 
     function countLabel(count) {
@@ -91,11 +79,11 @@
         helpDetail.textContent = detail;
     }
 
-    function requestHelp() {
+    async function requestHelp() {
         const issue = helpCore.resolveIssue(currentHelpContext());
         const result = helpCore.reveal(helpProgress, issue.id);
         helpProgress = result.progress;
-        if (result.counted) safeStorageSet(helpProgress);
+        if (result.counted) await learningData.setFeatureProgress("pixelmuseum", helpProgress);
         renderHelpCount();
         renderHelp({ ...result, issue: result.issue || issue });
     }

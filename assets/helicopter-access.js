@@ -131,13 +131,22 @@ var $builtinmodule = function () {
         });
     }
 
-    function finishRun(code) {
+    async function finishRun(code) {
         const snapshot = state.snapshot();
         const passed = snapshot.accessGranted;
         if (passed) {
+            const saved = await window.completeLevelProgress?.(
+                "helikopter_flucht_level1",
+                code,
+                ["link-helicopter-level2"]
+            );
+            if (!saved) {
+                setAccessState("denied", "NICHT GESPEICHERT");
+                lastResult = Object.freeze({ passed: false, persisted: false, snapshot });
+                return lastResult;
+            }
             setAccessState("granted", "ACCESS GRANTED!");
-            window.saveCompletedLevelCode?.("helikopter_flucht_level1", code);
-            window.unlockLevel?.("link-helicopter-level2");
+            window.applyUnlocks?.();
             revealResult();
         } else {
             setAccessState("denied", "ACCESS DENIED!");
@@ -173,14 +182,14 @@ var $builtinmodule = function () {
         setAccessState("locked", "CHECKING SIGNAL …");
         setRunning(true);
         resetRunState();
-        window.saveAttemptedLevelCode?.("helikopter_flucht_level1", code);
+        await window.saveAttemptedLevelCode?.("helikopter_flucht_level1", code);
 
         try {
             configureSkulpt();
             await Sk.misceval.asyncToPromise(() => Sk.importMainWithBody("<stdin>", false, code, true));
             if (generation !== runGeneration) return null;
             if (!outputText.trim()) appendOutput("Programm beendet – kein Signal geprüft.\n");
-            return finishRun(code);
+            return await finishRun(code);
         } catch (error) {
             if (generation !== runGeneration || cancelRequested) return null;
             outputText = "PYTHON-FEHLER: " + String(error).replace(/^Error:\s*/, "");

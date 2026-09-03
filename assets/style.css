@@ -42,6 +42,22 @@ body {
     font-family: inherit;
 }
 
+.learning-data-warning {
+    position: fixed;
+    z-index: 10000;
+    right: max(16px, env(safe-area-inset-right));
+    bottom: max(16px, env(safe-area-inset-bottom));
+    width: min(440px, calc(100vw - 32px));
+    padding: 14px 16px;
+    border: 1px solid rgba(255, 138, 138, 0.58);
+    border-radius: 14px;
+    background: rgba(45, 10, 18, 0.96);
+    box-shadow: var(--shadow-lg);
+    color: var(--ink);
+    font-weight: 700;
+    line-height: 1.45;
+}
+
 button,
 input,
 textarea {

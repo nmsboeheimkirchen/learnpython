@@ -52,11 +52,7 @@ window.TeacherSolutions = (() => {
 
     function teacherModeActive() {
         if (window.location.hash.toLowerCase() === "#l") return true;
-        try {
-            return window.localStorage?.getItem("cheatMode") === "true";
-        } catch (_error) {
-            return false;
-        }
+        return window.AgentDeviceSettings?.isTeacherMode?.() === true;
     }
 
     document.addEventListener("DOMContentLoaded", () => {

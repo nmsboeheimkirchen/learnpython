@@ -357,7 +357,7 @@
         return raw;
     }
 
-    function finishRun(code) {
+    async function finishRun(code) {
         syncPythonState();
         const notice = config.getRunNotice?.();
         if (notice) appendOutput((outputText && !outputText.endsWith("\n") ? "\n" : "") + notice + "\n");
@@ -369,8 +369,16 @@
         );
         const levelComplete = result.passed && result.levelComplete !== false;
         if (levelComplete && config.levelId) {
-            window.saveCompletedLevelCode?.(config.levelId, code);
-            (result.unlocks || config.unlocks || []).forEach(id => window.unlockLevel?.(id));
+            const saved = await window.completeLevelProgress?.(
+                config.levelId,
+                code,
+                result.unlocks || config.unlocks || []
+            );
+            if (!saved) {
+                setStatus("Nicht gespeichert", "error");
+                return { ...result, persisted: false };
+            }
+            window.applyUnlocks?.();
         }
         return result;
     }
@@ -392,14 +400,14 @@
         renderChecks(initialResult("Simulation läuft – die Missionszustände werden live geprüft."));
         setRunning(true);
         setStatus(config.runningLabel || "Drohne unterwegs", "running");
-        if (config.levelId) window.saveAttemptedLevelCode?.(config.levelId, code);
+        if (config.levelId) await window.saveAttemptedLevelCode?.(config.levelId, code);
 
         try {
             config.onRunStart?.(code);
             configureSkulpt();
             await Sk.misceval.asyncToPromise(() => Sk.importMainWithBody("<stdin>", false, code, true));
             if (generation !== runGeneration) return null;
-            const result = finishRun(code);
+            const result = await finishRun(code);
             if (!outputText.trim()) consoleOutput.textContent = config.emptyOutput || "Programm beendet – noch ohne Textausgabe.";
             return result;
         } catch (error) {

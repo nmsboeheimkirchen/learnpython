@@ -432,7 +432,7 @@
         }, window.SUCCESS_POPUP_DELAY_MS ?? 4000);
     }
 
-    function validateRun(code) {
+    async function validateRun(code) {
         recordRawPosition(activeTurtle);
         syncInventoryEvidence();
         const structure = typeof window.validateLevelSolution === "function"
@@ -450,8 +450,17 @@
         }
 
         if (result.passed) {
-            window.saveCompletedLevelCode?.(levelId, code);
-            if (levelConfig.unlockId) window.unlockLevel?.(levelConfig.unlockId);
+            const saved = await window.completeLevelProgress?.(
+                levelId,
+                code,
+                levelConfig.unlockId ? [levelConfig.unlockId] : []
+            );
+            if (!saved) {
+                setStatus("Nicht gespeichert", "error");
+                setTopStatus("Lernstand konnte nicht gespeichert werden", "error");
+                return { ...result, persisted: false };
+            }
+            window.applyUnlocks?.();
             if (nextButton) nextButton.style.display = "block";
             setStatus("Geschafft", "success");
             setTopStatus(levelConfig.successTitle, "success");
@@ -497,13 +506,13 @@
         setTopStatus("Simulation läuft …", "running");
 
         const code = editor.getValue();
-        window.saveAttemptedLevelCode?.(levelId, code);
+        await window.saveAttemptedLevelCode?.(levelId, code);
         try {
             configureSkulpt();
             await Sk.misceval.asyncToPromise(() => Sk.importMainWithBody("<stdin>", false, code, true));
             if (generation !== runGeneration) return;
 
-            validateRun(code);
+            await validateRun(code);
             if (!outputText.trim()) {
                 consoleOutput.textContent = levelId === "agent_training_level2"
                     ? "Programm beendet."

@@ -85,15 +85,23 @@ function createRunnerContext(initialStorage = {}) {
         return originalAppendChild(element);
     };
 
+    const localStorage = {
+        getItem(key) { return storage.get(key) ?? null; },
+        removeItem(key) { storage.delete(key); },
+        setItem(key, value) { storage.set(key, String(value)); }
+    };
+
+    const window = {
+        addEventListener() {},
+        localStorage,
+        location: { hash: "", pathname: "/mission3_level3.html" }
+    };
+
     const context = vm.createContext({
         Sk: {},
         confetti() {},
         document,
-        localStorage: {
-            getItem(key) { return storage.get(key) ?? null; },
-            removeItem(key) { storage.delete(key); },
-            setItem(key, value) { storage.set(key, String(value)); }
-        },
+        localStorage,
         clearInterval(timerId) {
             const timer = timers[timerId - 1];
             if (timer) timer.cleared = true;
@@ -110,12 +118,20 @@ function createRunnerContext(initialStorage = {}) {
             timers.push({ callback, cleared: false, delay, type: "timeout" });
             return timers.length;
         },
-        window: {
-            location: { hash: "", pathname: "/mission3_level3.html" }
-        }
+        window
     });
 
+    const learningDataCore = readFileSync(
+        new URL("../assets/data/learning-data-core.js", import.meta.url),
+        "utf8"
+    );
+    const localLearningData = readFileSync(
+        new URL("../assets/data/local-learning-data.js", import.meta.url),
+        "utf8"
+    );
     const source = readFileSync(new URL("../assets/runner.js", import.meta.url), "utf8");
+    vm.runInContext(learningDataCore, context);
+    vm.runInContext(localLearningData, context);
     vm.runInContext(source, context);
     return { context, elements, storage, timers };
 }
@@ -428,7 +444,7 @@ test("a level stores code through the normal success path", () => {
     });
 });
 
-test("every standard level waits four seconds before showing its success popup", () => {
+test("every standard level waits four seconds before showing its success popup", async () => {
     const { context, elements, timers } = createRunnerContext();
     const passingCode = 'print("Verbindung wird hergestellt...")\n';
     let runCount = 0;
@@ -442,6 +458,7 @@ test("every standard level waits four seconds before showing its success popup",
     vm.runInContext('setupLevel("mission1_level1")', context);
     const runButton = elements.get("run-btn");
     runButton.dispatch("click");
+    await Promise.resolve();
 
     assert.equal(vm.runInContext("SUCCESS_POPUP_DELAY_MS", context), 4000);
     assert.equal(runCount, 1);
@@ -493,7 +510,7 @@ test("clicking Code Ausführen stores the attempted code without marking the lev
     assert.equal(restored.storage.has("completedLevelCode_v1"), false);
 });
 
-test("Mission 3 level 2 keeps both required guesses across consecutive runs", () => {
+test("Mission 3 level 2 keeps both required guesses across consecutive runs", async () => {
     const { context, elements, storage, timers } = createRunnerContext();
     const code = [
         'eingabe = input("Code eingeben: ")',
@@ -518,6 +535,7 @@ test("Mission 3 level 2 keeps both required guesses across consecutive runs", ()
     assert.equal(runButton.disabled, false);
 
     runButton.dispatch("click");
+    await Promise.resolve();
     assert.deepEqual(JSON.parse(storage.get("completedLevelCode_v1")), {
         mission3_level2: code
     });
@@ -1546,10 +1564,10 @@ test("stored teacher mode keeps PICO solutions visible after hashless navigation
         querySelectorAll() { return [button]; }
     };
     const window = {
+        AgentDeviceSettings: { isTeacherMode() { return true; } },
         atob(encoded) { return Buffer.from(encoded, "base64").toString("binary"); },
         editor,
-        location: { hash: "" },
-        localStorage: { getItem(key) { return key === "cheatMode" ? "true" : null; } }
+        location: { hash: "" }
     };
     const context = vm.createContext({ document, TextDecoder, Uint8Array, window });
     const source = readFileSync(new URL("../assets/teacher-solutions.js", import.meta.url), "utf8");
@@ -2187,7 +2205,8 @@ test("the first helicopter level uses a runtime signal and one replace-based acc
     assert.doesNotMatch(runtime, /HINWEIS: Entferne alle \? mit replace/);
     assert.match(runtime, /if \(passed\) \{[\s\S]*revealResult\(\);[\s\S]*\} else \{/);
     assert.doesNotMatch(runtime, /lastResult = Object\.freeze\(\{ passed: false, error:[\s\S]{0,220}revealResult\(\)/);
-    assert.match(runtime, /window\.unlockLevel\?\.\("link-helicopter-level2"\)/);
+    assert.match(runtime, /window\.completeLevelProgress\?\.\([\s\S]*"helikopter_flucht_level1"[\s\S]*\["link-helicopter-level2"\][\s\S]*\)/);
+    assert.doesNotMatch(runtime, /window\.unlockLevel\?\./);
     assert.match(runtime, /nextLevelButton\.hidden = accessState !== "granted"/);
     assert.match(html, /id="next-level-btn"[^>]+href="helikopter_flucht_level2\.html"[^>]+hidden/);
     assert.match(html, /<span>Nächster Auftrag<\/span>\s*<strong>Startkonfiguration reparieren<\/strong>/);
@@ -2254,7 +2273,8 @@ test("the second helicopter level edits grouped JSON before Python and opens bot
     assert.match(coreSource, /hasExactKeys\(config, \["heli", "cockpit", "hangar"\]\)/);
     assert.match(runtime, /mode:\s*null/);
     assert.match(runtime, /window\.saveAttemptedLevelCode\?\.\("helikopter_flucht_level2", source\)/);
-    assert.match(runtime, /window\.saveCompletedLevelCode\?\.\("helikopter_flucht_level2", source\)/);
+    assert.match(runtime, /window\.completeLevelProgress\?\.\("helikopter_flucht_level2", source, \[\]\)/);
+    assert.doesNotMatch(runtime, /window\.saveCompletedLevelCode\?\./);
     assert.match(runtime, /document\.body\.dataset\.hangarState = granted \? "open" : "closed"/);
     assert.match(runtime, /if \(validation\.passed\) \{[\s\S]*setVisualState\("granted"\);[\s\S]*revealResult\(\);[\s\S]*\} else \{/);
     assert.match(css, /\.helicopter-config-page\[data-hangar-state="open"\] \.hangar-closed-image\s*\{\s*opacity:\s*0/);

@@ -10,7 +10,9 @@
     const byId = id => document.getElementById(id);
     const nextButton = byId("next-level-btn");
     let completionShown = false;
+    let completionPending = false;
     let completionTimer = null;
+    let completionGeneration = 0;
 
     function showNext(visible) {
         nextButton.hidden = false;
@@ -18,13 +20,15 @@
     }
 
     function cancelCompletion() {
+        completionGeneration += 1;
         window.clearTimeout(completionTimer);
         completionTimer = null;
+        completionPending = false;
         completionShown = false;
     }
 
-    function completeMission(result, meta = {}) {
-        if (!result?.passed || completionShown) return;
+    async function completeMission(result, meta = {}) {
+        if (!result?.passed || completionShown || completionPending) return;
         if (meta.dirty || runtime.isCodeDirty()) {
             mission.lastValidationPassed = false;
             document.body.classList.remove("validation-passed");
@@ -32,13 +36,22 @@
             byId("validation-message").textContent = "Der erfolgreiche Lauf gehört zur vorherigen Codefassung. Starte deinen aktuellen Code noch einmal.";
             return;
         }
+        const operationGeneration = completionGeneration;
+        completionPending = true;
+        const saved = await window.completeLevelProgress?.(
+            "pixelmuseum_finale",
+            meta.code || runtime.editor.getValue(),
+            ["link-helicopter-escape", "link-helicopter-level1"]
+        );
+        if (operationGeneration !== completionGeneration) return;
+        completionPending = false;
+        if (!saved) return;
         completionShown = true;
         showNext(true);
-        window.saveCompletedLevelCode?.("pixelmuseum_finale", meta.code || runtime.editor.getValue());
-        window.unlockLevel?.("link-helicopter-escape");
-        window.unlockLevel?.("link-helicopter-level1");
+        window.applyUnlocks?.();
 
         completionTimer = window.setTimeout(() => {
+            if (operationGeneration !== completionGeneration || !completionShown) return;
             completionTimer = null;
             window.triggerSuccess?.(true, "Das Sternenfragment ist gesichert.", {
                 title: "PIXELMUSEUM GESCHAFFT",
@@ -53,9 +66,9 @@
     }
 
     const previousOnResult = mission.onResult;
-    mission.onResult = (result, meta) => {
-        previousOnResult?.(result, meta);
-        completeMission(result, meta);
+    mission.onResult = async (result, meta) => {
+        await previousOnResult?.(result, meta);
+        await completeMission(result, meta);
     };
 
     document.addEventListener("finale:running", event => {
