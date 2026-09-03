@@ -49,7 +49,7 @@
   - [x] Bestehende Lernpfad-, Wiederherstellungs- und Reset-Abläufe unverändert als Regressionstests beibehalten
 - [x] Stufe 1 durch gezielte Speicher- und Isolationstests absichern
   - [x] Fehler bei `storage.getItem()`, `storage.setItem()` und `storage.removeItem()` sowie überschrittene Speicherquote testen; ein fehlgeschlagener Schreibvorgang darf nicht als gespeichert erscheinen
-  - [x] Gleichzeitige Änderungen in zwei Tabs testen und in den Zielbrowsern mit einer originweiten exklusiven Web-Sperre vor verlorenen Aktualisierungen schützen
+  - [x] Gleichzeitige Änderungen in zwei Tabs testen und in den Zielbrowsern mit einer kombinierten Web-Locks-/IndexedDB-Sperre vor verlorenen Aktualisierungen schützen; der Linux-WebKit-Test prüft ausdrücklich den Fallback gegen nur scheinbar originweit geteilte Web Locks
   - [x] Anonymen Stand, Reset, Normalisierung und Wiederherstellung in Chromium und WebKit als Browser-Tests prüfen
   - [x] Tests dokumentiert: `learning-data-core.test.mjs` prüft Profilbindung und verspätete Antworten; `local-learning-data.test.mjs` Speichervertrag und Fehler; `progress-architecture.test.mjs` die Kapselungsgrenze
   - [x] Browser-Tests dokumentiert: `progress-storage.spec.mjs` prüft Fehler, Reset und Wiederherstellung; `progress-multitab.spec.mjs` parallele Änderungen in zwei Tabs – jeweils Chromium und WebKit

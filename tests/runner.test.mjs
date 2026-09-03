@@ -2250,7 +2250,7 @@ test("the second helicopter level edits grouped JSON before Python and opens bot
     assert.match(html, /helicopter-hangar-closed\.webp/);
     assert.match(html, /helicopter-hangar-final\.webp/);
     assert.match(html, /assets\/helicopter-config-core\.js\?v=20260902-1/);
-    assert.match(html, /assets\/helicopter-config\.js\?v=20260902-1/);
+    assert.match(html, /assets\/helicopter-config\.js\?v=20260903-1/);
     assert.equal((html.match(/Konfiguration anwenden<\/button>/g) ?? []).length, 2);
     assert.doesNotMatch(html, /python-editor|python\.min\.js|skulpt|json\.loads/i);
 

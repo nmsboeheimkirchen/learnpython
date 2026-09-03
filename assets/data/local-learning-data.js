@@ -17,6 +17,8 @@
     ]);
     const TRACKED_KEYS = new Set(Object.values(STORAGE_KEYS));
     const LEARNING_DATA_LOCK = "agent-py-learning-data-v1";
+    const LEARNING_DATA_LOCK_DB = "agent-py-learning-locks-v1";
+    const LEARNING_DATA_LOCK_STORE = "locks";
 
     function clone(value) {
         if (value === null || value === undefined) return value;
@@ -83,12 +85,171 @@
         }
     }
 
-    function browserLockManager() {
+    function browserWebLockManager() {
         try {
             return window.navigator?.locks || null;
         } catch (_error) {
             return null;
         }
+    }
+
+    function browserIndexedDb() {
+        try {
+            return window.indexedDB || null;
+        } catch (_error) {
+            return null;
+        }
+    }
+
+    function lockFailure(error, actionStarted = false) {
+        const failure = new Error(
+            typeof error?.message === "string"
+                ? error.message
+                : "Die lokale Lernstandssperre ist nicht verfügbar."
+        );
+        failure.name = typeof error?.name === "string" ? error.name : "StorageError";
+        failure.actionStarted = actionStarted;
+        return failure;
+    }
+
+    function createIndexedDbLockManager(indexedDb) {
+        if (!indexedDb || typeof indexedDb.open !== "function") return null;
+        let databasePromise = null;
+
+        function openDatabase() {
+            if (databasePromise) return databasePromise;
+
+            databasePromise = new Promise((resolve, reject) => {
+                let request;
+                try {
+                    request = indexedDb.open(LEARNING_DATA_LOCK_DB, 1);
+                } catch (error) {
+                    reject(lockFailure(error));
+                    return;
+                }
+
+                request.onupgradeneeded = () => {
+                    const database = request.result;
+                    if (!database.objectStoreNames.contains(LEARNING_DATA_LOCK_STORE)) {
+                        database.createObjectStore(LEARNING_DATA_LOCK_STORE);
+                    }
+                };
+                request.onerror = () => reject(lockFailure(request.error));
+                request.onblocked = () => reject(lockFailure({
+                    name: "InvalidStateError",
+                    message: "Die lokale Lernstandssperre wird von einem anderen Tab blockiert."
+                }));
+                request.onsuccess = () => {
+                    const database = request.result;
+                    database.onversionchange = () => {
+                        database.close();
+                        databasePromise = null;
+                    };
+                    if ("onclose" in database) {
+                        database.onclose = () => {
+                            databasePromise = null;
+                        };
+                    }
+                    resolve(database);
+                };
+            }).catch(error => {
+                databasePromise = null;
+                throw error;
+            });
+
+            return databasePromise;
+        }
+
+        return Object.freeze({
+            request(name, _options, action) {
+                return openDatabase().then(database => new Promise((resolve, reject) => {
+                    let actionResult;
+                    let actionStarted = false;
+                    let settled = false;
+                    let transaction;
+
+                    const fail = error => {
+                        if (settled) return;
+                        settled = true;
+                        reject(lockFailure(error, actionStarted));
+                    };
+
+                    try {
+                        transaction = database.transaction(LEARNING_DATA_LOCK_STORE, "readwrite");
+                    } catch (error) {
+                        fail(error);
+                        return;
+                    }
+
+                    transaction.onabort = () => fail(transaction.error);
+                    transaction.onerror = () => fail(transaction.error);
+                    transaction.oncomplete = () => {
+                        if (settled) return;
+                        settled = true;
+                        resolve(actionResult);
+                    };
+
+                    let request;
+                    try {
+                        request = transaction.objectStore(LEARNING_DATA_LOCK_STORE).get(name);
+                    } catch (error) {
+                        try {
+                            transaction.abort();
+                        } catch (_abortError) {
+                            // Die ursprüngliche Ursache wird gemeldet.
+                        }
+                        fail(error);
+                        return;
+                    }
+
+                    request.onsuccess = () => {
+                        actionStarted = true;
+                        try {
+                            actionResult = action();
+                        } catch (error) {
+                            try {
+                                transaction.abort();
+                            } catch (_abortError) {
+                                // Die ursprüngliche Ursache wird gemeldet.
+                            }
+                            fail(error);
+                        }
+                    };
+                }));
+            }
+        });
+    }
+
+    function browserLockManager() {
+        const webLocks = browserWebLockManager();
+        const databaseLocks = createIndexedDbLockManager(browserIndexedDb());
+        if (!webLocks) return databaseLocks;
+        if (!databaseLocks) return webLocks;
+
+        // Manche WebKit-Builds stellen Web Locks bereit, teilen sie aber nicht
+        // zuverlässig zwischen Tabs. Die IDB-Transaktion ist daher primär;
+        // Web Locks bleiben der Fallback, falls IndexedDB vor der Aktion ausfällt.
+        return Object.freeze({
+            request(name, options, action) {
+                let actionStarted = false;
+                const trackedAction = () => {
+                    actionStarted = true;
+                    return action();
+                };
+                const withWebLock = () => webLocks.request(name, options, trackedAction);
+
+                try {
+                    return Promise.resolve(databaseLocks.request(name, options, trackedAction))
+                        .catch(error => {
+                            if (actionStarted || error?.actionStarted) throw error;
+                            return withWebLock();
+                        });
+                } catch (error) {
+                    if (actionStarted) return Promise.reject(error);
+                    return Promise.resolve(withWebLock());
+                }
+            }
+        });
     }
 
     function createLocalLearningStores(options = {}) {

@@ -103,12 +103,12 @@
     async function resetMission() {
         editor.setValue(defaultConfig);
         editor.clearHistory?.();
-        await window.saveAttemptedLevelCode?.("helikopter_flucht_level2", defaultConfig);
         consoleOutput.textContent = "Datei geladen. Helikopterzugang und Hangartor sind noch geschlossen.";
         consoleOutput.classList.remove("is-error");
         lastResult = null;
         setVisualState("locked");
         editor.focus();
+        await window.saveAttemptedLevelCode?.("helikopter_flucht_level2", defaultConfig);
     }
 
     runButtons.forEach(button => button.addEventListener("click", applyConfig));

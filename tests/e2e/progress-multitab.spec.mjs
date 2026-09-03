@@ -5,13 +5,24 @@ async function openLearningPage(page, path) {
     await expect.poll(() => page.evaluate(() => Boolean(window.AgentLearningData))).toBe(true);
 }
 
-test("@ipad two guest tabs retain different level completions in their shared local stand", async ({ context, page }) => {
+test("@ipad two guest tabs retain different completions even with ineffective Web Locks", async ({ context, page }) => {
+    // Simuliert die Linux-WebKit-Abweichung, bei der die API existiert, aber
+    // gleichnamige Locks zweier Tabs nicht gemeinsam serialisiert werden.
+    await context.addInitScript(() => {
+        Object.defineProperty(navigator, "locks", {
+            configurable: true,
+            value: {
+                request(_name, _options, action) {
+                    return Promise.resolve().then(action);
+                }
+            }
+        });
+    });
     const secondTab = await context.newPage();
     await Promise.all([
         openLearningPage(page, "/mission1_level1.html"),
         openLearningPage(secondTab, "/mission2_level1.html")
     ]);
-    expect(await page.evaluate(() => typeof navigator.locks?.request === "function")).toBe(true);
 
     const [savedA, savedB] = await Promise.all([
         page.evaluate(() => window.AgentLearningData.completeLevel({
