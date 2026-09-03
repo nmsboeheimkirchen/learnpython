@@ -40,13 +40,36 @@
 
 ## Fortschritt und Anmeldung
 
-- [ ] Bestehenden Gastfortschritt hinter einer austauschbaren Speicher-Schnittstelle kapseln
+- [x] Stufe 1: den bestehenden Gastbetrieb ohne Änderung des normalen Lernablaufs hinter austauschbaren Speicher-Schnittstellen kapseln
+  - [x] `ProgressStore` für Freischaltungen und Hilfestände einführen; der lokale Abschlussstatus wird weiterhin aus den erfolgreichen Codefassungen abgeleitet
+  - [x] `CodeStore` für versuchte und erfolgreich abgeschlossene Codefassungen einführen; Quellcode bleibt von der späteren Lehreransicht getrennt
+  - [x] `DraftCache` als bewussten No-op vorsehen: weiterhin nur beim Klick auf „Ausführen“ speichern; ein häufiges Tastendruck-Autosave erst bei nachgewiesenem Bedarf ergänzen
+  - [x] Bestehende gültige lokale Daten ohne Verlust ausschließlich als anonymen Gaststand übernehmen; korrupte und unbekannte Einträge sicher normalisieren
+  - [x] Direkte Zugriffe auf `localStorage` außerhalb des Gast-Adapters und klar getrennter Geräteeinstellungen durch einen Architekturtest verhindern
+  - [x] Bestehende Lernpfad-, Wiederherstellungs- und Reset-Abläufe unverändert als Regressionstests beibehalten
+- [x] Stufe 1 durch gezielte Speicher- und Isolationstests absichern
+  - [x] Fehler bei `storage.getItem()`, `storage.setItem()` und `storage.removeItem()` sowie überschrittene Speicherquote testen; ein fehlgeschlagener Schreibvorgang darf nicht als gespeichert erscheinen
+  - [x] Gleichzeitige Änderungen in zwei Tabs testen und in den Zielbrowsern mit einer originweiten exklusiven Web-Sperre vor verlorenen Aktualisierungen schützen
+  - [x] Anonymen Stand, Reset, Normalisierung und Wiederherstellung in Chromium und WebKit als Browser-Tests prüfen
+  - [x] Tests dokumentiert: `learning-data-core.test.mjs` prüft Profilbindung und verspätete Antworten; `local-learning-data.test.mjs` Speichervertrag und Fehler; `progress-architecture.test.mjs` die Kapselungsgrenze
+  - [x] Browser-Tests dokumentiert: `progress-storage.spec.mjs` prüft Fehler, Reset und Wiederherstellung; `progress-multitab.spec.mjs` parallele Änderungen in zwei Tabs – jeweils Chromium und WebKit
+- [ ] Stufe 2: optionalen Login-Pilot mit technisch strikt getrenntem Datenstand vorbereiten
+  - [x] Jede Speicher-Fassade dauerhaft an genau einen unveränderlichen Gast- oder Profilkontext binden und verspätete Antworten einer beendeten Sitzung verwerfen
+  - [ ] Beim späteren Login-Bootstrap den Profilkontext vor dem ersten Fortschrittszugriff eindeutig auf Gast oder Login festlegen
+  - [ ] Im Loginmodus weder Gastdaten lesen noch schreiben und bei Netzwerk- oder Serverfehlern niemals auf den lokalen Gaststand zurückfallen
+  - [ ] Login, Logout und Wechsel zwischen zwei Identitäten testen; Gaststand und jeweils fremder Loginstand müssen unverändert und unsichtbar bleiben
+  - [ ] Synchronisierung desselben Stands auf zwei Geräten einschließlich Versionskonflikt, Wiederholung und Verbindungsabbruch testen
+  - [ ] Optionalen Export und Import des lokalen Gastfortschritts prüfen; eine Übernahme in ein Loginprofil darf nur als ausdrücklich bestätigte Einweg-Aktion erfolgen
+  - [ ] Microsoft-Anmeldung zunächst auf den eigenen Schultenant begrenzen
+- [ ] Stufe 3: Klassenverwaltung und Lehreransicht vor der konkreten Datenbankwahl fachlich modellieren
+  - [ ] Lehrerrolle, Klassen, Beitrittscodes, Mitgliedschaften, Namenslistenimport, Fortschrittsansicht und Löschabläufe definieren
+  - [ ] In der zentralen Lehreransicht standardmäßig nur Abschlussstatus, Zeitpunkt und erforderliche Lernmetadaten anzeigen; Entwürfe und vollständige Quellcodes bleiben privat
+  - [ ] Eine Hybridoption prüfen: privater vollständiger Schülerstand im OneDrive-App-Ordner, Klassen und datensparsame Fortschrittsprojektion in einer zentralen PHP-Datenbank
+  - [ ] OneDrive-Snapshot und zentrale PHP-Projektion mit Revisionen, idempotenten Ereignissen und einer wiederholbaren Outbox gegen partielle Schreibfehler absichern
+  - [ ] Partielle Hybridfehler ausdrücklich testen: OneDrive erfolgreich/PHP fehlgeschlagen, PHP erfolgreich/OneDrive fehlgeschlagen, doppelte Übertragung und Wiederaufnahme nach Abbruch
+  - [ ] Backend-Lasttest mit realistischer Klassenanzahl, gleichzeitigen Anmeldungen, Programmläufen und Abschlussmeldungen durchführen; Antwortzeiten, Fehlerrate und Datenbanklast protokollieren
 - [ ] Für das erste Unterrichtsjahr entscheiden: ausschließlich lokaler Gastbetrieb oder zusätzlicher Pilot
-- [ ] Optionalen Export und Import des lokalen Gastfortschritts prüfen
-- [ ] Microsoft-Anmeldung zunächst auf den eigenen Schultenant begrenzen
 - [ ] Vor Cloudspeicherung Verantwortlichkeit, Hosting, Löschfristen, Backups und Sicherheitsbetrieb klären
-- [ ] Spätere Klassenfunktionen vor der Datenbankwahl modellieren: Lehrerrolle, Klassen, Beitrittscodes, Mitgliedschaften und Fortschrittsansicht
-- [ ] Angemeldeten Cloudstand und lokalen Gaststand technisch strikt getrennt halten
 
 ## Domain und Veröffentlichung
 
