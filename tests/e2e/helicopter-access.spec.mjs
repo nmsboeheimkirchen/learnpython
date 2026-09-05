@@ -108,9 +108,9 @@ test("the real receive and replace chain grants access", async ({ page }) => {
         lastFailure: null
     });
     expect(run.output).toContain("SIGNAL EMPFANGEN:");
-    expect(run.output).toContain("BORDCOMPUTER: ACCESS GRANTED!");
     const signal = run.output.match(/SIGNAL EMPFANGEN: ([^\n]+)/)?.[1] ?? "";
     const password = signal.replaceAll("?", "");
+    expect(run.output).toContain("BORDCOMPUTER: " + password + "\nACCESS GRANTED!\n");
     expect(signal).toHaveLength(511);
     expect(password).toHaveLength(256);
     expect([...signal].filter(character => character === "?")).toHaveLength(255);
@@ -129,7 +129,18 @@ test("the real receive and replace chain grants access", async ({ page }) => {
     await expect(nextMission).toContainText("Startkonfiguration reparieren");
     await expect(nextMission).toHaveAttribute("href", "helikopter_flucht_level2.html");
     expect((await nextMission.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+    const nextBounds = await nextMission.boundingBox();
+    const heroBounds = await page.locator("#access-hero").boundingBox();
+    expect(nextBounds.y + nextBounds.height).toBeLessThanOrEqual(heroBounds.y);
+    expect(nextBounds.x + nextBounds.width).toBeCloseTo(heroBounds.x + heroBounds.width, 0);
     expect(await page.evaluate(() => window.scrollY)).toBeLessThan(scrollBeforeRun - 1);
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await runCode(page, correctCode);
+    const phoneNextBounds = await nextMission.boundingBox();
+    const dockBounds = await page.locator("#learning-nav-dock").boundingBox();
+    expect(phoneNextBounds.y).toBeGreaterThanOrEqual(dockBounds.y + dockBounds.height);
+    expect(phoneNextBounds.x + phoneNextBounds.width).toBeLessThanOrEqual(390);
 
     await nextMission.click();
     await expect(page).toHaveURL(/helikopter_flucht_level2\.html$/);
@@ -144,6 +155,10 @@ test("the starter failure does not reveal the replace arguments in its output", 
     const run = await page.evaluate(async () => window.HelicopterAccessRuntime.run());
     expect(run.passed).toBe(false);
     await expect(page.locator("#console-output")).toContainText("ACCESS DENIED!");
+    const output = await page.locator("#console-output").textContent();
+    const signal = output.match(/SIGNAL EMPFANGEN: ([^\n]+)/)?.[1] ?? "";
+    expect(signal).toHaveLength(511);
+    expect(output).toContain("BORDCOMPUTER: " + signal + "\nACCESS DENIED!\n");
     await expect(page.locator("#console-output")).not.toContainText('replace("?", "")');
     await expect(page.locator("#console-output")).not.toContainText("Entferne alle ?");
     const scrollAfterRun = await page.evaluate(() => window.scrollY);

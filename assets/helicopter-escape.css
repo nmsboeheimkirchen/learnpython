@@ -158,6 +158,14 @@
     text-transform: uppercase;
 }
 
+.helicopter-config-page .agent-briefing {
+    background: transparent;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    text-shadow: 0 1px 4px #020309;
+}
+
 .agent-briefing blockquote {
     margin: 0;
     color: #d2e0eb;
@@ -399,6 +407,7 @@
     font-size: 0.75rem;
     line-height: 1.55;
     white-space: pre-wrap;
+    overflow-wrap: anywhere;
 }
 
 .helicopter-output-card pre.is-error {
@@ -419,6 +428,21 @@
     box-shadow: 0 14px 35px rgba(105, 243, 162, 0.12);
     color: #eafff2;
     text-decoration: none;
+}
+
+.helicopter-mission-nav {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 58px;
+    margin-bottom: 18px;
+    scroll-margin-top: 88px;
+}
+
+.helicopter-mission-nav .helicopter-next-mission {
+    min-width: 0;
+    margin-top: 0;
 }
 
 .helicopter-next-mission[hidden] {
@@ -734,6 +758,24 @@
 }
 
 @media (max-width: 480px) {
+    .helicopter-mission-nav {
+        align-items: flex-start;
+    }
+
+    .helicopter-mission-nav .level-badge {
+        padding-inline: 8px;
+        font-size: 0.68rem;
+    }
+
+    .helicopter-mission-nav .helicopter-next-mission {
+        padding: 10px 12px;
+    }
+
+    .helicopter-mission-nav .helicopter-next-mission > strong {
+        font-size: 0.8rem;
+        overflow-wrap: anywhere;
+    }
+
     .helicopter-controls {
         grid-template-columns: minmax(0, 1fr);
     }

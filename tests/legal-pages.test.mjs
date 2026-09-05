@@ -38,7 +38,7 @@ test("the imprint shows only the supplied identity and address with a route home
     assert.match(html, /<h1 id="impressum-title">Impressum<\/h1>/);
     assert.match(html, /href="assets\/legal\.css\?v=20260902-1"/);
     assert.match(html, /<h2>Umsetzung und für den Inhalt verantwortlich<\/h2>/);
-    assert.match(html, /<h2>Idee und Beratung<\/h2>\s*<p class="legal-credit"><strong>Ioannis Männl BEd<\/strong><\/p>/);
+    assert.match(html, /<h2>Idee und Beratung<\/h2>\s*<p class="legal-credit"><strong>Ioannis Männl, BEd<\/strong><\/p>/);
     assert.match(html, /href="#impressum-main"/);
     assert.match(html, /<main id="impressum-main"/);
     assert.match(html, /href="index\.html">Zurück zur Startseite<\/a>/);
@@ -50,6 +50,6 @@ test("the README names the author and adviser without internal solution hints", 
 
     assert.match(readme, /^# AGENT PY – Python Agenten-Training$/m);
     assert.match(readme, /Urheber ist \*\*Dipl\. Ing\. Michael Bieglmayer\*\*\./);
-    assert.match(readme, /Idee und Beratung: \*\*Ioannis Männl BEd\*\*/);
+    assert.match(readme, /Idee und Beratung: \*\*Ioannis Männl, BEd\*\*/);
     assert.doesNotMatch(readme, /#l|Lehrerlös/i);
 });

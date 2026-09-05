@@ -11,6 +11,7 @@
     const consoleOutput = byId("console-output");
     const resetButton = byId("reset-btn");
     const accessHero = byId("access-hero");
+    const missionNavigation = document.querySelector(".helicopter-mission-nav");
     const accessDisplay = byId("access-display");
     const accessMessage = byId("access-message");
     const nextLevelButton = byId("next-level-btn");
@@ -84,8 +85,9 @@ var $builtinmodule = function () {
                 return new Sk.builtin.str(signal);
             },
             check(candidate) {
-                const accepted = state.check(Sk.ffi.remapToJs(candidate));
-                appendOutput("BORDCOMPUTER: " + (accepted ? "ACCESS GRANTED!" : "ACCESS DENIED!") + "\n");
+                const password = Sk.ffi.remapToJs(candidate);
+                const accepted = state.check(password);
+                appendOutput("BORDCOMPUTER: " + password + "\n" + (accepted ? "ACCESS GRANTED!" : "ACCESS DENIED!") + "\n");
                 return accepted;
             }
         });
@@ -124,9 +126,9 @@ var $builtinmodule = function () {
 
     function revealResult() {
         const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
-        accessHero.scrollIntoView?.({
+        (missionNavigation || accessHero).scrollIntoView?.({
             behavior: testMode || reducedMotion ? "auto" : "smooth",
-            block: "center",
+            block: "start",
             inline: "nearest"
         });
     }

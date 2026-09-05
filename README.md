@@ -99,6 +99,6 @@ Offene Arbeit und geplante Erweiterungen stehen in der [Roadmap](TODO.md).
 
 Das Projekt steht unter der [MIT-Lizenz](LICENSE). Urheber ist **Dipl. Ing. Michael Bieglmayer**.
 
-Idee und Beratung: **Ioannis Männl BEd**
+Idee und Beratung: **Ioannis Männl, BEd**
 
 Zum [Impressum](impressum.html)

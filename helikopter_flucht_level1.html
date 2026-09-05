@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
     <link rel="stylesheet" href="assets/style.css?v=20260722-2">
-    <link rel="stylesheet" href="assets/helicopter-escape.css?v=20260902-2">
+    <link rel="stylesheet" href="assets/helicopter-escape.css?v=20260905-1">
 </head>
 <body class="helicopter-access-page" data-hangar-state="closed" data-access-state="locked">
     <a class="skip-link" href="#code-panel">Zum Python-Editor</a>
@@ -25,6 +25,14 @@
     <script src="assets/navigation.js?v=20260902-1"></script>
 
     <main id="main-content" class="helicopter-access-main">
+        <nav class="helicopter-mission-nav" aria-label="Missionsfortschritt">
+            <span class="level-badge">Stufe 1 von 2</span>
+            <a id="next-level-btn" class="helicopter-next-mission next-level-btn" href="helikopter_flucht_level2.html" hidden>
+                <span>Nächster Auftrag</span>
+                <strong>Startkonfiguration reparieren</strong>
+                <span aria-hidden="true">→</span>
+            </a>
+        </nav>
         <section id="access-hero" class="helicopter-access-hero" aria-labelledby="mission-title">
             <img src="assets/images/escape/helicopter-hangar-closed.webp?v=20260831-1" alt="" width="1717" height="916" fetchpriority="high">
             <div class="helicopter-hero-shade" aria-hidden="true"></div>
@@ -80,11 +88,6 @@ bordcomputer.pruefe(passwort)
                     <button id="run-btn" class="helicopter-run-button" type="button"><span aria-hidden="true">▶</span> Bordcomputer starten</button>
                     <button id="reset-btn" class="helicopter-reset-button" type="button">↺ Startcode laden</button>
                 </div>
-                <a id="next-level-btn" class="helicopter-next-mission next-level-btn" href="helikopter_flucht_level2.html" hidden>
-                    <span>Nächster Auftrag</span>
-                    <strong>Startkonfiguration reparieren</strong>
-                    <span aria-hidden="true">→</span>
-                </a>
                 <button class="test-btn" type="button" data-teacher-solution="helikopter_flucht_level1">Musterlösung (Für Lehrer)</button>
             </section>
 
@@ -114,6 +117,6 @@ ort = ort.replace("ö", "oe")</code></pre>
     <script src="assets/vendor/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="assets/vendor/codemirror/5.65.2/python.min.js"></script>
     <script src="assets/helicopter-access-core.js?v=20260902-1"></script>
-    <script src="assets/helicopter-access.js?v=20260902-2"></script>
+    <script src="assets/helicopter-access.js?v=20260905-1"></script>
 </body>
 </html>
