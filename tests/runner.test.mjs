@@ -2368,14 +2368,20 @@ test("both homepage options keep distinct light moods and one shared logo while 
         assert.match(html, variant.brand);
         assert.match(html, /src="assets\/brand\/agent-py-logo\.png\?v=20260720-2"/);
         assert.match(html, /href="assets\/style\.css\?v=20260722-2"/);
-        assert.match(html, /href="assets\/home\.css\?v=20260902-2"/);
+        assert.match(html, /href="assets\/home\.css\?v=20260912-1"/);
         assert.match(html, /href="index\.html" aria-label="Agent PY – Startseite"/);
         assert.deepEqual(missionTargets, expectedMissionTargets);
         assert.equal((html.match(/<main\b/gi) ?? []).length, 1);
         assert.equal((html.match(/<\/main>/gi) ?? []).length, 1);
         assert.match(html, /<main id="home-main">/);
         assert.doesNotMatch(html, /href="[^"]*(?:prototypes\/|finale)/i);
-        assert.doesNotMatch(html, /https?:\/\//i);
+        // SEO metadata needs absolute URLs; runtime assets and navigation stay local.
+        assert.doesNotMatch(html.slice(html.indexOf("<body")), /https?:\/\//i);
+        for (const [tag] of html.matchAll(/<(?:script|link|img|source|iframe)\b[^>]*>/gi)) {
+            if (!/\brel=["']canonical["']/i.test(tag)) {
+                assert.doesNotMatch(tag, /\b(?:src|href)=["'](?:https?:)?\/\//i);
+            }
+        }
         assert.doesNotMatch(html, /checkpoint|observatorium|observation|beobacht/i);
         assert.match(html, /<h2 id="future-title">Die 5\. Mission <span class="course-no-break">wählst du\.<\/span><\/h2>/);
         assert.match(html, /Artefakt der Seruianer/);
