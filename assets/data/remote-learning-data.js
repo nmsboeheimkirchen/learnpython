@@ -1,0 +1,155 @@
+(() => {
+    "use strict";
+    const copy = value => JSON.parse(JSON.stringify(value));
+    const object = value => value !== null && typeof value === "object" && !Array.isArray(value);
+    const own = (map, key) => Object.hasOwn(map, key) ? map[key] : null;
+    const messages = {
+        NETWORK_ERROR: "Keine Serverbestätigung. Lass diese Seite offen und versuche die Speicherung erneut.",
+        REVISION_CONFLICT: "Der Stand wurde in einem anderen Tab oder Gerät geändert. Sichere deinen aktuellen Code, bevor du den Serverstand neu lädst.",
+        PROFILE_CHANGED: "Das angemeldete Konto wurde in einem anderen Tab geändert. Bitte lade die Seite neu.",
+        AUTH_REQUIRED: "Deine Anmeldung ist abgelaufen. Sichere deinen Code und melde dich erneut an.",
+        CSRF_MISMATCH: "Deine Sitzung hat sich geändert. Bitte melde dich erneut an.",
+        INVALID_CREDENTIALS: "E-Mail-Adresse oder Passwort stimmt nicht.",
+        LOGIN_RATE_LIMITED: "Zu viele Anmeldeversuche. Bitte warte 15 Minuten.",
+        SESSION_CLOSED: "Diese Lernsitzung ist beendet.",
+        INVALID_RESPONSE: "Der Serverstand konnte nicht sicher gelesen werden. Bitte nicht weiterarbeiten.",
+        WRITE_BLOCKED: "Eine vorherige Speicherung ist ungeklärt. Bitte zuerst erneut versuchen oder den Konflikt klären."
+    };
+    function error(code, status = 0) {
+        return Object.assign(new Error(messages[code] || "Die Änderung wurde nicht bestätigt. Bitte sichere deinen Code und versuche es später erneut."), { code, status });
+    }
+    function validateState(state) {
+        if (!object(state) || !Number.isSafeInteger(state.revision) || state.revision < 0 || !object(state.data)) throw error("INVALID_RESPONSE");
+        const data = state.data;
+        for (const key of ["attemptedCodes", "completedCodes"]) {
+            if (!object(data[key]) || Object.values(data[key]).some(code => typeof code !== "string")) throw error("INVALID_RESPONSE");
+        }
+        if (!object(data.featureProgress) || !Array.isArray(data.unlockedIds) || data.unlockedIds.some(id => typeof id !== "string")) throw error("INVALID_RESPONSE");
+        return copy(state);
+    }
+    function createClient({ endpoint = "api/index.php", fetch: fetcher = window.fetch.bind(window), baseURL = window.location.href, timeoutMs = 12000 } = {}) {
+        const url = new URL(endpoint, baseURL);
+        if (url.origin !== new URL(baseURL).origin || !/^https?:$/.test(url.protocol) || url.username || url.password) throw error("INVALID_ENDPOINT");
+        async function request(action, { body, csrfToken, profileId } = {}) {
+            const target = new URL(url);
+            target.search = new URLSearchParams({ action }).toString();
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), timeoutMs);
+            try {
+                const headers = { Accept: "application/json" };
+                if (profileId) headers["X-Agentpy-Profile"] = profileId;
+                if (body !== undefined) Object.assign(headers, { "Content-Type": "application/json", "X-CSRF-Token": csrfToken });
+                const response = await fetcher(target.href, {
+                    method: body === undefined ? "GET" : "POST", credentials: "same-origin", cache: "no-store",
+                    redirect: "error", headers, signal: controller.signal,
+                    ...(body === undefined ? {} : { body: JSON.stringify(body) })
+                });
+                let data;
+                try { data = await response.json(); } catch (_) { throw error("INVALID_RESPONSE", response.status); }
+                if (!response.ok) throw error(data?.error?.code || "SERVER_UNAVAILABLE", response.status);
+                return data;
+            } catch (failure) {
+                if (failure.code && failure instanceof Error) throw failure;
+                throw error("NETWORK_ERROR");
+            } finally { clearTimeout(timeout); }
+        }
+        return Object.freeze({ request });
+    }
+    function createRemoteLearningStores({ client, profile, csrfToken, initialState, saveMode = "attempts", operationId = () => window.crypto.randomUUID() }) {
+        if (!profile?.id || !csrfToken || !["attempts", "completion-only"].includes(saveMode)) throw error("INVALID_CONTEXT");
+        const profileId = profile.id; // Never follow a mutable current-profile variable.
+        let state = validateState(initialState);
+        let disposed = false;
+        let pending = null;
+        let blocked = null;
+        let tail = Promise.resolve();
+        let queued = 0;
+        let volatileAttempts = {};
+        let status = Object.freeze({ type: "saved", message: "Serverstand geladen." });
+        const listeners = new Set();
+        function notify(type, message, failure = null) {
+            status = Object.freeze({ type, message, error: failure });
+            for (const listener of listeners) { try { listener(status); } catch (_) { /* UI isolation */ } }
+        }
+        function assertOpen() { if (disposed) throw error("SESSION_CLOSED"); }
+        function value(read) { assertOpen(); return { ok: true, value: copy(read()) }; }
+        async function transmit() {
+            assertOpen();
+            notify("saving", "Wird zentral gespeichert …");
+            try {
+                const response = await client.request("write", { body: pending, csrfToken, profileId });
+                assertOpen();
+                if (response.profile?.id !== profileId) throw error("PROFILE_CHANGED");
+                const next = validateState(response.state);
+                if (next.revision < state.revision) throw error("INVALID_RESPONSE");
+                state = next;
+                if (pending.command.type === "reset") volatileAttempts = {};
+                if (pending.command.type === "complete") delete volatileAttempts[pending.command.levelId];
+                pending = null;
+                blocked = null;
+                notify("saved", "Zentral gespeichert.");
+                return { ok: true };
+            } catch (failure) {
+                if (disposed) return { ok: false, error: error("SESSION_CLOSED") };
+                blocked = failure;
+                notify(failure.code === "REVISION_CONFLICT" ? "conflict" : "error", failure.message, failure);
+                return { ok: false, error: failure };
+            }
+        }
+        function enqueue(action) {
+            queued++;
+            const run = tail.then(() => { assertOpen(); return action(); }).catch(failure => ({ ok: false, error: failure }));
+            tail = run.then(() => { queued--; });
+            return run;
+        }
+        function write(command) {
+            const frozenCommand = copy(command);
+            return enqueue(() => {
+                if (blocked) return { ok: false, error: blocked };
+                pending = { command: frozenCommand, expectedRevision: state.revision, operationId: operationId() };
+                return transmit();
+            });
+        }
+        const controls = Object.freeze({
+            subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); },
+            getStatus: () => status,
+            hasUnconfirmed: () => queued > 0 || pending !== null || Object.keys(volatileAttempts).length > 0,
+            retry() {
+                return enqueue(() => {
+                    if (!pending) return { ok: true };
+                    // Conflict/auth errors require an explicit reload, never automatic overwriting.
+                    if (blocked && (blocked.status === 409 || blocked.status === 401 || blocked.status === 403)) return { ok: false, error: blocked };
+                    return transmit();
+                });
+            },
+            dispose() { disposed = true; state = null; volatileAttempts = {}; pending = null; listeners.clear(); }
+        });
+        return Object.freeze({
+            controls,
+            codeStore: Object.freeze({
+                getAttemptedCode: id => value(() => own(volatileAttempts, id) ?? own(state.data.attemptedCodes, id)),
+                getCompletedCode: id => value(() => own(state.data.completedCodes, id)),
+                getCompletedCodes: () => value(() => state.data.completedCodes),
+                recordAttempt(levelId, code) {
+                    if (saveMode !== "completion-only") return write({ type: "attempt", levelId, code });
+                    assertOpen();
+                    volatileAttempts[levelId] = code;
+                    notify("local-only", "Nur in diesem Tab: Unfertiger Code wird im Abschlussmodus nicht zentral gespeichert.");
+                    return { ok: true };
+                }
+            }),
+            progressStore: Object.freeze({
+                getUnlockedLevelIds: () => value(() => state.data.unlockedIds),
+                getFeatureProgress: id => value(() => own(state.data.featureProgress, id)),
+                setFeatureProgress: (featureId, featureValue) => write({ type: "feature", featureId, value: featureValue }),
+                grantUnlocks: unlockIds => write({ type: "unlocks", unlockIds: Array.isArray(unlockIds) ? unlockIds : [unlockIds] })
+            }),
+            coordinator: Object.freeze({
+                completeLevel: ({ levelId, code }) => write({ type: "complete", levelId, code }),
+                resetLearningData: () => write({ type: "reset" }),
+                dispose: controls.dispose
+            })
+        });
+    }
+    window.AgentPyRemoteLearningData = Object.freeze({ createClient, createRemoteLearningStores, validateState, error });
+})();

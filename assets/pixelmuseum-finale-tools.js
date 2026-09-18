@@ -1,5 +1,6 @@
-(() => {
+(async () => {
     "use strict";
+    if (window.AgentAccountConfig?.enabled && !(await window.AgentLearningDataReady)) return;
 
     const helperCode = 'def alarm_hacken(code):\n    print("ALARM_HACK|" + code)';
     const copyButton = document.getElementById("copy-alarm-helper");

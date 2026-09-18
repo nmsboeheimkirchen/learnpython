@@ -1,5 +1,6 @@
-(() => {
+(async () => {
     "use strict";
+    if (window.AgentAccountConfig?.enabled && !(await window.AgentLearningDataReady)) return;
 
     const helpCore = window.PixelmuseumHelpCore;
     const runtime = window.DroneMissionRuntime;

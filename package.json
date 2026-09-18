@@ -4,6 +4,11 @@
   "type": "module",
   "scripts": {
     "test": "node tests/all.test.mjs",
+    "test:backend": "node --test tests/backend-api.test.mjs",
+    "test:login": "playwright test --config playwright.login.config.mjs",
+    "test:hosting": "node --test tests/hostinger-setup.test.mjs",
+    "build:hostinger": "node scripts/build-hostinger-release.mjs",
+    "build:pages": "node scripts/build-static-site.mjs",
     "test:e2e": "playwright test"
   },
   "devDependencies": {

@@ -227,6 +227,7 @@
                 disposed = true;
                 generation += 1;
                 if (typeof unsubscribeExternal === "function") unsubscribeExternal();
+                coordinator.dispose?.();
                 listeners.clear();
             }
         };

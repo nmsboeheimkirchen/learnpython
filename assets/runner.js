@@ -371,7 +371,8 @@ function preventLockedClick(e) {
     e.preventDefault();
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    if (window.AgentAccountConfig?.enabled && !(await window.AgentLearningDataReady)) return;
     const sidebar = document.getElementById("mySidebar");
     const menuButton = document.getElementById("menu-btn");
     const closeButton = document.getElementById("navigation-close-btn");
@@ -1099,30 +1100,43 @@ function hideLearningDataWarning() {
 }
 
 function initializeLearningData() {
-    if (window.AgentLearningData) {
-        learningData = window.AgentLearningData;
-        deviceSettings = window.AgentDeviceSettings || null;
-    } else {
-        const core = window.AgentLearningDataCore;
-        const local = window.AgentPyLocalLearningData;
-        if (!core || !local) {
-            throw new Error("Die Lernstands-Speicherung wurde nicht vor runner.js geladen.");
-        }
-
-        const stores = local.createLocalLearningStores({
-            defaultUnlockedLevelIds: DEFAULT_UNLOCKED_LEVELS,
-            isKnownLevel: levelId => Object.prototype.hasOwnProperty.call(LEVEL_OUTCOMES, levelId),
-            normalizeCodeMap: normalizeCompletedLevelCode,
-            normalizeUnlockedLevelIds: normalizeUnlockedLevels
-        });
-        learningData = core.createLearningSession({
-            context: { kind: "guest", profileId: "guest-local" },
-            ...stores
-        });
-        deviceSettings = core.createDeviceSettings(stores.settingsStore);
-        window.AgentLearningData = learningData;
-        window.AgentDeviceSettings = deviceSettings;
+    if (window.AgentAccountConfig?.enabled) {
+        if (!window.AgentAccount) throw new Error("Die Konto-Anbindung fehlt.");
+        return window.AgentAccount.start({ createGuest: createGuestLearningData, attach: attachLearningData });
     }
+    if (window.AgentLearningData) {
+        attachLearningData({ learningData: window.AgentLearningData, deviceSettings: window.AgentDeviceSettings || null });
+    } else {
+        attachLearningData(createGuestLearningData());
+    }
+    return true;
+}
+
+function createGuestLearningData() {
+    const core = window.AgentLearningDataCore;
+    const local = window.AgentPyLocalLearningData;
+    if (!core || !local) {
+        throw new Error("Die Lernstands-Speicherung wurde nicht vor runner.js geladen.");
+    }
+
+    const stores = local.createLocalLearningStores({
+        defaultUnlockedLevelIds: DEFAULT_UNLOCKED_LEVELS,
+        isKnownLevel: levelId => Object.prototype.hasOwnProperty.call(LEVEL_OUTCOMES, levelId),
+        normalizeCodeMap: normalizeCompletedLevelCode,
+        normalizeUnlockedLevelIds: normalizeUnlockedLevels
+    });
+    const guest = core.createLearningSession({
+        context: { kind: "guest", profileId: "guest-local" },
+        ...stores
+    });
+    return { learningData: guest, deviceSettings: core.createDeviceSettings(stores.settingsStore) };
+}
+
+function attachLearningData(stores) {
+    learningData = stores.learningData;
+    deviceSettings = stores.deviceSettings;
+    window.AgentLearningData = learningData;
+    window.AgentDeviceSettings = deviceSettings;
 
     learningData.subscribe?.(event => {
         if (event.type === "error") showLearningDataWarning(event.error);
@@ -1131,7 +1145,7 @@ function initializeLearningData() {
     });
 }
 
-initializeLearningData();
+window.AgentLearningDataReady = Promise.resolve(initializeLearningData());
 
 function validateLevelSolution(levelId, code, output, evidence = {}) {
     const validator = LEVEL_VALIDATORS[levelId];
@@ -1154,7 +1168,10 @@ function setupLevel(levelId) {
     let successPopupTimeout = null;
     let validationEvidence = {};
 
-    const restoreCode = () => restoreLevelCode(levelId);
+    const restoreCode = async () => {
+        if (window.AgentAccountConfig?.enabled && !(await window.AgentLearningDataReady)) return;
+        restoreLevelCode(levelId);
+    };
     if (document.readyState === "loading") {
         document.addEventListener("DOMContentLoaded", restoreCode, { once: true });
     } else {

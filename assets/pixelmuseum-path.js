@@ -1,5 +1,6 @@
-(() => {
+(async () => {
     "use strict";
+    if (window.AgentAccountConfig?.enabled && !(await window.AgentLearningDataReady)) return;
 
     const runtime = window.finalePrototype;
     const mission = window.FINALE_CONFIG;

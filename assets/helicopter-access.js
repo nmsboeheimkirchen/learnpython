@@ -1,5 +1,6 @@
-(() => {
+(async () => {
     "use strict";
+    if (window.AgentAccountConfig?.enabled && !(await window.AgentLearningDataReady)) return;
 
     const core = window.HelicopterAccessCore;
     if (!core || !window.Sk || !window.CodeMirror) {

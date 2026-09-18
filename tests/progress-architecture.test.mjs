@@ -59,7 +59,20 @@ test("every page using runner loads the core and local adapter first", () => {
         assert.ok(coreIndex >= 0, `${relative(repoRoot, path)} lädt den Daten-Core nicht`);
         assert.ok(localIndex > coreIndex, `${relative(repoRoot, path)} lädt den lokalen Adapter zu früh`);
         assert.ok(runnerIndex > localIndex, `${relative(repoRoot, path)} lädt runner.js vor der Datenkapselung`);
+        const configIndex = html.indexOf('assets/data/account-config.js');
+        const remoteIndex = html.indexOf('assets/data/remote-learning-data.js');
+        const bootstrapIndex = html.indexOf('assets/data/account-bootstrap.js');
+        assert.ok(configIndex > localIndex && remoteIndex > configIndex && bootstrapIndex > remoteIndex && runnerIndex > bootstrapIndex,
+            `${relative(repoRoot, path)} lädt die Konto-Anbindung nicht vor dem Runner`);
     }
+});
+
+test('static releases keep account login explicitly disabled until a pilot release enables it', () => {
+    const config = readFileSync(join(repoRoot, 'assets/data/account-config.js'), 'utf8');
+    assert.match(config, /enabled: false/);
+    const workflow = readFileSync(join(repoRoot, '.github/workflows/pages.yml'), 'utf8');
+    assert.match(workflow, /run: npm run test:login/);
+    assert.match(workflow, /needs:[\s\S]*- login-browser/);
 });
 
 test("mission runtimes use one coordinated completion command", () => {

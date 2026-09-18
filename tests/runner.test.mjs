@@ -2298,7 +2298,10 @@ test("the Pages deployment verifies the published commit and all helicopter stag
     const workflow = readFileSync(new URL("../.github/workflows/pages.yml", import.meta.url), "utf8");
     const verifier = readFileSync(new URL("./verify-pages-deployment.mjs", import.meta.url), "utf8");
 
-    assert.match(workflow, /printf '%s\\n' "\$GITHUB_SHA" > "deploy-meta\/\$\{GITHUB_SHA\}\.txt"/);
+    assert.match(workflow, /run: npm run build:pages/);
+    assert.match(workflow, /uses: actions\/upload-pages-artifact@v3[\s\S]*path: \.cache\/site-pages/);
+    const builder = readFileSync(new URL("../scripts/build-static-site.mjs", import.meta.url), "utf8");
+    assert.match(builder, /GITHUB_SHA/);
     assert.match(workflow, /name: Verify published Pages deployment[\s\S]*needs: deploy/);
     assert.match(workflow, /PAGES_URL: \$\{\{ needs\.deploy\.outputs\.page_url \}\}/);
     assert.match(workflow, /EXPECTED_SHA: \$\{\{ github\.sha \}\}/);

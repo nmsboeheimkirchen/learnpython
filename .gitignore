@@ -184,3 +184,11 @@ cython_debug/
 node_modules/
 playwright-report/
 test-results/
+
+# Private login deployment configuration and database exports
+server/config.local.php
+server/private/
+agentpy-private/
+database-password.txt
+*.sql.gz
+.env.*

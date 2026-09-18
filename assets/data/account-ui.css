@@ -1,0 +1,15 @@
+.account-panel { position: fixed; right: 12px; bottom: 12px; z-index: 5000; max-width: min(420px, calc(100vw - 24px)); padding: 12px 16px; border: 1px solid #52828d; border-radius: 14px; background: #071724; color: #eefaff; font: 14px/1.4 system-ui, sans-serif; box-shadow: 0 6px 25px #0008; }
+.account-panel p { margin: 4px 0 10px; }
+.account-panel button, .account-dialog button { padding: 8px 12px; margin: 4px; border: 1px solid #71edf4; border-radius: 7px; background: #153743; color: #fff; cursor: pointer; font: inherit; }
+.account-panel button:focus-visible, .account-dialog :focus-visible { outline: 3px solid #f9c963; outline-offset: 3px; }
+.account-panel button:disabled { opacity: .5; cursor: wait; }
+.account-dialog { max-width: min(470px, calc(100vw - 40px)); border: 1px solid #71edf4; border-radius: 14px; background: #071724; color: #eefaff; padding: 24px; font: 16px/1.5 system-ui, sans-serif; }
+.account-dialog::backdrop { background: #03101ee8; }
+.account-dialog h2 { margin-top: 0; }
+.account-dialog label { display: block; margin: 12px 0; }
+.account-dialog input { display: block; box-sizing: border-box; width: 100%; padding: 10px; border: 1px solid #8ca5b7; background: #fff; color: #06131e; border-radius: 5px; font: inherit; }
+.account-dialog [role=alert] { color: #ffcd96; }
+.account-blocked body > :not(.account-panel):not(.account-dialog):not(script):not(link) { visibility: hidden !important; }
+.account-panel [hidden], .account-dialog [hidden] { display: none !important; }
+body:has(.account-panel) { padding-bottom: 135px; }
+@media (max-width: 600px) { .account-panel { left: 12px; max-width: none; } }

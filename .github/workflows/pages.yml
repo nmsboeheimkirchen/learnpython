@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - dev-login-save
   pull_request:
   workflow_dispatch:
 
@@ -75,12 +76,69 @@ jobs:
       - name: Run browser end-to-end tests
         run: npm run test:e2e -- --project=${{ matrix.project }}
 
+  login-browser:
+    name: Login and device-switch browser tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Install local PHP test runtime
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y php-cli php-sqlite3
+      - run: npx playwright install --with-deps chromium webkit
+      - run: npm run test:login
+
+  backend:
+    name: PHP API and MariaDB integration tests
+    runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_ROOT_PASSWORD: disposable-test-root
+          MARIADB_DATABASE: agentpy_test
+          MARIADB_USER: agentpy_test
+          MARIADB_PASSWORD: disposable-test-password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install PHP test runtime
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y php-cli php-mysql php-sqlite3
+      - name: Test real HTTP sessions and persistence on SQLite and MariaDB
+        env:
+          AGENTPY_TEST_MYSQL_DSN: mysql:host=127.0.0.1;port=3306;dbname=agentpy_test;charset=utf8mb4
+          AGENTPY_TEST_MYSQL_USER: agentpy_test
+          AGENTPY_TEST_MYSQL_PASSWORD: disposable-test-password
+        run: npm run test:backend
+      - name: Test private Hostinger setup and release integrity
+        run: npm run test:hosting
+
   deploy:
     name: Deploy to GitHub Pages
-    if: github.event_name != 'pull_request'
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     needs:
       - logic
       - browser
+      - backend
+      - login-browser
     permissions:
       contents: read
       pages: write
@@ -98,16 +156,18 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
-      - name: Add deployment version marker
-        shell: bash
-        run: |
-          mkdir -p deploy-meta
-          printf '%s\n' "$GITHUB_SHA" > "deploy-meta/${GITHUB_SHA}.txt"
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Prepare public static files only
+        run: npm run build:pages
 
       - name: Upload static site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: .cache/site-pages
 
       - name: Deploy to GitHub Pages
         id: deployment
@@ -115,7 +175,7 @@ jobs:
 
   smoke:
     name: Verify published Pages deployment
-    if: github.event_name != 'pull_request'
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     needs: deploy
     permissions:
       contents: read
