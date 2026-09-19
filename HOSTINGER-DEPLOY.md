@@ -2,7 +2,7 @@
 
 ## Update 19.09.2026: Phase 1 bereit, noch keine Live-Umschaltung
 
-Registrierung/Verifikation und Mailwarteschlange sind implementiert. Lokal bestanden: 197 Logik-, 50 Backend-, 133 Missionsbrowser-, 24 Loginbrowser- und 11 Deploymenttests. **Live bleibt `pilot-20260917-r2`, Datenbank/persönliches Konto unverändert.** Vor Freigabe fehlen bestätigter Testmail-Empfang und hPanel-Cron. Die älteren Abschnitte darunter sind historischer Stand; nicht als leere Datenbank interpretieren.
+Registrierung/Verifikation und Mailwarteschlange sind implementiert. Lokal bestanden: 197 Logik-, 50 Backend-, 133 Missionsbrowser-, 24 Loginbrowser- und 11 Deploymenttests. Nach einem WebKit-CI-Fehler wurde der Übergang Verifikation→Login gegen überlappende Sitzungsanfragen korrigiert (2221728); **GitHub-CI 35455450506 erfolgreich**. Lokales geprüftes Paket: `.cache/hostinger/pilot-20260919-r4` (124 Dateien, Herkunft 2221728). **Live bleibt `pilot-20260917-r2`, Datenbank/persönliches Konto unverändert.** Vor Freigabe fehlen bestätigter Testmail-Empfang und hPanel-Cron. Die älteren Abschnitte darunter sind historischer Stand; nicht als leere Datenbank interpretieren.
 
 Eine genehmigte Testmail (`AGENT PY: Versandtest Phase 1`) von `noreply@agentpy.bildungdigital.at` an `michael@cybershoes.io` wurde vom Transport angenommen. Das beweist noch keinen Empfang. `mail()`/Sendmail unter PHP 8.3.33 sind verfügbar, `crontab` über SSH nicht.
 

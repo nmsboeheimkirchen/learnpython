@@ -2,7 +2,7 @@
 
 ## Phase 1 – Stand 19.09.2026
 
-Registrierung und persistente Mailqueue implementiert/testet, **noch nicht live aktiviert**. Live bleibt r2 bis tatsächlicher Mail-Empfang und hPanel-Cron bestätigt sind; ältere Angaben unten beschreiben r2. Aktuelle Betriebsschritte: [HOSTINGER-DEPLOY.md](../HOSTINGER-DEPLOY.md).
+Registrierung und persistente Mailqueue sind implementiert und getestet, **noch nicht live aktiviert**. Live bleibt r2 bis tatsächlicher Mail-Empfang und hPanel-Cron bestätigt sind; ältere Angaben unten beschreiben r2. Aktuelle Betriebsschritte: [HOSTINGER-DEPLOY.md](../HOSTINGER-DEPLOY.md).
 
 - Additives Schema 3: Klassenkapazität/Einladungen, reservierte Anmeldungen, Mailjobs und Budget. `manage.php migrate` erhält Konten/Lernstände, keine Migration per HTTP.
 - Gast-POST mit Origin+CSRF: `check-invitation {code}` → Klassenname/10-Minuten-Grant; `register {name,email,password}` → 202/Vormerkung; `verify-email {token}` → einmalige Aktivierung ohne Auto-Login; `cancel-registration {}` löscht Grant, nicht Sperrzähler. `session` liefert öffentliche Registrierungspolicy; Fehler ggf. `attemptsLeft`/`retryAfter`.
