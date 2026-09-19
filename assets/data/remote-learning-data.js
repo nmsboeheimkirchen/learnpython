@@ -11,6 +11,17 @@
         CSRF_MISMATCH: "Deine Sitzung hat sich geändert. Bitte melde dich erneut an.",
         INVALID_CREDENTIALS: "E-Mail-Adresse oder Passwort stimmt nicht.",
         LOGIN_RATE_LIMITED: "Zu viele Anmeldeversuche. Bitte warte 15 Minuten.",
+        REGISTRATION_UNAVAILABLE: "Die Neuanmeldung ist gerade nicht verfügbar. Du kannst im Gastmodus arbeiten.",
+        CLASS_CODE_INVALID: "Der Klassencode ist ungültig oder abgelaufen.",
+        CLASS_CODE_COOLDOWN: "Fünf falsche Versuche. Bitte warte fünf Minuten, bevor du es erneut versuchst.",
+        REGISTRATION_RATE_LIMITED: "Gerade gibt es zu viele Anfragen. Bitte versuche es später erneut.",
+        CLASS_CODE_REQUIRED: "Bitte gib deinen Klassencode erneut ein.",
+        CLASS_FULL: "Diese Klasse hat keine freien Plätze mehr. Bitte frage deine Lehrperson.",
+        INVALID_NEW_PASSWORD: "Das Passwort braucht mindestens 8 Zeichen und darf höchstens 72 UTF-8-Bytes lang sein.",
+        INVALID_NAME: "Bitte gib einen Namen mit 1 bis 100 Zeichen ein.",
+        INVALID_EMAIL: "Bitte prüfe deine E-Mail-Adresse.",
+        VERIFICATION_INVALID: "Dieser Bestätigungslink ist ungültig, abgelaufen oder wurde bereits verwendet. Melde dich an, wenn du deine E-Mail schon bestätigt hast; sonst frage deine Lehrperson.",
+        ALREADY_SIGNED_IN: "Du bist bereits angemeldet. Melde dich zuerst ab, um ein anderes Konto zu bestätigen oder anzulegen.",
         SESSION_CLOSED: "Diese Lernsitzung ist beendet.",
         INVALID_RESPONSE: "Der Serverstand konnte nicht sicher gelesen werden. Bitte nicht weiterarbeiten.",
         WRITE_BLOCKED: "Eine vorherige Speicherung ist ungeklärt. Bitte zuerst erneut versuchen oder den Konflikt klären."
@@ -46,7 +57,11 @@
                 });
                 let data;
                 try { data = await response.json(); } catch (_) { throw error("INVALID_RESPONSE", response.status); }
-                if (!response.ok) throw error(data?.error?.code || "SERVER_UNAVAILABLE", response.status);
+                if (!response.ok) {
+                    const failure = error(data?.error?.code || "SERVER_UNAVAILABLE", response.status);
+                    for (const key of ["retryAfter", "attemptsLeft"]) if (Number.isSafeInteger(data?.error?.[key])) failure[key] = data.error[key];
+                    throw failure;
+                }
                 return data;
             } catch (failure) {
                 if (failure.code && failure instanceof Error) throw failure;

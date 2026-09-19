@@ -27,9 +27,7 @@ function createAccount(\PDO $db, array $input): array
     $email = normalizedEmail($input['email']);
     $name = accountLabel($input['name']);
     $password = $input['password'];
-    // Count Unicode code points, not UTF-8 bytes. Bcrypt still has a 72-byte ceiling.
-    if (!is_string($password) || strlen($password) > 72 || str_contains($password, "\0")
-        || preg_match_all('/./us', $password) < 8) throw new \RuntimeException('Password must contain at least 8 characters and at most 72 bytes');
+    validateNewPassword($password);
     $classId = $input['classId'];
     if (!is_string($classId) || !preg_match('/^[a-f0-9]{32}$/D', $classId)) throw new \RuntimeException('Invalid class');
     $query = $db->prepare('SELECT name FROM classes WHERE id = ?');
@@ -50,6 +48,13 @@ function createAccount(\PDO $db, array $input): array
         throw $error;
     }
     return ['id' => $id, 'email' => $email, 'name' => $name, 'classId' => $classId, 'className' => $className];
+}
+
+function validateNewPassword(mixed $password): void
+{
+    // Count Unicode code points, not UTF-8 bytes. Bcrypt still has a 72-byte ceiling.
+    if (!is_string($password) || strlen($password) > 72 || str_contains($password, "\0")
+        || preg_match_all('/./us', $password) < 8) throw new ApiError(422, 'INVALID_NEW_PASSWORD');
 }
 
 function migrateAccounts(\PDO $db): void
@@ -75,4 +80,5 @@ function migrateAccounts(\PDO $db): void
     }
     if (!$db->query('SELECT version FROM schema_migrations WHERE version = 2')->fetchColumn())
         $db->prepare('INSERT INTO schema_migrations (version, applied_at) VALUES (2, ?)')->execute([time()]);
+    migrateRegistration($db);
 }

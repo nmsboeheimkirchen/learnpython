@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { buildStaticSite } from './build-static-site.mjs';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const privateFiles = ['src/bootstrap.php', 'src/auth.php', 'src/storage.php', 'src/account-management.php', 'public/api/index.php', 'bin/manage.php', 'schema.sql'];
+const privateFiles = ['src/bootstrap.php', 'src/auth.php', 'src/storage.php', 'src/account-management.php', 'src/registration.php', 'src/mail.php', 'public/api/index.php', 'bin/manage.php', 'bin/mail-worker.php', 'schema.sql', 'registration-schema.sql'];
 
 export function releaseFiles(root, prefix = '') {
     return readdirSync(join(root, prefix), { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name)).flatMap(entry => {

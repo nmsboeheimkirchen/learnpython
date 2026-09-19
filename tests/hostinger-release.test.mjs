@@ -18,6 +18,9 @@ function fixture() {
         'notes.txt': 'DO_NOT_PUBLISH', '.env': 'DO_NOT_PUBLISH', 'server/config.local.php': 'DO_NOT_PUBLISH',
         'server/src/bootstrap.php': '<?php // bootstrap', 'server/src/auth.php': '<?php // auth', 'server/src/storage.php': '<?php // storage',
         'server/src/account-management.php': '<?php // accounts and migration',
+        'server/src/registration.php': '<?php // registration', 'server/src/mail.php': '<?php // mail worker',
+        'server/registration-schema.sql': '-- registration schema',
+        'server/bin/mail-worker.php': '<?php // stable private cron dispatcher',
         'server/public/api/index.php': '<?php // API', 'server/bin/manage.php': '<?php // management', 'server/schema.sql': '-- schema',
     };
     for (const [path, content] of Object.entries(files)) {

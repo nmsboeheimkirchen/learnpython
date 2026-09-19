@@ -2419,7 +2419,8 @@ test("the public index is the selected complete B homepage instead of a redirect
 
     assert.match(root, /<body class="course-home home-agent-path"/);
     assert.match(root, /Entdecke,/);
-    assert.match(root, /href="index-a\.html"/);
+    assert.doesNotMatch(root, /class="variant-switch"|class="course-header-action"/);
+    assert.match(root, /data-account-actions/);
     assert.match(root, /agent-path-magenta-portal\.webp/);
     assert.doesNotMatch(root, /window\.location|http-equiv=["']refresh/i);
     assert.equal(root, optionB);

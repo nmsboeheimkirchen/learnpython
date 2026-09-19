@@ -1,10 +1,14 @@
 # Roadmap und offene Entscheidungen
 
-18.09.2026: Nutzer bestätigt Login, Speichern und Logout im persönlichen Testkonto. Neue Oberfläche, Klassencode-Neuanmeldung, Kontobereich und Lehreransicht werden **vor Umsetzung besprochen**; Vorschläge und offene Entscheidungen in [LOGIN-NEXT-STEPS.md](LOGIN-NEXT-STEPS.md). `CTEST` ist noch nicht aktiviert.
+19.09.2026: Phase 1 implementiert (Kopfzeile/Vollbild, Passwortsichtbarkeit, Klassencode, E-Mail-Verifikation, persistente Mailwarteschlange). Live bleibt vorerst r2: Testmail-Empfang und hPanel-Cron noch bestätigen, dann Backup/Migration/Release. `CTEST` ist bislang nur in isolierten Tests aktiv. Details und Abgrenzung zu Kontoverwaltung/Lehreransicht/PICO: [LOGIN-NEXT-STEPS.md](LOGIN-NEXT-STEPS.md); genauer Fortsetzungsstand: [LOGIN-HANDOFF.md](LOGIN-HANDOFF.md).
 
 ## Lernpfad
 
 - [x] Pixelmuseum: offene Lösungswege, klare und geräteunabhängige Weltregeln
+- [ ] PICO später umbenennen und die Agentengeschichte für einen kürzeren, klar geführten Wahlweg überarbeiten; blockiert Login/Klassenverwaltung nicht
+  - [ ] Optionales PICO-Level 2a aus dem aktiven Lernweg entfernen (gewünschte Richtung vom 19.09.); Level 2 direkt zu 3, Altlinks und historische Lösungen erhalten
+  - [ ] Anzeigename von stabilen Speicher-IDs trennen; bei substanziell neuen Aufgaben explizite Kursversion/Übernahme alter Abschlüsse statt stiller Löschung oder falscher Anerkennung
+  - [ ] Regressionstests für alten Gast-/Kontostand, Umbenennung, Codeübernahme mit/ohne 2a, Gerätewechsel, Navigation und serverseitige Freischaltungen ergänzen
 - [ ] Gemeinsame Helikopterflucht als interaktives Kursfinale umsetzen
   - [x] Hangar und Bildaufbau aus Variante A übernehmen
   - [x] Helikopter modern, kantig und facettiert wie in Variante B gestalten
@@ -66,6 +70,11 @@ Aktuelle Priorität (16.09.2026): Login mit E-Mail-Adresse und Passwort sowie ze
   - [x] Website, DNS und HTTPS bereit; HTTPS-HEAD auf `agentpy.bildungdigital.at` liefert HTTP 200 (16.09.2026)
   - [x] Eigene Hostinger-Datenbank verbinden und initial vier InnoDB-/utf8mb4-Tabellen anlegen; keine Schülerkonten vorhanden
   - [ ] Kontoanlage, Wiederherstellung und Mailversand festlegen
+  - [x] Phase 1: Klassencode, 5 Fehlversuche/5 Minuten, Name/E-Mail/Passwort, Verifikation; Schema 3 erhält Konten/Code. Tests: richtige/falsche/widerrufene Codes, abgelaufene Berechtigung/Token, CSRF, Klassen-ID-Manipulation, letzte freie Stelle parallel, 32 Plätze inklusive Reservierungen, doppelte E-Mail und einmalige Aktivierung auf SQLite/MariaDB
+  - [x] Bestätigungsmails persistent vormerken; rollierend höchstens 10/Minute und 100/24 Stunden. Tests: 32 wartende Aufträge, parallele PHP-Prozesse, Prozessabbruch/Lease, Versandfehler/Wiederholung, konfigurierbarer Takt und Tagesbudget. UI mit Outlook/Geduld/Spam, keine behauptete Zustellung
+  - [x] `MAIL-TRANSPORT-LIMIT`: zentrale Grenzen, Warteschlangensteuerung, UI und Tests markiert/gekoppelt; SMTP-Adapter später ergänzen, persistente Aufträge/Missbrauchsschutz nicht entfernen
+  - [x] Startseitenkopf/Vollbild/Passwortsichtbarkeit und Registrierung in Chromium/WebKit prüfen; Regression: Vollbildknopf verdeckt im Präsentationsmodus nicht den Rückweg zum Editor
+  - [ ] Phase-1-Livefreigabe: Empfang der echten Testmail, hPanel-Cron jede Minute (privater Dispatcher vorhanden), frisches Datenbankbackup, additive Migration 3, `CTEST` für vorhandene Klasse Test, Releaseprüfung und HTTPS-/Login-Smoke
   - [x] Mindestpasswortlänge auf Nutzerwunsch 8 Zeichen; Tests für 7/8 Zeichen, Umlaute, bcrypt-Obergrenze und Nullzeichen
   - [x] Name und genau eine Pflichtklasse pro Konto: Datenbank-Fremdschlüssel, private Klassen-/Kontoanlage und Anzeige im eigenen Kontostatus; noch keine Lehrerübersicht
   - [x] Migration 2 für leeren Alt-Pilotbestand, Abbruch bei bestehenden Alt-Konten, wiederholbare Migration und Erhalt bestehender v2-Konten auf SQLite/MariaDB geprüft; 34 Backendtests, 16 Loginbrowser- und 207 Logik-/Deploymenttests grün
@@ -81,6 +90,9 @@ Aktuelle Priorität (16.09.2026): Login mit E-Mail-Adresse und Passwort sowie ze
   - [ ] Passwort-Wiederherstellung sowie Sitzungsablauf im laufenden Editor und Browser-Zurück/Seiten-Cache ergänzend end-to-end testen
   - [ ] Lasttest mit 15 gleichzeitig Aktiven und 30 als Reserve einschließlich Anmeldungs- und Abschlussstößen durchführen; Details und weitere Abnahmetests siehe `LOGIN-PILOT.md`
 - [ ] Stufe 3: Klassenverwaltung und Lehreransicht nach dem Gerätewechsel-Pilot fachlich modellieren
+  - [x] Pilot-Zugang und Rechte festgelegt (19.09.): Code + bestätigte E-Mail, 32 SuS; Lehrerrolle nur Superadmin, Mitbetreuung nach Zustimmung des Klasseninhabers
+  - [ ] Später ggf. vom Klasseninhaber einstellbare Kapazität; Verringerung darf keine bestehenden Mitgliedschaften automatisch löschen
+  - [ ] Fortschrittsbasis 60/10/20/10 und Extras +20 zweites Projekt / +5 Mission 2–3 umsetzen; getrennte Bonusanzeige vor vollständigem Pflichtweg, maximal 125 %, PICO 2a ohne Wertung; Grenzen und Wiederholungen testen
   - [ ] Lehrerrolle, Klassen, Beitrittscodes, Mitgliedschaften, Namenslistenimport, Fortschrittsansicht und Löschabläufe definieren
   - [ ] In der zentralen Lehreransicht standardmäßig nur Abschlussstatus, Zeitpunkt und erforderliche Lernmetadaten anzeigen; Entwürfe und vollständige Quellcodes bleiben privat
   - [ ] Optional später Microsoft-Anmeldung ergänzen und zunächst auf den eigenen Schultenant begrenzen

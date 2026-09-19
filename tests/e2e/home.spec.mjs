@@ -50,14 +50,14 @@ function durationInMilliseconds(value) {
     return Number.POSITIVE_INFINITY;
 }
 
-test("the public root is the selected complete B homepage and keeps A reachable", async ({ page }) => {
+test("the public root is the selected B homepage with fullscreen instead of variant controls", async ({ page }) => {
     const pageErrors = capturePageErrors(page);
     await page.goto("/");
 
     await expect(page.locator("body")).toHaveClass(/home-agent-path/);
     await expect(page.locator("h1")).toContainText("Entdecke,");
-    await expect(page.locator('.variant-switch a[aria-current="page"]')).toHaveText("B");
-    await expect(page.locator('.variant-switch a[href="index-a.html"]')).toBeVisible();
+    await expect(page.locator('.variant-switch, .course-header-action')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Vollbild', exact: true })).toBeVisible();
     await expect(page.locator(".course-brand")).toHaveAttribute("href", "index.html");
     await expect(page.locator(".course-brand-logo")).toHaveAttribute("src", `assets/brand/agent-py-logo.png?v=${assetVersion}`);
     const logoResponse = await page.request.get(`/assets/brand/agent-py-logo.png?v=${assetVersion}`);
@@ -112,7 +112,8 @@ for (const variant of variants) {
         expect(links).toEqual(missionTargets);
 
         const currentVariant = page.locator(`.variant-switch a[aria-current="page"]`);
-        await expect(currentVariant).toHaveText(variant.currentVariant);
+        if (variant.currentVariant === "A") await expect(currentVariant).toHaveText("A");
+        else await expect(page.locator('.variant-switch')).toHaveCount(0);
         await expect(page.locator(".course-future")).toContainText("PICO");
         await expect(page.locator(".course-future")).toContainText("Pixelmuseum");
         await expect(page.locator("#future-title")).toHaveText("Die 5. Mission wählst du.");
@@ -272,7 +273,7 @@ test("phone heroes keep the artwork visible through translucent cards and compac
         await page.goto(`/${variant.path}`);
         const header = page.locator(".course-header");
         const brand = page.locator(".course-brand");
-        const start = page.locator(".course-header-action");
+        const start = page.locator(variant.currentVariant === "A" ? ".course-header-action" : ".account-fullscreen");
         const switcher = page.locator(".variant-switch");
         const hero = page.locator(".course-hero-card");
         const style = await hero.evaluate(element => {
@@ -305,16 +306,16 @@ test("phone heroes keep the artwork visible through translucent cards and compac
         const headerBox = await header.boundingBox();
         const brandBox = await brand.boundingBox();
         const startBox = await start.boundingBox();
-        const switcherBox = await switcher.boundingBox();
+        const switcherBox = variant.currentVariant === "A" ? await switcher.boundingBox() : null;
         expect(headerBox).not.toBeNull();
         expect(brandBox).not.toBeNull();
         expect(startBox).not.toBeNull();
-        expect(switcherBox).not.toBeNull();
         expect(brandBox.height).toBeGreaterThanOrEqual(44);
         expect(brandBox.x + brandBox.width).toBeLessThanOrEqual(headerBox.x + headerBox.width);
         expect(brandBox.x + brandBox.width).toBeLessThanOrEqual(startBox.x + 1);
-        expect(startBox.x + startBox.width).toBeLessThanOrEqual(switcherBox.x + 1);
-        await expect(start).toHaveText("Starten");
+        if (switcherBox) expect(startBox.x + startBox.width).toBeLessThanOrEqual(switcherBox.x + 1);
+        else expect(startBox.x + startBox.width).toBeLessThanOrEqual(headerBox.x + headerBox.width);
+        await expect(start).toHaveText(variant.currentVariant === "A" ? "Starten" : "Vollbild");
 
         const overflow = await documentOverflow(page);
         expect(overflow.body).toBeLessThanOrEqual(1);

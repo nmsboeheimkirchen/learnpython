@@ -56,6 +56,7 @@ for (const path of presentationPages) {
         const originalStart = page.locator("#run-btn");
         const exit = page.locator("#exit-presentation-btn");
         await expect(page.locator("body")).toHaveClass(/presentation-mode/);
+        await expect(page.locator(".account-toolbar")).toBeHidden();
         await expect(start).toBeVisible();
         await expect(start).toBeInViewport();
         await expect(start).toBeFocused();

@@ -22,6 +22,8 @@ mkdirSync(join(temp, 'sessions'));
 const env = { ...process.env, AGENTPY_CONFIG: '', AGENTPY_ENVIRONMENT: 'development',
     AGENTPY_ORIGIN: 'http://127.0.0.1:4174', AGENTPY_DSN: `sqlite:${join(temp, 'browser_test.sqlite')}`,
     AGENTPY_DB_USER: '', AGENTPY_DB_PASSWORD: '', AGENTPY_SESSION_PATH: join(temp, 'sessions') };
+Object.assign(env, { AGENTPY_REGISTRATION_ENABLED: 'true', AGENTPY_MAIL_TRANSPORT: 'test', AGENTPY_MAIL_FROM: 'noreply@example.test' });
+writeFileSync(join(root, '.cache/login-browser-fixture.json'), JSON.stringify({ dsn: env.AGENTPY_DSN, sessions: env.AGENTPY_SESSION_PATH }));
 function manage(command, input = {}) {
     const result = spawnSync(php, [...phpArgs, 'server/bin/manage.php', command], { cwd: root, env, input: JSON.stringify(input), encoding: 'utf8', windowsHide: true });
     if (result.status !== 0) throw new Error(`Test fixture setup failed: ${result.stderr || result.error}`);
@@ -29,6 +31,7 @@ function manage(command, input = {}) {
 }
 manage('migrate');
 const classInfo = JSON.parse(manage('create-class', { name: 'Browser Test' }));
+manage('create-invitation', { classId: classInfo.id, code: 'CTEST', expiresAt: Math.floor(Date.now()/1000)+86400 });
 for (const engine of ['login-chromium', 'login-webkit']) {
     for (const name of ['student-a', 'student-b']) manage('create-user', { email: `${name}-${engine}@example.test`, password: 'Synthetic-browser-password-123!', name, classId: classInfo.id });
 }

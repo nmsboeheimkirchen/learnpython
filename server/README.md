@@ -1,5 +1,19 @@
 # Login-/Speicher-Pilot: Integration und Hostinger-Testversion
 
+## Phase 1 – Stand 19.09.2026
+
+Registrierung und persistente Mailqueue implementiert/testet, **noch nicht live aktiviert**. Live bleibt r2 bis tatsächlicher Mail-Empfang und hPanel-Cron bestätigt sind; ältere Angaben unten beschreiben r2. Aktuelle Betriebsschritte: [HOSTINGER-DEPLOY.md](../HOSTINGER-DEPLOY.md).
+
+- Additives Schema 3: Klassenkapazität/Einladungen, reservierte Anmeldungen, Mailjobs und Budget. `manage.php migrate` erhält Konten/Lernstände, keine Migration per HTTP.
+- Gast-POST mit Origin+CSRF: `check-invitation {code}` → Klassenname/10-Minuten-Grant; `register {name,email,password}` → 202/Vormerkung; `verify-email {token}` → einmalige Aktivierung ohne Auto-Login; `cancel-registration {}` löscht Grant, nicht Sperrzähler. `session` liefert öffentliche Registrierungspolicy; Fehler ggf. `attemptsLeft`/`retryAfter`.
+- Fünf falsche Codes → 300 Sekunden Sperre pro serverseitiger Sitzung, zusätzliche großzügige IP-/Gesamtbremse für Schul-NAT. Code ist kein Nachweis der Schulzugehörigkeit. 32 Plätze inklusive 48-Stunden-Reservierungen, letzte Stelle transaktional; E-Mail eindeutig, vorhandene Konten unverändert.
+- Private CLI: `create-invitation {classId,code,expiresAt}` (fünf Großbuchstaben, Unix-Sekunden), `revoke-invitation {code}`, `mail-work`. Eingaben auf stdin. `CTEST` ist ein echter Einladungseintrag, kein Bypass.
+- Konfiguration: `registration_enabled=false`, `mail_transport=disabled|sendmail`, `mail_from`, `mail_per_minute=10`, `mail_per_day=100`. Privater `registration-config.php` neben `config.php` kann nur diese Felder überschreiben. `test`-Transport nur in lokaler Entwicklung.
+- `server/bin/mail-worker.php` als stabiler privater Cron-Dispatcher folgt aktivem Release; beim Rückfall auf r2 kein Versand. Dauerhafte Jobs, gesperrtes Budget, Lease und Backoff schützen gegen Neustarts/Parallelität. At-least-once-Mailversand, einmalige Tokenaktivierung; Transportannahme beweist keine Zustellung. Link als URL-Fragment, Bestätigung nur per explizitem POST.
+- Tests `registration-cases.mjs` auf SQLite/MariaDB, `login-e2e/registration.spec.mjs` auf Chromium/WebKit; `test:hosting` prüft auch Cron-Dispatcher. Bestehende GitHub-Pipeline führt sie aus.
+
+Phase 2/später: Passwort-Reset/erneutes Anfordern, `Mein Konto`, Namens-/E-Mail-Änderung, Löschung, Lehreransicht und Fortschrittsprozente. SMTP separat implementieren; Marker `MAIL-TRANSPORT-LIMIT` verbindet Transport, Queue, Limits, UI und Tests.
+
 Branch `dev-login-save`, noch uncommittet. Öffentliche Hostinger-Testversion `pilot-20260917-r2` mit Schema 2 und Pflichtklasse seit 17.09.2026 aktiv und geprüft, **noch nicht für Schülerbetrieb freigegeben**. Die Lernseiten unterstützen Remote-Adapter, Login/Logout und Speicherstatus. `assets/data/account-config.js` lässt das Kontosystem im normalen statischen Release deaktiviert; nur das Hostinger-Paket aktiviert es. Synthetische Live-Testkonten anschließend gelöscht; persönliches Testkonto des Nutzers separat angelegt und geprüft. Betrieb und Rückfall: [HOSTINGER-DEPLOY.md](../HOSTINGER-DEPLOY.md).
 
 ## Bereits umgesetzt

@@ -5,10 +5,13 @@ namespace AgentPy;
 
 require_once __DIR__ . '/storage.php';
 require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/account-management.php';
+require_once __DIR__ . '/registration.php';
+require_once __DIR__ . '/mail.php';
 
 final class ApiError extends \RuntimeException
 {
-    public function __construct(public readonly int $status, public readonly string $errorCode)
+    public function __construct(public readonly int $status, public readonly string $errorCode, public readonly array $details = [])
     {
         parent::__construct($errorCode);
     }
@@ -19,8 +22,15 @@ function config(): array
     $path = getenv('AGENTPY_CONFIG');
     $file = $path ? require $path : [];
     if (!is_array($file)) throw new \RuntimeException('Invalid configuration');
+    // Optional private mail settings allow deployment without rewriting DB credentials.
+    $mailPath = $path ? dirname($path) . '/registration-config.php' : '';
+    if ($mailPath && is_file($mailPath)) {
+        $mailSettings = require $mailPath;
+        if (!is_array($mailSettings)) throw new \RuntimeException('Invalid mail configuration');
+        $file = array_replace($file, array_intersect_key($mailSettings, array_flip(['registration_enabled', 'mail_transport', 'mail_from', 'mail_per_minute', 'mail_per_day'])));
+    }
     $values = [];
-    foreach (['environment', 'origin', 'dsn', 'db_user', 'db_password', 'session_path'] as $key) {
+    foreach (['environment', 'origin', 'dsn', 'db_user', 'db_password', 'session_path', 'registration_enabled', 'mail_transport', 'mail_from', 'mail_per_minute', 'mail_per_day'] as $key) {
         $env = getenv('AGENTPY_' . strtoupper($key));
         $values[$key] = $env !== false ? $env : ($file[$key] ?? '');
     }
@@ -37,6 +47,20 @@ function config(): array
     if (!$local && !str_starts_with($values['dsn'], 'mysql:'))
         throw new \RuntimeException('Production requires MySQL/MariaDB');
     $values['secure_cookie'] = !$local || $origin['scheme'] === 'https';
+    $values['registration_enabled'] = filter_var($values['registration_enabled'], FILTER_VALIDATE_BOOLEAN);
+    $values['mail_transport'] = $values['mail_transport'] ?: 'disabled';
+    foreach (['mail_per_minute' => 10, 'mail_per_day' => 100] as $key => $default) {
+        $value = $values[$key] === '' ? $default : filter_var($values[$key], FILTER_VALIDATE_INT);
+        if ($value === false || $value < 1 || $value > 100000) throw new \RuntimeException('Invalid mail limit');
+        $values[$key] = $value;
+    }
+    if (!in_array($values['mail_transport'], $local ? ['disabled', 'sendmail', 'test'] : ['disabled', 'sendmail'], true))
+        throw new \RuntimeException('Unsupported mail transport');
+    if ($values['registration_enabled'] && ($values['mail_transport'] === 'disabled'
+        || !filter_var($values['mail_from'], FILTER_VALIDATE_EMAIL) || preg_match('/[\r\n]/', $values['mail_from'])))
+        throw new \RuntimeException('Registration requires a configured sender');
+    if ($values['mail_transport'] === 'sendmail' && ($values['mail_per_minute'] > 10 || $values['mail_per_day'] > 100))
+        throw new \RuntimeException('Built-in sendmail quotas cannot be exceeded');
     return $values;
 }
 

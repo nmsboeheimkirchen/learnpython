@@ -24,6 +24,32 @@ function domain() {
 }
 function init(root) { return run([prepare, root, 'https://agentpy.example.test', 'agentpy_test', 'agentpy_test']); }
 
+test('stable mail cron follows the active release, records a private heartbeat and stops on rollback', () => {
+    const root = domain(); assert.equal(init(root).status, 0);
+    const privateRoot = join(root, 'agentpy-private');
+    const worker = join(privateRoot, 'tools/mail-worker.php');
+    cpSync(join(repo, 'server/bin/mail-worker.php'), worker);
+    const active = join(root, 'public_html/release.json');
+    const app = join(privateRoot, 'releases/worker-test/app/src'); mkdirSync(app, {recursive:true});
+    writeFileSync(join(app, 'registration.php'), '<?php // fixture');
+    writeFileSync(join(app, 'bootstrap.php'), `<?php namespace AgentPy;
+        function config() { return ['registration_enabled'=>true,'mail_per_minute'=>10]; }
+        function database($config) { return null; }
+        function dispatchMail($db,$config) { static $n=0; return ++$n<=3; }`);
+    writeFileSync(active, JSON.stringify({releaseId:'worker-test'}));
+    const result = run([worker]); assert.equal(result.status, 0, result.stderr);
+    assert.equal(JSON.parse(result.stdout).processed, 3);
+    const status = join(privateRoot, 'mail-worker-status.json');
+    assert.equal(JSON.parse(readFileSync(status)).releaseId, 'worker-test');
+    if (process.platform !== 'win32') assert.equal(statSync(status).mode & 0o777, 0o600);
+    mkdirSync(join(privateRoot, 'releases/old-test/app'), {recursive:true});
+    writeFileSync(active, JSON.stringify({releaseId:'old-test'}));
+    assert.equal(JSON.parse(run([worker]).stdout).processed, 0);
+    writeFileSync(active, JSON.stringify({releaseId:'../../outside'}));
+    assert.equal(run([worker]).status, 1);
+    assert.equal(JSON.parse(readFileSync(status)).releaseId, 'old-test');
+});
+
 test('setup creates only private configuration and refuses to overwrite a password on rerun', () => {
     const root = domain(); const result = init(root);
     assert.equal(result.status, 0, result.stderr || result.error?.message);

@@ -1,5 +1,25 @@
 # Hostinger: Testveröffentlichung und Rückfall
 
+## Update 19.09.2026: Phase 1 bereit, noch keine Live-Umschaltung
+
+Registrierung/Verifikation und Mailwarteschlange sind implementiert. Lokal bestanden: 197 Logik-, 50 Backend-, 133 Missionsbrowser-, 24 Loginbrowser- und 11 Deploymenttests. **Live bleibt `pilot-20260917-r2`, Datenbank/persönliches Konto unverändert.** Vor Freigabe fehlen bestätigter Testmail-Empfang und hPanel-Cron. Die älteren Abschnitte darunter sind historischer Stand; nicht als leere Datenbank interpretieren.
+
+Eine genehmigte Testmail (`AGENT PY: Versandtest Phase 1`) von `noreply@agentpy.bildungdigital.at` an `michael@cybershoes.io` wurde vom Transport angenommen. Das beweist noch keinen Empfang. `mail()`/Sendmail unter PHP 8.3.33 sind verfügbar, `crontab` über SSH nicht.
+
+Der stabile CLI-Dispatcher liegt bereits privat unter `agentpy-private/tools/mail-worker.php` (0600). Manueller Probelauf unter r2: `processed=0`; er folgt dem aktiven Release und stoppt beim Rückfall auf r2. Keine öffentliche Cron-URL, keine Kontenänderung. In hPanel nur bei dieser Website unter Erweitert → Cron-Jobs einen **Custom/benutzerdefinierten** Job jede Minute einrichten (fünf Zeitfelder jeweils `*`), andere Jobs nicht ersetzen. [Hostinger-Anleitung](https://www.hostinger.com/support/1583465-how-to-set-up-a-cron-job-at-hostinger/).
+
+```text
+/opt/alt/php83/usr/bin/php /home/u535472856/domains/agentpy.bildungdigital.at/agentpy-private/tools/mail-worker.php
+```
+
+Keine Passwörter/Umleitung ergänzen. Der explizite PHP-Pfad vermeidet die veraltete Standard-CLI. `node scripts/check-hostinger-mail.mjs worker-status` liest ausschließlich privaten Status (Release, Zeitpunkt, Anzahl). `ranAt` muss ohne manuellen Aufruf weitersteigen, um den Zeitplan nachzuweisen. Bisher manuell: `1789825650`, noch kein bestätigter Cron.
+
+Vor Release: frisches privates SQL-Backup samt Hash (altes Backup vor persönlichem Konto!), neue unveränderliche Release-ID mit Herkunftscommit bauen/hochladen/Manifest prüfen, additives Schema 3 migrieren und serverintern Konten/Lernstände unverändert vergleichen. Echten zeitlich begrenzten `CTEST` für die vorhandene Klasse `Test` anlegen, kein neues persönliches Konto. Standard 32 Plätze inklusive bestehendem Testkonto.
+
+Erst nach Mail-/Cron-Abnahme private `agentpy-private/registration-config.php` (0600) erstellen: `registration_enabled=true`, `mail_transport=sendmail`, `mail_from=noreply@agentpy.bildungdigital.at`, `mail_per_minute=10`, `mail_per_day=100`. Bootstrap übernimmt nur diese Mailwerte; DB-Zugangsdaten bleiben unangetastet. Danach Aktivierung, HTTPS-/Privatpfad-/Login-/Speicher-Smoke, neuer Cron-Heartbeat, schließlich `confirm` oder Webroot-Rollback. r2-API bleibt mit additivem Schema 3 kompatibel.
+
+`MAIL-TRANSPORT-LIMIT`: rollierende projektweite Versandversuche einschließlich Fehler/Abbruch; andere Websites können zusätzlich das Anbieterbudget beanspruchen. SMTP-Adapter noch nicht implementiert. Reservierungen nach 48 Stunden beim nächsten Register-/Worker-Aufruf entfernen, Verifikationslink ab Versandversuch höchstens 24 Stunden und nie länger als Reservierung. Erneutes Anfordern/Passwort-Reset/Kontoverwaltung und Lehrerübersicht folgen separat. Genaue Fortsetzung: [LOGIN-HANDOFF.md](LOGIN-HANDOFF.md).
+
 Stand 17.09.2026: **Testversion `pilot-20260917-r2` auf https://agentpy.bildungdigital.at aktiv.** Schema 2 ergänzt Namen/Pflichtklasse; Mindestpasswortlänge acht Zeichen. Persönliches Testkonto des Nutzers in Klasse `Test` angelegt, Browser-Login/Anzeige/Logout ohne Lernstandsänderung geprüft. Temporäre Testkonten und Testklasse wieder gelöscht. Keine echten Schülerkonten und keine Schülerfreigabe, kein automatisches Hostinger-Deployment. GitHub Pages und andere Hostinger-Websites unverändert. Arbeitsstand noch nicht committet/gepusht.
 
 ## Verzeichnisse

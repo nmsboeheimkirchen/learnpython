@@ -1,5 +1,30 @@
 (() => {
     "use strict";
+    const ready = document.readyState === "loading"
+        ? new Promise(resolve => document.addEventListener("DOMContentLoaded", resolve, { once: true })) : Promise.resolve();
+    // Fullscreen also works in guest-only builds; it neither reads nor writes learning data.
+    ready.then(() => {
+        let actions = document.querySelector("[data-account-actions]");
+        if (!actions) {
+            actions = document.createElement("div"); actions.className = "account-toolbar";
+            document.body.appendChild(actions);
+        }
+        const fullscreen = document.createElement("button"); fullscreen.type = "button";
+        fullscreen.className = "account-fullscreen";
+        const update = () => {
+            fullscreen.textContent = document.fullscreenElement ? "Vollbild beenden" : "Vollbild";
+            fullscreen.setAttribute("aria-pressed", String(Boolean(document.fullscreenElement)));
+        };
+        update(); actions.appendChild(fullscreen);
+        fullscreen.addEventListener("click", async () => {
+            try {
+                if (document.fullscreenElement) await document.exitFullscreen();
+                else if (document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen();
+                else window.alert("Vollbild wird hier nicht unterstützt. Am Laptop kannst du F11 versuchen.");
+            } catch (_) { window.alert("Vollbild ist in diesem Browser gerade nicht möglich. Am Laptop kannst du F11 versuchen."); }
+        });
+        document.addEventListener("fullscreenchange", update);
+    });
     const config = window.AgentAccountConfig;
     if (!config?.enabled) return;
     const remote = window.AgentPyRemoteLearningData;
@@ -44,19 +69,114 @@
         if (controls?.hasUnconfirmed() && !window.confirm("Nicht bestätigte Änderungen oder unfertiger Code gehen beim Neuladen verloren. Hast du deinen Code gesichert?")) return;
         window.location.reload();
     }
+    function passwordVisibility(form) {
+        const input = form.querySelector('input[name="password"]');
+        const toggle = button("Passwort anzeigen", () => {
+            const visible = input.type === "password";
+            input.type = visible ? "text" : "password";
+            toggle.textContent = visible ? "Passwort verbergen" : "Passwort anzeigen";
+            toggle.setAttribute("aria-pressed", String(visible));
+        });
+        toggle.setAttribute("aria-pressed", "false"); input.closest("label").after(toggle);
+    }
+    async function registrationRequest(action, body) {
+        const current = await client.request("session");
+        if (invalidated) throw remote.error("PROFILE_CHANGED");
+        if (current.profile) throw remote.error("ALREADY_SIGNED_IN");
+        return client.request(action, { body, csrfToken: current.csrfToken });
+    }
+    function registrationDialog(verificationToken = null) {
+        if (controls?.hasUnconfirmed()) return;
+        const dialog = document.createElement("dialog"); dialog.className = "account-dialog";
+        dialog.setAttribute("aria-label", verificationToken ? "E-Mail bestätigen" : "Neuanmeldung");
+        let busy = false, phase = verificationToken ? "verify" : "code", className = "";
+        dialog.addEventListener("cancel", event => { if (busy) event.preventDefault(); });
+        dialog.addEventListener("close", () => {
+            dialog.querySelectorAll('input[name="password"]').forEach(input => { input.value = ""; input.type = "password"; });
+            verificationToken = null; dialog.remove(); loginButton.focus();
+            if (!session?.profile) show("Gastmodus · nur in diesem Browser gespeichert.");
+            // Best effort: the short-lived grant also expires on the server. The cooldown remains.
+            registrationRequest("cancel-registration", {}).catch(() => {});
+        });
+        function render() {
+            const heading = phase === "code" ? "Gib deinen Klassencode ein" : phase === "register" ? "Willkommen" : phase === "verify" ? "E-Mail bestätigen" : "Prüfe dein Postfach";
+            dialog.innerHTML = '<form><h2></h2><p data-intro></p><div data-fields></div><p role="alert"></p><button type="submit"></button><button type="button" data-cancel>Abbrechen · Gastmodus</button></form>';
+            const form = dialog.querySelector("form"); form.querySelector("h2").textContent = heading;
+            const intro = form.querySelector("[data-intro]");
+            const fields = form.querySelector("[data-fields]");
+            const submit = form.querySelector('[type="submit"]');
+            const cancel = form.querySelector("[data-cancel]");
+            if (phase === "code") {
+                fields.innerHTML = '<label>Klassencode<input name="code" required minlength="5" maxlength="5" autocomplete="off" autocapitalize="characters" spellcheck="false"></label>';
+                intro.textContent = "Den Code bekommst du von deiner Lehrperson."; submit.textContent = "Klassencode prüfen";
+            } else if (phase === "register") {
+                intro.textContent = `Willkommen in ${className}! Lege dein Konto an.`;
+                fields.innerHTML = '<label>Name<input name="name" autocomplete="name" required maxlength="100"></label><label>E-Mail-Adresse<input name="email" type="email" autocomplete="username" required maxlength="254"></label><label>Passwort (mindestens 8 Zeichen)<input name="password" type="password" autocomplete="new-password" required></label>';
+                passwordVisibility(form); submit.textContent = "Konto anlegen";
+            } else if (phase === "verify") {
+                intro.textContent = "Bestätige deine E-Mail-Adresse. Anschließend kannst du dich auf jedem Gerät anmelden.";
+                submit.textContent = "E-Mail jetzt bestätigen";
+            }
+            cancel.addEventListener("click", () => { if (!busy) dialog.close(); });
+            form.addEventListener("submit", async event => {
+                event.preventDefault(); if (busy) return;
+                busy = true; submit.disabled = true; cancel.disabled = true;
+                const alert = form.querySelector('[role="alert"]'); alert.textContent = "";
+                try {
+                    if (phase === "code") {
+                        const result = await registrationRequest("check-invitation", { code: form.elements.code.value });
+                        className = result.className; phase = "register"; render();
+                    } else if (phase === "register") {
+                        const password = form.elements.password.value;
+                        const result = await registrationRequest("register", { name: form.elements.name.value, email: form.elements.email.value, password });
+                        form.elements.password.value = "";
+                        phase = "sent"; render();
+                        // MAIL-TRANSPORT-LIMIT: derive the notice from the worker's server policy.
+                        // Hosting/SMTP changes must update policy, queue and tests together.
+                        const note = dialog.querySelector("[data-intro]");
+                        note.textContent = `Wenn deine Adresse noch kein Konto hat, senden wir dir eine Bestätigungs-E-Mail. Öffne dein E-Mail-Programm, zum Beispiel Outlook, und klicke auf den Bestätigungslink. Wenn sich gerade deine ganze Klasse anmeldet, hab bitte etwas Geduld: Wir verschicken höchstens ${result.mailPolicy.perMinute} Bestätigungsmails pro Minute. Schau auch im Spam-Ordner nach. Wenn keine E-Mail ankommt, frage deine Lehrperson.`;
+                        if (result.mailPolicy.dailyLimitReached) note.textContent += " Das Tageslimit ist gerade erreicht. Deine Anmeldung bleibt vorgemerkt; der Versand kann bis morgen dauern.";
+                        dialog.querySelector('[type="submit"]').hidden = true;
+                        dialog.querySelector("[data-cancel]").textContent = "Weiter im Gastmodus";
+                    } else if (phase === "verify") {
+                        await registrationRequest("verify-email", { token: verificationToken });
+                        verificationToken = null; phase = "verified";
+                        intro.textContent = "Deine E-Mail-Adresse ist bestätigt. Du kannst dich jetzt anmelden.";
+                        submit.textContent = "Zur Anmeldung"; cancel.textContent = "Weiter im Gastmodus";
+                    } else if (phase === "verified") { dialog.close(); loginDialog(); }
+                } catch (failure) {
+                    alert.textContent = failure.message;
+                    if (failure.attemptsLeft) alert.textContent += ` Noch ${failure.attemptsLeft} Versuche.`;
+                    if (failure.retryAfter) alert.textContent += ` Wartezeit: ${Math.ceil(failure.retryAfter / 60)} Minute(n).`;
+                    if (phase === "register") { form.elements.password.value = ""; form.elements.password.type = "password"; }
+                } finally {
+                    busy = false;
+                    dialog.querySelectorAll('button').forEach(item => { item.disabled = false; });
+                    if (form.isConnected) { submit.disabled = false; cancel.disabled = false; }
+                }
+            });
+            fields.querySelector("input")?.focus();
+        }
+        render(); document.body.appendChild(dialog); dialog.showModal();
+    }
     async function loginDialog() {
         if (controls?.hasUnconfirmed()) return;
         const dialog = document.createElement("dialog");
         dialog.className = "account-dialog";
         dialog.setAttribute("aria-label", "Am Schulkonto anmelden");
-        dialog.innerHTML = '<form><h2>Am Schulkonto anmelden</h2><p>Gaststand und Kontostand bleiben getrennt. Es wird nichts automatisch übernommen.</p><label>E-Mail-Adresse<input name="email" type="email" autocomplete="username" required maxlength="254"></label><label>Passwort<input name="password" type="password" autocomplete="current-password" required></label><p role="alert"></p><button type="submit">Anmelden</button><button type="button" data-cancel>Abbrechen</button><p>Du brauchst ein eingerichtetes Pilotkonto. Bei vergessenem Passwort wende dich vorerst an deine Lehrperson.</p></form>';
+        dialog.innerHTML = '<form><h2>Am Schulkonto anmelden</h2><p>Gaststand und Kontostand bleiben getrennt. Es wird nichts automatisch übernommen.</p><label>E-Mail-Adresse<input name="email" type="email" autocomplete="username" required maxlength="254"></label><label>Passwort<input name="password" type="password" autocomplete="current-password" required></label><p role="alert"></p><button type="submit">Anmelden</button><button type="button" data-cancel>Abbrechen</button><p>Zur Neuanmeldung brauchst du einen Klassencode.</p><button class="account-register-link" type="button" data-register>Neuanmeldung</button><p>Passwort vergessen? Wende dich vorerst an deine Lehrperson.</p></form>';
         const form = dialog.querySelector("form");
+        passwordVisibility(form);
+        form.querySelector("[data-register]").addEventListener("click", () => { if (!busy) { dialog.close(); registrationDialog(); } });
         const submit = form.querySelector('[type="submit"]');
         const cancel = form.querySelector("[data-cancel]");
         let busy = false;
         cancel.addEventListener("click", () => dialog.close());
         dialog.addEventListener("cancel", event => { if (busy) event.preventDefault(); });
-        dialog.addEventListener("close", () => { dialog.remove(); loginButton.focus(); });
+        dialog.addEventListener("close", () => {
+            form.elements.password.value = ""; form.elements.password.type = "password";
+            dialog.remove(); loginButton.focus();
+        });
         form.addEventListener("submit", async event => {
             event.preventDefault(); if (busy) return;
             busy = true; submit.disabled = true; cancel.disabled = true;
@@ -101,6 +221,8 @@
         for (const item of [loginButton, logoutButton, retryButton, reloadButton, exportButton]) item.hidden = true;
         panel.append(message, loginButton, logoutButton, retryButton, reloadButton, exportButton);
         document.body.appendChild(panel);
+        const headerActions = document.querySelector("[data-account-actions]");
+        if (headerActions) headerActions.appendChild(loginButton);
     }
     const mounted = mount();
     function storageStatus(status) {
@@ -180,6 +302,11 @@
                     exportButton.hidden = !document.getElementById("python-editor");
                     if (invalidated) throw remote.error("PROFILE_CHANGED");
                     document.documentElement.classList.remove("account-blocked");
+                    if (/^#verify=/.test(window.location.hash)) {
+                        const token = window.location.hash.slice(8);
+                        history.replaceState(null, "", window.location.pathname + window.location.search);
+                        registrationDialog(token);
+                    }
                     return true;
                 } catch (failure) { block(failure); return false; }
             })();

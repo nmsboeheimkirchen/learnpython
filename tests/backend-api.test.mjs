@@ -8,6 +8,7 @@ import { dirname, join, resolve } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
+import { registrationTests } from './registration-cases.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const portable = join(root, '.cache/php-runtime/php-8.5.10/php.exe');
@@ -104,6 +105,7 @@ for (const backend of backends) {
             AGENTPY_DSN: backend.dsn || `sqlite:${join(dir, 'test.sqlite')}`,
             AGENTPY_DB_USER: backend.dsn ? (process.env.AGENTPY_TEST_MYSQL_USER || '') : '',
             AGENTPY_DB_PASSWORD: backend.dsn ? (process.env.AGENTPY_TEST_MYSQL_PASSWORD || '') : '',
+            AGENTPY_REGISTRATION_ENABLED: 'true', AGENTPY_MAIL_TRANSPORT: 'test', AGENTPY_MAIL_FROM: 'noreply@example.test',
         };
         const fixture = (action, input = {}) => phpCall(['tests/backend-fixture.php', action], env, input);
         const ids = [];
@@ -348,6 +350,8 @@ for (const backend of backends) {
             assert.equal((await client.request('state')).status, 401);
             assert.equal((await client.request('session')).data.profile, null);
         });
+
+        await registrationTests({ t, fixture, env, phpCall, BrowserSession, url, workerUrl: worker2.url, ids, password, userB });
 
         await t.test('broken saved data is an error, never an empty account; disabled users lose access', async () => {
             fixture('corrupt-state', { id: userB.id });
