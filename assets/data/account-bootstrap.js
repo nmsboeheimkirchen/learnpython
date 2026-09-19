@@ -90,13 +90,23 @@
         const dialog = document.createElement("dialog"); dialog.className = "account-dialog";
         dialog.setAttribute("aria-label", verificationToken ? "E-Mail bestätigen" : "Neuanmeldung");
         let busy = false, phase = verificationToken ? "verify" : "code", className = "";
-        dialog.addEventListener("cancel", event => { if (busy) event.preventDefault(); });
+        async function leaveRegistration(openLogin = false) {
+            busy = true;
+            dialog.querySelectorAll('button').forEach(item => { item.disabled = true; });
+            // Finish session/CSRF requests BEFORE login can rotate the session cookie.
+            // A fire-and-forget request in the close event can race the subsequent login.
+            try { await registrationRequest("cancel-registration", {}); } catch (_) { /* Grant expires too. */ }
+            busy = false; dialog.close();
+            if (openLogin) loginDialog();
+        }
+        dialog.addEventListener("cancel", event => {
+            event.preventDefault(); if (!busy) leaveRegistration();
+        });
         dialog.addEventListener("close", () => {
             dialog.querySelectorAll('input[name="password"]').forEach(input => { input.value = ""; input.type = "password"; });
-            verificationToken = null; dialog.remove(); loginButton.focus();
+            verificationToken = null; dialog.remove();
+            if (!document.querySelector('dialog[open]')) loginButton.focus();
             if (!session?.profile) show("Gastmodus · nur in diesem Browser gespeichert.");
-            // Best effort: the short-lived grant also expires on the server. The cooldown remains.
-            registrationRequest("cancel-registration", {}).catch(() => {});
         });
         function render() {
             const heading = phase === "code" ? "Gib deinen Klassencode ein" : phase === "register" ? "Willkommen" : phase === "verify" ? "E-Mail bestätigen" : "Prüfe dein Postfach";
@@ -117,7 +127,7 @@
                 intro.textContent = "Bestätige deine E-Mail-Adresse. Anschließend kannst du dich auf jedem Gerät anmelden.";
                 submit.textContent = "E-Mail jetzt bestätigen";
             }
-            cancel.addEventListener("click", () => { if (!busy) dialog.close(); });
+            cancel.addEventListener("click", () => { if (!busy) leaveRegistration(); });
             form.addEventListener("submit", async event => {
                 event.preventDefault(); if (busy) return;
                 busy = true; submit.disabled = true; cancel.disabled = true;
@@ -143,7 +153,7 @@
                         verificationToken = null; phase = "verified";
                         intro.textContent = "Deine E-Mail-Adresse ist bestätigt. Du kannst dich jetzt anmelden.";
                         submit.textContent = "Zur Anmeldung"; cancel.textContent = "Weiter im Gastmodus";
-                    } else if (phase === "verified") { dialog.close(); loginDialog(); }
+                    } else if (phase === "verified") { await leaveRegistration(true); }
                 } catch (failure) {
                     alert.textContent = failure.message;
                     if (failure.attemptsLeft) alert.textContent += ` Noch ${failure.attemptsLeft} Versuche.`;
@@ -175,7 +185,7 @@
         dialog.addEventListener("cancel", event => { if (busy) event.preventDefault(); });
         dialog.addEventListener("close", () => {
             form.elements.password.value = ""; form.elements.password.type = "password";
-            dialog.remove(); loginButton.focus();
+            dialog.remove(); if (!document.querySelector('dialog[open]')) loginButton.focus();
         });
         form.addEventListener("submit", async event => {
             event.preventDefault(); if (busy) return;

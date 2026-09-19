@@ -82,10 +82,26 @@ test('class invitation, queued mail and explicit verification on another browser
         expect(device.url()).not.toContain('#verify=');
         await device.getByRole('button',{name:'E-Mail jetzt bestätigen'}).click();
         await expect(device.getByRole('dialog')).toContainText('Deine E-Mail-Adresse ist bestätigt');
+        // Hold cancellation to prove login cannot rotate cookies while an older
+        // registration session request is still in flight (WebKit CI regression).
+        let releaseCancellation;
+        const cancellationGate=new Promise(resolve=>{releaseCancellation=resolve;});
+        let cancellationStarted;
+        const cancellationSeen=new Promise(resolve=>{cancellationStarted=resolve;});
+        await device.route('**/api/index.php?action=cancel-registration',async route=>{
+            cancellationStarted(); await cancellationGate; await route.continue();
+        });
         await device.getByRole('button',{name:'Zur Anmeldung'}).click();
+        await cancellationSeen;
+        await expect(device.getByRole('dialog')).toContainText('Deine E-Mail-Adresse ist bestätigt');
+        await expect(device.getByRole('button',{name:'Zur Anmeldung'})).toBeDisabled();
+        releaseCancellation();
         await device.getByLabel('E-Mail-Adresse',{exact:true}).fill(email);
         await device.getByLabel('Passwort',{exact:true}).fill(password);
+        const loginResponse=device.waitForResponse(response=>response.url().includes('action=login'));
         await device.getByRole('dialog').getByRole('button',{name:'Anmelden',exact:true}).click();
+        expect((await loginResponse).status()).toBe(200);
+        await expect(device.getByRole('button',{name:'Abmelden',exact:true})).toBeVisible();
         await expect(device.locator('.account-panel')).toContainText('Test Anmeldung · Klasse Browser Test');
     } finally { await context.close(); }
 });
