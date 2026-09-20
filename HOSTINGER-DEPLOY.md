@@ -1,5 +1,19 @@
 # Hostinger: Testveröffentlichung und Rückfall
 
+## Aktuell 20.09.2026: r5 mit bestehenden Konten veröffentlicht
+
+**https://agentpy.bildungdigital.at läuft bestätigt mit `pilot-20260920-r5` aus Commit `55c0e6f`.** Neues Headerlayout, Vollbild und Passwortanzeige sind live. Ausschließlich bestehende Accounts können sich anmelden; Selbstregistrierung, Klassenbeitritt und E-Mail-Funktionen bleiben deaktiviert (`registration_enabled=false`, `mail_transport=disabled`). Keine private Mailkonfiguration und keine Schema-3-Migration durchgeführt. `Mein Konto`/Prozentübersicht bleiben ein nächster Entwicklungsschritt.
+
+234 lokale Logik/SQLite/Hostingtests und 28 Login-Browsertests bestanden; gesamte [GitHub-CI](https://github.com/nmsboeheimkirchen/learnpython/actions/runs/35515070520) grün. Live-HTTPS-, Datenabgrenzungs-, Login-/Speicher-/Gerätewechseltests sowie Chromium-/WebKit-Layouttests bestanden; nur die eigens angelegten synthetischen Testkonten wieder entfernt. Michael-Konto und Lernstände serverintern vor/nach Release unverändert bestätigt. Cron läuft mit r5 und `processed=0`; keine weitere Cron-Einrichtung nötig.
+
+Aktuelles privates SQL-Backup: `backups/before-pilot-20260920-r5.sql` (14454 Bytes, SHA256 `4ea6b419753c0301bb01c2b5251f138e35748fa5d1e3f2a1fe59c12152a3a26a`, Wiederherstellung noch nicht getestet). Webroot-Rückfall auf r2: `backups/web-20260920142542-ac0a73bf55`. Ausschließlich bei Bedarf:
+
+```text
+/opt/alt/php83/usr/bin/php /home/u535472856/domains/agentpy.bildungdigital.at/agentpy-private/tools/activate-hostinger.php /home/u535472856/domains/agentpy.bildungdigital.at pilot-20260920-r5 rollback
+```
+
+Weitere operative Details stehen oben in `LOGIN-HANDOFF.md`. **Die folgenden Abschnitte dokumentieren frühere Stände.** Mailabnahme bleibt Voraussetzung für spätere Selbstregistrierung, nicht für den bereits erfolgten eingeschränkten Rollout; alte r3/r4-Pakete nicht ausliefern.
+
 ## Update 19.09.2026: Phase 1 bereit, noch keine Live-Umschaltung
 
 Registrierung/Verifikation und Mailwarteschlange sind implementiert. Lokal bestanden: 197 Logik-, 50 Backend-, 133 Missionsbrowser-, 24 Loginbrowser- und 11 Deploymenttests. Nach einem WebKit-CI-Fehler wurde der Übergang Verifikation→Login gegen überlappende Sitzungsanfragen korrigiert (2221728); **GitHub-CI 35455450506 erfolgreich**. Lokales geprüftes Paket: `.cache/hostinger/pilot-20260919-r4` (124 Dateien, Herkunft 2221728). **Live bleibt `pilot-20260917-r2`, Datenbank/persönliches Konto unverändert.** Vor Freigabe fehlen bestätigter Testmail-Empfang und hPanel-Cron. Die älteren Abschnitte darunter sind historischer Stand; nicht als leere Datenbank interpretieren.
