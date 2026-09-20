@@ -1,9 +1,52 @@
 (() => {
     "use strict";
+    const config = window.AgentAccountConfig;
+    const scriptURL = new URL(document.currentScript.src, location.href);
+    const progressModuleURL = new URL("course-progress.js" + scriptURL.search, scriptURL).href;
+    const isShell = document.documentElement.hasAttribute("data-account-shell");
+    let shell = null;
+    try {
+        if (window.parent !== window && window.parent.location.origin === location.origin
+            && window.parent.document.documentElement.hasAttribute("data-account-shell")
+            && window.parent.document.getElementById("account-lesson")?.contentWindow === window) shell = window.parent;
+    } catch (_) { /* Not our shell. */ }
+    if (!isShell && !shell && config?.enabled && config.shell) {
+        const target = new URL("app.html", location.href);
+        target.searchParams.set("screen", location.pathname.split("/").pop() || "index.html");
+        // Verification secrets remain fragments, never query parameters or logs.
+        target.searchParams.set("screen", (location.pathname.split("/").pop() || "index.html") + location.search);
+        target.hash = location.hash;
+        // Runner scripts parsed before navigation commits must wait, not initialize a guest.
+        window.AgentAccount = Object.freeze({ start: () => new Promise(() => {}) });
+        location.replace(target.href);
+        return;
+    }
+    const ui = shell?.document || document;
+    if (shell) document.documentElement.classList.add("account-in-shell");
+    let lifetime = new AbortController();
+    // Small local vector set adapted from Lucide/Feather (assets/icons/LICENSE).
+    // Matches the approved preview; no remote font/CDN.
+    const paths = {
+        expand: '<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>',
+        collapse: '<path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7"/>',
+        person: '<circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2Z"/>',
+        eye: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>',
+        hidden: '<path d="m3 3 18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.2A11 11 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3 3.9M6.5 6.5A20 20 0 0 0 2 12s3.5 7 10 7a12 12 0 0 0 5.5-1.5"/>',
+        progress: '<path d="M5 20v-5M12 20V9M19 20V3"/>',
+        save: '<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12l4 4v12a2 2 0 0 1-2 2Z"/><path d="M7 3v6h10V3M7 21v-8h10v8"/>',
+        logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M9 12h12m-5-5 5 5-5 5"/>'
+    };
+    function icon(name, filled = false) {
+        return `<svg viewBox="0 0 24 24" width="24" height="24" fill="${filled ? "currentColor" : "none"}" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name]}</svg>`;
+    }
+    function iconButton(element, name, label, filled = false) {
+        element.innerHTML = icon(name, filled); element.setAttribute("aria-label", label); element.title = label;
+    }
     const ready = document.readyState === "loading"
         ? new Promise(resolve => document.addEventListener("DOMContentLoaded", resolve, { once: true })) : Promise.resolve();
     // Fullscreen also works in guest-only builds; it neither reads nor writes learning data.
     ready.then(() => {
+        if (shell) return;
         let actions = document.querySelector("[data-account-actions]");
         if (!actions) {
             actions = document.createElement("div"); actions.className = "account-toolbar";
@@ -12,7 +55,7 @@
         const fullscreen = document.createElement("button"); fullscreen.type = "button";
         fullscreen.className = "account-fullscreen";
         const update = () => {
-            fullscreen.textContent = document.fullscreenElement ? "Vollbild beenden" : "Vollbild";
+            iconButton(fullscreen, document.fullscreenElement ? "collapse" : "expand", document.fullscreenElement ? "Vollbild beenden" : "Vollbild");
             fullscreen.setAttribute("aria-pressed", String(Boolean(document.fullscreenElement)));
         };
         update(); actions.appendChild(fullscreen);
@@ -25,8 +68,12 @@
         });
         document.addEventListener("fullscreenchange", update);
     });
-    const config = window.AgentAccountConfig;
+    if (isShell) return;
     if (!config?.enabled) return;
+    const pageLevel = location.pathname.split("/").pop().replace(/\.html$/, "");
+    if (/^(?:mission[1-4]_level[1-4]|agent_training_level[1-3]|pico_level(?:[1-4]|2a)|pixelmuseum_(?:briefing|finale)|helikopter_flucht_level[12])$/.test(pageLevel)) {
+        window.AgentCurrentLevel = ({ pico_level1: "pico_level1_navigation", pico_level4: "pico_level4_memory" })[pageLevel] || pageLevel;
+    }
     const remote = window.AgentPyRemoteLearningData;
     const client = remote.createClient({ endpoint: config.endpoint });
     const domReady = document.readyState === "loading"
@@ -36,7 +83,14 @@
     let controls = null;
     let invalidated = false;
     let checking = false;
-    let panel, message, loginButton, logoutButton, retryButton, reloadButton, exportButton;
+    let panel, message, loginButton, logoutButton, retryButton, reloadButton, exportButton, saveButton;
+    let intendedMission = null;
+    let dirtyDraft = false;
+    let leavingAccount = false;
+    function hasUnconfirmed() {
+        if (invalidated || leavingAccount) return false;
+        return controls?.hasUnconfirmed() || (dirtyDraft && snapshotCode() !== window.AgentLearningData?.getAttemptedCode(window.AgentCurrentLevel));
+    }
     let channel;
     try { channel = new BroadcastChannel("agentpy-account-v1"); } catch (_) { /* Focus check remains active. */ }
     function show(text) { if (message) message.textContent = text; }
@@ -46,11 +100,16 @@
         document.documentElement.classList.add("account-blocked");
         show(failure.message);
         if (reloadButton) reloadButton.hidden = false;
+        openMenu();
+        loginButton?.classList.add("account-attention");
         if (erase) {
             invalidated = true;
             window.AgentLearningData?.dispose();
             window.editor?.setValue("");
             if (exportButton) exportButton.hidden = true;
+            ui.querySelectorAll(".account-dialog").forEach(dialog => { dialog.close(); dialog.remove(); });
+            panel?.querySelectorAll("[data-authenticated]").forEach(item => { item.hidden = true; });
+            if (saveButton) saveButton.disabled = true;
         }
     }
     function snapshotCode() { return window.editor?.getValue?.() ?? document.getElementById("python-editor")?.value ?? ""; }
@@ -58,28 +117,32 @@
         const blob = new Blob([snapshotCode()], { type: "text/plain;charset=utf-8" });
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
-        link.href = url; link.download = "agentpy-code.txt"; link.click();
+        link.href = url; link.download = "agentpy-code.py"; link.click();
         setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
     function announceChange() { channel?.postMessage({ type: "account-changed" }); }
     function button(label, action) {
-        const element = document.createElement("button");
+        const element = ui.createElement("button");
         element.type = "button"; element.textContent = label;
         element.addEventListener("click", action); return element;
     }
     function reload() {
-        if (controls?.hasUnconfirmed() && !window.confirm("Nicht bestätigte Änderungen oder unfertiger Code gehen beim Neuladen verloren. Hast du deinen Code gesichert?")) return;
+        if (hasUnconfirmed() && !window.confirm("Nicht bestätigte Änderungen oder unfertiger Code gehen beim Neuladen verloren. Hast du deinen Code gesichert?")) return;
+        leavingAccount = true;
         window.location.reload();
     }
     function passwordVisibility(form) {
         const input = form.querySelector('input[name="password"]');
+        const wrap = ui.createElement("span"); wrap.className = "account-password";
+        input.replaceWith(wrap); wrap.append(input);
         const toggle = button("Passwort anzeigen", () => {
             const visible = input.type === "password";
             input.type = visible ? "text" : "password";
-            toggle.textContent = visible ? "Passwort verbergen" : "Passwort anzeigen";
+            iconButton(toggle, visible ? "hidden" : "eye", visible ? "Passwort verbergen" : "Passwort anzeigen");
             toggle.setAttribute("aria-pressed", String(visible));
         });
-        toggle.setAttribute("aria-pressed", "false"); input.closest("label").after(toggle);
+        toggle.className = "account-eye"; iconButton(toggle, "eye", "Passwort anzeigen");
+        toggle.setAttribute("aria-pressed", "false"); wrap.append(toggle);
     }
     async function registrationRequest(action, body) {
         const current = await client.request("session");
@@ -93,7 +156,8 @@
             return;
         }
         if (controls?.hasUnconfirmed()) return;
-        const dialog = document.createElement("dialog"); dialog.className = "account-dialog";
+        closeMenu();
+        const dialog = ui.createElement("dialog"); dialog.className = "account-dialog";
         dialog.setAttribute("aria-label", verificationToken ? "E-Mail bestätigen" : "Neuanmeldung");
         let busy = false, phase = verificationToken ? "verify" : "code", className = "";
         async function leaveRegistration(openLogin = false) {
@@ -111,7 +175,7 @@
         dialog.addEventListener("close", () => {
             dialog.querySelectorAll('input[name="password"]').forEach(input => { input.value = ""; input.type = "password"; });
             verificationToken = null; dialog.remove();
-            if (!document.querySelector('dialog[open]')) loginButton.focus();
+            if (!ui.querySelector('dialog[open]')) loginButton.focus();
             if (!session?.profile) show("Gastmodus · nur in diesem Browser gespeichert.");
         });
         function render() {
@@ -173,11 +237,13 @@
             });
             fields.querySelector("input")?.focus();
         }
-        render(); document.body.appendChild(dialog); dialog.showModal();
+        render(); ui.body.appendChild(dialog); dialog.showModal();
     }
     async function loginDialog() {
-        if (controls?.hasUnconfirmed()) return;
-        const dialog = document.createElement("dialog");
+        if (controls?.hasUnconfirmed()) { openMenu(); return; }
+        if (hasUnconfirmed() && !window.confirm("Dein noch nicht gespeicherter Gastentwurf wird beim Anmelden nicht übernommen. Trotzdem anmelden?")) return;
+        closeMenu();
+        const dialog = ui.createElement("dialog");
         dialog.className = "account-dialog";
         dialog.setAttribute("aria-label", "Am Schulkonto anmelden");
         const registrationHint = registrationEnabled()
@@ -190,11 +256,11 @@
         const submit = form.querySelector('[type="submit"]');
         const cancel = form.querySelector("[data-cancel]");
         let busy = false;
-        cancel.addEventListener("click", () => dialog.close());
-        dialog.addEventListener("cancel", event => { if (busy) event.preventDefault(); });
+        cancel.addEventListener("click", () => { intendedMission = null; dialog.close(); });
+        dialog.addEventListener("cancel", event => { if (busy) event.preventDefault(); else intendedMission = null; });
         dialog.addEventListener("close", () => {
             form.elements.password.value = ""; form.elements.password.type = "password";
-            dialog.remove(); if (!document.querySelector('dialog[open]')) loginButton.focus();
+            dialog.remove(); if (!ui.querySelector('dialog[open]')) loginButton.focus();
         });
         form.addEventListener("submit", async event => {
             event.preventDefault(); if (busy) return;
@@ -205,29 +271,143 @@
                 // Refresh the CSRF token without silently replacing any loaded profile.
                 const current = await client.request("session");
                 if (invalidated) throw remote.error("PROFILE_CHANGED");
-                if (current.profile) { announceChange(); window.location.reload(); return; }
+                if (current.profile) { announceChange(); resumeAfterLogin(); return; }
                 await client.request("login", { body: { email: form.elements.email.value, password }, csrfToken: current.csrfToken });
-                window.AgentLearningData?.dispose(); announceChange(); window.location.reload();
+                window.AgentLearningData?.dispose(); announceChange(); resumeAfterLogin();
             } catch (failure) { form.querySelector('[role="alert"]').textContent = failure.message; }
             finally { busy = false; submit.disabled = false; cancel.disabled = false; }
         });
-        document.body.appendChild(dialog); dialog.showModal();
+        ui.body.appendChild(dialog); dialog.showModal();
     }
+    function resumeAfterLogin() {
+        leavingAccount = true;
+        if (intendedMission) window.location.assign(intendedMission);
+        else window.location.reload();
+    }
+    function closeMenu() {
+        if (panel) panel.hidden = true;
+        loginButton?.setAttribute("aria-expanded", "false");
+    }
+    function openMenu(focus = false) {
+        if (panel) panel.hidden = false;
+        loginButton?.setAttribute("aria-expanded", "true");
+        if (focus) panel?.querySelector("button:not([hidden]):not(:disabled)")?.focus();
+    }
+    function simpleDialog(title, content) {
+        closeMenu();
+        const dialog = ui.createElement("dialog"); dialog.className = "account-dialog";
+        dialog.setAttribute("aria-label", title);
+        const heading = ui.createElement("h2"); heading.textContent = title;
+        dialog.append(heading, content, button("Schließen", () => dialog.close()));
+        dialog.addEventListener("close", () => { dialog.remove(); loginButton.focus(); });
+        ui.body.append(dialog); dialog.showModal(); return dialog;
+    }
+    async function accountDialog() {
+        const form = ui.createElement("form");
+        form.innerHTML = '<p data-identity></p><label>Anzeigename<input name="name" required maxlength="100" autocomplete="name"></label><button type="submit">Namen speichern</button><p role="status"></p><p>E-Mail-Änderung und Passwort-Zurücksetzen werden später freigeschaltet.</p>';
+        form.querySelector("[data-identity]").textContent = `${session.profile.email} · Klasse ${session.profile.className}`;
+        form.elements.name.value = session.profile.name;
+        form.addEventListener("submit", async event => {
+            event.preventDefault(); const submit = form.querySelector('[type="submit"]'); submit.disabled = true;
+            try {
+                const result = await client.request("update-profile", { body: { name: form.elements.name.value }, csrfToken: session.csrfToken, profileId: session.profile.id });
+                if (invalidated || result.profile?.id !== session.profile.id) throw remote.error("PROFILE_CHANGED");
+                session.profile = result.profile;
+                form.querySelector('[role="status"]').textContent = "Anzeigename gespeichert.";
+                show(`${session.profile.name} · Klasse ${session.profile.className} · ${session.profile.email}`);
+            } catch (failure) { form.querySelector('[role="status"]').textContent = failure.message; }
+            finally { submit.disabled = false; }
+        });
+        simpleDialog("Kontoinfo bearbeiten", form);
+    }
+    async function progressDialog() {
+        const content = ui.createElement("div"); content.textContent = "Fortschritt wird geladen …";
+        simpleDialog("Fortschritt", content);
+        try {
+            const response = await client.request("state", { profileId: session.profile.id });
+            if (invalidated || response.profile?.id !== session.profile.id) throw remote.error("PROFILE_CHANGED");
+            const completed = response.state.data.completedCodes;
+            const { calculateProgress } = await import(progressModuleURL);
+            const progress = calculateProgress(completed);
+            const title = ui.createElement("p"); title.className = "account-progress-number";
+            title.textContent = progress.label;
+            const list = ui.createElement("ul"); list.className = "account-progress-list";
+            progress.rows.forEach(({label, codes}) => {
+                const item = ui.createElement("li");
+                item.textContent = `${label}: ${codes.join(", ") || "noch kein Abschluss"}`; list.append(item);
+            });
+            if (progress.optionalCompleted) {
+                const item = ui.createElement("li"); item.textContent = "Optional geschafft: 02-3 (+5 Bonuspunkte)"; list.append(item);
+            }
+            const note = ui.createElement("p"); note.className = "account-muted";
+            note.textContent = "Erreichte Abschnitte, nicht die zeitliche Reihenfolge. Zwei Fluchtphasen fehlen noch im Kurs; dafür sind 5 % reserviert. Bonus ersetzt keine Pflichtaufgabe.";
+            content.replaceChildren(title, list, note);
+        } catch (failure) { content.textContent = failure.message; }
+    }
+    async function saveCode() {
+        const levelId = window.AgentCurrentLevel;
+        if (!levelId || invalidated) return;
+        saveButton.disabled = true;
+        try {
+            const code = snapshotCode();
+            const result = controls ? (await controls.saveDraft(levelId, code)).ok : await window.AgentLearningData?.recordAttempt(levelId, code);
+            show(result ? (session?.profile ? "Entwurf zentral gespeichert. Nicht ausgeführt." : "Entwurf in diesem Browser gespeichert.") : "Entwurf nicht bestätigt. Bitte Code herunterladen oder erneut versuchen.");
+        } finally { saveButton.disabled = false; }
+    }
+    function guestMission(target) {
+        intendedMission = target;
+        let choice = null;
+        const content = ui.createElement("div");
+        const note = ui.createElement("p");
+        note.textContent = "Du startest im Gastmodus. Dein Code und Fortschritt werden nur in diesem Browser gespeichert, nicht auf anderen Geräten. Wenn du die Browserdaten löschst, geht dieser Stand verloren.";
+        const proceed = button("OK – Mission starten", () => { choice = "guest"; dialog.close(); location.assign(target); });
+        const signin = button("Anmelden", () => { choice = "login"; dialog.close(); loginDialog(); }); signin.className = "account-register-link";
+        content.append(note, proceed, signin);
+        const dialog = simpleDialog("Im Gastmodus starten", content);
+        dialog.addEventListener("close", () => { if (!choice) intendedMission = null; });
+    }
+    document.addEventListener("click", event => {
+        const link = event.target.closest?.("a[href]");
+        if (!link || event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || session?.profile || !session) return;
+        const target = new URL(link.href, location.href);
+        const entry = /^(?:mission[1-4]_level1|agent_training_level1|pico_level1|pixelmuseum_briefing|helikopter_flucht_level1)\.html$/.test(target.pathname.split("/").pop());
+        if (target.origin === location.origin && (link.matches(".mission-start-action,.escape-coming-action") || entry)) {
+            event.preventDefault(); event.stopImmediatePropagation(); guestMission(target.href);
+        }
+    }, true);
     async function logout() {
-        if (controls?.hasUnconfirmed() && !window.confirm("Nicht zentral bestätigte Änderungen gehen beim Abmelden verloren. Code zuvor sichern. Trotzdem abmelden?")) return;
+        if (hasUnconfirmed() && !window.confirm("Nicht bestätigte Änderungen oder ungespeicherter Code gehen beim Abmelden verloren. Code zuvor sichern. Trotzdem abmelden?")) return;
         logoutButton.disabled = true;
         try {
             await client.request("logout", { body: {}, csrfToken: session.csrfToken, profileId: session.profile.id });
+            leavingAccount = true;
             window.AgentLearningData?.dispose(); announceChange(); window.location.reload();
         } catch (failure) { show(failure.message); }
         finally { logoutButton.disabled = false; }
     }
     async function mount() {
         await domReady;
-        panel = document.createElement("aside"); panel.className = "account-panel"; panel.setAttribute("aria-label", "Konto und Speicherung");
-        message = document.createElement("p"); message.setAttribute("role", "status"); message.textContent = "Konto und Lernstand werden geprüft …";
-        loginButton = button("Anmelden", loginDialog);
+        lifetime.abort(); lifetime = new AbortController();
+        // A child document owns its account UI, but renders it in the persistent shell.
+        ui.querySelectorAll("[data-account-owned]").forEach(node => node.remove());
+        panel = ui.createElement("aside"); panel.className = "account-panel"; panel.setAttribute("aria-label", "Konto und Speicherung"); panel.hidden = true;
+        panel.dataset.accountOwned = ""; panel.id = "account-menu";
+        message = ui.createElement("p"); message.setAttribute("role", "status"); message.textContent = "Konto und Lernstand werden geprüft …";
+        loginButton = button("Anmelden", () => {
+            if (invalidated || document.documentElement.classList.contains("account-blocked") || session?.profile) {
+                if (panel.hidden) openMenu(true); else closeMenu();
+            } else loginDialog();
+        });
+        loginButton.dataset.accountOwned = ""; loginButton.className = "account-person";
+        iconButton(loginButton, "person", "Anmelden"); loginButton.setAttribute("aria-controls", "account-menu");
+        loginButton.setAttribute("aria-expanded", "false");
         logoutButton = button("Abmelden", logout);
+        const progressButton = button("Fortschritt", progressDialog);
+        const profileButton = button("Kontoinfo bearbeiten", accountDialog);
+        saveButton = button("Code speichern", saveCode);
+        saveButton.disabled = true;
+        progressButton.dataset.authenticated = ""; profileButton.dataset.authenticated = "";
+        for (const [item, symbol] of [[progressButton,"progress"],[profileButton,"person"],[saveButton,"save"],[logoutButton,"logout"]]) item.insertAdjacentHTML("afterbegin", icon(symbol));
         retryButton = button("Speichern erneut versuchen", async () => {
             retryButton.disabled = true;
             try {
@@ -236,18 +416,40 @@
             } finally { retryButton.disabled = false; }
         });
         reloadButton = button("Seite neu laden", reload);
-        exportButton = button("Code sichern", exportCode);
-        for (const item of [loginButton, logoutButton, retryButton, reloadButton, exportButton]) item.hidden = true;
-        panel.append(message, loginButton, logoutButton, retryButton, reloadButton, exportButton);
-        document.body.appendChild(panel);
-        const headerActions = document.querySelector("[data-account-actions]");
-        if (headerActions) headerActions.appendChild(loginButton);
+        exportButton = button("Code herunterladen (.py)", exportCode);
+        for (const item of [logoutButton, progressButton, profileButton, retryButton, reloadButton, exportButton]) item.hidden = true;
+        panel.append(progressButton, profileButton, saveButton, logoutButton, message, retryButton, reloadButton, exportButton);
+        ui.body.appendChild(panel);
+        const headerActions = ui.querySelector("[data-account-actions], .account-toolbar");
+        headerActions.appendChild(loginButton);
+        if (shell) {
+            // Moving focus between chrome and lesson is NOT returning to the app.
+            // Hiding the lesson on that internal focus transition swallowed the
+            // user's first click. Recheck only after the whole app lost focus.
+            let leftApp = false;
+            shell.addEventListener("blur", () => {
+                setTimeout(() => { if (!ui.hasFocus()) leftApp = true; }, 0);
+            }, { signal: lifetime.signal });
+            shell.addEventListener("focus", () => {
+                if (leftApp) { leftApp = false; checkIdentity(); }
+            }, { signal: lifetime.signal });
+            ui.addEventListener("visibilitychange", () => { if (!ui.hidden) checkIdentity(); }, { signal: lifetime.signal });
+            shell.addEventListener("beforeunload", warnUnconfirmed, { signal: lifetime.signal });
+        }
+        for (const doc of new Set([ui, document])) {
+            doc.addEventListener("click", event => { if (!event.target.closest?.(".account-panel,.account-person")) closeMenu(); }, { signal: lifetime.signal });
+            doc.addEventListener("keydown", event => {
+                if (event.key === "Escape" && !panel.hidden) { closeMenu(); loginButton.focus(); }
+            }, { signal: lifetime.signal });
+        }
     }
     const mounted = mount();
     function storageStatus(status) {
         show(status.message);
         retryButton.hidden = !["error"].includes(status.type) || [401, 403, 409].includes(status.error?.status);
         reloadButton.hidden = !["error", "conflict"].includes(status.type);
+        loginButton.classList.toggle("account-attention", ["error", "conflict"].includes(status.type));
+        if (["error", "conflict"].includes(status.type)) openMenu();
         if (["PROFILE_CHANGED", "AUTH_REQUIRED", "CSRF_MISMATCH"].includes(status.error?.code)) {
             // A changed account must not display the previous person's editor.
             block(status.error, status.error.code === "PROFILE_CHANGED");
@@ -270,21 +472,38 @@
     channel?.addEventListener("message", event => {
         if (event.data?.type === "account-changed") block(remote.error("PROFILE_CHANGED"), true);
     });
-    window.addEventListener("focus", checkIdentity);
+    if (!shell) window.addEventListener("focus", checkIdentity);
     document.addEventListener("visibilitychange", () => { if (!document.hidden) checkIdentity(); });
-    window.addEventListener("pageshow", event => { if (event.persisted) checkIdentity(); });
-    window.addEventListener("pagehide", () => document.documentElement.classList.add("account-blocked"));
-    window.addEventListener("beforeunload", event => {
-        if (controls?.hasUnconfirmed()) { event.preventDefault(); event.returnValue = ""; }
+    window.addEventListener("pageshow", async event => {
+        if (event.persisted) { await mount(); renderIdentity(); checkIdentity(); }
     });
+    window.addEventListener("pagehide", () => {
+        document.documentElement.classList.add("account-blocked");
+        lifetime.abort();
+        ui.querySelectorAll(".account-dialog").forEach(dialog => { dialog.close(); dialog.remove(); });
+        if (panel) panel.hidden = true;
+        if (loginButton) loginButton.disabled = true;
+    });
+    function warnUnconfirmed(event) {
+        if (hasUnconfirmed()) { event.preventDefault(); event.returnValue = ""; }
+    }
+    window.addEventListener("beforeunload", warnUnconfirmed);
     // Defense in depth: no clicks/keyboard actions before readiness, even if CSS is unavailable.
     for (const type of ["click", "keydown", "submit"]) document.addEventListener(type, event => {
-        if (document.documentElement.classList.contains("account-blocked") && !event.target.closest?.(".account-panel, .account-dialog")) {
+        if (!document.body.classList.contains("legal-page") && document.documentElement.classList.contains("account-blocked") && !event.target.closest?.(".account-panel, .account-dialog, .account-toolbar, [data-account-actions]")) {
             event.preventDefault(); event.stopImmediatePropagation();
         }
     }, true);
+    function renderIdentity() {
+        iconButton(loginButton, "person", session?.profile ? "Benutzermenü" : "Anmelden", Boolean(session?.profile));
+        logoutButton.hidden = !session?.profile;
+        panel.querySelectorAll("[data-authenticated]").forEach(item => { item.hidden = !session?.profile; });
+        exportButton.hidden = !document.getElementById("python-editor");
+        saveButton.disabled = !window.AgentCurrentLevel || invalidated;
+    }
     let started = false;
     window.AgentAccount = Object.freeze({
+        editorChanged() { dirtyDraft = true; },
         start({ createGuest, attach } = {}) {
             if (started) throw new Error("Account bootstrap already started");
             started = true;
@@ -318,7 +537,7 @@
                             ? `${session.profile.name} · Klasse ${session.profile.className} · ${session.profile.email}` : session.profile.email;
                         show(`${identity} · ${config.saveMode === "completion-only" ? "Nur erfolgreiche Abschlüsse werden zentral gesichert." : "Ausgeführter Code und Abschlüsse werden zentral gesichert."}`);
                     }
-                    exportButton.hidden = !document.getElementById("python-editor");
+                    renderIdentity();
                     if (invalidated) throw remote.error("PROFILE_CHANGED");
                     document.documentElement.classList.remove("account-blocked");
                     if (/^#verify=/.test(window.location.hash)) {

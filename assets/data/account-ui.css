@@ -1,25 +1,49 @@
-.account-panel { position: fixed; right: 12px; bottom: 12px; z-index: 5000; max-width: min(420px, calc(100vw - 24px)); padding: 12px 16px; border: 1px solid #52828d; border-radius: 14px; background: #071724; color: #eefaff; font: 14px/1.4 system-ui, sans-serif; box-shadow: 0 6px 25px #0008; }
-.account-panel p { margin: 4px 0 10px; }
-.account-panel button, .account-dialog button { padding: 8px 12px; margin: 4px; border: 1px solid #71edf4; border-radius: 7px; background: #153743; color: #fff; cursor: pointer; font: inherit; }
-.account-panel button:focus-visible, .account-dialog :focus-visible { outline: 3px solid #f9c963; outline-offset: 3px; }
-.account-panel button:disabled { opacity: .5; cursor: wait; }
-.account-dialog { max-width: min(470px, calc(100vw - 40px)); border: 1px solid #71edf4; border-radius: 14px; background: #071724; color: #eefaff; padding: 24px; font: 16px/1.5 system-ui, sans-serif; }
-.account-dialog::backdrop { background: #03101ee8; }
-.account-dialog h2 { margin-top: 0; }
-.account-dialog label { display: block; margin: 12px 0; }
-.account-dialog input { display: block; box-sizing: border-box; width: 100%; padding: 10px; border: 1px solid #8ca5b7; background: #fff; color: #06131e; border-radius: 5px; font: inherit; }
-.account-dialog [role=alert] { color: #ffcd96; }
-.account-blocked body > :not(.account-panel):not(.account-dialog):not(script):not(link) { visibility: hidden !important; }
-.account-panel [hidden], .account-dialog [hidden] { display: none !important; }
-body:has(.account-panel) { padding-bottom: 135px; }
-@media (max-width: 600px) { .account-panel { left: 12px; max-width: none; } }
-[data-account-actions] { display: flex; gap: 8px; align-items: center; }
-[data-account-actions] button, .account-toolbar button { padding: 9px 12px; border: 1px solid #71edf4; border-radius: 10px; color: #eefaff; background: #153743; font: 600 14px/1.3 system-ui, sans-serif; cursor: pointer; }
-[data-account-actions] [hidden] { display: none !important; }
-[data-account-actions] button:focus-visible, .account-toolbar button:focus-visible { outline: 3px solid #f9c963; outline-offset: 3px; }
-.account-toolbar { position: fixed; right: 12px; top: 12px; z-index: 4999; }
-/* The scene presentation has its own controls; never cover its exit button. */
-.presentation-mode .account-toolbar { display: none; }
-.account-dialog { box-sizing: border-box; width: min(470px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow-y: auto; }
-.account-dialog .account-register-link { display: block; font-weight: 750; border-width: 2px; text-decoration: underline; }
-.account-dialog input[name=code] { text-transform: uppercase; letter-spacing: .15em; }
+/* Shared account chrome: no fixed bottom panel or reserved bottom padding. */
+:is(.account-panel,.account-dialog,.account-toolbar,[data-account-actions]) { box-sizing:border-box; font:15px/1.5 system-ui,sans-serif; color:#eefaff; }
+:is(.account-panel,.account-dialog,.account-toolbar,[data-account-actions]) button { box-sizing:border-box; min-height:44px; padding:10px 13px; border:1px solid #71edf470; border-radius:12px; background:#153743; color:#eefaff; font:inherit; cursor:pointer; }
+:is(.account-panel,.account-dialog,.account-toolbar,[data-account-actions]) button:hover { background:#204c59; }
+:is(.account-panel,.account-dialog,.account-toolbar,[data-account-actions]) button:disabled { opacity:.5; cursor:not-allowed; }
+:is(.account-panel,.account-dialog,.account-toolbar,[data-account-actions]) :focus-visible { outline:2px solid #71edf4; outline-offset:3px; box-shadow:0 0 0 5px #71edf41c,0 0 18px #71edf42b; }
+:is(.account-panel,.account-dialog,[data-account-actions]) [hidden],.account-panel[hidden] { display:none!important; }
+[data-account-actions],.account-toolbar { display:flex; gap:8px; align-items:center; }
+:is([data-account-actions],.account-toolbar) > button { display:grid; place-items:center; width:44px; height:44px; padding:9px; flex:none; }
+.account-toolbar { position:fixed; top:max(12px,env(safe-area-inset-top)); right:max(12px,env(safe-area-inset-right)); z-index:5001; }
+/* Legacy standalone guest pages have their own presentation exit at this spot.
+   Hostinger's persistent shell controls are outside that page and stay visible. */
+.presentation-mode .account-toolbar { display:none; }
+.account-panel { position:fixed; right:max(12px,env(safe-area-inset-right)); top:68px; z-index:5002; width:min(350px,calc(100vw - 24px)); max-height:calc(100dvh - 84px); overflow-y:auto; padding:12px; border:1px solid #71edf470; border-radius:16px; background:#091c29; box-shadow:0 12px 40px #0008; }
+.account-panel > button { display:flex; align-items:center; gap:12px; width:100%; text-align:left; margin:3px 0; background:transparent; border-color:transparent; }
+.account-panel > button:hover { border-color:#71edf470; }
+.account-panel svg { flex:none; }
+.account-panel p { font-size:13px; color:#b6c9d2; margin:12px 4px 4px; overflow-wrap:anywhere; }
+.account-person.account-attention { border-color:#ffc179; box-shadow:0 0 0 3px #ffc17940; }
+.account-dialog { box-sizing:border-box; width:min(470px,calc(100vw - 32px)); max-height:calc(100dvh - 32px); overflow-y:auto; border:1px solid #71edf48c; border-radius:18px; background:#071724; color:#eefaff; padding:24px; font:16px/1.5 system-ui,sans-serif; }
+.account-dialog::backdrop { background:#03101edb; }
+.account-dialog h2 { margin:0 0 12px; font-size:21px; color:#8aecf1; }
+.account-dialog label { display:block; margin:18px 0; }
+.account-dialog input { display:block; box-sizing:border-box; width:100%; margin-top:9px; padding:11px 12px; min-height:46px; border:1px solid #8ca5b7; border-radius:9px; background:#f5fbff; color:#06131e; font:inherit; }
+.account-dialog input:focus { outline:1px solid #71edf4; outline-offset:2px; box-shadow:0 0 0 5px #71edf41c,0 0 18px #71edf42b; }
+.account-dialog button { margin:4px 6px 4px 0; }
+.account-dialog [role=alert] { color:#ffcd96; }
+.account-password { position:relative; display:block; margin-top:9px; }
+.account-password input { padding-right:55px; margin-top:0; }
+.account-dialog .account-eye { position:absolute; display:grid; place-items:center; right:2px; top:50%; transform:translateY(-50%); width:44px; height:44px; min-height:0; padding:10px; margin:0; border:0; color:#234b58; background:transparent; }
+.account-dialog .account-eye:hover { background:#71edf425; }
+.account-dialog .account-register-link { display:block; text-decoration:underline; background:transparent; border-color:transparent; }
+.account-dialog input[name=code] { text-transform:uppercase; letter-spacing:.15em; }
+.account-dialog .account-progress-number { font-size:28px; font-weight:750; color:#91f0d0; }
+.account-progress-list { padding-left:20px; }
+.account-progress-list li { margin:7px 0; }
+.account-muted { color:#aec3cf; font-size:13px; }
+.account-blocked body:not(.legal-page) > :not(.account-panel):not(.account-dialog):not(.account-toolbar):not(script):not(link) { visibility:hidden!important; }
+.account-blocked [data-account-actions] { visibility:visible; }
+/* One top-level fullscreen element survives child-document navigation. */
+html[data-account-shell],.account-shell { width:100%; height:100%; margin:0; background:#06131e; overflow:hidden; }
+.account-shell { display:flex; flex-direction:column; }
+.account-shell-header { box-sizing:border-box; display:flex; justify-content:space-between; align-items:center; gap:12px; padding:8px max(12px,env(safe-area-inset-right)) 8px max(16px,env(safe-area-inset-left)); padding-top:max(8px,env(safe-area-inset-top)); min-height:60px; flex:none; border-bottom:1px solid #71edf422; }
+.account-shell-brand { display:block; line-height:0; }
+.account-shell-brand img { display:block; width:156px; height:auto; }
+.account-shell iframe { display:block; border:0; width:100%; flex:1; min-height:0; background:#06131e; }
+.account-in-shell .course-header { display:none; }
+.account-in-shell .mission-home-link,.account-in-shell .project-choice-brand { display:none; }
+@media(max-width:480px) { .account-dialog { padding:20px; } .account-shell-brand img { width:135px; } }

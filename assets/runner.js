@@ -1162,6 +1162,7 @@ function showLevelFeedback(message) {
 }
 
 function setupLevel(levelId) {
+    window.AgentCurrentLevel = levelId;
     const runButton = document.getElementById("run-btn");
     const outcome = LEVEL_OUTCOMES[levelId];
     if (!runButton || !outcome) return;

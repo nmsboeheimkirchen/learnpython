@@ -21,6 +21,7 @@ for (const [name, engine, options] of [
                 failedAssets.push(new URL(response.url()).pathname);
         });
         await page.goto(base + '/', { waitUntil: 'networkidle' });
+        await expect(page.locator('#account-lesson')).toBeVisible();
         const header = page.locator('[data-account-actions]');
         await expect(header.getByRole('button', { name: 'Anmelden', exact: true })).toBeVisible();
         await expect(header.getByRole('button', { name: 'Vollbild', exact: true })).toBeVisible();
@@ -42,7 +43,17 @@ for (const [name, engine, options] of [
         await page.screenshot({ path: `${output}/${name}-login.png` });
         await dialog.getByRole('button', { name: 'Abbrechen' }).click();
         await expect(dialog).toHaveCount(0);
+        const lesson=page.frameLocator('#account-lesson');
+        const native=await page.evaluate(()=>document.fullscreenEnabled && !!document.documentElement.requestFullscreen);
+        if(native) await header.getByRole('button',{name:'Vollbild',exact:true}).click();
+        await page.locator('#account-lesson').evaluate(frame=>{frame.contentWindow.location.href='mission1_start.html';});
+        await lesson.getByRole('link',{name:/Training starten/}).click();
+        await expect(page.getByRole('dialog',{name:'Im Gastmodus starten'})).toBeVisible();
+        await page.getByRole('button',{name:'OK – Mission starten'}).click();
+        await expect(lesson.locator('#python-editor')).toBeAttached();
+        if(native) await expect(header.getByRole('button',{name:'Vollbild beenden'})).toHaveAttribute('aria-pressed','true');
+        await expect(page.locator('.account-panel')).toBeHidden();
         if (scriptErrors || failedAssets.length) throw new Error('Script or asset failures');
-        console.log(JSON.stringify({ browser: name, ok: true, checks: ['home-assets', 'guest-ready', 'header-login-fullscreen', 'restricted-registration', 'password-visibility', 'login-dialog', 'focus', 'dialog-fit', 'cancel'], screenshot: `${output}/${name}-login.png` }));
+        console.log(JSON.stringify({ browser: name, ok: true, checks: ['home-assets', 'guest-ready', 'header-login-fullscreen', 'restricted-registration', 'password-visibility', 'login-dialog', 'focus', 'dialog-fit', 'cancel','guest-mission-dialog','persistent-shell-fullscreen'], screenshot: `${output}/${name}-login.png` }));
     } finally { await browser.close(); }
 }

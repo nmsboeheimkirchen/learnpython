@@ -24,6 +24,7 @@ async function login(page, account = 'student-a') {
     await page.getByLabel('E-Mail-Adresse', { exact: true }).fill(`${account}-${test.info().project.name}@example.test`);
     await page.getByLabel('Passwort', { exact: true }).fill(password);
     await page.getByRole('dialog').getByRole('button', { name: 'Anmelden', exact: true }).click();
+    await page.getByRole('button', { name: 'Benutzermenü' }).click();
     await expect(page.getByRole('button', { name: 'Abmelden', exact: true })).toBeVisible();
     await expect(page.locator('.account-panel')).toContainText(`${account} · Klasse Browser Test`);
 }
@@ -50,6 +51,7 @@ test('real login: a completed mission and exact code follow a student to another
         expect(await laptop.evaluate(() => window.editor.getValue())).toBe(passed);
         expect(await laptop.evaluate(() => window.AgentLearningData.getUnlockedLevelIds())).toContain('link-level2');
     } finally { await other.close(); }
+    await page.getByRole('button', { name: 'Benutzermenü' }).click();
     await page.getByRole('button', { name: 'Abmelden', exact: true }).click();
     await expect(page.locator('.account-panel')).toContainText('Gastmodus');
     await expect.poll(() => page.evaluate(() => window.editor?.getValue())).toBe('GAST BLEIBT');
@@ -93,6 +95,7 @@ test('an account switch locks and clears an already open tab', async ({ page, co
     await login(page); await mission(page); await reset(page);
     await page.evaluate(() => window.editor.setValue('private account A'));
     const other = await context.newPage(); await other.goto('/');
+    await other.getByRole('button', { name: 'Benutzermenü' }).click();
     await other.getByRole('button', { name: 'Abmelden', exact: true }).click();
     await expect(page.locator('html')).toHaveClass(/account-blocked/);
     expect(await page.evaluate(() => window.editor.getValue())).toBe('');
@@ -150,7 +153,7 @@ test('login controls and dialog fit the school viewport and retain accessible la
     await expect(page.getByRole('dialog')).toBeVisible();
     await expect(page.getByLabel('E-Mail-Adresse', { exact: true })).toBeVisible();
     await expect(page.getByLabel('Passwort', { exact: true })).toBeVisible();
-    for (const selector of ['.account-panel', '.account-dialog']) {
+    for (const selector of ['.account-person', '.account-dialog']) {
         const bounds = await page.locator(selector).boundingBox();
         const viewport = page.viewportSize();
         expect(bounds.x).toBeGreaterThanOrEqual(0);

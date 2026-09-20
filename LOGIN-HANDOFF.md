@@ -1,5 +1,53 @@
 # Übergabe: dev-login-save
 
+## 20.09.2026 – lokaler Abschluss, Commit/CI/Release als Nächstes
+
+Dieser Abschnitt ersetzt die offenen Testaufgaben der älteren Zwischenstände unten.
+
+- Alle lokalen Prüfungen abgeschlossen: **212/212 Logik- und Hostingtests**, **27/27 SQLite-Backendtests**, **133/133 Missions-Browsertests**, **36/36 Login-/Shelltests**. Danach erweiterte Shellsuite **12/12**, abschließender Sonderseiten-/Präsentationstest **2/2** grün. Keine Testsession mehr offen.
+- Alle 31 Aufgaben-Dateien explizit gestaged; `git diff --cached --check` sauber. Branch `dev-login-save`, bisheriger HEAD `4752b41`. Noch kein neuer Commit/Push und keine Liveänderung: **r5 bleibt live**.
+- Nächste Schritte: Commit/Push nur Dev, komplette CI abwarten; Paket `pilot-20260920-r6` mit echtem Commit bauen. Geprüfter lokaler Operator `.cache/hostinger-ui-rollout.mjs`: inspect → frisches Backup von r5 → upload → compare → activate → Live-Health/Browser/synthetischer Login → compare → confirm. Bei Fehler rollback. Keine Schema-/Mailfreischaltung, keine Michael-Testschreibzugriffe, kein Main/Pagesdeploy.
+- Live-Smokes berücksichtigen jetzt äußere Shell, Gaststartdialog, Vollbild, synthetischen Browserlogin, Entwurfspeicherung, Prozentanzeige und Namensänderung. Die synthetischen Konten werden anschließend gezielt entfernt. Echtgeräteabnahme auf dem iPad bleibt nach Veröffentlichung beim Nutzer.
+- Regelmäßige Handoffs weiterführen. Unbekannten ungetrackten Root-Dateinamen weiterhin weder ausgeben noch stagen; niemals `git add .` verwenden.
+
+## Zwischenstand 20.09.2026, UI-Umsetzung Testphase (aktuellster Abschnitt)
+
+**Update vor Commit:** 133/133 Missions-Browsertests im vollständigen Wiederholungslauf grün. Zusätzliche Shelltests 12/12 grün, Präsentations-Testzusatz separat als Session6075. Live-Smokes aktualisiert (auch synthetischer Browserlogin/Entwurf/Name/Prozent). Neuer Operatorhelper `.cache/hostinger-ui-rollout.mjs` für `pilot-20260920-r6` von r5 angelegt, noch NICHT ausgeführt. Öffentliche Hostinger-Header erlauben gleichursprüngliche Frames. Nur r5 ist live.
+
+- Live weiterhin unverändert **r5**, Branch `dev-login-save`, noch kein Commit/Push/Upload dieser UI-Arbeit.
+- **201/201 Logiktests grün**, **27/27 SQLite-Backendtests grün** (inkl Anzeigename ändern). Hostinger-Setup-Tests 11/11 ebenfalls bestanden. **36/36 Login-/Shelltests Chromium+WebKit grün**; zusätzliche 4 Sonderseiten/Dirty-Draft-Tests laufen als Playwright-Session 75333 (zuletzt 10/12 grün).
+- Wichtiger Shellfehler behoben: interne Fokuswechsel Kopf↔iframe dürfen keine neue Identity-Prüfung mit Verstecken des Inhalts auslösen, das verschluckte den ersten Klick. Jetzt nur nach echtem App-Fokusverlust + Visibility/Broadcast; die Prüfungen nach externem Kontowechsel bleiben bestehen.
+- `assets/data/course-progress.js` neu, separat getestet in `tests/course-progress.test.mjs`: Pflichtweg, normalisierte Wahlwege, optionale 02-3/PICO2a-Ausschluss, reservierte zwei Fluchtphasen; keine erfundene Abschlusschronologie. Fortschrittsdialog lädt Modul mit derselben Releasekennung wie Bootstrap.
+- `assets/editor.js` meldet tatsächliches Tippen/Undo/Paste an Account (nicht setValue-Restore). Ungespeicherte Eingaben erzeugen Verlustwarnung; explizites Speichern löst sie auf. Gastdialog/Login-Abbruch verwirft das nur vorgemerkte Missionsziel.
+- Fehlender Impressum-Bootstrap ergänzt; Impressumsinhalt bleibt bei APIfehler öffentlich zugänglich. Legal-Test erlaubt nur die drei lokalen Kontoskripte statt früher pauschal keine Skripte. Editor-Testmocks um echten change-Callback erweitert. Node-Pfad in playwright.config.mjs verwendet process.execPath.
+- Alter kompletter Missions-Browserlauf: 125/133 grün, 8 Fehler waren geänderte UI-Erwartungen: Vollbild jetzt Icon statt Text; sowie alte Präsentationssteuerung. Texttest auf AccessibleName angepasst. Legacy standalone Gast-Präsentationen blenden nur ihren kollidierenden iframe-eigenen Toolbar aus; **Hostinger-Shelltoolbar bleibt davon unberührt sichtbar**. Diese 8 Tests erneut laufen lassen; danach CI vollständig.
+- `assets/icons/LICENSE` neu: offizielle Lucide ISC + Feather MIT Quelle raw.githubusercontent.com/lucide-icons/lucide/main/LICENSE. Kleine SVG-Auswahl im Bootstrap entsprechend kommentiert. Builder kopiert LICENSE automatisch.
+- Visuell geprüft: echter Screenshot der neuen WebKit-Menüansicht, oben Person gefüllt + diagonales Vollbildicon, keine unteren Kontoelemente. Bilder nur unter .cache/login-results, keine persönlichen Daten außer synthetischen Fixtures.
+- Nächste Schritte: Session75333 abschließen; Präsentation innerhalb Shell explizit testen, alte 8 Regressionen wiederholen. Live-Smokeskript auf Shell/Gastmission+Fullscreen erweitern. Explizite Gitpfade stagen inkl **app.html, account-shell.js, course-progress.js, assets/icons/LICENSE, tests/course-progress.test.mjs, tests/login-e2e/shell.spec.mjs**. Commit/Push nur dev-login-save; CI abwarten. Release neue ID r6, Backup aus live r5, scoped Operatorhelper kopieren/anpassen (aktuell r5 mit veraltetem backup-source r2!). Aktivieren erst nach grünen Tests, synthetische Livechecks+Bestandsvergleich+confirm. Keine Schema-/Mailfreischaltung, kein Main/Pagesdeploy.
+
+## IN ARBEIT 20.09.2026 – Nutzer hat Umsetzung freigegeben und nach Limitwarnung wieder fortsetzen lassen
+
+**Nicht veröffentlicht/committet. Live weiterhin r5.** Neue lokale Dateien unbedingt explizit mitnehmen; niemals ungefiltertes `git status` / `git add .` (geheimer untracked Root-Dateiname!).
+
+- Neu: `app.html` + `assets/data/account-shell.js` als beständige Vollbild-Hülle mit gleichursprünglichem Missions-iframe. Hostinger-Build generiert `shell:true`; Legacy-Browsertest-Server bewusst `shell:false`, neue `tests/login-e2e/shell.spec.mjs` testet echten Redirect/Shell per Init-Script. Static Pages bleibt guest-only ohne Redirect.
+- `account-bootstrap.js` geändert: lokale SVG-Icons, UI im Elterndokument, Personmenü oben, Auge im Passwortfeld, Gaststartdialog, Entwurfspeichern, Fortschrittsdialog (60/10/20/10; zwei fehlende Heli-Phasen reservieren 5%; Bonus getrennt), Anzeigename ändern; Mail/Registrierung unverändert serverseitig gated. UI-CSS ersetzt, unteres Overlay/Bottom-Padding entfernt.
+- `remote-learning-data.js`: explizites `controls.saveDraft` als normaler revisionierter attempt (auch Abschlussmodus), niemals Codeausführung. `runner.js` setzt `AgentCurrentLevel`, Speziallevel zusätzlich aus verifiziertem Seitenmuster abgeleitet.
+- API `update-profile`: requireMutation/requireUser/exactFields/name validation, nur display_name; keine Migration, E-Mail/Klasse/Lernstand bleiben erhalten. Neuer Backend-Test hierfür noch nicht gelaufen.
+- `projektwahl.html` und `index-a.html` haben nun Bootstrap. **Impressum fehlt noch** (letzter Patch für Impressum/CSS/Test schlug atomar fehl). Redirect-Altseiten benötigen kein eigenes Konto.
+- Letzter Logiklauf: **197/197 bestanden**. Legacy Login-Playwright 28 Tests läuft/lief als Session 36016. Bisher ein erwarteter Testfehler: registration.spec Zeile138 erwartet direkt sichtbares Abmelden, muss nun Benutzermenü erwarten. Andere bisher sichtbare Tests bestanden inkl Isolation/Fehler/alle Sonderruntimes. Neue Shell-Tests noch nicht gelaufen.
+- **Nächste Schritte:** fehlgeschlagenen Patch neu anwenden (Impressum Bootstrap; CSS `.learning-brand` ersetzen durch `.mission-home-link,.project-choice-brand`; registration.spec `device` statt vermeintlich `laptop`). Legacy-Test abholen; Shell-Tests ausführen und echte Fehler lösen. History/Back, native Vollbildänderungen, Login→Missionsziel, Parent-Dialog-Fokus, Account invalidation/BFCache, Sonderseiten prüfen. Fortschrittslogik separat/unit-testbar machen; explizites Draftsave Completion-only testen. Echte iPad-Abnahme kann WebKit-Emulation nicht ersetzen.
+- Sicherheitsprüfung offen: bei block/erase Eltern-Dialoge entfernen; Parentlistener mit AbortController auf pagehide aufgeräumt und bei pageshow remount. Noch keine Behauptung, dass alles korrekt ist. Keine Michael-Daten in Tests, nur synthetische Fixtures.
+- Noch KEINE neue Release-ID, kein Upload, kein DB-/Liveeingriff. Vor Deployment neue Sicherung, Tests/CI, Releasehelper von r5 auf neue ID anpassen, Bestand vergleichen. Alte Betriebsdetails unten bleiben gültig.
+
+Nutzer möchte **regelmäßige weitere Übergaben**. Neuester Auftrag ist Fortsetzen, nicht Pausieren.
+
+## Neuester Wunsch 20.09.2026 nach r5-Test: UI zuerst planen und Symbole zeigen
+
+- Nutzer möchte das Overlay unten rechts **vollständig entfernen**. Einheitlich oben rechts immer Vollbild (diagonale Pfeile) + Person, Gast als Umriss, angemeldet gefüllt. Person öffnet Login bzw. Menü mit Fortschritt, Kontoinfo bearbeiten, Code speichern, Abmelden. Kein sofortiges Logout beim Antippen der Person.
+- Gastwarnung mittig bei jedem Missionsstart, OK oder darunter Anmelden. Goldener Fokusrahmen überdeckt im iPad-Foto E-Mail-Label: dezenter Schein und Abstand; Passwortauge direkt im Feld.
+- Vollbildverlust beim nächsten Level durch vollständige Navigation im Code bestätigt. Geplante Lösung ist dauerhafte äußere App-Hülle und interner Inhaltswechsel; echtes iPad plus Chrome testen, keine pauschale Zusage jenseits Browser-/Betriebssystemgrenzen. Vollbild erneut nach Reload ohne Nutzergeste nicht einfach erzwingbar.
+- **Nur Planung/Vorschau beauftragt.** Appcode/Hostinger unverändert r5. Konkrete Reihenfolge/Abnahmetests in neuer oberster Sektion von LOGIN-NEXT-STEPS.md. Erst Symbole/Interaktion abnehmen lassen, dann implementieren. Inline-Vorschau: `C:/Users/Cy-X/.codex/visualizations/2026/09/16/01a0aae0-d7f5-7652-92cb-0f8e6038c963/agentpy-konto-symbole.html`; sechs Symbole, Menü, Gastdialog, E-Mail-Fokus und anklickbares Auge. Lokale Browserprüfung für Symbole/Interaktionen/Überläufe auf Desktop/schmalem Mobilformat. Diese Planänderungen noch nicht committet.
+
 ## Abgeschlossen 20.09.2026: eingeschränkter Zwischenstand r5 live
 
 - Nutzer autorisiert ausdrücklich Hostinger-Release des neuen Layouts/Vollbilds mit **nur bestehenden Konten**. Registrierung, Klassenbeitritt, Bestätigungsmail und Passwort-Reset auf später verschieben. Das frühere Mail-Abnahmegate gilt weiterhin für Selbstregistrierung, nicht für diesen eingeschränkten Rollout.

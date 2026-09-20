@@ -315,7 +315,8 @@ test("phone heroes keep the artwork visible through translucent cards and compac
         expect(brandBox.x + brandBox.width).toBeLessThanOrEqual(startBox.x + 1);
         if (switcherBox) expect(startBox.x + startBox.width).toBeLessThanOrEqual(switcherBox.x + 1);
         else expect(startBox.x + startBox.width).toBeLessThanOrEqual(headerBox.x + headerBox.width);
-        await expect(start).toHaveText(variant.currentVariant === "A" ? "Starten" : "Vollbild");
+        if (variant.currentVariant === "A") await expect(start).toHaveText("Starten");
+        else await expect(start).toHaveAccessibleName("Vollbild");
 
         const overflow = await documentOverflow(page);
         expect(overflow.body).toBeLessThanOrEqual(1);

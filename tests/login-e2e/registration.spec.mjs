@@ -136,7 +136,7 @@ test('class invitation, queued mail and explicit verification on another browser
         const loginResponse=device.waitForResponse(response=>response.url().includes('action=login'));
         await device.getByRole('dialog').getByRole('button',{name:'Anmelden',exact:true}).click();
         expect((await loginResponse).status()).toBe(200);
-        await expect(device.getByRole('button',{name:'Abmelden',exact:true})).toBeVisible();
+        await expect(device.getByRole('button',{name:'Benutzermenü'})).toBeVisible();
         await expect(device.locator('.account-panel')).toContainText('Test Anmeldung · Klasse Browser Test');
     } finally { await context.close(); }
 });

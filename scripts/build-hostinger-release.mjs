@@ -15,7 +15,7 @@ export function releaseFiles(root, prefix = '') {
     });
 }
 
-export function buildHostingerRelease({ source = repoRoot, destination, releaseId, commit = null, saveMode = 'attempts' }) {
+export function buildHostingerRelease({ source = repoRoot, destination, releaseId, commit = null, saveMode = 'attempts', shell = true }) {
     if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(releaseId || '')) throw new Error('Invalid release ID.');
     if (!['attempts', 'completion-only'].includes(saveMode)) throw new Error('Invalid save mode.');
     if (!destination) throw new Error('An explicit output directory is required.');
@@ -31,7 +31,7 @@ export function buildHostingerRelease({ source = repoRoot, destination, releaseI
         cpSync(original, join(output, 'app', file));
     }
     writeFileSync(join(publicRoot, 'assets/data/account-config.js'),
-        `// Generated pilot release; the repository's guest configuration is unchanged.\nwindow.AgentAccountConfig = Object.freeze(window.AgentAccountConfig || ${JSON.stringify({ enabled: true, endpoint: 'api/index.php', saveMode })});\n`);
+        `// Generated pilot release; the repository's guest configuration is unchanged.\nwindow.AgentAccountConfig = Object.freeze(window.AgentAccountConfig || ${JSON.stringify({ enabled: true, endpoint: 'api/index.php', saveMode, shell })});\n`);
     // Tag every local script/stylesheet, including existing v= URLs. External URLs stay unchanged.
     for (const file of readdirSync(publicRoot).filter(name => name.endsWith('.html'))) {
         const path = join(publicRoot, file);

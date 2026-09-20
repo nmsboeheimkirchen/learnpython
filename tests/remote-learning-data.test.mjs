@@ -108,6 +108,20 @@ test('remote HTTP: same-origin credentials, no redirects, CSRF/profile headers a
     assert.equal(sent.init.headers['X-CSRF-Token'], 'token'); assert.equal(sent.init.headers['X-Agentpy-Profile'], 'a');
     assert.throws(() => h.api.createClient({ endpoint: 'https://foreign.test/api' }), /bestätigt/);
 });
+
+test('remote: explicit draft save in completion-only mode survives retry without completing or unlocking',async()=>{
+    const h=harness({saveMode:'completion-only'});
+    await h.session.recordAttempt('mission1_level1','old volatile');
+    h.loseResponse();
+    assert.equal((await h.stores.controls.saveDraft('mission1_level1','explicit draft')).ok,false);
+    assert.equal(h.stores.controls.hasUnconfirmed(),true);
+    assert.equal((await h.stores.controls.retry()).ok,true);
+    assert.deepEqual(h.writes[0],h.writes[1]);
+    assert.equal(h.session.getAttemptedCode('mission1_level1'),'explicit draft');
+    assert.equal(h.session.getCompletedCode('mission1_level1'),null);
+    assert.deepEqual([...h.session.getUnlockedLevelIds()],['link-level1']);
+    assert.equal(h.stores.controls.hasUnconfirmed(),false);
+});
 test('remote HTTP: timeout and invalid JSON are not treated as saved', async () => {
     const h = harness();
     const client = h.api.createClient({ timeoutMs: 5, fetch: (_url, { signal }) => new Promise((_resolve, reject) => {

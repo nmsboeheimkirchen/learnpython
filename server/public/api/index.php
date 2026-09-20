@@ -46,6 +46,15 @@ try {
         $user = requireUser($db);
         jsonResponse(['profile' => $user] + writeState($db, $user['id'], $body));
     }
+    if ($action === 'update-profile') {
+        $user = requireUser($db);
+        exactFields($body, ['name']);
+        try { $name = \AgentPy\accountLabel($body['name']); }
+        catch (\RuntimeException) { throw new ApiError(422, 'INVALID_NAME'); }
+        // Identity, email, class and learning state cannot be changed by this endpoint.
+        $db->prepare('UPDATE users SET display_name = ? WHERE id = ?')->execute([$name, $user['id']]);
+        jsonResponse(['profile' => currentUser($db)]);
+    }
     throw new ApiError(404, 'NOT_FOUND');
 } catch (ApiError $error) {
     if ($error->status === 429) header('Retry-After: ' . ($error->details['retryAfter'] ?? 900));

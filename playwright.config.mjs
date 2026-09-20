@@ -13,7 +13,7 @@ export default defineConfig({
     workers: process.env.CI ? 2 : undefined,
     reporter: process.env.CI ? "github" : "list",
     webServer: {
-        command: "node tests/static-server.mjs",
+        command: `"${process.execPath}" tests/static-server.mjs`,
         url: "http://127.0.0.1:4173",
         reuseExistingServer: !process.env.CI,
         timeout: 10_000

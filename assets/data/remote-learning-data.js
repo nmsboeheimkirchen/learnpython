@@ -100,6 +100,7 @@
                 state = next;
                 if (pending.command.type === "reset") volatileAttempts = {};
                 if (pending.command.type === "complete") delete volatileAttempts[pending.command.levelId];
+                if (pending.command.type === "attempt") delete volatileAttempts[pending.command.levelId];
                 pending = null;
                 blocked = null;
                 notify("saved", "Zentral gespeichert.");
@@ -126,6 +127,8 @@
             });
         }
         const controls = Object.freeze({
+            // Explicit save is intentional even in completion-only mode; never executes code.
+            saveDraft: (levelId, code) => write({ type: "attempt", levelId, code }),
             subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); },
             getStatus: () => status,
             hasUnconfirmed: () => queued > 0 || pending !== null || Object.keys(volatileAttempts).length > 0,

@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { join } from 'node:path';
+import { chromium, expect } from '@playwright/test';
 
 const [releaseId] = process.argv.slice(2);
 if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(releaseId || '')) throw new Error('Release ID required');
@@ -79,6 +80,41 @@ try {
     assert.equal((await device1.call('state')).status, 401);
     assert.equal((await device2.call('state')).status, 200);
     checks.push('logout', 'independent-device-session');
+    stage = 'synthetic-browser-account-menu';
+    const browser = await chromium.launch();
+    try {
+        const page = await browser.newPage({viewport:{width:1366,height:768}});
+        await page.goto(base + '/', {waitUntil:'networkidle'});
+        await page.getByRole('button',{name:'Anmelden',exact:true}).click();
+        await page.getByLabel('E-Mail-Adresse',{exact:true}).fill(accounts[0].email);
+        await page.getByLabel('Passwort',{exact:true}).fill(accounts[0].password);
+        await page.getByRole('dialog').getByRole('button',{name:'Anmelden',exact:true}).click();
+        await expect(page.getByRole('button',{name:'Benutzermenü'})).toBeVisible();
+        const frame = page.frameLocator('#account-lesson');
+        await page.locator('#account-lesson').evaluate(iframe=>{iframe.contentWindow.location.href='mission1_level1.html';});
+        await expect(frame.locator('.CodeMirror')).toBeVisible();
+        await page.locator('#account-lesson').evaluate(iframe=>{iframe.contentWindow.editor.setValue('# synthetic explicitly saved draft');});
+        await page.getByRole('button',{name:'Benutzermenü'}).click();
+        await page.getByRole('button',{name:'Code speichern',exact:true}).click();
+        await expect(page.locator('.account-panel')).toContainText('Entwurf zentral gespeichert');
+        const checked=(await device2.call('state')).data.state;
+        assert.equal(checked.data.attemptedCodes.mission1_level1,'# synthetic explicitly saved draft');
+        assert.equal(checked.data.completedCodes.mission1_level1,code);
+        await page.getByRole('button',{name:'Fortschritt',exact:true}).click();
+        await expect(page.getByRole('dialog')).toContainText('01-1');
+        await expect(page.locator('.account-progress-number')).toHaveText('5 %');
+        await page.getByRole('button',{name:'Schließen',exact:true}).click();
+        await page.getByRole('button',{name:'Benutzermenü'}).click();
+        await page.getByRole('button',{name:'Kontoinfo bearbeiten'}).click();
+        await page.getByLabel('Anzeigename',{exact:true}).fill('Synthetic updated learner');
+        await page.getByRole('button',{name:'Namen speichern'}).click();
+        await expect(page.getByRole('dialog')).toContainText('Anzeigename gespeichert');
+        await page.getByRole('button',{name:'Schließen',exact:true}).click();
+        await page.getByRole('button',{name:'Benutzermenü'}).click();
+        await page.getByRole('button',{name:'Abmelden',exact:true}).click();
+        await expect(page.getByRole('button',{name:'Anmelden',exact:true})).toBeVisible();
+        checks.push('browser-login-menu','explicit-draft-without-completion','progress-display','profile-name-edit','browser-logout');
+    } finally { await browser.close(); }
 } catch {
     console.error(`Live login smoke test failed at ${stage}; no credentials or response payloads logged.`);
     process.exitCode = 1;

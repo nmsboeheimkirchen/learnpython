@@ -39,6 +39,7 @@ test('Hostinger release separates private PHP from webroot and cannot copy passw
     assert.match(readFileSync(join(options.destination, 'public/api/index.php'), 'utf8'), /agentpy-private.*|releases\/test-release\/app\/public\/api\/index.php/);
     const context = { window: {} }; vm.runInNewContext(readFileSync(join(options.destination, 'public/assets/data/account-config.js'), 'utf8'), context);
     assert.equal(context.window.AgentAccountConfig.enabled, true);
+    assert.equal(context.window.AgentAccountConfig.shell, true);
     assert.equal(context.window.AgentAccountConfig.saveMode, 'attempts');
     assert.match(readFileSync(join(options.source, 'assets/data/account-config.js'), 'utf8'), /enabled: false/);
 });

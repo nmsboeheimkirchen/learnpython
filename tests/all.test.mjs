@@ -9,6 +9,7 @@ import "./legal-pages.test.mjs";
 import "./learning-data-core.test.mjs";
 import "./local-learning-data.test.mjs";
 import "./remote-learning-data.test.mjs";
+import "./course-progress.test.mjs";
 import "./progress-architecture.test.mjs";
 import "./static-release.test.mjs";
 import "./hostinger-release.test.mjs";

@@ -249,6 +249,26 @@ for (const backend of backends) {
             assert.equal((await a.request('state')).data.state.data.completedCodes.mission1_level1, 'print("Geschafft ✓")');
         });
 
+        await t.test('profile edit changes only the authenticated display name and never learning state', async () => {
+            const before = (await a.request('state')).data.state;
+            const anonymous = new BrowserSession(url); await anonymous.request('session');
+            assert.equal((await anonymous.request('update-profile', {name:'Denied'})).status,401);
+            for(const name of ['', 'x'.repeat(101), 'Bad\nname', null]) {
+                assert.equal((await a.request('update-profile',{name})).status,422);
+            }
+            assert.equal((await a.request('update-profile',{name:'No', email:userB.email})).status,422);
+            assert.equal((await a.request('update-profile',{name:'No'}, {headers:{'X-Agentpy-Profile':userB.id}})).status,409);
+            assert.equal((await a.request('update-profile',{name:'No'}, {headers:{'X-CSRF-Token':'wrong'}})).status,403);
+            const updated = await a.request('update-profile',{name:'Änderung <b>Test</b>'});
+            assert.equal(updated.status,200);
+            assert.equal(updated.data.profile.name,'Änderung <b>Test</b>');
+            assert.equal(updated.data.profile.email,userA.email);
+            assert.equal(updated.data.profile.classId,classInfo.id);
+            assert.equal((await b.request('session')).data.profile.name,userB.name);
+            assert.deepEqual((await a.request('state')).data.state,before);
+            await a.request('update-profile',{name:userA.name});
+        });
+
         await t.test('stale devices conflict and retried requests do not replay old code over newer progress', async () => {
             const command = { type: 'attempt', levelId: 'mission1_level1', code: 'new version' };
             const operationId = randomUUID();

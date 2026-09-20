@@ -2456,7 +2456,9 @@ test("the supplied transparent Agent PY PNG is the shared optimized logo asset",
 
 test("CodeMirror is initialized from one central editor module", () => {
     const textarea = { id: "python-editor" };
-    const createdEditor = { name: "editor" };
+    let changeHandler;
+    let dirtyEvents = 0;
+    const createdEditor = { name: "editor", on(type, handler) { assert.equal(type, 'change'); changeHandler = handler; } };
     let receivedTextarea = null;
     let receivedOptions = null;
     const document = {
@@ -2474,6 +2476,11 @@ test("CodeMirror is initialized from one central editor module", () => {
     const context = vm.createContext({ document, Error, window });
     const source = readFileSync(new URL("../assets/editor.js", import.meta.url), "utf8");
     vm.runInContext(source, context);
+    window.AgentAccount = { editorChanged() { dirtyEvents++; } };
+    changeHandler(createdEditor, {origin:'setValue'});
+    assert.equal(dirtyEvents,0);
+    changeHandler(createdEditor, {origin:'+input'});
+    assert.equal(dirtyEvents,1);
 
     assert.equal(receivedTextarea, textarea);
     assert.equal(window.editor, createdEditor);
@@ -2496,6 +2503,7 @@ test("the editor refreshes after layout events and real width changes", () => {
         getBoundingClientRect() { return { width }; }
     };
     const editor = {
+        on() {},
         refreshCount: 0,
         getWrapperElement() { return wrapper; },
         refresh() { this.refreshCount += 1; }

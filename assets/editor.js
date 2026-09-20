@@ -13,6 +13,11 @@
         lineNumbers: true,
         indentUnit: 4
     });
+    window.editor.on("change", (_editor, change) => {
+        // Restoration/template replacement is programmatic; typing, undo, paste
+        // and IME edits need a loss warning until explicitly saved or executed.
+        if (change.origin !== "setValue") window.AgentAccount?.editorChanged?.();
+    });
 
     // Firefox kann das Gutter vor dem ersten stabilen Layout falsch vermessen.
     // Mehrere Refresh-Punkte halten Zeilennummern auch bei Zoom, Back/Forward und

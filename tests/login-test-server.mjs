@@ -13,7 +13,8 @@ mkdirSync(join(root, '.cache'), { recursive: true });
 const temp = mkdtempSync(join(root, '.cache/login-browser-'));
 const webroot = join(temp, 'public_html');
 const release = join(temp, 'agentpy-private/releases/browser-test');
-buildHostingerRelease({ destination: release, releaseId: 'browser-test' });
+// Legacy runtime tests exercise documents directly. shell.spec opens the actual shell.
+buildHostingerRelease({ destination: release, releaseId: 'browser-test', shell: false });
 cpSync(join(release, 'public'), webroot, { recursive: true });
 // Disposable localhost configuration only; production credentials never enter tests.
 writeFileSync(join(temp, 'agentpy-private/config.php'), '<?php return [];');

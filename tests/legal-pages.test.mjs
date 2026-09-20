@@ -42,7 +42,12 @@ test("the imprint shows only the supplied identity and address with a route home
     assert.match(html, /href="#impressum-main"/);
     assert.match(html, /<main id="impressum-main"/);
     assert.match(html, /href="index\.html">Zurück zur Startseite<\/a>/);
-    assert.doesNotMatch(html, /<script\b|https?:\/\//i);
+    // Only the shared local account chrome may run here; legal content itself
+    // remains ordinary HTML, reachable without JS or a successful account API.
+    assert.doesNotMatch(html, /https?:\/\//i);
+    const scripts = [...html.matchAll(/<script\b[^>]*src="([^"]+)"[^>]*>([\s\S]*?)<\/script>/g)];
+    assert.deepEqual(scripts.map(match=>match[1]), ['assets/data/account-config.js','assets/data/remote-learning-data.js','assets/data/account-bootstrap.js']);
+    assert.ok(scripts.every(match=>match[2].trim()===''));
 });
 
 test("the README names the author and adviser without internal solution hints", () => {
