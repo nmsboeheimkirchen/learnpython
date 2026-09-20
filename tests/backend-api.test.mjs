@@ -109,6 +109,33 @@ for (const backend of backends) {
         };
         const fixture = (action, input = {}) => phpCall(['tests/backend-fixture.php', action], env, input);
         const ids = [];
+        await t.test('restricted rollout uses existing v2 accounts without registration tables or mail', async () => {
+            fixture('init-v2-only');
+            const disabled = {...env, AGENTPY_REGISTRATION_ENABLED:'false', AGENTPY_MAIL_TRANSPORT:'disabled', AGENTPY_MAIL_FROM:''};
+            const group = JSON.parse(phpCall(['server/bin/manage.php', 'create-class'], disabled, {name:'Restricted rollout'}));
+            const user = JSON.parse(phpCall(['server/bin/manage.php', 'create-user'], disabled, {email:'restricted@example.test', password, name:'Existing learner', classId:group.id}));
+            const {child, url} = await startServer(disabled, port);
+            try {
+                const client = new BrowserSession(url);
+                assert.equal((await client.request('session')).data.registration.enabled, false);
+                for (const action of ['check-invitation', 'register', 'verify-email']) {
+                    const result = await client.request(action, {});
+                    assert.equal(result.status, 503);
+                    assert.equal(result.data.error.code, 'REGISTRATION_UNAVAILABLE');
+                }
+                await client.login(user.email);
+                assert.equal(client.profile.name, 'Existing learner');
+                assert.equal((await client.request('state')).data.state.revision, 0);
+                const code = 'print("Existing account still saves")';
+                assert.equal((await client.write({type:'complete', levelId:'mission1_level1', code},0)).status,200);
+                assert.equal((await client.request('state')).data.state.data.completedCodes.mission1_level1,code);
+                assert.equal((await client.request('logout',{})).status,200);
+                assert.deepEqual(JSON.parse(fixture('inspect-v2-only')), {schema:2,hasRegistrationTables:false});
+            } finally {
+                const exited = once(child,'exit'); child.kill(); await exited;
+                fixture('cleanup',{ids:[user.id],classId:group.id});
+            }
+        });
         await t.test('v2 migration rejects populated legacy databases, upgrades empty ones and repeats safely', () => {
             assert.equal(JSON.parse(fixture('test-profile-migration')).ok, true);
         });

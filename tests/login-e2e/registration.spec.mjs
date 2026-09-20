@@ -18,6 +18,41 @@ async function register(page) {
     await page.getByRole('button',{name:'Anmelden',exact:true}).click();
     await page.getByRole('button',{name:'Neuanmeldung',exact:true}).click();
 }
+test('restricted rollout hides registration unless the server explicitly enables it', async ({page}) => {
+    for (const policy of [undefined, {enabled:false}, {enabled:'true'}]) {
+        await page.route('**/api/index.php?action=session', async route => {
+            const response = await route.fetch();
+            const json = await response.json();
+            json.registration = policy;
+            await route.fulfill({response, json});
+        });
+        await page.goto('/');
+        await page.locator('[data-account-actions]').getByRole('button',{name:'Anmelden',exact:true}).click();
+        await expect(page.getByRole('dialog')).toContainText('nur die Anmeldung mit einem bestehenden Konto');
+        await expect(page.getByRole('button',{name:'Neuanmeldung',exact:true})).toHaveCount(0);
+        await expect(page.getByLabel('E-Mail-Adresse',{exact:true})).toBeVisible();
+        await page.getByRole('button',{name:'Abbrechen',exact:true}).click();
+        await page.unroute('**/api/index.php?action=session');
+    }
+});
+
+test('restricted rollout clears verification fragments without opening a wizard or sending a request', async ({page}) => {
+    const actions = [];
+    page.on('request', request => {
+        if(request.url().includes('/api/index.php')) actions.push(new URL(request.url()).searchParams.get('action'));
+    });
+    await page.route('**/api/index.php?action=session', async route => {
+        const response = await route.fetch();
+        const json = await response.json();
+        json.registration = {enabled:false};
+        await route.fulfill({response,json});
+    });
+    await page.goto('/#verify=' + 'a'.repeat(64));
+    await expect(page.locator('.account-panel')).toContainText('noch nicht freigegeben');
+    expect(page.url()).not.toContain('#verify=');
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    expect(actions).toEqual(['session']);
+});
 test('fullscreen control toggles native fullscreen or explains an unsupported browser',async({page})=>{
     await page.goto('/');
     const control=page.getByRole('button',{name:'Vollbild',exact:true});

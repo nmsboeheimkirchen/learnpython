@@ -40,6 +40,8 @@
     let channel;
     try { channel = new BroadcastChannel("agentpy-account-v1"); } catch (_) { /* Focus check remains active. */ }
     function show(text) { if (message) message.textContent = text; }
+    // Server-controlled rollout: no registration UI until explicitly enabled.
+    function registrationEnabled() { return session?.registration?.enabled === true; }
     function block(failure, erase = false) {
         document.documentElement.classList.add("account-blocked");
         show(failure.message);
@@ -86,6 +88,10 @@
         return client.request(action, { body, csrfToken: current.csrfToken });
     }
     function registrationDialog(verificationToken = null) {
+        if (!registrationEnabled()) {
+            show("Neuanmeldung und E-Mail-Bestätigung sind noch nicht freigegeben. Bestehende Konten können sich anmelden.");
+            return;
+        }
         if (controls?.hasUnconfirmed()) return;
         const dialog = document.createElement("dialog"); dialog.className = "account-dialog";
         dialog.setAttribute("aria-label", verificationToken ? "E-Mail bestätigen" : "Neuanmeldung");
@@ -174,10 +180,13 @@
         const dialog = document.createElement("dialog");
         dialog.className = "account-dialog";
         dialog.setAttribute("aria-label", "Am Schulkonto anmelden");
-        dialog.innerHTML = '<form><h2>Am Schulkonto anmelden</h2><p>Gaststand und Kontostand bleiben getrennt. Es wird nichts automatisch übernommen.</p><label>E-Mail-Adresse<input name="email" type="email" autocomplete="username" required maxlength="254"></label><label>Passwort<input name="password" type="password" autocomplete="current-password" required></label><p role="alert"></p><button type="submit">Anmelden</button><button type="button" data-cancel>Abbrechen</button><p>Zur Neuanmeldung brauchst du einen Klassencode.</p><button class="account-register-link" type="button" data-register>Neuanmeldung</button><p>Passwort vergessen? Wende dich vorerst an deine Lehrperson.</p></form>';
+        const registrationHint = registrationEnabled()
+            ? '<p>Zur Neuanmeldung brauchst du einen Klassencode.</p><button class="account-register-link" type="button" data-register>Neuanmeldung</button><p>Passwort vergessen? Wende dich vorerst an deine Lehrperson.</p>'
+            : '<p>Derzeit ist nur die Anmeldung mit einem bestehenden Konto möglich. Neuanmeldung, Klassenbeitritt und Passwort-Zurücksetzen werden später freigeschaltet.</p>';
+        dialog.innerHTML = '<form><h2>Am Schulkonto anmelden</h2><p>Gaststand und Kontostand bleiben getrennt. Es wird nichts automatisch übernommen.</p><label>E-Mail-Adresse<input name="email" type="email" autocomplete="username" required maxlength="254"></label><label>Passwort<input name="password" type="password" autocomplete="current-password" required></label><p role="alert"></p><button type="submit">Anmelden</button><button type="button" data-cancel>Abbrechen</button>' + registrationHint + '</form>';
         const form = dialog.querySelector("form");
         passwordVisibility(form);
-        form.querySelector("[data-register]").addEventListener("click", () => { if (!busy) { dialog.close(); registrationDialog(); } });
+        form.querySelector("[data-register]")?.addEventListener("click", () => { if (!busy) { dialog.close(); registrationDialog(); } });
         const submit = form.querySelector('[type="submit"]');
         const cancel = form.querySelector("[data-cancel]");
         let busy = false;

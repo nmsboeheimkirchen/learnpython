@@ -10,6 +10,21 @@ if (!str_starts_with($config['dsn'], 'sqlite:') && !preg_match('/(?:;|:)dbname=[
 $db = AgentPy\database($config);
 $input = json_decode(stream_get_contents(STDIN), true, 20, JSON_THROW_ON_ERROR);
 switch ($argv[1] ?? '') {
+    case 'init-v2-only':
+        $db->exec(file_get_contents(dirname(__DIR__) . '/server/schema.sql'));
+        if ((int) $db->query('SELECT COUNT(*) FROM users')->fetchColumn() !== 0) exit(1);
+        foreach (['mail_jobs', 'pending_registrations', 'class_invitations', 'class_registration', 'mail_attempts', 'mail_dispatch_lock'] as $table)
+            $db->exec('DROP TABLE IF EXISTS ' . $table);
+        $db->exec('DELETE FROM schema_migrations');
+        $db->prepare('INSERT INTO schema_migrations (version, applied_at) VALUES (2, ?)')->execute([time()]);
+        break;
+    case 'inspect-v2-only':
+        $mysql = $db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql';
+        $tables = $mysql ? $db->query('SHOW TABLES')->fetchAll(PDO::FETCH_COLUMN)
+            : $db->query("SELECT name FROM sqlite_master WHERE type='table'")->fetchAll(PDO::FETCH_COLUMN);
+        echo json_encode(['schema' => (int) $db->query('SELECT MAX(version) FROM schema_migrations')->fetchColumn(),
+            'hasRegistrationTables' => (bool) array_intersect($tables, ['mail_jobs', 'pending_registrations', 'class_invitations', 'class_registration', 'mail_attempts', 'mail_dispatch_lock'])]);
+        break;
     case 'registration-inspect':
         $q = $db->prepare('SELECT id,token_hash,token_expires_at,expires_at FROM pending_registrations WHERE email=?');
         $q->execute([$input['email']]); $pending = $q->fetch();

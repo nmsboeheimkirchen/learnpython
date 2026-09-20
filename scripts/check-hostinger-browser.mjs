@@ -21,13 +21,20 @@ for (const [name, engine, options] of [
                 failedAssets.push(new URL(response.url()).pathname);
         });
         await page.goto(base + '/', { waitUntil: 'networkidle' });
-        const account = page.getByRole('complementary', { name: 'Konto und Speicherung' });
-        await expect(account.getByRole('button', { name: 'Anmelden', exact: true })).toBeVisible();
+        const header = page.locator('[data-account-actions]');
+        await expect(header.getByRole('button', { name: 'Anmelden', exact: true })).toBeVisible();
+        await expect(header.getByRole('button', { name: 'Vollbild', exact: true })).toBeVisible();
         await expect(page.locator('html')).not.toHaveClass(/account-blocked/);
-        await account.getByRole('button', { name: 'Anmelden', exact: true }).click();
+        await header.getByRole('button', { name: 'Anmelden', exact: true }).click();
         const dialog = page.getByRole('dialog', { name: 'Am Schulkonto anmelden' });
         await expect(dialog).toBeVisible();
         await expect(dialog.getByLabel('E-Mail-Adresse')).toBeFocused();
+        await expect(dialog).toContainText('nur die Anmeldung mit einem bestehenden Konto');
+        await expect(dialog.getByRole('button', { name: 'Neuanmeldung', exact: true })).toHaveCount(0);
+        await dialog.getByRole('button', { name: 'Passwort anzeigen', exact: true }).click();
+        await expect(dialog.getByLabel('Passwort', { exact: true })).toHaveAttribute('type', 'text');
+        await dialog.getByRole('button', { name: 'Passwort verbergen', exact: true }).click();
+        await expect(dialog.getByLabel('Passwort', { exact: true })).toHaveAttribute('type', 'password');
         const box = await dialog.boundingBox();
         const viewport = page.viewportSize();
         if (!box || box.x < 0 || box.y < 0 || box.x + box.width > viewport.width || box.y + box.height > viewport.height)
@@ -36,6 +43,6 @@ for (const [name, engine, options] of [
         await dialog.getByRole('button', { name: 'Abbrechen' }).click();
         await expect(dialog).toHaveCount(0);
         if (scriptErrors || failedAssets.length) throw new Error('Script or asset failures');
-        console.log(JSON.stringify({ browser: name, ok: true, checks: ['home-assets', 'guest-ready', 'login-dialog', 'focus', 'dialog-fit', 'cancel'], screenshot: `${output}/${name}-login.png` }));
+        console.log(JSON.stringify({ browser: name, ok: true, checks: ['home-assets', 'guest-ready', 'header-login-fullscreen', 'restricted-registration', 'password-visibility', 'login-dialog', 'focus', 'dialog-fit', 'cancel'], screenshot: `${output}/${name}-login.png` }));
     } finally { await browser.close(); }
 }
