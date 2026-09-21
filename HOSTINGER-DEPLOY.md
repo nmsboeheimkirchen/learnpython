@@ -1,5 +1,15 @@
 # Hostinger: Testveröffentlichung und Rückfall
 
+## Aktuell 21.09.2026 – r7 mit Neuanmeldung und Passwortreset freigeschaltet
+
+**pilot-20260921-r7** aus **a814006946b726b703cb5c45a8a7c8ec7e35275b** bestätigt live, Schema4. CTEST führt zur bestehenden Klasse Test (32Plätze, Codeablauf20.12.2026). Registrierung/E-Mail-Bestätigung und Passwortreset aktiviert. SMTP über smtp.hostinger.com:465 mit geprüften Zertifikaten und privatem Postfachpasswort; Nutzer bestätigt echte Testmail **ohne Absenderwarnung**. Mailquote weiterhin konservativ10/Minute,100/24Stunden, alle Kontomails teilen sie. Minutencron und neue Dispatcher-Version bestätigt. Keine Änderung an anderen Websites, persönlichem Passwort oder Lernstand.
+
+Gesamte [CI35608444725](https://github.com/nmsboeheimkirchen/learnpython/actions/runs/35608444725) grün, Live-Checks inklusive Chromium/WebKit und synthetischen Konten abgeschlossen, synthetische Konten entfernt. Persönlicher Bestand1Klasse/1Konto/1Lernstand/47Belege hashidentisch vor/nach Veröffentlichung. Alle Sicherungen, Prüfsummen und Ablaufdetails oben in LOGIN-HANDOFF.md.
+
+**Wichtig:** ältere Rückfallbefehle unten sind historisch und jetzt nicht blind verwenden! r6 und älter prüfen keine Session-Epochen nach Passwortreset. Bei Problemen zunächst `node .cache/hostinger-registration-rollout.mjs disable-mail`: deaktiviert Registrierung/Recovery/Transport, behält r7-Auth-Code und Daten. Kein DB-Downgrade/Restore alter Passwörter. Frisches privates Backup `backups/before-pilot-20260921-r7.sql` (20445Bytes), Webbackup `backups/web-20260921144312-d9b24ee9c6`; Restore nicht getestet.
+
+Private SMTPdatei: `/home/u535472856/domains/agentpy.bildungdigital.at/agentpy-private/smtp-password.txt`. Nur direkt im geschützten Dateimanager bearbeiten, keine Ausgabe/Übermittlung in Chat oder Git. `scripts/check-hostinger-mail.mjs smtp-status` meldet ausschließlich gesetzt/nichtgesetzt; `worker-status` meldet nur nichtpersonenbezogenen Heartbeat. Keine weiteren Testmails ohne Anlass.
+
 ## Aktuell 20.09.2026: r5 mit bestehenden Konten veröffentlicht
 
 **https://agentpy.bildungdigital.at läuft bestätigt mit `pilot-20260920-r5` aus Commit `55c0e6f`.** Neues Headerlayout, Vollbild und Passwortanzeige sind live. Ausschließlich bestehende Accounts können sich anmelden; Selbstregistrierung, Klassenbeitritt und E-Mail-Funktionen bleiben deaktiviert (`registration_enabled=false`, `mail_transport=disabled`). Keine private Mailkonfiguration und keine Schema-3-Migration durchgeführt. `Mein Konto`/Prozentübersicht bleiben ein nächster Entwicklungsschritt.

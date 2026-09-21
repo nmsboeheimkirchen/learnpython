@@ -4,6 +4,7 @@ import { mkdir } from 'node:fs/promises';
 
 const base = 'https://agentpy.bildungdigital.at';
 const output = '.cache/hostinger-browser';
+const registrationEnabled = process.argv.includes('--registration');
 await mkdir(output, { recursive: true });
 for (const [name, engine, options] of [
     ['chromium', chromium, { viewport: { width: 1366, height: 768 } }],
@@ -30,8 +31,14 @@ for (const [name, engine, options] of [
         const dialog = page.getByRole('dialog', { name: 'Am Schulkonto anmelden' });
         await expect(dialog).toBeVisible();
         await expect(dialog.getByLabel('E-Mail-Adresse')).toBeFocused();
-        await expect(dialog).toContainText('nur die Anmeldung mit einem bestehenden Konto');
-        await expect(dialog.getByRole('button', { name: 'Neuanmeldung', exact: true })).toHaveCount(0);
+        if (registrationEnabled) {
+            await expect(dialog).toContainText('Zur Neuanmeldung brauchst du einen Klassencode');
+            await expect(dialog.getByRole('button', { name: 'Neuanmeldung', exact: true })).toBeVisible();
+            await expect(dialog.getByRole('button', { name: 'Passwort vergessen?', exact: true })).toBeVisible();
+        } else {
+            await expect(dialog).toContainText('nur die Anmeldung mit einem bestehenden Konto');
+            await expect(dialog.getByRole('button', { name: 'Neuanmeldung', exact: true })).toHaveCount(0);
+        }
         await dialog.getByRole('button', { name: 'Passwort anzeigen', exact: true }).click();
         await expect(dialog.getByLabel('Passwort', { exact: true })).toHaveAttribute('type', 'text');
         await dialog.getByRole('button', { name: 'Passwort verbergen', exact: true }).click();
@@ -41,6 +48,24 @@ for (const [name, engine, options] of [
         if (!box || box.x < 0 || box.y < 0 || box.x + box.width > viewport.width || box.y + box.height > viewport.height)
             throw new Error('Login dialog outside viewport');
         await page.screenshot({ path: `${output}/${name}-login.png` });
+        if (registrationEnabled) {
+            await dialog.getByRole('button',{name:'Neuanmeldung',exact:true}).click();
+            const wizard=page.getByRole('dialog',{name:'Neuanmeldung'});
+            await wizard.getByLabel('Klassencode',{exact:true}).fill('CTEST');
+            await wizard.getByRole('button',{name:'Klassencode prüfen'}).click();
+            await expect(wizard).toContainText('Willkommen in Test!');
+            for (const name of ['Name','E-Mail-Adresse','Passwort (mindestens 8 Zeichen)']) await expect(wizard.getByLabel(name,{exact:true})).toBeVisible();
+            await page.screenshot({path:`${output}/${name}-registration.png`});
+            // Do not create fake mail recipients or reset any real password.
+            await wizard.getByRole('button',{name:'Abbrechen · Gastmodus'}).click();
+            await expect(wizard).toHaveCount(0);
+            await header.getByRole('button',{name:'Anmelden',exact:true}).click();
+            await dialog.getByRole('button',{name:'Passwort vergessen?',exact:true}).click();
+            const recovery=page.getByRole('dialog',{name:'Passwort zurücksetzen'});
+            await expect(recovery.getByRole('button',{name:'Link anfordern'})).toBeVisible();
+            await recovery.getByRole('button',{name:'Abbrechen',exact:true}).click();
+            await header.getByRole('button',{name:'Anmelden',exact:true}).click();
+        }
         await dialog.getByRole('button', { name: 'Abbrechen' }).click();
         await expect(dialog).toHaveCount(0);
         const lesson=page.frameLocator('#account-lesson');
@@ -54,6 +79,6 @@ for (const [name, engine, options] of [
         if(native) await expect(header.getByRole('button',{name:'Vollbild beenden'})).toHaveAttribute('aria-pressed','true');
         await expect(page.locator('.account-panel')).toBeHidden();
         if (scriptErrors || failedAssets.length) throw new Error('Script or asset failures');
-        console.log(JSON.stringify({ browser: name, ok: true, checks: ['home-assets', 'guest-ready', 'header-login-fullscreen', 'restricted-registration', 'password-visibility', 'login-dialog', 'focus', 'dialog-fit', 'cancel','guest-mission-dialog','persistent-shell-fullscreen'], screenshot: `${output}/${name}-login.png` }));
+        console.log(JSON.stringify({ browser: name, ok: true, checks: ['home-assets', 'guest-ready', 'header-login-fullscreen', registrationEnabled ? 'CTEST-Test-registration-and-recovery' : 'restricted-registration', 'password-visibility', 'login-dialog', 'focus', 'dialog-fit', 'cancel','guest-mission-dialog','persistent-shell-fullscreen'], screenshot: `${output}/${name}-login.png` }));
     } finally { await browser.close(); }
 }

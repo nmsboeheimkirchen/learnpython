@@ -2,6 +2,8 @@
 
 ## Neuer Auftrag 21.09.2026 – CTEST, Bestätigung und Passwortreset
 
+**Abgeschlossen:** r7 auf Hostinger freigeschaltet und bestätigt. CTEST→Test, E-Mailbestätigung, Passwortreset und authentifiziertes SMTP sind live. ZweiteTestmail ohne Warnung empfangen, komplette CI und Live-Smokes erfolgreich. Nächster Schritt: Nutzer registriert eine neue Person mit einer noch nicht belegten E-Mail und testet Bestätigung/Login/Reset. Betriebsdetails oben in LOGIN-HANDOFF.md; keine offenen automatischen Deployment-Aufgaben.
+
 Echtgerätefeedback für r6 ist positiv. Registrierung in bestehende Klasse **Test** per **CTEST** und Passwort-Wiederherstellung sind nun beauftragt. Die lokale Erweiterung nutzt additive Schema3/4, Einmal-Links, zwei Passworteingaben (mindestens 8 Zeichen), Sitzungswiderruf und dieselbe persistente Mailquote für alle Kontomails. Bestehende Konten/Lernstände bleiben erhalten; keine Lehreransicht/E-Mail-Änderung/Kontolöschung in diesem Auftrag.
 
 Die Testmail wurde am 21.09. im Posteingang empfangen, aber der Screenshot zeigt eine Absenderwarnung. Authentifizierten Versand vor öffentlicher Freischaltung klären; SMTP benötigt das separate Postfachpasswort, niemals im Chat/Repository. Chronologie, Tests und letzter Live-Stand stehen oben in LOGIN-HANDOFF.md. Die folgenden Betriebsstände sind historisch.
