@@ -547,8 +547,24 @@
         });
     }
 
+    // Home is read-only: no repairing/writing legacy keys or opening the guest
+    // store for a signed-in user. Call only after the account identity is known.
+    function readHomeProgress(options = {}) {
+        const driver = createStorageDriver(Object.hasOwn(options,'storage') ? options.storage : browserStorage());
+        const state = {};
+        for (const [field,key] of [['completedCodes',STORAGE_KEYS.completedCode],['attemptedCodes',STORAGE_KEYS.attemptedCode]]) {
+            const result = driver.getItem(key);
+            if (!result.ok) return result;
+            try {
+                const value = JSON.parse(result.value || '{}');
+                state[field] = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+            } catch (_) { return unavailableResult('read-home',key); }
+        }
+        return {ok:true,value:state};
+    }
     window.AgentPyLocalLearningData = Object.freeze({
         STORAGE_KEYS,
-        createLocalLearningStores
+        createLocalLearningStores,
+        readHomeProgress
     });
 })();

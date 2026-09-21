@@ -1,0 +1,67 @@
+import {test,expect} from '@playwright/test';
+const child=page=>page.frames().find(frame=>frame.parentFrame()===page.mainFrame());
+const lesson=page=>page.frameLocator('#account-lesson');
+async function open(page){
+    await page.addInitScript(()=>{window.AgentAccountConfig={enabled:true,endpoint:'api/index.php',saveMode:'attempts',shell:true};});
+    await page.goto('/');await expect(page.locator('.account-person')).toBeVisible();
+}
+test('home resumes guest state, keeps guest prompt and never substitutes it for account progress',async({page})=>{
+    await open(page);
+    await expect(lesson(page).locator('[data-next-target]')).toHaveText('System Access');
+    await child(page).evaluate(()=>localStorage.setItem('completedLevelCode_v1',JSON.stringify({mission1_level1:'print(1)'})));
+    await page.reload();
+    await expect(lesson(page).locator('[data-next-target]')).toHaveText('System Access · 01-2');
+    await lesson(page).getByRole('link',{name:'Weiter mit 01-2'}).click();
+    await expect(page.getByRole('dialog',{name:'Im Gastmodus starten'})).toBeVisible();
+    const primary=page.getByRole('button',{name:'OK – Mission starten'}),close=page.getByRole('button',{name:'Schließen',exact:true});
+    expect(await primary.evaluate(el=>+getComputedStyle(el).fontWeight)).toBeGreaterThan(await close.evaluate(el=>+getComputedStyle(el).fontWeight));
+    await close.click();
+    await page.getByRole('button',{name:'Anmelden',exact:true}).click();
+    await page.getByLabel('E-Mail-Adresse',{exact:true}).fill(`polish-student-${test.info().project.name}@example.test`);
+    await page.getByLabel('Passwort',{exact:true}).fill('Synthetic-browser-password-123!');
+    const submit=page.getByRole('dialog').getByRole('button',{name:'Anmelden',exact:true}),cancel=page.getByRole('button',{name:'Abbrechen',exact:true});
+    expect(await submit.evaluate(el=>+getComputedStyle(el).fontWeight)).toBeGreaterThan(await cancel.evaluate(el=>+getComputedStyle(el).fontWeight));
+    await submit.click();await expect(page.getByRole('button',{name:'Benutzermenü'})).toBeVisible();
+    await expect(lesson(page).locator('[data-next-target]')).toHaveText('System Access');
+    await child(page).evaluate(async()=>{
+        const session=await fetch('/api/index.php?action=session').then(r=>r.json());
+        const state=await fetch('/api/index.php?action=state',{headers:{'X-Agentpy-Profile':session.profile.id}}).then(r=>r.json());
+        const result=await fetch('/api/index.php?action=write',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':session.csrfToken,'X-Agentpy-Profile':session.profile.id},body:JSON.stringify({expectedRevision:state.state.revision,operationId:crypto.randomUUID(),command:{type:'complete',levelId:'mission1_level1',code:'print(1)'}})});
+        if(!result.ok)throw Error('Fixture write failed');
+    });
+    await page.reload();await expect(lesson(page).locator('[data-next-target]')).toHaveText('System Access · 01-2');
+    await page.screenshot({path:test.info().outputPath('home-resume.png')});
+    await page.getByRole('button',{name:'Benutzermenü'}).click();await page.getByRole('button',{name:'Fortschritt',exact:true}).click();
+    await expect(page.locator('.account-progress-list strong').first()).toHaveText('Mission 1: ');
+    await expect(page.locator('.account-progress-done').first()).toContainText('01-1');
+    await expect(page.locator('.account-progress-pending').first()).toContainText('01-2');
+    await page.screenshot({path:test.info().outputPath('progress-overview.png')});
+    await page.getByRole('button',{name:'Schließen',exact:true}).click();
+    await page.getByRole('button',{name:'Benutzermenü'}).click();await page.getByRole('button',{name:'Kontoinfo bearbeiten'}).click();
+    await expect(page.locator('.account-identity')).toContainText('Klasse:');
+    await expect(page.locator('[data-class]')).toHaveText('Browser Test');
+    await page.setViewportSize({width:390,height:844});
+    await page.screenshot({path:test.info().outputPath('account-details.png')});
+    const box=await page.getByRole('dialog').boundingBox();expect(box.x).toBeGreaterThanOrEqual(0);expect(box.x+box.width).toBeLessThanOrEqual(390);
+    const logo=await page.locator('.account-shell-brand img').boundingBox(),controls=await page.locator('[data-account-actions]').boundingBox();
+    expect(logo.width).toBeGreaterThanOrEqual(190);expect(logo.x+logo.width).toBeLessThan(controls.x);
+});
+test('guest-only static homepage also resumes browser progress without account requests',async({page})=>{
+    const api=[];page.on('request',r=>{if(r.url().includes('/api/'))api.push(r.url());});
+    await page.addInitScript(()=>{
+        window.AgentAccountConfig={enabled:false};
+        localStorage.setItem('completedLevelCode_v1',JSON.stringify({mission1_level1:'done'}));
+    });
+    await page.goto('/index.html');
+    await expect(page.locator('[data-next-target]')).toHaveText('System Access · 01-2');
+    expect(api).toHaveLength(0);
+    await page.setViewportSize({width:390,height:844});
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+});
+test('failed account progress does not display another person’s guest continuation',async({page})=>{
+    await page.route('**/api/index.php?action=session',route=>route.fulfill({json:{csrfToken:'fixture',profile:{id:'fixture-user',email:'fixture@example.test',name:'Fixture',className:'Test'}}}));
+    await page.route('**/api/index.php?action=state',route=>route.fulfill({status:503,json:{error:{code:'SERVER_UNAVAILABLE'}}}));
+    await open(page);
+    await expect(lesson(page).locator('[data-next-target]')).toHaveText('Lernstand nicht verfügbar');
+    await expect(lesson(page).locator('[data-resume-action]')).toHaveAttribute('href','#missionen');
+});

@@ -76,7 +76,7 @@ test('new password dialog fits a phone, rejects mismatch and clears secret input
 
 test('forgot password through shell preserves progress, invalidates another device and allows only the new password',async({page,browser})=>{
     const email=`recovery-student-${test.info().project.name}@example.test`;
-    const oldPassword='Synthetic-browser-password-123!',newPassword='Reset!888';
+    const oldPassword='Synthetic-browser-password-123!',newPassword='12345678'; // Deliberately no composition requirement.
     const deviceContext=await browser.newContext(),device=await deviceContext.newPage();
     try {
         await shell(device);await login(device,email,oldPassword);
@@ -102,6 +102,21 @@ test('forgot password through shell preserves progress, invalidates another devi
         await page.goto(link);
         await expect(page.getByRole('dialog',{name:'Neues Passwort festlegen'})).toBeVisible();
         expect(page.url()).not.toContain('#reset=');expect(child(page).url()).not.toContain('#reset=');
+        const requests=[]; page.on('request',request=>{if(request.url().includes('action=reset-password'))requests.push(request);});
+        await page.getByLabel('Neues Passwort',{exact:true}).fill('123');
+        await page.getByLabel('Passwort wiederholen').fill('123');
+        await page.getByRole('button',{name:'Neues Passwort speichern'}).click();
+        await expect(page.getByRole('alert')).toContainText('hier korrigieren');
+        await expect(page.getByLabel('Neues Passwort',{exact:true})).toHaveValue('123');
+        expect(requests).toHaveLength(0);
+        // Also verify a server-side rejection can be corrected in this same
+        // dialog without requesting another mail or losing the in-memory token.
+        await page.route('**/api/index.php?action=reset-password',route=>route.fulfill({status:422,contentType:'application/json',body:JSON.stringify({error:{code:'INVALID_NEW_PASSWORD'}})}),{times:1});
+        await page.getByLabel('Neues Passwort',{exact:true}).fill(newPassword);
+        await page.getByLabel('Passwort wiederholen').fill(newPassword);
+        await page.getByRole('button',{name:'Neues Passwort speichern'}).click();
+        await expect(page.getByRole('alert')).toContainText('keine neue E-Mail');
+        await expect(page.getByLabel('Neues Passwort',{exact:true})).toHaveValue(newPassword);
         await page.getByLabel('Neues Passwort',{exact:true}).fill(newPassword);
         await page.getByLabel('Passwort wiederholen').fill(newPassword);
         await page.getByRole('button',{name:'Neues Passwort speichern'}).click();

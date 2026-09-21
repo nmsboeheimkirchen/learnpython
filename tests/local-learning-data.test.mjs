@@ -60,6 +60,18 @@ function loadAdapter() {
     };
 }
 
+test('home progress is read-only, reports unavailable storage and never repairs or erases broken guest state',()=>{
+    const {adapter}=loadAdapter();
+    const storage=new FaultStorage({completedLevelCode_v1:'{"mission1_level1":"done"}',attemptedLevelCode_v1:'{"mission1_level2":"draft"}'});
+    assert.equal(adapter.readHomeProgress({storage}).value.completedCodes.mission1_level1,'done');
+    assert.equal(adapter.readHomeProgress({storage}).value.attemptedCodes.mission1_level2,'draft');
+    storage.data.set('completedLevelCode_v1','broken JSON');
+    assert.equal(adapter.readHomeProgress({storage}).ok,false);
+    assert.equal(storage.data.get('completedLevelCode_v1'),'broken JSON');
+    assert.ok(storage.calls.every(call=>call.operation==='getItem'));
+    assert.equal(adapter.readHomeProgress({storage:null}).ok,false);
+});
+
 const knownLevels = new Set(["level-1", "level-2"]);
 const knownUnlocks = new Set(["start", "link-level-2", "link-finale"]);
 

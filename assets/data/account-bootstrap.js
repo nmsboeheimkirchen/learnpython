@@ -69,7 +69,10 @@
         document.addEventListener("fullscreenchange", update);
     });
     if (isShell) return;
-    if (!config?.enabled) return;
+    if (!config?.enabled) {
+        ready.then(() => updateHomeTarget(null));
+        return;
+    }
     const pageLevel = location.pathname.split("/").pop().replace(/\.html$/, "");
     if (/^(?:mission[1-4]_level[1-4]|agent_training_level[1-3]|pico_level(?:[1-4]|2a)|pixelmuseum_(?:briefing|finale)|helikopter_flucht_level[12])$/.test(pageLevel)) {
         window.AgentCurrentLevel = ({ pico_level1: "pico_level1_navigation", pico_level4: "pico_level4_memory" })[pageLevel] || pageLevel;
@@ -156,6 +159,18 @@
             }
         }
     }
+    // Same simple policy as PHP: 8 Unicode characters; no composition rules.
+    // Validate before sending, keep the link and both inputs for inline correction.
+    function checkNewPassword(form) {
+        const input = form.elements.password;
+        if (Array.from(input.value).length >= 8 && new TextEncoder().encode(input.value).length <= 72 && !input.value.includes('\0')) {
+            input.removeAttribute('aria-invalid'); return true;
+        }
+        form.querySelector('[role=alert]').textContent = (Array.from(input.value).length < 8
+            ? 'Bitte mindestens 8 Zeichen verwenden.' : 'Das Passwort ist zu lang oder enthält ein ungültiges Zeichen. Bitte höchstens 72 UTF-8-Bytes verwenden.')
+            + ' Du kannst die Eingabe hier korrigieren.';
+        input.setAttribute('aria-invalid','true'); input.focus(); return false;
+    }
     async function registrationRequest(action, body) {
         const current = await client.request("session");
         if (invalidated) throw remote.error("PROFILE_CHANGED");
@@ -212,6 +227,7 @@
             cancel.addEventListener("click", () => { if (!busy) leaveRegistration(); });
             form.addEventListener("submit", async event => {
                 event.preventDefault(); if (busy) return;
+                if (phase === "register" && !checkNewPassword(form)) return;
                 busy = true; submit.disabled = true; cancel.disabled = true;
                 const alert = form.querySelector('[role="alert"]'); alert.textContent = "";
                 try {
@@ -325,7 +341,8 @@
         });
         form.addEventListener('submit',async event=>{
             event.preventDefault(); if(busy)return;
-            if(token !== null && form.elements.password.value!==form.elements.confirmation.value){form.querySelector('[role=alert]').textContent="Die Passwörter stimmen nicht überein.";return;}
+            if(token !== null && !checkNewPassword(form)) return;
+            if(token !== null && form.elements.password.value!==form.elements.confirmation.value){form.querySelector('[role=alert]').textContent="Die Passwörter stimmen nicht überein. Bitte hier korrigieren; der Link bleibt gültig.";form.elements.confirmation.focus();return;}
             busy=true; submit.disabled=true; cancel.disabled=true;
             const resetting=token!==null;
             const body=resetting ? {token,password:form.elements.password.value,confirmation:form.elements.confirmation.value} : {email:form.elements.email.value};
@@ -340,11 +357,18 @@
                     location.replace('index.html?account-reset='+Date.now()+'#password-updated'); return;
                 }
                 fields.replaceChildren(); submit.hidden=true; cancel.textContent="Schließen";
-                intro.textContent=`Falls zu dieser Adresse ein aktives Konto gehört, ist eine E-Mail vorgemerkt. Öffne dein E-Mail-Programm, zum Beispiel Outlook, und prüfe auch den Spamordner. Bitte hab etwas Geduld: Wir versenden insgesamt höchstens ${result.mailPolicy.perMinute} Konto-Mails pro Minute. Ein bereits angeforderter Link bleibt gültig; weitere Klicks senden nicht jedes Mal eine neue Mail. Der Link gilt eine Stunde ab dem ersten Versandversuch.`;
+                // MAIL-TRANSPORT-LIMIT: keep this notice in sync with queue/provider policy.
+                intro.textContent=`Wenn die Adresse zu einem aktiven Konto gehört, kommt eine E-Mail. Öffne dein E-Mail-Programm (z. B. Outlook) und prüfe auch Spam. Bitte etwas Geduld: höchstens ${result.mailPolicy.perMinute} Konto-Mails pro Minute. Der Link gilt nach Versand eine Stunde.`;
+                if(result.mailPolicy.dailyLimitReached) intro.textContent+=' Das Tageslimit ist erreicht; der Versand kann bis morgen dauern.';
                 form.querySelector('[role=alert]').textContent="";
-            } catch(failure){form.querySelector('[role=alert]').textContent=failure.message;}
+            } catch(failure){
+                form.querySelector('[role=alert]').textContent=failure.message;
+                if (resetting && ['INVALID_NEW_PASSWORD','PASSWORD_MISMATCH'].includes(failure.code)) {
+                    form.querySelector('[role=alert]').textContent+=' Bitte hier korrigieren; du brauchst keine neue E-Mail.';
+                    form.elements.password.focus();
+                } else if (resetting) clearPasswords(form);
+            }
             finally {
-                clearPasswords(form);
                 delete body.password; delete body.confirmation; delete body.token;
                 busy=false; submit.disabled=false; cancel.disabled=false;
             }
@@ -365,15 +389,18 @@
         const dialog = ui.createElement("dialog"); dialog.className = "account-dialog";
         dialog.setAttribute("aria-label", title);
         const heading = ui.createElement("h2"); heading.textContent = title;
-        dialog.append(heading, content, button("Schließen", () => dialog.close()));
+        const close = button("Schließen", () => dialog.close()); close.className = "account-close";
+        dialog.append(heading, content, close);
         dialog.addEventListener("close", () => { dialog.remove(); loginButton.focus(); });
         ui.body.append(dialog); dialog.showModal(); return dialog;
     }
     async function accountDialog() {
         const form = ui.createElement("form");
-        form.innerHTML = '<p data-identity></p><label>Anzeigename<input name="name" required maxlength="100" autocomplete="name"></label><button type="submit">Namen speichern</button><p role="status"></p><p>E-Mail-Änderung wird später freigeschaltet.</p>';
-        if(recoveryEnabled()) form.append(button("Passwort zurücksetzen",()=>{ui.querySelector('.account-dialog')?.close();recoveryDialog();}));
-        form.querySelector("[data-identity]").textContent = `${session.profile.email} · Klasse ${session.profile.className}`;
+        form.className = 'account-profile-form';
+        form.innerHTML = '<dl class="account-identity"><div><dt>E-Mail:</dt><dd data-email></dd></div><div><dt>Klasse:</dt><dd data-class></dd></div></dl><label>Anzeigename<input name="name" required maxlength="100" autocomplete="name"></label><button type="submit">Namen speichern</button><p role="status"></p><p class="account-muted">Die E-Mail-Adresse ist dein Anmeldename. Änderungen sind später möglich.</p>';
+        if(recoveryEnabled()) form.append(button("Passwort zurücksetzen",()=>{const current=ui.querySelector('.account-dialog');current?.close();current?.remove();recoveryDialog();}));
+        form.querySelector("[data-email]").textContent = session.profile.email;
+        form.querySelector("[data-class]").textContent = session.profile.className;
         form.elements.name.value = session.profile.name;
         form.addEventListener("submit", async event => {
             event.preventDefault(); const submit = form.querySelector('[type="submit"]'); submit.disabled = true;
@@ -400,12 +427,23 @@
             const title = ui.createElement("p"); title.className = "account-progress-number";
             title.textContent = progress.label;
             const list = ui.createElement("ul"); list.className = "account-progress-list";
-            progress.rows.forEach(({label, codes}) => {
+            progress.rows.forEach(({label, sections}) => {
                 const item = ui.createElement("li");
-                item.textContent = `${label}: ${codes.join(", ") || "noch kein Abschluss"}`; list.append(item);
+                const title = ui.createElement('strong'); title.textContent = label + ': ';
+                item.append(title);
+                sections.forEach(({code, completed, available}, index) => {
+                    if(index) item.append(', ');
+                    const status = ui.createElement('span');
+                    status.className = completed ? 'account-progress-done' : 'account-progress-pending';
+                    status.textContent = code + (completed ? ' ✓' : available ? ' · offen' : ' · folgt');
+                    status.setAttribute('aria-label',code + (completed ? ': abgeschlossen' : available ? ': noch nicht abgeschlossen' : ': noch nicht im Kurs verfügbar'));
+                    item.append(status);
+                });
+                list.append(item);
             });
             if (progress.optionalCompleted) {
-                const item = ui.createElement("li"); item.textContent = "Optional geschafft: 02-3 (+5 Bonuspunkte)"; list.append(item);
+                const item = ui.createElement("li");
+                item.innerHTML = '<strong>Optional geschafft: </strong><span class="account-progress-done">02-3 ✓ (+5 Bonuspunkte)</span>'; list.append(item);
             }
             const note = ui.createElement("p"); note.className = "account-muted";
             note.textContent = "Erreichte Abschnitte, nicht die zeitliche Reihenfolge. Zwei Fluchtphasen fehlen noch im Kurs; dafür sind 5 % reserviert. Bonus ersetzt keine Pflichtaufgabe.";
@@ -429,6 +467,7 @@
         const note = ui.createElement("p");
         note.textContent = "Du startest im Gastmodus. Dein Code und Fortschritt werden nur in diesem Browser gespeichert, nicht auf anderen Geräten. Wenn du die Browserdaten löschst, geht dieser Stand verloren.";
         const proceed = button("OK – Mission starten", () => { choice = "guest"; dialog.close(); location.assign(target); });
+        proceed.className = 'account-primary';
         const signin = button("Anmelden", () => { choice = "login"; dialog.close(); loginDialog(); }); signin.className = "account-register-link";
         content.append(note, proceed, signin);
         const dialog = simpleDialog("Im Gastmodus starten", content);
@@ -439,7 +478,7 @@
         if (!link || event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || session?.profile || !session) return;
         const target = new URL(link.href, location.href);
         const entry = /^(?:mission[1-4]_level1|agent_training_level1|pico_level1|pixelmuseum_briefing|helikopter_flucht_level1)\.html$/.test(target.pathname.split("/").pop());
-        if (target.origin === location.origin && (link.matches(".mission-start-action,.escape-coming-action") || entry)) {
+        if (target.origin === location.origin && (link.matches(".mission-start-action,.escape-coming-action") || entry || (link.matches('[data-resume-action]') && target.pathname !== location.pathname))) {
             event.preventDefault(); event.stopImmediatePropagation(); guestMission(target.href);
         }
     }, true);
@@ -623,6 +662,7 @@
                         const content=ui.createElement('div');
                         const note=ui.createElement('p'); note.textContent="Dein Passwort wurde geändert. Dein Lernstand bleibt erhalten. Melde dich jetzt mit dem neuen Passwort an.";
                         const signin=button('Zur Anmeldung',()=>{dialog.close();dialog.remove();loginDialog();});
+                        signin.className='account-primary';
                         content.append(note,signin); const dialog=simpleDialog('Passwort geändert',content);
                     }
                     return true;
@@ -632,6 +672,34 @@
     });
     // Home page has no runner, but provides the same login/logout controls.
     if (!document.querySelector('script[src*="assets/runner.js"]') && document.currentScript?.hasAttribute("data-account-home")) {
-        window.AgentLearningDataReady = window.AgentAccount.start();
+        window.AgentLearningDataReady = window.AgentAccount.start().then(async ok => {
+            if(ok) await updateHomeTarget(session);
+            return ok;
+        });
+    }
+    async function updateHomeTarget(identity) {
+        const target = document.querySelector('[data-next-target]'), action = document.querySelector('[data-resume-action]');
+        if (!target || !action) return;
+        try {
+            let data;
+            if (identity?.profile) {
+                const response = await client.request('state', {profileId: identity.profile.id});
+                if (invalidated || response.profile?.id !== identity.profile.id) throw remote.error('PROFILE_CHANGED');
+                data = response.state.data;
+            } else {
+                const result = window.AgentPyLocalLearningData.readHomeProgress();
+                if (!result.ok) throw new Error('Browserstand nicht lesbar');
+                data = result.value;
+            }
+            const {nextCourseTarget} = await import(progressModuleURL);
+            const next = nextCourseTarget(data);
+            target.textContent = next.label; action.href = next.href;
+            action.replaceChildren(next.action + ' ');
+            const arrow = document.createElement('span'); arrow.setAttribute('aria-hidden','true'); arrow.textContent='→'; action.append(arrow);
+        } catch (_) {
+            target.textContent = 'Lernstand nicht verfügbar';
+            // A failed account read must never fall back to another person's guest state.
+            action.href = '#missionen'; action.textContent = 'Mission auswählen →';
+        }
     }
 })();

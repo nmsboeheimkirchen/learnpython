@@ -19,7 +19,43 @@ export function calculateProgress(completed = {}) {
     return {
         version: progressVersion, base, bonus,
         label: base === 100 ? `${100 + bonus} %` : `${base} %${bonus ? ` + ${bonus} Bonuspunkte` : ""}`,
-        rows: groups.map(([label, prefix, , ids]) => ({ label, codes: ids.flatMap((id,i) => done(id) ? [`${prefix}-${i+1}`] : []) })),
+        rows: groups.map(([label, prefix, , ids]) => ({ label,
+            codes: ids.flatMap((id,i) => done(id) ? [`${prefix}-${i+1}`] : []),
+            sections: ids.map((id,i) => ({code:`${prefix}-${i+1}`,completed:done(id),available:id!==null}))
+        })),
         optionalCompleted: done("mission2_level3")
     };
+}
+
+// Recommended continuation, not a claim about the last chronological visit.
+// Never treat unlock/skip flags as completed work. Only available required steps
+// participate; optional 02-3/PICO2a must not block the next mission.
+export function nextCourseTarget({completedCodes = {}, attemptedCodes = {}} = {}) {
+    const done = id => Object.hasOwn(completedCodes,id) && typeof completedCodes[id] === 'string';
+    const attempted = id => Object.hasOwn(attemptedCodes,id) && typeof attemptedCodes[id] === 'string';
+    const titles = ['System Access','Bombe entschärfen','Safe-Knacker','Geheimdienst-Chat','Drohnensteuerung','PICO','Pixelmuseum','Flucht'];
+    const href = id => ({pico_level1_navigation:'pico_level1',pico_level4_memory:'pico_level4'})[id] || id;
+    const nextIn = index => {
+        const group = groups[index], position = group[3].findIndex(id=>id && !done(id));
+        if(position < 0) return null;
+        const id = group[3][position], code = `${group[1]}-${position+1}`;
+        return {label:`${titles[index]} · ${code}`,href:href(id)+'.html',action:`Weiter mit ${code}`};
+    };
+    const coreIds = groups.slice(0,5).flatMap(group=>group[3]);
+    if (!coreIds.some(id=>done(id)||attempted(id)) && !groups.slice(5).some(group=>group[3].some(id=>id&&(done(id)||attempted(id))))) {
+        return {label:'System Access',href:'mission1_start.html',action:'Mission 1 starten'};
+    }
+    for(let index=0;index<5;index++) { const next=nextIn(index); if(next) return next; }
+    const completeProject = index => groups[index][3].every(done);
+    if (!completeProject(5) && !completeProject(6)) {
+        // Resume a started project; if both were started, use the one further
+        // progressed (stable PICO tie-break, no invented timestamp).
+        const score = index => groups[index][3].filter(done).length/groups[index][3].length
+            + (groups[index][3].some(attempted) ? .001 : 0);
+        const pico=score(5), museum=score(6);
+        if(pico || museum) return nextIn(museum>pico ? 6 : 5);
+        return {label:'Weggabelung',href:'projektwahl.html',action:'Projekt auswählen'};
+    }
+    const escape=nextIn(7); if(escape) return escape;
+    return {label:'Alle verfügbaren Pflichtabschnitte geschafft',href:'projektwahl.html',action:'Weiteres Projekt ansehen'};
 }

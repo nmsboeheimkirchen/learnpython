@@ -55,6 +55,7 @@
     <link rel="stylesheet" href="assets/style.css?v=20260722-2">
     <link rel="stylesheet" href="assets/home.css?v=20260912-1">
     <script src="assets/data/account-config.js?v=20260916-1"></script>
+    <script src="assets/data/local-learning-data.js?v=20260921-1"></script>
     <link rel="stylesheet" href="assets/data/account-ui.css?v=20260916-1">
     <script src="assets/data/remote-learning-data.js?v=20260916-1"></script>
     <script src="assets/data/account-bootstrap.js?v=20260916-1" data-account-home></script>
@@ -83,7 +84,7 @@
                     <h1 id="home-title"><span>Entdecke,</span> was dein Code bewegen kann.</h1>
                     <p class="course-hero-lead">5 Missionen und dein Weg beginnt hier. Jeder Auftrag bringt dir neue Python-Werkzeuge bei.</p>
                     <div class="course-hero-actions">
-                        <a class="course-primary-action" href="mission1_start.html">
+                        <a class="course-primary-action" data-resume-action href="mission1_start.html">
                             Mission 1 starten <span aria-hidden="true">→</span>
                         </a>
                         <a class="course-secondary-action" href="#missionen">Missionen ansehen</a>
@@ -91,7 +92,7 @@
                     <dl class="course-facts" aria-label="Umfang des Lernpfads">
                         <div><dt>Missionen</dt><dd>5</dd></div>
                         <div><dt>Level</dt><dd>12</dd></div>
-                        <div><dt>Nächstes Ziel</dt><dd>Turtle</dd></div>
+                        <div><dt>Nächstes Ziel</dt><dd data-next-target aria-live="polite">System Access</dd></div>
                     </dl>
                 </div>
             </div>

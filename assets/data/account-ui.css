@@ -24,6 +24,9 @@
 .account-dialog input { display:block; box-sizing:border-box; width:100%; margin-top:9px; padding:11px 12px; min-height:46px; border:1px solid #8ca5b7; border-radius:9px; background:#f5fbff; color:#06131e; font:inherit; }
 .account-dialog input:focus { outline:1px solid #71edf4; outline-offset:2px; box-shadow:0 0 0 5px #71edf41c,0 0 18px #71edf42b; }
 .account-dialog button { margin:4px 6px 4px 0; }
+.account-dialog :is(button[type=submit],.account-primary) { font-weight:750; background:#245867; border-color:#8aecf1; }
+.account-dialog :is(button[type=submit],.account-primary):hover { background:#2b6978; }
+.account-dialog [data-cancel],.account-dialog .account-close { font-weight:400; background:transparent; border-color:#7896a655; color:#bfd0dc; }
 .account-dialog [role=alert] { color:#ffcd96; }
 .account-password { position:relative; display:block; margin-top:9px; }
 .account-password input { padding-right:55px; margin-top:0; }
@@ -34,6 +37,17 @@
 .account-dialog .account-progress-number { font-size:28px; font-weight:750; color:#91f0d0; }
 .account-progress-list { padding-left:20px; }
 .account-progress-list li { margin:7px 0; }
+.account-progress-list strong { color:#eefaff; font-weight:750; }
+.account-progress-done { color:#91f0b8; }
+.account-progress-pending { color:#e6a8af; }
+.account-identity { margin:16px 0 22px; padding:14px 16px; border:1px solid #71edf430; border-radius:12px; background:#102b38; }
+.account-identity div { display:flex; gap:8px; flex-wrap:wrap; margin:5px 0; }
+.account-identity dt { font-weight:700; }
+.account-identity dd { margin:0; overflow-wrap:anywhere; min-width:0; }
+.account-profile-form > label { font-weight:650; }
+.account-profile-form input { font-weight:400; }
+.account-profile-form [role=status]:empty { display:none; }
+.account-profile-form [role=status] { color:#91f0b8; }
 .account-muted { color:#aec3cf; font-size:13px; }
 .account-blocked body:not(.legal-page) > :not(.account-panel):not(.account-dialog):not(.account-toolbar):not(script):not(link) { visibility:hidden!important; }
 .account-blocked [data-account-actions] { visibility:visible; }
@@ -42,8 +56,9 @@ html[data-account-shell],.account-shell { width:100%; height:100%; margin:0; bac
 .account-shell { display:flex; flex-direction:column; }
 .account-shell-header { box-sizing:border-box; display:flex; justify-content:space-between; align-items:center; gap:12px; padding:8px max(12px,env(safe-area-inset-right)) 8px max(16px,env(safe-area-inset-left)); padding-top:max(8px,env(safe-area-inset-top)); min-height:60px; flex:none; border-bottom:1px solid #71edf422; }
 .account-shell-brand { display:block; line-height:0; }
-.account-shell-brand img { display:block; width:156px; height:auto; }
+.account-shell-brand img { display:block; width:clamp(190px,24vw,290px); max-width:100%; height:auto; }
+.account-shell-brand { min-width:0; }
 .account-shell iframe { display:block; border:0; width:100%; flex:1; min-height:0; background:#06131e; }
 .account-in-shell .course-header { display:none; }
 .account-in-shell .mission-home-link,.account-in-shell .project-choice-brand { display:none; }
-@media(max-width:480px) { .account-dialog { padding:20px; } .account-shell-brand img { width:135px; } }
+@media(max-width:480px) { .account-dialog { padding:20px; } .account-shell-brand img { width:190px; } }

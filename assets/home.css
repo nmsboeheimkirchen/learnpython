@@ -74,7 +74,7 @@
 
 .course-brand-logo {
     display: block;
-    width: clamp(174px, 18vw, 230px);
+    width: clamp(200px, 24vw, 290px);
     height: auto;
 }
 
@@ -288,7 +288,7 @@
 
 .course-facts {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: minmax(0, .7fr) minmax(0, .5fr) minmax(0, 1.8fr);
     margin: 0;
     padding-top: 22px;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -321,6 +321,8 @@
     font-size: clamp(1.05rem, 1.8vw, 1.35rem);
     font-weight: 780;
 }
+
+.course-facts [data-next-target] { font-size:clamp(.95rem,1.6vw,1.2rem); overflow-wrap:anywhere; }
 
 .course-section {
     position: relative;
@@ -809,7 +811,7 @@
     }
 
     .course-brand-logo {
-        width: 150px;
+        width: min(190px, 46vw);
     }
 
     .course-nav-link {

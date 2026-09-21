@@ -36,7 +36,7 @@ manage('create-invitation', { classId: classInfo.id, code: 'CTEST', expiresAt: M
 for (const engine of ['login-chromium', 'login-webkit']) {
     // Shell cases use a separate fixture account. The full suite must not spend
     // the same student's ten-login throttle bucket across unrelated scenarios.
-    for (const name of ['student-a', 'student-b', 'shell-student', 'recovery-student']) manage('create-user', { email: `${name}-${engine}@example.test`, password: 'Synthetic-browser-password-123!', name, classId: classInfo.id });
+    for (const name of ['student-a', 'student-b', 'shell-student', 'recovery-student','polish-student']) manage('create-user', { email: `${name}-${engine}@example.test`, password: 'Synthetic-browser-password-123!', name, classId: classInfo.id });
 }
 const child = spawn(php, [...phpArgs, '-S', '127.0.0.1:4174', '-t', webroot], { env, cwd: root, stdio: 'inherit', windowsHide: true });
 for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => { child.kill(); });
