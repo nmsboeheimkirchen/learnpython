@@ -11,9 +11,11 @@ async function open(page, screen = 'index.html') {
 }
 async function login(page) {
     await page.getByRole('button', {name:'Anmelden', exact:true}).click();
-    await page.getByLabel('E-Mail-Adresse', {exact:true}).fill(`student-a-${test.info().project.name}@example.test`);
+    await page.getByLabel('E-Mail-Adresse', {exact:true}).fill(`shell-student-${test.info().project.name}@example.test`);
     await page.getByLabel('Passwort', {exact:true}).fill(password);
+    const response=page.waitForResponse(response=>response.url().includes('action=login'));
     await page.getByRole('dialog').getByRole('button',{name:'Anmelden',exact:true}).click();
+    expect((await response).status()).toBe(200);
     await expect(page.getByRole('button',{name:'Benutzermenü'})).toBeVisible();
 }
 async function navigate(page, screen) {
@@ -47,7 +49,7 @@ test('guest login resumes intended mission; eye, menu, explicit draft save and a
     await open(page,'mission1_start.html');
     await lesson(page).getByRole('link',{name:/Training starten/}).click();
     await page.getByRole('dialog').getByRole('button',{name:'Anmelden',exact:true}).click();
-    await page.getByLabel('E-Mail-Adresse',{exact:true}).fill(`student-a-${test.info().project.name}@example.test`);
+    await page.getByLabel('E-Mail-Adresse',{exact:true}).fill(`shell-student-${test.info().project.name}@example.test`);
     await page.getByLabel('Passwort',{exact:true}).fill(password);
     await page.getByRole('button',{name:'Passwort anzeigen',exact:true}).click();
     await expect(page.getByLabel('Passwort',{exact:true})).toHaveAttribute('type','text');
@@ -72,7 +74,7 @@ test('guest login resumes intended mission; eye, menu, explicit draft save and a
     await page.getByRole('button',{name:'Namen speichern'}).click();
     await expect(page.getByRole('dialog')).toContainText('Anzeigename gespeichert');
     // Restore fixture display name; no real user is touched.
-    await page.getByLabel('Anzeigename',{exact:true}).fill('student-a');
+    await page.getByLabel('Anzeigename',{exact:true}).fill('shell-student');
     await page.getByRole('button',{name:'Namen speichern'}).click();
     await expect(page.getByRole('button',{name:'Namen speichern'})).toBeEnabled();
     await page.getByRole('button',{name:'Schließen',exact:true}).click();

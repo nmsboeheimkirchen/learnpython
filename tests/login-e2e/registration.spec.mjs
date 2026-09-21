@@ -102,7 +102,10 @@ test('class invitation, queued mail and explicit verification on another browser
     await page.getByLabel('Name',{exact:true}).fill('Test Anmeldung');
     await page.getByLabel('E-Mail-Adresse',{exact:true}).fill(email);
     await page.getByLabel('Passwort (mindestens 8 Zeichen)',{exact:true}).fill(password);
+    expect(await page.getByRole('dialog').locator('form').evaluate(form=>form.checkValidity())).toBe(true);
+    const registrationResponse=page.waitForResponse(response=>response.url().includes('action=register'));
     await page.getByRole('button',{name:'Konto anlegen'}).click();
+    expect((await registrationResponse).status()).toBe(202);
     await expect(page.getByRole('dialog')).toContainText('Outlook');
     await expect(page.getByRole('dialog')).toContainText('höchstens 10 Bestätigungsmails pro Minute');
     await page.getByRole('button',{name:'Weiter im Gastmodus'}).click();

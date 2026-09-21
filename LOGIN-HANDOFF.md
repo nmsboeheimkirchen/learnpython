@@ -1,5 +1,12 @@
 # Übergabe: dev-login-save
 
+## Fortsetzung 21.09.2026 – CI-Korrektur vor Veröffentlichung
+
+- UI-Commit **ca07bf73b05c75db95d8a67b868b964d9c9f5fee** auf `origin/dev-login-save`. CI **35535327771**: Login-Browserjob 37/40 grün, drei Fehler; deshalb **noch kein Release gebaut/hochgeladen/aktiviert**. Hostinger read-only bestätigt unverändert r5, Schema 2, 1 Klasse/1 Konto/1 Lernstand/23 Belege, keine Registrierungskonfiguration, kein ausstehendes Deployment.
+- Zwei Fehler deterministisch lokal reproduziert: neuer letzter Shelltest erreicht beim geteilten student-a-Testkonto den unveränderten Schutz von 10 Logins/15 Minuten. Testfehler, keine Lockerung der Produktionssicherheit! Neue `shell-student`-Fixtures je Browser isolieren die Shellfälle; Loginantwort wird explizit auf 200 geprüft.
+- Dritter CIfehler: WebKit-Neuregistrierung blieb vor Versandhinweis im Formular. Ursache noch nicht belegt. Test prüft nun Formularvalidität und tatsächliche Register-Antwort; CI lädt bei Fehler synthetische Browserdiagnostik für 3 Tage hoch. Kein Mailversand außerhalb isolierter Testfixtures.
+- Neue Korrekturen noch uncommitted: tests/login-test-server.mjs, tests/login-e2e/shell.spec.mjs, tests/login-e2e/registration.spec.mjs, .github/workflows/pages.yml, diese Übergabe. Vollständigen 40er-Lauf frisch ausführen, danach Commit/Push/CI und erst bei grünem Ergebnis r6 gemäß Operatorablauf unten veröffentlichen. Keine laufende alte Testsession weiterverwenden (55427 nach bestätigter Reproduktion beendet).
+
 ## 20.09.2026 – lokaler Abschluss, Commit/CI/Release als Nächstes
 
 Dieser Abschnitt ersetzt die offenen Testaufgaben der älteren Zwischenstände unten.

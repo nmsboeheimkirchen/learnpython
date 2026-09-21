@@ -92,6 +92,13 @@ jobs:
           sudo apt-get install -y php-cli php-sqlite3
       - run: npx playwright install --with-deps chromium webkit
       - run: npm run test:login
+      - name: Retain failed browser diagnostics (disposable fixtures only)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: login-browser-diagnostics
+          path: .cache/login-results
+          retention-days: 3
 
   backend:
     name: PHP API and MariaDB integration tests
