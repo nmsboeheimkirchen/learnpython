@@ -1,8 +1,8 @@
 # Klassen und Konten: Planungsstand
 
-## Neuer UI-Auftrag 20.09.2026 – Vorschau freigegeben, Umsetzung läuft
+## UI-Auftrag abgeschlossen 21.09.2026 – r6 live, Echtgerätefeedback als Nächstes
 
-Live ist r5 mit bestehenden Konten (Details in LOGIN-HANDOFF.md). Nutzer hat die Symbol-/UI-Vorschau inzwischen freigegeben. Umsetzung und lokale Tests laufen; noch kein neuer Upload. Der ursprüngliche Plan folgt, aktuellen Arbeitsstand immer oben in LOGIN-HANDOFF.md lesen.
+Live ist **pilot-20260920-r6**, auf Hostinger geprüft und bestätigt. Obere Person-/Vollbildsteuerung, beständige Navigationshülle, Gastdialog, Passwortauge, Entwurfspeichern, kompakter Fortschritt und Anzeigename bearbeiten sind umgesetzt. 40/40 Login-/Shelltests und gesamte CI grün; persönliche Daten unverändert. **Nächster Schritt ist Nutzerfeedback auf echtem iPad/PC Chrome.** Mailversand, Registrierung/Klassenbeitritt und Passwortreset bleiben ausgeschaltet. Details/Rückfallsicherung im obersten Abschnitt von LOGIN-HANDOFF.md. Der folgende ursprüngliche Umsetzungsplan bleibt zur Nachvollziehbarkeit erhalten.
 
 1. **Alle Kontobedienelemente oben rechts:** das feste Panel unten rechts vollständig entfernen, einschließlich reserviertem unteren Seitenabstand. Gemeinsame Kopfzeile auf Start-, Missions-, Level- und Sonderseiten, ohne Kollision mit Pfad-/Präsentationssteuerung. Vollbild und Person immer erreichbar; Mindest-Touchfläche 44×44, sichere Ränder/iPad-Tastatur beachten. Nur das Personensymbol öffnet Login (Umriss) bzw. Benutzermenü (gefüllt), niemals sofort ausloggen. Abmelden ist ein ausdrücklicher Menüeintrag.
 2. **Symbole zur Freigabe:** Lucide `maximize-2` / `minimize-2` für diagonale Vollbildpfeile; `user-round` als Umriss/gefüllte Silhouette; `eye` / `eye-off` im Passwortfeld. Menü: Fortschritt, Kontoinfo bearbeiten, Code speichern, Abmelden. Symbolbeschriftungen für Screenreader/Tooltip, Zustände per aria-expanded/aria-pressed und Form, nicht allein Farbe. Vorschau liegt in der Thread-Visualisierung `agentpy-konto-symbole.html`, keine neue Bilddatei/Iconbibliothek ins Produkt kopiert.
