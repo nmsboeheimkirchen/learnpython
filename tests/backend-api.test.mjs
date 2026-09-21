@@ -9,6 +9,7 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
 import { registrationTests } from './registration-cases.mjs';
+import { recoveryTests } from './recovery-cases.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const portable = join(root, '.cache/php-runtime/php-8.5.10/php.exe');
@@ -106,18 +107,21 @@ for (const backend of backends) {
             AGENTPY_DB_USER: backend.dsn ? (process.env.AGENTPY_TEST_MYSQL_USER || '') : '',
             AGENTPY_DB_PASSWORD: backend.dsn ? (process.env.AGENTPY_TEST_MYSQL_PASSWORD || '') : '',
             AGENTPY_REGISTRATION_ENABLED: 'true', AGENTPY_MAIL_TRANSPORT: 'test', AGENTPY_MAIL_FROM: 'noreply@example.test',
+            AGENTPY_PASSWORD_RESET_ENABLED: 'true',
         };
         const fixture = (action, input = {}) => phpCall(['tests/backend-fixture.php', action], env, input);
         const ids = [];
         await t.test('restricted rollout uses existing v2 accounts without registration tables or mail', async () => {
             fixture('init-v2-only');
-            const disabled = {...env, AGENTPY_REGISTRATION_ENABLED:'false', AGENTPY_MAIL_TRANSPORT:'disabled', AGENTPY_MAIL_FROM:''};
+            const disabled = {...env, AGENTPY_REGISTRATION_ENABLED:'false', AGENTPY_PASSWORD_RESET_ENABLED:'false', AGENTPY_MAIL_TRANSPORT:'disabled', AGENTPY_MAIL_FROM:''};
             const group = JSON.parse(phpCall(['server/bin/manage.php', 'create-class'], disabled, {name:'Restricted rollout'}));
             const user = JSON.parse(phpCall(['server/bin/manage.php', 'create-user'], disabled, {email:'restricted@example.test', password, name:'Existing learner', classId:group.id}));
             const {child, url} = await startServer(disabled, port);
             try {
                 const client = new BrowserSession(url);
                 assert.equal((await client.request('session')).data.registration.enabled, false);
+                assert.equal((await client.request('session')).data.recovery.enabled, false);
+                for(const action of ['request-password-reset','reset-password']) assert.equal((await client.request(action,{})).status,503);
                 for (const action of ['check-invitation', 'register', 'verify-email']) {
                     const result = await client.request(action, {});
                     assert.equal(result.status, 503);
@@ -399,6 +403,7 @@ for (const backend of backends) {
         });
 
         await registrationTests({ t, fixture, env, phpCall, BrowserSession, url, workerUrl: worker2.url, ids, password, userB });
+        await recoveryTests({t,fixture,env,phpCall,BrowserSession,url,workerUrl:worker2.url,ids,password});
 
         await t.test('broken saved data is an error, never an empty account; disabled users lose access', async () => {
             fixture('corrupt-state', { id: userB.id });

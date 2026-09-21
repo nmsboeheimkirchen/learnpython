@@ -24,6 +24,28 @@ function domain() {
 }
 function init(root) { return run([prepare, root, 'https://agentpy.example.test', 'agentpy_test', 'agentpy_test']); }
 
+test('SMTP adapter requires private credentials, verified TLS and aligned authenticated sender without leaking the secret', () => {
+    const root=domain();assert.equal(init(root).status,0);
+    const config=join(root,'agentpy-private/config.php'),secretFile=join(root,'agentpy-private/smtp-password.txt');
+    writeFileSync(join(root,'agentpy-private/database-password.txt'),'Synthetic-db-only');
+    const env={AGENTPY_CONFIG:config,AGENTPY_MAIL_TRANSPORT:'smtp',AGENTPY_MAIL_FROM:'noreply@example.test',
+        AGENTPY_SMTP_HOST:'smtp.hostinger.com',AGENTPY_SMTP_PORT:'465',AGENTPY_SMTP_ENCRYPTION:'ssl',
+        AGENTPY_SMTP_USER:'noreply@example.test',AGENTPY_SMTP_PASSWORD_FILE:secretFile};
+    const probe=`require 'server/src/bootstrap.php';try {$c=AgentPy\\config();$m=AgentPy\\smtpMessage($c,'recipient@example.test','SMTP fixture','Synthetic body');
+        if($m->Password!=='Synthetic-mail-only' || !$m->SMTPAuth || $m->SMTPDebug!==0 || $m->SMTPSecure!=='ssl' || $m->Port!==465
+          || $m->Sender!==$m->Username || $m->SMTPOptions['ssl']!==['verify_peer'=>true,'verify_peer_name'=>true,'allow_self_signed'=>false])exit(3);
+        if(!$m->preSend() || !str_contains($m->getSentMIMEMessage(),'From: AGENT PY <noreply@example.test>')
+          || str_contains($m->getSentMIMEMessage(),$m->Password))exit(4);echo 'OK';
+    }catch(Throwable $e){exit(2);}`;
+    assert.equal(run(['-r',probe],env).status,2);
+    writeFileSync(secretFile,'REPLACE_WITH_MAILBOX_PASSWORD\n');assert.equal(run(['-r',probe],env).status,2);
+    writeFileSync(secretFile,'Synthetic-mail-only\r\n');
+    const result=run(['-r',probe],env);assert.equal(result.status,0,result.stderr);assert.equal(result.stdout,'OK');
+    for(const bad of [{AGENTPY_SMTP_PORT:'25'},{AGENTPY_SMTP_ENCRYPTION:''},{AGENTPY_SMTP_HOST:'host;injection'},
+        {AGENTPY_SMTP_USER:'other@example.test'},{AGENTPY_SMTP_PASSWORD_FILE:join(root,'public_html/password.txt')}])
+        assert.equal(run(['-r',probe],{...env,...bad}).status,2);
+});
+
 test('stable mail cron follows the active release, records a private heartbeat and stops on rollback', () => {
     const root = domain(); assert.equal(init(root).status, 0);
     const privateRoot = join(root, 'agentpy-private');

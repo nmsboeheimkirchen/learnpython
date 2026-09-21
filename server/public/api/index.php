@@ -16,7 +16,7 @@ try {
     $method = $_SERVER['REQUEST_METHOD'] ?? '';
     if (array_diff(array_keys($_GET), ['action'])) throw new ApiError(400, 'INVALID_QUERY');
     if ($method === 'GET' && $action === 'session') {
-        jsonResponse(['profile' => currentUser($db), 'csrfToken' => $_SESSION['csrf'], 'registration' => registrationPolicy($config)]);
+        jsonResponse(['profile' => currentUser($db), 'csrfToken' => $_SESSION['csrf'], 'registration' => registrationPolicy($config), 'recovery' => ['enabled' => $config['password_reset_enabled']]]);
     }
     if ($method === 'GET' && $action === 'state') {
         $user = requireUser($db);
@@ -28,6 +28,8 @@ try {
     if ($action === 'check-invitation') jsonResponse(checkInvitation($db, $config, $body));
     if ($action === 'register') jsonResponse(registerStudent($db, $config, $body), 202);
     if ($action === 'verify-email') jsonResponse(verifyRegistration($db, $config, $body));
+    if ($action === 'request-password-reset') jsonResponse(\AgentPy\requestPasswordReset($db,$config,$body),202);
+    if ($action === 'reset-password') jsonResponse(\AgentPy\resetPassword($db,$config,$body));
     if ($action === 'cancel-registration') {
         exactFields($body, []);
         unset($_SESSION['registration_grant']); // Never reset code-failure/cooldown counters here.

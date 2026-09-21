@@ -190,5 +190,6 @@ server/config.local.php
 server/private/
 agentpy-private/
 database-password.txt
+smtp-password.txt
 *.sql.gz
 .env.*

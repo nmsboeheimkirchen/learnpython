@@ -13,7 +13,7 @@ switch ($argv[1] ?? '') {
     case 'init-v2-only':
         $db->exec(file_get_contents(dirname(__DIR__) . '/server/schema.sql'));
         if ((int) $db->query('SELECT COUNT(*) FROM users')->fetchColumn() !== 0) exit(1);
-        foreach (['mail_jobs', 'pending_registrations', 'class_invitations', 'class_registration', 'mail_attempts', 'mail_dispatch_lock'] as $table)
+        foreach (['recovery_mail_jobs','password_resets','auth_epochs','mail_jobs', 'pending_registrations', 'class_invitations', 'class_registration', 'mail_attempts', 'mail_dispatch_lock'] as $table)
             $db->exec('DROP TABLE IF EXISTS ' . $table);
         $db->exec('DELETE FROM schema_migrations');
         $db->prepare('INSERT INTO schema_migrations (version, applied_at) VALUES (2, ?)')->execute([time()]);
@@ -68,6 +68,15 @@ switch ($argv[1] ?? '') {
         break;
     case 'mail-clear-attempts':
         $db->exec('DELETE FROM mail_attempts'); break;
+    case 'reset-inspect':
+        $q=$db->prepare('SELECT r.* FROM password_resets r JOIN users u ON u.id=r.user_id WHERE u.email=?');$q->execute([$input['email']]);
+        $reset=$q->fetch();
+        $q=$db->prepare('SELECT j.kind,j.token,j.state,j.attempts FROM recovery_mail_jobs j JOIN users u ON u.id=j.user_id WHERE u.email=?');$q->execute([$input['email']]);
+        echo json_encode(['reset'=>$reset,'jobs'=>$q->fetchAll()]);break;
+    case 'reset-expire':
+        $db->prepare('UPDATE password_resets SET token_expires_at=1 WHERE user_id=(SELECT id FROM users WHERE email=?)')->execute([$input['email']]);break;
+    case 'session-legacy-epoch':
+        session_id($input['session']);AgentPy\beginSession($config);unset($_SESSION['auth_epoch']);session_write_close();break;
     case 'mail-seed':
         $now = time();
         for ($i=0; $i<$input['count']; $i++) {
@@ -89,7 +98,7 @@ switch ($argv[1] ?? '') {
         $tables = $mysql ? $db->query('SHOW TABLES')->fetchAll(PDO::FETCH_COLUMN)
             : $db->query("SELECT name FROM sqlite_master WHERE type='table'")->fetchAll(PDO::FETCH_COLUMN);
         if (in_array('users', $tables, true) && (int) $db->query('SELECT COUNT(*) FROM users')->fetchColumn() !== 0) exit(1);
-        foreach (['mail_jobs', 'pending_registrations', 'class_invitations', 'class_registration', 'mail_attempts', 'mail_dispatch_lock', 'write_receipts', 'learning_states', 'users', 'classes', 'schema_migrations', 'login_limits'] as $table)
+        foreach (['recovery_mail_jobs','password_resets','auth_epochs','mail_jobs', 'pending_registrations', 'class_invitations', 'class_registration', 'mail_attempts', 'mail_dispatch_lock', 'write_receipts', 'learning_states', 'users', 'classes', 'schema_migrations', 'login_limits'] as $table)
             $db->exec('DROP TABLE IF EXISTS ' . $table);
         $db->exec('CREATE TABLE users (id VARCHAR(32) PRIMARY KEY, email VARCHAR(254) NOT NULL UNIQUE, password_hash VARCHAR(255) NOT NULL, active INTEGER NOT NULL DEFAULT 1, created_at BIGINT NOT NULL)');
         $db->exec("INSERT INTO users (id,email,password_hash,created_at) VALUES ('legacy','legacy@example.test','synthetic-not-a-hash',0)");

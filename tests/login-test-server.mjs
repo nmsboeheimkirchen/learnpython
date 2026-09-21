@@ -23,7 +23,7 @@ mkdirSync(join(temp, 'sessions'));
 const env = { ...process.env, AGENTPY_CONFIG: '', AGENTPY_ENVIRONMENT: 'development',
     AGENTPY_ORIGIN: 'http://127.0.0.1:4174', AGENTPY_DSN: `sqlite:${join(temp, 'browser_test.sqlite')}`,
     AGENTPY_DB_USER: '', AGENTPY_DB_PASSWORD: '', AGENTPY_SESSION_PATH: join(temp, 'sessions') };
-Object.assign(env, { AGENTPY_REGISTRATION_ENABLED: 'true', AGENTPY_MAIL_TRANSPORT: 'test', AGENTPY_MAIL_FROM: 'noreply@example.test' });
+Object.assign(env, { AGENTPY_REGISTRATION_ENABLED: 'true', AGENTPY_PASSWORD_RESET_ENABLED: 'true', AGENTPY_MAIL_TRANSPORT: 'test', AGENTPY_MAIL_FROM: 'noreply@example.test' });
 writeFileSync(join(root, '.cache/login-browser-fixture.json'), JSON.stringify({ dsn: env.AGENTPY_DSN, sessions: env.AGENTPY_SESSION_PATH }));
 function manage(command, input = {}) {
     const result = spawnSync(php, [...phpArgs, 'server/bin/manage.php', command], { cwd: root, env, input: JSON.stringify(input), encoding: 'utf8', windowsHide: true });
@@ -36,7 +36,7 @@ manage('create-invitation', { classId: classInfo.id, code: 'CTEST', expiresAt: M
 for (const engine of ['login-chromium', 'login-webkit']) {
     // Shell cases use a separate fixture account. The full suite must not spend
     // the same student's ten-login throttle bucket across unrelated scenarios.
-    for (const name of ['student-a', 'student-b', 'shell-student']) manage('create-user', { email: `${name}-${engine}@example.test`, password: 'Synthetic-browser-password-123!', name, classId: classInfo.id });
+    for (const name of ['student-a', 'student-b', 'shell-student', 'recovery-student']) manage('create-user', { email: `${name}-${engine}@example.test`, password: 'Synthetic-browser-password-123!', name, classId: classInfo.id });
 }
 const child = spawn(php, [...phpArgs, '-S', '127.0.0.1:4174', '-t', webroot], { env, cwd: root, stdio: 'inherit', windowsHide: true });
 for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => { child.kill(); });

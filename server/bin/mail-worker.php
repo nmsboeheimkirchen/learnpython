@@ -31,7 +31,7 @@ try {
         putenv('AGENTPY_CONFIG=' . $private . '/config.php');
         require $app . '/src/bootstrap.php';
         $config = AgentPy\config();
-        if ($config['registration_enabled']) {
+        if ($config['registration_enabled'] || ($config['password_reset_enabled'] ?? false)) {
             $db = AgentPy\database($config);
             for ($i = 0; $i < $config['mail_per_minute']; $i++) {
                 if (!AgentPy\dispatchMail($db, $config)) break;

@@ -20,6 +20,10 @@ function fixture() {
         'server/src/account-management.php': '<?php // accounts and migration',
         'server/src/registration.php': '<?php // registration', 'server/src/mail.php': '<?php // mail worker',
         'server/registration-schema.sql': '-- registration schema',
+        'server/recovery-schema.sql': '-- recovery schema', 'server/src/recovery.php': '<?php // recovery',
+        'server/src/smtp.php': '<?php // SMTP adapter',
+        'server/vendor/phpmailer/Exception.php': '<?php // vendor', 'server/vendor/phpmailer/PHPMailer.php': '<?php // vendor',
+        'server/vendor/phpmailer/SMTP.php': '<?php // vendor', 'server/vendor/phpmailer/LICENSE': 'license', 'server/vendor/phpmailer/README.agentpy.md': 'provenance',
         'server/bin/mail-worker.php': '<?php // stable private cron dispatcher',
         'server/public/api/index.php': '<?php // API', 'server/bin/manage.php': '<?php // management', 'server/schema.sql': '-- schema',
     };

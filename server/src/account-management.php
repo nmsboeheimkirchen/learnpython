@@ -81,4 +81,5 @@ function migrateAccounts(\PDO $db): void
     if (!$db->query('SELECT version FROM schema_migrations WHERE version = 2')->fetchColumn())
         $db->prepare('INSERT INTO schema_migrations (version, applied_at) VALUES (2, ?)')->execute([time()]);
     migrateRegistration($db);
+    migrateRecovery($db);
 }

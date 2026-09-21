@@ -96,6 +96,7 @@
     function show(text) { if (message) message.textContent = text; }
     // Server-controlled rollout: no registration UI until explicitly enabled.
     function registrationEnabled() { return session?.registration?.enabled === true; }
+    function recoveryEnabled() { return session?.recovery?.enabled === true; }
     function block(failure, erase = false) {
         document.documentElement.classList.add("account-blocked");
         show(failure.message);
@@ -131,18 +132,29 @@
         leavingAccount = true;
         window.location.reload();
     }
-    function passwordVisibility(form) {
-        const input = form.querySelector('input[name="password"]');
+    function passwordVisibility(form, field = "password") {
+        const input = form.querySelector(`input[name="${field}"]`);
+        const label = field === "confirmation" ? "Wiederholung" : "Passwort";
         const wrap = ui.createElement("span"); wrap.className = "account-password";
         input.replaceWith(wrap); wrap.append(input);
-        const toggle = button("Passwort anzeigen", () => {
+        const toggle = button(label + " anzeigen", () => {
             const visible = input.type === "password";
             input.type = visible ? "text" : "password";
-            iconButton(toggle, visible ? "hidden" : "eye", visible ? "Passwort verbergen" : "Passwort anzeigen");
+            iconButton(toggle, visible ? "hidden" : "eye", label + (visible ? " verbergen" : " anzeigen"));
             toggle.setAttribute("aria-pressed", String(visible));
         });
-        toggle.className = "account-eye"; iconButton(toggle, "eye", "Passwort anzeigen");
+        toggle.className = "account-eye"; iconButton(toggle, "eye", label + " anzeigen");
         toggle.setAttribute("aria-pressed", "false"); wrap.append(toggle);
+    }
+    function clearPasswords(form) {
+        for (const input of form.querySelectorAll('input[name=password],input[name=confirmation]')) {
+            input.value = ""; input.type = "password";
+            const toggle = input.closest('.account-password')?.querySelector('.account-eye');
+            if (toggle) {
+                iconButton(toggle, "eye", input.name === "confirmation" ? "Wiederholung anzeigen" : "Passwort anzeigen");
+                toggle.setAttribute("aria-pressed", "false");
+            }
+        }
     }
     async function registrationRequest(action, body) {
         const current = await client.request("session");
@@ -228,7 +240,7 @@
                     alert.textContent = failure.message;
                     if (failure.attemptsLeft) alert.textContent += ` Noch ${failure.attemptsLeft} Versuche.`;
                     if (failure.retryAfter) alert.textContent += ` Wartezeit: ${Math.ceil(failure.retryAfter / 60)} Minute(n).`;
-                    if (phase === "register") { form.elements.password.value = ""; form.elements.password.type = "password"; }
+                    if (phase === "register") clearPasswords(form);
                 } finally {
                     busy = false;
                     dialog.querySelectorAll('button').forEach(item => { item.disabled = false; });
@@ -246,13 +258,15 @@
         const dialog = ui.createElement("dialog");
         dialog.className = "account-dialog";
         dialog.setAttribute("aria-label", "Am Schulkonto anmelden");
-        const registrationHint = registrationEnabled()
-            ? '<p>Zur Neuanmeldung brauchst du einen Klassencode.</p><button class="account-register-link" type="button" data-register>Neuanmeldung</button><p>Passwort vergessen? Wende dich vorerst an deine Lehrperson.</p>'
-            : '<p>Derzeit ist nur die Anmeldung mit einem bestehenden Konto möglich. Neuanmeldung, Klassenbeitritt und Passwort-Zurücksetzen werden später freigeschaltet.</p>';
+        let registrationHint = registrationEnabled()
+            ? '<p>Zur Neuanmeldung brauchst du einen Klassencode.</p><button class="account-register-link" type="button" data-register>Neuanmeldung</button>'
+            : '<p>Derzeit ist nur die Anmeldung mit einem bestehenden Konto möglich. Neuanmeldung und Klassenbeitritt werden später freigeschaltet.</p>';
+        if (recoveryEnabled()) registrationHint += '<button class="account-register-link" type="button" data-forgot>Passwort vergessen?</button>';
         dialog.innerHTML = '<form><h2>Am Schulkonto anmelden</h2><p>Gaststand und Kontostand bleiben getrennt. Es wird nichts automatisch übernommen.</p><label>E-Mail-Adresse<input name="email" type="email" autocomplete="username" required maxlength="254"></label><label>Passwort<input name="password" type="password" autocomplete="current-password" required></label><p role="alert"></p><button type="submit">Anmelden</button><button type="button" data-cancel>Abbrechen</button>' + registrationHint + '</form>';
         const form = dialog.querySelector("form");
         passwordVisibility(form);
-        form.querySelector("[data-register]")?.addEventListener("click", () => { if (!busy) { dialog.close(); registrationDialog(); } });
+        form.querySelector("[data-register]")?.addEventListener("click", () => { if (!busy) { dialog.close(); dialog.remove(); registrationDialog(); } });
+        form.querySelector("[data-forgot]")?.addEventListener("click", () => { if (!busy) { dialog.close(); dialog.remove(); recoveryDialog(); } });
         const submit = form.querySelector('[type="submit"]');
         const cancel = form.querySelector("[data-cancel]");
         let busy = false;
@@ -284,6 +298,59 @@
         if (intendedMission) window.location.assign(intendedMission);
         else window.location.reload();
     }
+    function recoveryDialog(token = null) {
+        if (!recoveryEnabled()) { show("Passwort-Zurücksetzen ist noch nicht freigegeben."); return; }
+        closeMenu();
+        const dialog = ui.createElement("dialog"); dialog.className = "account-dialog";
+        dialog.setAttribute("aria-label", token !== null ? "Neues Passwort festlegen" : "Passwort zurücksetzen");
+        dialog.innerHTML = '<form><h2></h2><p data-intro></p><div data-fields></div><p role="alert"></p><button type="submit"></button><button type="button" data-cancel>Abbrechen</button></form>';
+        const form=dialog.querySelector("form"), fields=form.querySelector('[data-fields]'), intro=form.querySelector('[data-intro]');
+        const submit=form.querySelector('[type=submit]'), cancel=form.querySelector('[data-cancel]');
+        form.querySelector('h2').textContent=token !== null ? "Neues Passwort festlegen" : "Passwort vergessen?";
+        if (token !== null) {
+            intro.textContent="Wähle mindestens 8 Zeichen. Dein Lernstand bleibt erhalten; alte Anmeldungen werden beendet.";
+            fields.innerHTML='<label>Neues Passwort<input name="password" type="password" required autocomplete="new-password"></label><label>Passwort wiederholen<input name="confirmation" type="password" required autocomplete="new-password"></label>';
+            passwordVisibility(form); passwordVisibility(form,"confirmation"); submit.textContent="Neues Passwort speichern";
+        } else {
+            intro.textContent="Gib die E-Mail-Adresse deines Kontos ein. Wir schicken dir einen Link zum Festlegen eines neuen Passworts.";
+            fields.innerHTML='<label>E-Mail-Adresse<input name="email" type="email" required maxlength="254" autocomplete="username"></label>';
+            submit.textContent="Link anfordern";
+        }
+        let busy=false;
+        cancel.addEventListener('click',()=>{if(!busy)dialog.close();});
+        dialog.addEventListener('cancel',event=>{if(busy)event.preventDefault();});
+        dialog.addEventListener('close',()=>{
+            token=null; form.querySelectorAll('input').forEach(input=>{input.value="";}); dialog.remove();
+            if(!ui.querySelector('dialog[open]'))loginButton.focus();
+        });
+        form.addEventListener('submit',async event=>{
+            event.preventDefault(); if(busy)return;
+            if(token !== null && form.elements.password.value!==form.elements.confirmation.value){form.querySelector('[role=alert]').textContent="Die Passwörter stimmen nicht überein.";return;}
+            busy=true; submit.disabled=true; cancel.disabled=true;
+            const resetting=token!==null;
+            const body=resetting ? {token,password:form.elements.password.value,confirmation:form.elements.confirmation.value} : {email:form.elements.email.value};
+            try {
+                const current=await client.request('session');
+                if(invalidated)throw remote.error('PROFILE_CHANGED');
+                const result=await client.request(resetting?'reset-password':'request-password-reset',{body,csrfToken:current.csrfToken});
+                if(resetting){
+                    token=null; leavingAccount=true; window.AgentLearningData?.dispose(); announceChange();
+                    // A hash-only change on index.html does not restart the account
+                    // runtime. Force a fresh document after session revocation.
+                    location.replace('index.html?account-reset='+Date.now()+'#password-updated'); return;
+                }
+                fields.replaceChildren(); submit.hidden=true; cancel.textContent="Schließen";
+                intro.textContent=`Falls zu dieser Adresse ein aktives Konto gehört, ist eine E-Mail vorgemerkt. Öffne dein E-Mail-Programm, zum Beispiel Outlook, und prüfe auch den Spamordner. Bitte hab etwas Geduld: Wir versenden insgesamt höchstens ${result.mailPolicy.perMinute} Konto-Mails pro Minute. Ein bereits angeforderter Link bleibt gültig; weitere Klicks senden nicht jedes Mal eine neue Mail. Der Link gilt eine Stunde ab dem ersten Versandversuch.`;
+                form.querySelector('[role=alert]').textContent="";
+            } catch(failure){form.querySelector('[role=alert]').textContent=failure.message;}
+            finally {
+                clearPasswords(form);
+                delete body.password; delete body.confirmation; delete body.token;
+                busy=false; submit.disabled=false; cancel.disabled=false;
+            }
+        });
+        ui.body.append(dialog); dialog.showModal();
+    }
     function closeMenu() {
         if (panel) panel.hidden = true;
         loginButton?.setAttribute("aria-expanded", "false");
@@ -304,7 +371,8 @@
     }
     async function accountDialog() {
         const form = ui.createElement("form");
-        form.innerHTML = '<p data-identity></p><label>Anzeigename<input name="name" required maxlength="100" autocomplete="name"></label><button type="submit">Namen speichern</button><p role="status"></p><p>E-Mail-Änderung und Passwort-Zurücksetzen werden später freigeschaltet.</p>';
+        form.innerHTML = '<p data-identity></p><label>Anzeigename<input name="name" required maxlength="100" autocomplete="name"></label><button type="submit">Namen speichern</button><p role="status"></p><p>E-Mail-Änderung wird später freigeschaltet.</p>';
+        if(recoveryEnabled()) form.append(button("Passwort zurücksetzen",()=>{ui.querySelector('.account-dialog')?.close();recoveryDialog();}));
         form.querySelector("[data-identity]").textContent = `${session.profile.email} · Klasse ${session.profile.className}`;
         form.elements.name.value = session.profile.name;
         form.addEventListener("submit", async event => {
@@ -544,6 +612,18 @@
                         const token = window.location.hash.slice(8);
                         history.replaceState(null, "", window.location.pathname + window.location.search);
                         registrationDialog(token);
+                    } else if (/^#reset=/.test(window.location.hash)) {
+                        const token=location.hash.slice(7);
+                        const clean=new URL(location.href); clean.hash=""; clean.searchParams.delete('account-reset');
+                        history.replaceState(null,"",clean.pathname+clean.search);
+                        recoveryDialog(token);
+                    } else if(location.hash==="#password-updated") {
+                        const clean=new URL(location.href); clean.hash=""; clean.searchParams.delete('account-reset');
+                        history.replaceState(null,"",clean.pathname+clean.search);
+                        const content=ui.createElement('div');
+                        const note=ui.createElement('p'); note.textContent="Dein Passwort wurde geändert. Dein Lernstand bleibt erhalten. Melde dich jetzt mit dem neuen Passwort an.";
+                        const signin=button('Zur Anmeldung',()=>{dialog.close();dialog.remove();loginDialog();});
+                        content.append(note,signin); const dialog=simpleDialog('Passwort geändert',content);
                     }
                     return true;
                 } catch (failure) { block(failure); return false; }

@@ -1,5 +1,11 @@
 # Klassen und Konten: Planungsstand
 
+## Neuer Auftrag 21.09.2026 – CTEST, Bestätigung und Passwortreset
+
+Echtgerätefeedback für r6 ist positiv. Registrierung in bestehende Klasse **Test** per **CTEST** und Passwort-Wiederherstellung sind nun beauftragt. Die lokale Erweiterung nutzt additive Schema3/4, Einmal-Links, zwei Passworteingaben (mindestens 8 Zeichen), Sitzungswiderruf und dieselbe persistente Mailquote für alle Kontomails. Bestehende Konten/Lernstände bleiben erhalten; keine Lehreransicht/E-Mail-Änderung/Kontolöschung in diesem Auftrag.
+
+Die Testmail wurde am 21.09. im Posteingang empfangen, aber der Screenshot zeigt eine Absenderwarnung. Authentifizierten Versand vor öffentlicher Freischaltung klären; SMTP benötigt das separate Postfachpasswort, niemals im Chat/Repository. Chronologie, Tests und letzter Live-Stand stehen oben in LOGIN-HANDOFF.md. Die folgenden Betriebsstände sind historisch.
+
 ## UI-Auftrag abgeschlossen 21.09.2026 – r6 live, Echtgerätefeedback als Nächstes
 
 Live ist **pilot-20260920-r6**, auf Hostinger geprüft und bestätigt. Obere Person-/Vollbildsteuerung, beständige Navigationshülle, Gastdialog, Passwortauge, Entwurfspeichern, kompakter Fortschritt und Anzeigename bearbeiten sind umgesetzt. 40/40 Login-/Shelltests und gesamte CI grün; persönliche Daten unverändert. **Nächster Schritt ist Nutzerfeedback auf echtem iPad/PC Chrome.** Mailversand, Registrierung/Klassenbeitritt und Passwortreset bleiben ausgeschaltet. Details/Rückfallsicherung im obersten Abschnitt von LOGIN-HANDOFF.md. Der folgende ursprüngliche Umsetzungsplan bleibt zur Nachvollziehbarkeit erhalten.

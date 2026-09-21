@@ -46,7 +46,7 @@ function currentUser(\PDO $db): ?array
     $query = $db->prepare('SELECT u.id, u.email, u.display_name AS name, u.class_id AS classId, c.name AS className FROM users u JOIN classes c ON c.id = u.class_id WHERE u.id = ? AND u.active = 1');
     $query->execute([$_SESSION['user_id']]);
     $user = $query->fetch();
-    if (!$user) {
+    if (!$user || (int) ($_SESSION['auth_epoch'] ?? 0) !== authEpoch($db, $user['id'])) {
         rotateSession();
         return null;
     }
@@ -97,15 +97,22 @@ function login(\PDO $db, array $body): array
         throw new ApiError(422, 'INVALID_PASSWORD');
     throttle($db, 'ip:' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'), 150);
     throttle($db, 'email:' . $email, 10);
-    $query = $db->prepare('SELECT id, email, password_hash, active FROM users WHERE email = ?');
+    // Read password + epoch in one snapshot: a concurrent reset must never let
+    // the OLD password authenticate a session with the NEW epoch.
+    $v4 = (int)$db->query('SELECT MAX(version) FROM schema_migrations')->fetchColumn() >= 4;
+    $query = $db->prepare($v4
+        ? 'SELECT u.id,u.email,u.password_hash,u.active,COALESCE(e.revision,0) AS auth_epoch FROM users u LEFT JOIN auth_epochs e ON e.user_id=u.id WHERE u.email=?'
+        : 'SELECT id,email,password_hash,active,0 AS auth_epoch FROM users WHERE email=?');
     $query->execute([$email]);
     $user = $query->fetch();
+    $query->closeCursor();
     // Valid bcrypt hash at the same cost as provisioned accounts; never an actual account.
     $dummy = '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.';
     $valid = password_verify($body['password'], $user ? $user['password_hash'] : $dummy);
     if (!$user || !$valid || !(int) $user['active']) throw new ApiError(401, 'INVALID_CREDENTIALS');
     rotateSession();
     $_SESSION['user_id'] = $user['id'];
+    $_SESSION['auth_epoch'] = (int)$user['auth_epoch'];
     $_SESSION['login_at'] = time();
     return currentUser($db) ?? throw new ApiError(401, 'INVALID_CREDENTIALS');
 }

@@ -21,7 +21,14 @@ return [
     // Enable only after configuring the sender, CLI worker and testing actual receipt.
     // These keys can also live in private registration-config.php next to the real config.
     'registration_enabled' => false,
-    'mail_transport' => 'disabled', // Phase 1: disabled|sendmail. SMTP is a later adapter.
+    'password_reset_enabled' => false,
+    // Authenticated SMTP: mailbox password in a private file beside config.php.
+    'smtp_host' => 'smtp.hostinger.com',
+    'smtp_port' => 465,
+    'smtp_encryption' => 'ssl',
+    'smtp_user' => 'noreply@agentpy.bildungdigital.at',
+    'smtp_password_file' => __DIR__ . '/smtp-password.txt',
+    'mail_transport' => 'disabled', // disabled|sendmail|smtp; enable after real receipt/authentication check.
     'mail_from' => '',
     'mail_per_minute' => 10,
     'mail_per_day' => 100,

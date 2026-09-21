@@ -1,5 +1,18 @@
 # Login-/Speicher-Pilot: Integration und Hostinger-Testversion
 
+## Erweiterung 21.09.2026 – Passwort-Wiederherstellung
+
+Maßgeblicher Live-/Teststand: [LOGIN-HANDOFF.md](../LOGIN-HANDOFF.md). Die älteren Rolloutangaben unten sind historisch.
+
+- Additives Schema4: `auth_epochs`, `password_resets`, `recovery_mail_jobs`. Migration erhält vorhandene Profile, Passwort-Hashes und Lernstände. Alte Sitzungen verwenden Epoch0; nach Reset ist auch deren weiterer Zugriff gesperrt. Kein Datenbank-Downgrade bei Web-Rollback.
+- Privates Konfigurationsfeld `password_reset_enabled` (Standard false; ebenfalls `AGENTPY_PASSWORD_RESET_ENABLED`). Registrierung und Recovery unabhängig abschaltbar. `session.recovery.enabled` steuert die Oberfläche strikt boolesch.
+- `POST request-password-reset {email}` mit Origin/CSRF: gleiche 202-Antwort für bekannte, unbekannte, inaktive und pro Adresse begrenzte Konten. Drei Anforderungen je Adresse/15-Minuten-Fenster, großzügige Schul-IP-Bremse. Wiederholung versendet nicht erneut und entwertet keinen bestehenden Link.
+- `POST reset-password {token,password,confirmation}`: mindestens acht Unicode-Zeichen/maximal72 UTF-8-Bytes; Bestätigung muss übereinstimmen. Kryptografisch zufälliger 256-Bit-Token als URL-Fragment, serverseitig SHA256, einmalige transaktionale Verwendung. Link eine Stunde ab erstem Versandversuch gültig, Queue maximal24 Stunden. Passwortänderung plus Epocherhöhung atomar, kein Auto-Login; Klasse und Lernstand unverändert. Anschließend getrennte Benachrichtigungsmail ohne Passwort/Token.
+- Alle Kontomails teilen Sperre, rollierendes Minuten-/Tagesbudget und Wiederholung mit Lease/Backoff. Transportannahme ist kein Zustellnachweis. `MAIL-TRANSPORT-LIMIT`: bei neuem Transport Policy, Queue und UI gemeinsam prüfen; keine Missbrauchsbremsen pauschal entfernen.
+- Tests: `tests/recovery-cases.mjs` im SQLite-/MariaDB-Backendlauf, `tests/login-e2e/recovery.spec.mjs` für echte Shell in Chromium/WebKit. Nur isolierte Wegwerfkonten; niemals persönliche Passwörter für Tests zurücksetzen.
+- **Rollback-Sicherheit:** Sobald echte Passwortresets erfolgt sind, nicht blind auf r6/älteren Auth-Code zurückrollen: dieser prüft keine Session-Epochen. Stattdessen Registrierung/Recovery per privaten Flags deaktivieren und den Epochen prüfenden Auth-Code beibehalten, oder alle projektbezogenen Sitzungen gezielt invalidieren. Datenbank nicht zurücksetzen.
+- SMTP-Adapter: fest gepinnter PHPMailer7.1.1-Subset (Upstream/Lizenz unter `server/vendor/phpmailer/README.agentpy.md`), TLS465/ssl oder587/tls mit Zertifikatsprüfung, Authentifizierung und gleichem Envelope-/From-/Login-Absender. `smtp_password_file` nur neben privater Konfiguration, kein Passwort in Git/HTTP/Debugausgabe. Hostinger: `smtp.hostinger.com`,465,ssl. Konservative gemeinsame Quote10/Minute und100/24h vorerst behalten; tatsächlichen Postfachplan prüfen, bevor Grenzen erhöht werden.
+
 ## Phase 1 – Stand 19.09.2026
 
 Registrierung und persistente Mailqueue sind implementiert und getestet, **noch nicht live aktiviert**. Live bleibt r2 bis tatsächlicher Mail-Empfang und hPanel-Cron bestätigt sind; ältere Angaben unten beschreiben r2. Aktuelle Betriebsschritte: [HOSTINGER-DEPLOY.md](../HOSTINGER-DEPLOY.md).
