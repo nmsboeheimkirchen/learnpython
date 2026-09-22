@@ -102,6 +102,16 @@ test('class invitation, queued mail and explicit verification on another browser
     await page.getByLabel('Name',{exact:true}).fill('Test Anmeldung');
     await page.getByLabel('E-Mail-Adresse',{exact:true}).fill(email);
     await page.getByLabel('Passwort (mindestens 8 Zeichen)',{exact:true}).fill(password);
+    await page.getByLabel('Passwort wiederholen',{exact:true}).fill('Different!888');
+    const registrationRequests=[];
+    page.on('request',r=>{if(r.url().includes('action=register'))registrationRequests.push(r);});
+    await page.getByRole('button',{name:'Konto anlegen'}).click();
+    await expect(page.getByRole('alert')).toContainText('Die Passwörter stimmen nicht überein');
+    expect(registrationRequests).toHaveLength(0);
+    await expect(page.getByLabel('Passwort (mindestens 8 Zeichen)',{exact:true})).toHaveValue(password);
+    await page.getByRole('button',{name:'Wiederholung anzeigen',exact:true}).click();
+    await expect(page.getByLabel('Passwort wiederholen',{exact:true})).toHaveAttribute('type','text');
+    await page.getByLabel('Passwort wiederholen',{exact:true}).fill(password);
     expect(await page.getByRole('dialog').locator('form').evaluate(form=>form.checkValidity())).toBe(true);
     const registrationResponse=page.waitForResponse(response=>response.url().includes('action=register'));
     await page.getByRole('button',{name:'Konto anlegen'}).click();
@@ -109,17 +119,47 @@ test('class invitation, queued mail and explicit verification on another browser
     await expect(page.getByRole('dialog')).toContainText('Outlook');
     await expect(page.getByRole('dialog')).toContainText('höchstens 10 Bestätigungsmails pro Minute');
     await page.getByRole('button',{name:'Weiter im Gastmodus'}).click();
+    // A pending account gets the same generic list as an unknown address/bad password.
+    await page.getByRole('button',{name:'Anmelden',exact:true}).click();
+    await page.getByLabel('E-Mail-Adresse',{exact:true}).fill(email);
+    await page.getByLabel('Passwort',{exact:true}).fill(password);
+    await page.getByRole('dialog').getByRole('button',{name:'Anmelden',exact:true}).click();
+    await expect(page.getByRole('alert')).toContainText('Mögliche Ursachen');
+    await expect(page.getByRole('alert').locator('li')).toHaveText(['Das Konto wurde noch nicht angelegt.','Die E-Mail-Adresse wurde noch nicht bestätigt.','Die E-Mail-Adresse oder das Passwort ist falsch.']);
+    await page.getByRole('button',{name:'Abbrechen',exact:true}).click();
     const mail=deliverTestMail().find(item=>item.to===email);
     expect(mail).toBeTruthy();
     const link=mail.body.match(/http[^\s]+#verify=[a-f0-9]{64}/)[0];
     const context=await browser.newContext();
     try {
         const device=await context.newPage();
+        await device.addInitScript(()=>{window.AgentAccountConfig={enabled:true,endpoint:'api/index.php',saveMode:'attempts',shell:true};});
+        await device.goto('/');
+        await device.getByRole('button',{name:'Anmelden',exact:true}).click();
+        await device.getByLabel('E-Mail-Adresse',{exact:true}).fill(`verification-student-${test.info().project.name}@example.test`);
+        await device.getByLabel('Passwort',{exact:true}).fill('Synthetic-browser-password-123!');
+        await device.getByRole('dialog').getByRole('button',{name:'Anmelden',exact:true}).click();
+        await expect(device.getByRole('button',{name:'Benutzermenü'})).toBeVisible();
+        const token=link.split('#verify=')[1],requests=[];
+        device.on('request',r=>requests.push({url:r.url(),body:r.postDataJSON?.bind(r)}));
         await device.goto(link);
+        const verification=device.getByRole('dialog',{name:'E-Mail bestätigen',exact:true});
+        await expect(verification.getByRole('alert')).toContainText('Du bist bereits angemeldet');
+        await expect(verification.locator('[data-intro]')).toBeHidden();
+        await expect(verification.getByRole('button',{name:'E-Mail jetzt bestätigen'})).toHaveCount(0);
+        await verification.getByRole('button',{name:'Abbrechen',exact:true}).click();
+        await expect(device.getByRole('button',{name:'Benutzermenü'})).toBeVisible();
+        expect(requests.some(r=>r.url.includes('action=verify-email'))).toBe(false);
+        await device.goto(link);
+        await verification.getByRole('button',{name:'Abmelden',exact:true}).click();
         await expect(device.getByRole('button',{name:'E-Mail jetzt bestätigen'})).toBeVisible();
         expect(device.url()).not.toContain('#verify=');
+        expect(device.frames().some(f=>f.url().includes(token))).toBe(false);
+        expect(requests.some(r=>r.url.includes(token))).toBe(false);
+        expect(requests.some(r=>r.url.includes('action=verify-email'))).toBe(false);
         await device.getByRole('button',{name:'E-Mail jetzt bestätigen'}).click();
         await expect(device.getByRole('dialog')).toContainText('Deine E-Mail-Adresse ist bestätigt');
+        expect(requests.find(r=>r.url.includes('action=verify-email')).body().token).toBe(token);
         // Hold cancellation to prove login cannot rotate cookies while an older
         // registration session request is still in flight (WebKit CI regression).
         let releaseCancellation;

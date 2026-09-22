@@ -71,8 +71,17 @@ test('static releases keep account login explicitly disabled until a pilot relea
     const config = readFileSync(join(repoRoot, 'assets/data/account-config.js'), 'utf8');
     assert.match(config, /enabled: false/);
     const workflow = readFileSync(join(repoRoot, '.github/workflows/pages.yml'), 'utf8');
-    assert.match(workflow, /run: npm run test:login/);
-    assert.match(workflow, /needs:[\s\S]*- login-browser/);
+    assert.match(workflow, /uses: \.\/\.github\/workflows\/tests.yml/);
+    assert.match(workflow, /needs: tests/);
+    assert.match(workflow, /branches: \[main\]/);
+    assert.doesNotMatch(workflow, /dev-login-save|pull_request:/);
+    const tests = readFileSync(join(repoRoot, '.github/workflows/tests.yml'), 'utf8');
+    assert.match(tests, /dev-login-save/);
+    assert.match(tests, /workflow_call:/);
+    assert.match(tests, /run: npm run test:login/);
+    assert.match(tests, /run: npm run test:backend/);
+    assert.match(tests, /run: npm run test:hosting/);
+    assert.doesNotMatch(tests, /pages: write|deploy-pages/);
 });
 
 test("mission runtimes use one coordinated completion command", () => {

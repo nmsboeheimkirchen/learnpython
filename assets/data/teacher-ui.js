@@ -8,7 +8,15 @@ const button=(text,action,symbol,cls)=>{const b=el('button',undefined,cls);b.typ
 let selected=null,version=0,timer=null;
 const api=(action,body)=>window.AgentAccount.teacherRequest(action,body);
 function clearPrivate(){version++;root.replaceChildren(el('h1','Meine Klassen'),el('p','Bitte neu anmelden. Deine Sitzung wurde geändert.','teacher-error'));chrome.querySelectorAll('[data-teacher-dialog]').forEach(d=>{d.close();d.remove();});clearTimeout(timer);}
-new MutationObserver(()=>{if(document.documentElement.classList.contains('account-blocked'))clearPrivate();}).observe(document.documentElement,{attributes:true,attributeFilter:['class']});
+new MutationObserver(()=>{
+    const state=document.documentElement.classList;
+    if(state.contains('account-invalidated')){clearPrivate();return;}
+    // Focus checks hide the lesson briefly, but must preserve a valid class view.
+    // Teacher dialogs live in the shell, outside the lesson's blocking CSS.
+    chrome.querySelectorAll('[data-teacher-dialog]').forEach(d=>{
+        d.inert=state.contains('account-blocked');d.style.visibility=d.inert?'hidden':'';
+    });
+}).observe(document.documentElement,{attributes:true,attributeFilter:['class']});
 function fail(error){const node=el('p',error.message,'teacher-error');node.setAttribute('role','alert');root.replaceChildren(el('h1','Meine Klassen'),node,button('Erneut versuchen',()=>load(selected),'refresh'));}
 function dialog(title,content){const d=chrome.createElement('dialog');d.className='account-dialog';d.dataset.teacherDialog='';d.setAttribute('aria-label',title);d.append(el('h2',title),content);const close=button('Schließen',()=>d.close());close.className='account-close';d.append(close);d.addEventListener('close',()=>d.remove());chrome.body.append(d);d.showModal();return d;}
 function details(member){const p=calculateProgress(Object.fromEntries(member.completedIds.map(id=>[id,''])));const content=el('div');content.append(el('p',p.label,'account-progress-number'));const list=el('ul',undefined,'account-progress-list');for(const row of p.rows){const li=el('li');li.append(el('strong',row.label+': '));row.sections.forEach((s,i)=>{if(i)li.append(', ');li.append(el('span',s.code+(s.completed?' ✓':s.available?' · offen':' · folgt'),s.completed?'account-progress-done':'account-progress-pending'));});list.append(li);}content.append(list);if(p.optionalCompleted)content.append(el('p','Optional geschafft: 02-3 (+5 Bonuspunkte)','account-progress-done'));dialog(member.name,content);}

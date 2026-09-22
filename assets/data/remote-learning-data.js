@@ -9,7 +9,7 @@
         PROFILE_CHANGED: "Das angemeldete Konto wurde in einem anderen Tab geändert. Bitte lade die Seite neu.",
         AUTH_REQUIRED: "Deine Anmeldung ist abgelaufen. Sichere deinen Code und melde dich erneut an.",
         CSRF_MISMATCH: "Deine Sitzung hat sich geändert. Bitte melde dich erneut an.",
-        INVALID_CREDENTIALS: "E-Mail-Adresse oder Passwort stimmt nicht.",
+        INVALID_CREDENTIALS: "Anmeldung nicht möglich. Das Konto ist noch nicht angelegt oder bestätigt, oder E-Mail-Adresse oder Passwort sind falsch.",
         LOGIN_RATE_LIMITED: "Zu viele Anmeldeversuche. Bitte warte 15 Minuten.",
         REGISTRATION_UNAVAILABLE: "Die Neuanmeldung ist gerade nicht verfügbar. Du kannst im Gastmodus arbeiten.",
         CLASS_CODE_INVALID: "Der Klassencode ist ungültig oder abgelaufen.",

@@ -109,6 +109,8 @@
         loginButton?.classList.add("account-attention");
         if (erase) {
             invalidated = true;
+            // A temporary focus/session check is not an identity change.
+            document.documentElement.classList.add("account-invalidated");
             window.AgentLearningData?.dispose();
             window.editor?.setValue("");
             if (exportButton) exportButton.hidden = true;
@@ -183,7 +185,7 @@
             show("Neuanmeldung und E-Mail-Bestätigung sind noch nicht freigegeben. Bestehende Konten können sich anmelden.");
             return;
         }
-        if (controls?.hasUnconfirmed()) return;
+        if (!verificationToken && controls?.hasUnconfirmed()) return;
         closeMenu();
         const dialog = ui.createElement("dialog"); dialog.className = "account-dialog";
         dialog.setAttribute("aria-label", verificationToken ? "E-Mail bestätigen" : "Neuanmeldung");
@@ -201,7 +203,7 @@
             event.preventDefault(); if (!busy) leaveRegistration();
         });
         dialog.addEventListener("close", () => {
-            dialog.querySelectorAll('input[name="password"]').forEach(input => { input.value = ""; input.type = "password"; });
+            clearPasswords(dialog);
             verificationToken = null; dialog.remove();
             if (!ui.querySelector('dialog[open]')) loginButton.focus();
             if (!session?.profile) show("Gastmodus · nur in diesem Browser gespeichert.");
@@ -214,31 +216,44 @@
             const fields = form.querySelector("[data-fields]");
             const submit = form.querySelector('[type="submit"]');
             const cancel = form.querySelector("[data-cancel]");
+            const signedInVerification = phase === "verify" && Boolean(session?.profile);
             if (phase === "code") {
                 fields.innerHTML = '<label>Klassencode<input name="code" required minlength="5" maxlength="5" autocomplete="off" autocapitalize="characters" spellcheck="false"></label>';
                 intro.textContent = "Den Code bekommst du von deiner Lehrperson."; submit.textContent = "Klassencode prüfen";
             } else if (phase === "register") {
                 intro.textContent = `Willkommen in ${className}! Lege dein Konto an.`;
-                fields.innerHTML = '<label>Name<input name="name" autocomplete="name" required maxlength="100"></label><label>E-Mail-Adresse<input name="email" type="email" autocomplete="username" required maxlength="254"></label><label>Passwort (mindestens 8 Zeichen)<input name="password" type="password" autocomplete="new-password" required></label>';
-                passwordVisibility(form); submit.textContent = "Konto anlegen";
+                fields.innerHTML = '<label>Name<input name="name" autocomplete="name" required maxlength="100"></label><label>E-Mail-Adresse<input name="email" type="email" autocomplete="username" required maxlength="254"></label><label>Passwort (mindestens 8 Zeichen)<input name="password" type="password" autocomplete="new-password" required></label><label>Passwort wiederholen<input name="confirmation" type="password" autocomplete="new-password" required></label>';
+                passwordVisibility(form); passwordVisibility(form, "confirmation"); submit.textContent = "Konto anlegen";
             } else if (phase === "verify") {
-                intro.textContent = "Bestätige deine E-Mail-Adresse. Anschließend kannst du dich auf jedem Gerät anmelden.";
-                submit.textContent = "E-Mail jetzt bestätigen";
+                intro.hidden = signedInVerification;
+                intro.textContent = signedInVerification ? "" : "Bestätige deine E-Mail-Adresse. Anschließend kannst du dich auf jedem Gerät anmelden.";
+                submit.textContent = signedInVerification ? "Abmelden" : "E-Mail jetzt bestätigen";
+                if (signedInVerification) {
+                    form.querySelector('[role="alert"]').textContent = remote.error("ALREADY_SIGNED_IN").message;
+                    cancel.textContent = "Abbrechen";
+                }
             }
             cancel.addEventListener("click", () => { if (!busy) leaveRegistration(); });
             form.addEventListener("submit", async event => {
                 event.preventDefault(); if (busy) return;
                 if (phase === "register" && !checkNewPassword(form)) return;
+                if (phase === "register" && form.elements.password.value !== form.elements.confirmation.value) {
+                    form.querySelector('[role="alert"]').textContent = "Die Passwörter stimmen nicht überein. Bitte korrigiere die Wiederholung.";
+                    form.elements.confirmation.focus(); return;
+                }
                 busy = true; submit.disabled = true; cancel.disabled = true;
                 const alert = form.querySelector('[role="alert"]'); alert.textContent = "";
                 try {
-                    if (phase === "code") {
+                    if (signedInVerification) {
+                        const result = await logout(verificationToken);
+                        alert.textContent = result?.message || remote.error("ALREADY_SIGNED_IN").message;
+                    } else if (phase === "code") {
                         const result = await registrationRequest("check-invitation", { code: form.elements.code.value });
                         className = result.className; phase = "register"; render();
                     } else if (phase === "register") {
                         const password = form.elements.password.value;
                         const result = await registrationRequest("register", { name: form.elements.name.value, email: form.elements.email.value, password });
-                        form.elements.password.value = "";
+                        clearPasswords(form);
                         phase = "sent"; render();
                         // MAIL-TRANSPORT-LIMIT: derive the notice from the worker's server policy.
                         // Hosting/SMTP changes must update policy, queue and tests together.
@@ -305,7 +320,18 @@
                 if (current.profile) { announceChange(); resumeAfterLogin(); return; }
                 await client.request("login", { body: { email: form.elements.email.value, password }, csrfToken: current.csrfToken });
                 window.AgentLearningData?.dispose(); announceChange(); resumeAfterLogin();
-            } catch (failure) { form.querySelector('[role="alert"]').textContent = failure.message; }
+            } catch (failure) {
+                const alert = form.querySelector('[role="alert"]');
+                alert.textContent = failure.message;
+                if (failure.code === "INVALID_CREDENTIALS") {
+                    alert.textContent = "Anmeldung nicht möglich. Mögliche Ursachen:";
+                    const list = ui.createElement('ul');
+                    for (const text of ["Das Konto wurde noch nicht angelegt.", "Die E-Mail-Adresse wurde noch nicht bestätigt.", "Die E-Mail-Adresse oder das Passwort ist falsch."]) {
+                        const item = ui.createElement('li'); item.textContent = text; list.append(item);
+                    }
+                    alert.append(list);
+                }
+            }
             finally { busy = false; submit.disabled = false; cancel.disabled = false; }
         });
         ui.body.appendChild(dialog); dialog.showModal();
@@ -483,14 +509,18 @@
             event.preventDefault(); event.stopImmediatePropagation(); guestMission(target.href);
         }
     }, true);
-    async function logout() {
+    async function logout(verificationToken = null) {
         if (hasUnconfirmed() && !window.confirm("Nicht bestätigte Änderungen oder ungespeicherter Code gehen beim Abmelden verloren. Code zuvor sichern. Trotzdem abmelden?")) return;
         logoutButton.disabled = true;
         try {
             await client.request("logout", { body: {}, csrfToken: session.csrfToken, profileId: session.profile.id });
             leavingAccount = true;
-            window.AgentLearningData?.dispose(); announceChange(); window.location.reload();
-        } catch (failure) { show(failure.message); }
+            window.AgentLearningData?.dispose(); announceChange();
+            // Preserve the original link only in the fragment during this reload.
+            // Bootstrap removes it immediately again; never store it or use a query.
+            if (verificationToken) history.replaceState(null, "", location.pathname + location.search + '#verify=' + encodeURIComponent(verificationToken));
+            window.location.reload();
+        } catch (failure) { show(failure.message); return {message: failure.message}; }
         finally { logoutButton.disabled = false; }
     }
     async function mount() {
@@ -509,7 +539,7 @@
         loginButton.dataset.accountOwned = ""; loginButton.className = "account-person";
         iconButton(loginButton, "person", "Anmelden"); loginButton.setAttribute("aria-controls", "account-menu");
         loginButton.setAttribute("aria-expanded", "false");
-        logoutButton = button("Abmelden", logout);
+        logoutButton = button("Abmelden", () => logout());
         const progressButton = button("Fortschritt", progressDialog);
         const profileButton = button("Kontoinfo bearbeiten", accountDialog);
         const classesButton = button("Meine Klassen", () => { closeMenu(); location.assign('lehrer.html'); });
@@ -618,9 +648,14 @@
         // Dedicated teacher page reuses the verified identity and anti-stale-tab guard.
         async teacherRequest(action, body) {
             if (invalidated || !session?.profile) throw remote.error('AUTH_REQUIRED');
-            const result=await client.request(action,{body,csrfToken:session.csrfToken,profileId:session.profile.id});
-            if (invalidated || result.profile?.id!==session.profile.id) throw remote.error('PROFILE_CHANGED');
-            return result;
+            try {
+                const result=await client.request(action,{body,csrfToken:session.csrfToken,profileId:session.profile.id});
+                if (invalidated || result.profile?.id!==session.profile.id) throw remote.error('PROFILE_CHANGED');
+                return result;
+            } catch (failure) {
+                if (['PROFILE_CHANGED','AUTH_REQUIRED','CSRF_MISMATCH'].includes(failure.code)) block(failure,true);
+                throw failure;
+            }
         },
         editorChanged() { dirtyDraft = true; },
         start({ createGuest, attach } = {}) {

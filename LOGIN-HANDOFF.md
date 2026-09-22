@@ -1,5 +1,16 @@
 # Übergabe: dev-login-save
 
+## AKTUELL IN ARBEIT 22.09.2026 – Rückmeldungen nach r10
+
+- Produktiv weiterhin **r10**, kein Deployment oder Datenbankeingriff in diesem Turn. Neue Benutzer, Klassen und Lernstände unbedingt erhalten; **keinen alten Resetoperator erneut ausführen**.
+- Lokal geändert: Registrierungs-Passwortwiederholung mit Inline-Warnung und Augen; generische Login-Ursachenliste; angemeldeter Bestätigungsdialog nur orange Hinweis + Abmelden/Abbrechen (Link beim Logout nur kurz im Fragment, anschließend entfernt); Lehreransicht unterscheidet temporäre Prüfung von tatsächlichem Kontowechsel.
+- Lehrerfehler reproduziert: neuer Fokus-/Visibility-Test scheitert vor Fix exakt an verschwundener Klassenansicht. Ursache war MutationObserver auf `account-blocked` bei jeder kurzfristigen Identitätsprüfung. Jetzt zusätzlich semantisch `account-invalidated`; echte Kontowechsel löschen weiterhin Daten, Shell-Lehrerdialoge werden bei Prüfungen verborgen/inert.
+- CI in `tests.yml` (dev/PR/manuell/wiederverwendbar) und `pages.yml` (nur main/manuell, abhängig von allen Tests) getrennt. Nutzer-Mail nennt alten Fehlercommit 1b54bff; vorheriger Produktionscode 9039ef4 hatte bereits grüne CI.
+- Gezielte 14 Browserfälle Chromium/WebKit grün, 204 Logiktests und 48 PHP-API-/Hostingtests grün. Vollständige 54er-Konto-Suite läuft noch (lokale Session 70767, bisher keine Fehler). Danach commit/push, neue CI prüfen, r11 veröffentlichen und Livechecks.
+- Read-only live geprüft: r10/Schema5, **3 Konten, 3 Klassen inklusive Lehrergruppe, 3 Lernstände, 1 Lehrer, 2 eigene Schülerklassen, 2 Codes**, keine offene Aktivierung. Diese inzwischen neuen Daten erhalten! Alter CI-Lauf 35759100820 für 9039ef4 nochmals als success bestätigt.
+- Neuer isolierter Operator `.cache/hostinger-ui-r11.mjs` vorbereitet und Syntax geprüft. Nur `inspect` ausgeführt, **kein r11 gebaut/hochgeladen**. Upload verlangt `AGENTPY_TESTED_COMMIT`; serverseitig sind ausschließlich drei Frontenddateien (account-bootstrap, remote-learning-data, teacher-ui) plus automatische Release-/Commitmetadaten als Unterschiede erlaubt. Alle Backenddateien und privaten Einstellungen müssen gleich bleiben; keine Datenbankschreibbefehle/Reset/Migration.
+- Secrets niemals ausgeben; unbekannten ungetrackten Root-Dateinamen nicht auflisten/stagen. `git status --porcelain --untracked-files=no`, ausschließlich explizite git-add-Pfade.
+
 ## ABGESCHLOSSEN 22.09.2026 – Lehrer:innen LIVE r10, GitGuardian geprüft
 
 **Maßgeblicher Endstand. Alle nachfolgenden Zwischenstände sind historisch. KEINE offenen Deployments, Resetaktionen oder Testprozesse.**

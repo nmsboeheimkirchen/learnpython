@@ -1,11 +1,8 @@
-name: Test and deploy static site
+name: Deploy static site to GitHub Pages
 
 on:
   push:
-    branches:
-      - main
-      - dev-login-save
-  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -16,136 +13,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  logic:
-    name: Logic and validator tests
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: package-lock.json
-
-      - name: Install locked test dependencies
-        run: npm ci --ignore-scripts
-
-      - name: Run logic and validator tests
-        run: npm test
-
-  browser:
-    name: Browser tests (${{ matrix.project }})
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - project: chromium-school-laptop
-            engine: chromium
-          - project: webkit-ipad
-            engine: webkit
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: package-lock.json
-
-      - name: Install locked test dependencies
-        run: npm ci --ignore-scripts
-
-      - name: Install browser system dependencies
-        run: npx playwright install-deps ${{ matrix.engine }}
-
-      - name: Download Chromium headless shell
-        if: matrix.engine == 'chromium'
-        run: npx playwright install --only-shell chromium
-
-      - name: Download WebKit
-        if: matrix.engine == 'webkit'
-        run: npx playwright install webkit
-
-      - name: Run browser end-to-end tests
-        run: npm run test:e2e -- --project=${{ matrix.project }}
-
-  login-browser:
-    name: Login and device-switch browser tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci --ignore-scripts
-      - name: Install local PHP test runtime
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y php-cli php-sqlite3
-      - run: npx playwright install --with-deps chromium webkit
-      - run: npm run test:login
-      - name: Retain failed browser diagnostics (disposable fixtures only)
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: login-browser-diagnostics
-          path: .cache/login-results
-          retention-days: 3
-
-  backend:
-    name: PHP API and MariaDB integration tests
-    runs-on: ubuntu-latest
-    services:
-      mariadb:
-        image: mariadb:11.4
-        env:
-          MARIADB_ROOT_PASSWORD: disposable-test-root
-          MARIADB_DATABASE: agentpy_test
-          MARIADB_USER: agentpy_test
-          MARIADB_PASSWORD: disposable-test-password
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="healthcheck.sh --connect --innodb_initialized"
-          --health-interval=5s
-          --health-timeout=5s
-          --health-retries=20
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: Install PHP test runtime
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y php-cli php-mysql php-sqlite3
-      - name: Test real HTTP sessions and persistence on SQLite and MariaDB
-        env:
-          AGENTPY_TEST_MYSQL_DSN: mysql:host=127.0.0.1;port=3306;dbname=agentpy_test;charset=utf8mb4
-          AGENTPY_TEST_MYSQL_USER: agentpy_test
-          AGENTPY_TEST_MYSQL_PASSWORD: disposable-test-password
-        run: npm run test:backend
-      - name: Test private Hostinger setup and release integrity
-        run: npm run test:hosting
-
+  tests:
+    uses: ./.github/workflows/tests.yml
   deploy:
     name: Deploy to GitHub Pages
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-    needs:
-      - logic
-      - browser
-      - backend
-      - login-browser
+    needs: tests
     permissions:
       contents: read
       pages: write
