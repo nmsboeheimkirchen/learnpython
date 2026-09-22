@@ -1,6 +1,40 @@
 # Übergabe: dev-login-save
 
+## ABGESCHLOSSEN 22.09.2026 – Anmeldekorrekturen und Lehrer-Sitzungsfix LIVE r11
+
+**Dieser Abschnitt ist maßgeblich. Alle älteren Checkpoints darunter sind historisch. Keine offenen Tests, Uploads oder Aktivierungen.**
+
+- Live: **https://agentpy.bildungdigital.at/**, Release **pilot-20260922-r11**, Code **e4bb6830b6082b0134468f778e1ac49ca32c16ba**, Schema 5. Aktiviert, Livechecks erfolgreich und confirmed; `pendingDeployment=false`.
+- Registrierung: Passwort + Wiederholung, beide mit Auge; bei Abweichung Inline-Warnung ohne Anfrage/Verbrauch des Klassencode-Grants. Eingaben können direkt korrigiert werden. Bestehende Backend-API und 8-Zeichen-Regel unverändert.
+- Login: generische Ursachenliste (nicht angelegt / noch nicht bestätigt / Adresse oder Passwort falsch), keine Auskunft über tatsächliche Kontoexistenz.
+- Bestätigungslink bei angemeldetem Konto: nur orange Hinweis, **Abmelden / Abbrechen**. Logout behält den ursprünglichen Token ausschließlich kurz im Fragment über den Dokumentreload; Bootstrap entfernt ihn wieder. Kein Token in Query, Storage oder HTTP-URL. Nach Logout explizite E-Mail-Bestätigung möglich, keine neue Mail nötig. Bestehender Schutz vor ungespeicherten Änderungen bleibt aktiv.
+- Lehrerfehler reproduziert und behoben: `account-blocked` bei temporärer Fokusprüfung löscht die Klassenansicht nicht mehr; tatsächliches `account-invalidated` löscht private Daten weiterhin. Lehrerdialoge im Shell-Dokument sind während Prüfungen verborgen/inert. Regression prüft Klasse erstellen → Fokusprüfung → Klasse bleibt; anderer Tab meldet ab → Klassendaten verschwinden.
+- CI getrennt: `.github/workflows/tests.yml` = **Application tests** für Dev/PR/manuell + wiederverwendbar. `pages.yml` = Veröffentlichung nur main/manuell und abhängig von allen Tests. Push auf dev startete ausschließlich Tests. Alte Fehler-Mail zu 1b54bff ist überholt.
+
+### Verifikation und Datenbestand
+
+- Lokal **204 Logiktests, 48 Backend-/Hostingtests, 54 Konto-Browsertests** grün. CI **35780437515 vollständig success**: Logik, SQLite/MariaDB, Hosting, Missionsbrowser Chromium/WebKit und Konto-Browser.
+- Live echte anonyme HTTPS-/Release-/Cache-/Private-Pfad-/Sessionchecks und Browser-Smokes beider Engines grün. Neue Dialoge zusätzlich auf ausgeliefertem Frontend mit **vollständig gemockten API-Anfragen** geprüft, also kein echter Login, keine Registrierung/Testklasse, keine Mail. Fotos unter `.cache/hostinger-browser/*-r11-*.png`; Passwortwiederholung, Loginliste und angemeldete Bestätigung visuell geprüft.
+- Vorher/nachher: **3 Konten, 3 Klassen inklusive Lehrer:innen-Gruppe, 3 Lernstände, 1 Lehrer, 2 Schülerklassen, 2 Codes**. Kein Datenbankwrite durch Deployment, kein Reset, keine Migration. Private SMTP-/DB-/Registrierungs-/Lehrerschlüsseldateien hashgleich. Cron-Heartbeat bereits r11, ranAt1790109306, processed0.
+
+### Deployment / sichere Fortsetzung
+
+- Paket `.cache/hostinger/pilot-20260922-r11`, 143 Dateien, Manifest SHA256 **47a495833ea48a670319669995cea14e0b1a78073528b7ec1e089235f33c065c**.
+- Voriger Webroot r10 gesichert als `agentpy-private/backups/web-20260922203445-b5d8050bdd`; private Settings-Snapshot `backups/before-pilot-20260922-r11-patch.json`.
+- Operator `.cache/hostinger-ui-r11.mjs` fertig; nur `inspect` erneut sinnvoll. Nicht nochmals upload/verify/activate/confirm. Serverseitiger Guard erlaubte exakt drei Frontenddateien plus automatische Metadaten, alle PHP-/Backenddateien unverändert. Keinen früheren Resetoperator verwenden!
+- README dokumentiert neue Workflow-Trennung. Abschlusscommit enthält nur README/Handoff und braucht kein neues Deployment. Devbranch gepusht; main/Pages unverändert. Unbekannten ungetrackten Root-Dateinamen nicht ausgeben oder stagen; weiter ausschließlich explizite Pfade verwenden.
+- Nächster Nutzerschritt: Website neu laden und Anmeldung/Bestätigung sowie eigene Klassenansicht testen. Lehrerweiterentwicklung (Co-Teacher, CSV, Mitgliederverwaltung, Superadmin) bleibt separater geplanter Umfang, nicht in diesem Fix freigeschaltet.
+
 ## AKTUELL IN ARBEIT 22.09.2026 – Rückmeldungen nach r10
+
+### Checkpoint vor Release r11
+
+- Code **e4bb6830b6082b0134468f778e1ac49ca32c16ba** auf dev-login-save gepusht. **204 Logiktests, 48 Backend-/Hostingtests und alle 54 Konto-Browsertests lokal grün** (Chromium + WebKit). Alte Testprozesse beendet.
+- Neue CI **35780437515**, Workflow **Application tests**: Logik, SQLite/MariaDB/Hosting und Missionsbrowser beide grün; letzter Konto-Browserjob läuft noch. Kein Pages-Lauf für den Push gestartet. Vor Aktivierung vollständigen CI-Erfolg prüfen.
+- Paket `.cache/hostinger/pilot-20260922-r11` gebaut, **privat hochgeladen und serverseitig verifiziert (143 Dateien)**, Manifest SHA256 **47a495833ea48a670319669995cea14e0b1a78073528b7ec1e089235f33c065c**. Noch **NICHT aktiviert**. Live weiterhin r10. Snapshot `agentpy-private/backups/before-pilot-20260922-r11-patch.json` vorhanden. Kein Upload/verify wiederholen.
+- Nach grüner CI: `.cache/hostinger-ui-r11.mjs activate` → scripts/check-hostinger.mjs + check-hostinger-browser.mjs --registration --polish --without-test-class → confirm → inspect. Keine echten Konten/Schülerklassen zu Testzwecken verändern, keine alten Kennwörter verwenden. README/Handoff nach Commit noch lokal geändert; zum Schluss separat dokumentarisch committen/pushen.
+
+### Vorherige Schritte dieses Turns
 
 - Produktiv weiterhin **r10**, kein Deployment oder Datenbankeingriff in diesem Turn. Neue Benutzer, Klassen und Lernstände unbedingt erhalten; **keinen alten Resetoperator erneut ausführen**.
 - Lokal geändert: Registrierungs-Passwortwiederholung mit Inline-Warnung und Augen; generische Login-Ursachenliste; angemeldeter Bestätigungsdialog nur orange Hinweis + Abmelden/Abbrechen (Link beim Logout nur kurz im Fragment, anschließend entfernt); Lehreransicht unterscheidet temporäre Prüfung von tatsächlichem Kontowechsel.

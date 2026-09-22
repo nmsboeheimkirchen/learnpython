@@ -57,7 +57,8 @@ Die Anwendung ist eine statische Website aus HTML, CSS und JavaScript. Python l�
 ├── impressum.html                 # Impressum
 ├── assets/                        # Gestaltung, Laufzeitlogik, Bilder und Bibliotheken
 ├── tests/                         # Unit- und Browser-Tests
-└── .github/workflows/pages.yml    # Tests und GitHub-Pages-Veröffentlichung
+├── .github/workflows/tests.yml    # Anwendungs-, Konto- und Datenbanktests
+└── .github/workflows/pages.yml    # Geprüfte GitHub-Pages-Veröffentlichung (main)
 ```
 
 ## Lokal ausführen
@@ -91,7 +92,9 @@ Die Tests prüfen unter anderem Lernpfad und Freischaltungen, Aufgabenvalidierun
 
 ## Veröffentlichung
 
-Ein Push auf `main` startet den Workflow in [`.github/workflows/pages.yml`](.github/workflows/pages.yml). Nach erfolgreichen Logik- und Browser-Tests wird der aktuelle Stand über GitHub Pages veröffentlicht und anschließend mit einem Smoke-Test überprüft.
+Auf `dev-login-save` und bei Pull Requests läuft ausschließlich [Application tests](.github/workflows/tests.yml), ohne Pages-Veröffentlichung. Diese Tests prüfen auch die Kontoabläufe sowie SQLite und MariaDB.
+
+Ein Push auf `main` startet [Deploy static site to GitHub Pages](.github/workflows/pages.yml). Dieser Workflow ruft dieselben Anwendungstests auf. Erst nach deren Erfolg wird der statische Stand über GitHub Pages veröffentlicht und mit einem Smoke-Test überprüft. Hostinger-Pilot-Releases werden davon getrennt bereitgestellt.
 
 Offene Arbeit und geplante Erweiterungen stehen in der [Roadmap](TODO.md).
 
