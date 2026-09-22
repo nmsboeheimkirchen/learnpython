@@ -76,6 +76,9 @@ test('new password dialog fits a phone, rejects mismatch and clears secret input
 });
 
 test('forgot password through shell preserves progress, invalidates another device and allows only the new password',async({page,browser})=>{
+    // Two isolated devices, repeated full document loads and WebKit cleanup can
+    // exceed a minute on shared CI. Individual assertion deadlines stay strict.
+    test.setTimeout(90000);
     const email=`recovery-student-${test.info().project.name}@example.test`;
     const oldPassword='Synthetic-browser-password-123!'; // Disposable localhost fixture only.
     const newPassword=randomBytes(4).toString('hex'); // Eight characters, no upper-case/special requirement.

@@ -1,5 +1,19 @@
 # Übergabe: dev-login-save
 
+## CHECKPOINT – r9 LIVE + CONFIRMED; kleine Bestätigungskorrektur wird noch geprüft
+
+- **r9 erfolgreichaktiviert undconfirmed**. Alterr8Webrootgesichert `agentpy-private/backups/web-20260922165554-3186d57928`. HTTPS/API/privatePfad/sessionchecksgrün;GastbrowserChromium+WebKitgrün. Echter.comLehrerloginbeideBrowsergrün:GruppeLehrer:innen,0von10Klassen,LogoutentferntprivateAnsicht,Lernstandidentisch,keineTestklasse/Mailangelegt. WebKitScreenshot `.cache/hostinger-browser/webkit-teacher-r9.png` visuellgeprüft.
+- **.comKontoenthältkeinebearbeiteten/abgeschlossenenAbschnitte**;deshalbkorrektTrainingstart, nichtSetzefort. ErsterLivehelperhatfälschlichFortschrittvorausgesetzt,danachstatebasierterCheckgrün. FortsetzenmitgespeichertemStandinlokalen/CI-Testsgeprüft;keinenMichaelLernstanddafürschreiben.
+- NachCI1b54bff **35754415788**:MariaDB35Untertestsbestehen,Missionsbrowser/Logikgrün; SQLiteparalleleBestätigungselten200/503statt200/422;WebKitRecoveryGesamttestTimeout60s. KeineUrsacheinSMTPcleanup. Lokalbehoben:vorBestätigungstransaktionpreliminaryPDOcursorclose(wieRecovery),TestteardownlöschtseineDisposableUserauchbeiEarlyFailure;WebKit2GeräteRecoverydeadline90s(assertionstimeoutsunverändert). LokalerBackend-NeutestSession53589abholen. DanachCommit/Push/CIprüfen.
+- NeueRuntimeänderungnur4Zeileninserver/src/registration.php. **Noch NICHT inLive-r9**;planeanschließendkleinenimmutablePatchrelease r10 mitkeinerDBmigration/keinemweiterenKontenreset. DafürNEUENscopedOperatorverwenden(r9ResetoperatornichtfürneuenRelease). Restfrontendbytegleich. WeiterHandoffs;keineSecretwerte/logs.
+
+## LIVE-CHECKPOINT 22.09.2026 – Reset abgeschlossen, r9-Aktivierung gestartet
+
+- ZweitefrischeSicherung `before-pilot-20260922-r9-reset.sql`,36181Bytes,SHA256 **4be3a198408bfa1576edbfd6e03d3b712273e96b08407ac96a7c8246d631fa05**. PrivateRowsJSONrestoreverifiziert. AlteSchema4Sicherungzusätzlichbehalten.
+- **Reset erfolgreich COMMITTED**,Receiptvorhanden:2andereKonten+2Lernständegelöscht,Test/CTESTentfernt. michael@cybershoes.comID+eigenerLernstand/Belegeerhalten;Gruppe**Lehrer:innen**,10Klassen,0Schülerklassen. BeauftragtestemporäresPasswortgesetzt;alteSitzungendes.comAccountsüberEpochwiderrufen. SMTP/DBkonfiguration/Versandquotenunverändert.
+- **activate läuft gerade**; Ergebnisabholen/inspect,keinesfallsResetnochmalsausführen. DanachLiveHealth/Gastbrowser `--registration --polish --without-test-class` +sichererLehrerlogin→confirm→Heartbeat→Abschlussdoku. KeinweiteresBackup/Upload/Migrationnötig.
+- GitGuardianBereinigung+Handoff+angepasstesSmoketool committed/gepusht **1b54bff**. ProduktionsreleasebleibtCode468112a,143Dateien;nachfolgendeÄnderungenbetreffenTests/Beispiel/Operator/Docs,nichtRuntimepaket. GitGuardianhistorischeVorfälle imDashboardnochvomNutzeralsTestwert/Fehlalarmeinordnen. 13Hosting/Static+6RecoveryTestsgrün.
+
 ## FORTGESETZT 22.09.2026 – GitGuardian-Funde geprüft, r9-Abschluss wieder freigegeben
 
 - Nutzer nach Handoff ausdrücklich: **„bitte behebe das leck und setzte fort!“**; anschließend GitGuardian-Screenshot mit5Dateifunden. StoppausvorigemAbschnitt ist aufgehoben. Fundstellen vollständig in `SECURITY-REVIEW-20260922.md` eingeordnet:3Testcredentials,2Pfad/Beispiel-Fehlalarme,keineproduktivenSMTPcredentials. AktivesSMTPpasswortaufServergegenrelevante1368Gittextblobs/21.235.080Bytesverglichen:0Treffer;Passwortnichtausgegeben/heruntergeladen. HistorischeDashboardfälle nochNICHTgeschlossen,keinGitGuardian-Zugriff. Nutzer erhält genaueKlassifikation.

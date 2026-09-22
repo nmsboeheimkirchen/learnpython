@@ -140,6 +140,10 @@ function verifyRegistration(\PDO $db, array $config, array $body): array
     $hash = hash('sha256', $body['token']);
     $find->execute([$hash]);
     $pending = $find->fetch();
+    // Release the preliminary SQLite read lock before obtaining the class write
+    // lock. Concurrent confirmations otherwise can deadlock each other's commit.
+    // The transaction below re-reads and validates the token under that lock.
+    $find->closeCursor();
     if (!$pending) throw new ApiError(422, 'VERIFICATION_INVALID');
     $db->beginTransaction();
     try {

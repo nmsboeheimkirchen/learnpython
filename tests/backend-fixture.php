@@ -59,6 +59,9 @@ switch ($argv[1] ?? '') {
         $_SESSION['registration_grant']['expires'] = 1; session_write_close();
         break;
     case 'registration-clean-class':
+        // Also clean a disposable account when a test failed just after confirming
+        // it, before its ID could be added to the usual per-user teardown list.
+        $db->prepare('DELETE FROM users WHERE class_id=?')->execute([$input['classId']]);
         $db->prepare('DELETE FROM classes WHERE id=?')->execute([$input['classId']]);
         break;
     case 'mail-test':
