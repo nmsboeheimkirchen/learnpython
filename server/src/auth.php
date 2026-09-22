@@ -50,6 +50,11 @@ function currentUser(\PDO $db): ?array
         rotateSession();
         return null;
     }
+    if (teacherSchema($db)) {
+        $q=$db->prepare('SELECT display_name FROM teacher_classes WHERE class_id=?');$q->execute([$user['classId']]);
+        $name=$q->fetchColumn();if($name!==false)$user['className']=$name;
+    }
+    $user['teacher']=teacherProfile($db,$user['id']);
     return $user;
 }
 

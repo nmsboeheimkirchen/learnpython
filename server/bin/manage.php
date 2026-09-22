@@ -13,6 +13,7 @@ try {
     $action = $argv[1] ?? '';
     if ($action === 'migrate') {
         migrateAccounts($db);
+        prepareTeacherKey($config);
         echo "Schema ready.\n";
     } elseif ($action === 'mail-work') {
         $sent = 0;

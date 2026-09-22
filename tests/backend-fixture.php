@@ -10,10 +10,23 @@ if (!str_starts_with($config['dsn'], 'sqlite:') && !preg_match('/(?:;|:)dbname=[
 $db = AgentPy\database($config);
 $input = json_decode(stream_get_contents(STDIN), true, 20, JSON_THROW_ON_ERROR);
 switch ($argv[1] ?? '') {
+    case 'teacher-grant':
+        $db->prepare('INSERT INTO teachers (user_id,class_limit) VALUES (?,?)')->execute([$input['id'],$input['limit']]);break;
+    case 'teacher-expire':
+        $db->prepare('UPDATE class_invitations SET expires_at=? WHERE class_id=?')->execute([time()-1,$input['classId']]);break;
+    case 'teacher-limit':
+        $db->prepare('UPDATE teachers SET class_limit=? WHERE user_id=?')->execute([$input['limit'],$input['id']]);break;
+    case 'teacher-key-check':
+        $q=$db->prepare('SELECT encrypted_code FROM invitation_secrets WHERE code_hash=?');$q->execute([hash('sha256',$input['code'])]);
+        $cipher=$q->fetchColumn();echo json_encode(['encrypted'=>is_string($cipher)&&!str_contains($cipher,$input['code']),'hasPrivateKey'=>strlen(AgentPy\teacherKey($config))===32]);break;
+    case 'teacher-clean':
+        $q=$db->prepare('SELECT class_id FROM teacher_classes WHERE teacher_id=?');$q->execute([$input['id']]);
+        foreach($q->fetchAll(PDO::FETCH_COLUMN) as $id){$db->prepare('DELETE FROM users WHERE class_id=?')->execute([$id]);$db->prepare('DELETE FROM classes WHERE id=?')->execute([$id]);}
+        $db->prepare('DELETE FROM teachers WHERE user_id=?')->execute([$input['id']]);break;
     case 'init-v2-only':
         $db->exec(file_get_contents(dirname(__DIR__) . '/server/schema.sql'));
         if ((int) $db->query('SELECT COUNT(*) FROM users')->fetchColumn() !== 0) exit(1);
-        foreach (['recovery_mail_jobs','password_resets','auth_epochs','mail_jobs', 'pending_registrations', 'class_invitations', 'class_registration', 'mail_attempts', 'mail_dispatch_lock'] as $table)
+        foreach (['invitation_secrets','teacher_classes','teachers','teacher_audit','recovery_mail_jobs','password_resets','auth_epochs','mail_jobs', 'pending_registrations', 'class_invitations', 'class_registration', 'mail_attempts', 'mail_dispatch_lock'] as $table)
             $db->exec('DROP TABLE IF EXISTS ' . $table);
         $db->exec('DELETE FROM schema_migrations');
         $db->prepare('INSERT INTO schema_migrations (version, applied_at) VALUES (2, ?)')->execute([time()]);
@@ -98,7 +111,7 @@ switch ($argv[1] ?? '') {
         $tables = $mysql ? $db->query('SHOW TABLES')->fetchAll(PDO::FETCH_COLUMN)
             : $db->query("SELECT name FROM sqlite_master WHERE type='table'")->fetchAll(PDO::FETCH_COLUMN);
         if (in_array('users', $tables, true) && (int) $db->query('SELECT COUNT(*) FROM users')->fetchColumn() !== 0) exit(1);
-        foreach (['recovery_mail_jobs','password_resets','auth_epochs','mail_jobs', 'pending_registrations', 'class_invitations', 'class_registration', 'mail_attempts', 'mail_dispatch_lock', 'write_receipts', 'learning_states', 'users', 'classes', 'schema_migrations', 'login_limits'] as $table)
+        foreach (['invitation_secrets','teacher_classes','teachers','teacher_audit','recovery_mail_jobs','password_resets','auth_epochs','mail_jobs', 'pending_registrations', 'class_invitations', 'class_registration', 'mail_attempts', 'mail_dispatch_lock', 'write_receipts', 'learning_states', 'users', 'classes', 'schema_migrations', 'login_limits'] as $table)
             $db->exec('DROP TABLE IF EXISTS ' . $table);
         $db->exec('CREATE TABLE users (id VARCHAR(32) PRIMARY KEY, email VARCHAR(254) NOT NULL UNIQUE, password_hash VARCHAR(255) NOT NULL, active INTEGER NOT NULL DEFAULT 1, created_at BIGINT NOT NULL)');
         $db->exec("INSERT INTO users (id,email,password_hash,created_at) VALUES ('legacy','legacy@example.test','synthetic-not-a-hash',0)");

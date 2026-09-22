@@ -22,9 +22,20 @@ try {
         $user = requireUser($db);
         jsonResponse(['profile' => $user, 'state' => readState($db, $user['id'])]);
     }
+    if ($method === 'GET' && $action === 'teacher-classes') {
+        jsonResponse(\AgentPy\teacherClasses($db,$config,\AgentPy\requireTeacher($db)));
+    }
     if ($method !== 'POST') throw new ApiError(405, 'METHOD_NOT_ALLOWED');
     requireMutation($config);
     $body = readBody();
+    if (in_array($action,['teacher-class','teacher-create-class','teacher-renew-code'],true)) {
+        $user=\AgentPy\requireTeacher($db);
+        jsonResponse(match($action){
+            'teacher-class'=>\AgentPy\teacherClass($db,$config,$user,$body),
+            'teacher-create-class'=>\AgentPy\createTeacherClass($db,$config,$user,$body),
+            'teacher-renew-code'=>\AgentPy\renewTeacherCode($db,$config,$user,$body)
+        });
+    }
     if ($action === 'check-invitation') jsonResponse(checkInvitation($db, $config, $body));
     if ($action === 'register') jsonResponse(registerStudent($db, $config, $body), 202);
     if ($action === 'verify-email') jsonResponse(verifyRegistration($db, $config, $body));

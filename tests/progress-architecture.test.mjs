@@ -50,7 +50,7 @@ test("every page using runner loads the core and local adapter first", () => {
         .map(entry => join(repoRoot, entry.name));
     const runnerPages = htmlFiles.filter(path => readFileSync(path, "utf8").includes("assets/runner.js"));
 
-    assert.equal(runnerPages.length, 30, "Die bekannte Zahl produktiver Runner-Seiten hat sich geändert");
+    assert.equal(runnerPages.length, 31, "Die bekannte Zahl produktiver Runner-Seiten hat sich geändert");
     for (const path of runnerPages) {
         const html = readFileSync(path, "utf8");
         const coreIndex = html.indexOf("assets/data/learning-data-core.js");

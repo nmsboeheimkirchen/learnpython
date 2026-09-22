@@ -24,8 +24,8 @@ function claimMail(\PDO $db, array $config, int $now): ?array
             $counts->execute([$now - $window]);
             if ((int) $counts->fetchColumn() >= $limit) { $db->commit(); return null; }
         }
-        $q = $db->prepare("SELECT j.*, p.email, p.expires_at FROM mail_jobs j JOIN pending_registrations p ON p.id=j.registration_id JOIN class_invitations i ON i.code_hash=p.invitation_hash WHERE j.available_at<=? AND (j.state='queued' OR (j.state='sending' AND j.lease_until<=?)) AND p.expires_at>? AND i.active=1 AND i.expires_at>? ORDER BY j.created_at,j.id LIMIT 1");
-        $q->execute([$now, $now, $now + 3600, $now]);
+        $q = $db->prepare("SELECT j.*, p.email, p.expires_at FROM mail_jobs j JOIN pending_registrations p ON p.id=j.registration_id JOIN class_invitations i ON i.code_hash=p.invitation_hash WHERE j.available_at<=? AND (j.state='queued' OR (j.state='sending' AND j.lease_until<=?)) AND p.expires_at>? AND i.active=1 AND i.expires_at>p.created_at ORDER BY j.created_at,j.id LIMIT 1");
+        $q->execute([$now, $now, $now + 3600]);
         $job = $config['registration_enabled'] ? $q->fetch() : false;
         if ($job) { $job['mail_table']='mail_jobs'; $job['kind']='verify'; }
         if ($config['password_reset_enabled'] ?? false) {

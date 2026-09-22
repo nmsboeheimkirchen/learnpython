@@ -11,11 +11,15 @@ test('home resumes guest state, keeps guest prompt and never substitutes it for 
     await child(page).evaluate(()=>localStorage.setItem('completedLevelCode_v1',JSON.stringify({mission1_level1:'print(1)'})));
     await page.reload();
     await expect(lesson(page).locator('[data-next-target]')).toHaveText('System Access · 01-2');
-    await lesson(page).getByRole('link',{name:'Weiter mit 01-2'}).click();
+    await lesson(page).getByRole('link',{name:'Setze fort'}).click();
+    await expect(lesson(page).locator('#mySidebar')).toBeVisible();
+    await expect(page.getByRole('dialog',{name:'Im Gastmodus starten'})).toHaveCount(0);
+    await lesson(page).locator('#link-level2').click();
     await expect(page.getByRole('dialog',{name:'Im Gastmodus starten'})).toBeVisible();
     const primary=page.getByRole('button',{name:'OK – Mission starten'}),close=page.getByRole('button',{name:'Schließen',exact:true});
     expect(await primary.evaluate(el=>+getComputedStyle(el).fontWeight)).toBeGreaterThan(await close.evaluate(el=>+getComputedStyle(el).fontWeight));
     await close.click();
+    await page.locator('.account-shell-brand').click();
     await page.getByRole('button',{name:'Anmelden',exact:true}).click();
     await page.getByLabel('E-Mail-Adresse',{exact:true}).fill(`polish-student-${test.info().project.name}@example.test`);
     await page.getByLabel('Passwort',{exact:true}).fill('Synthetic-browser-password-123!');

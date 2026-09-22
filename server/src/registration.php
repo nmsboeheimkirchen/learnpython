@@ -30,7 +30,12 @@ function invitation(\PDO $db, string $hash, int $now): ?array
 {
     $q = $db->prepare('SELECT i.class_id, c.name, r.capacity FROM class_invitations i JOIN classes c ON c.id=i.class_id JOIN class_registration r ON r.class_id=i.class_id WHERE i.code_hash=? AND i.active=1 AND i.expires_at>?');
     $q->execute([$hash, $now]);
-    return $q->fetch() ?: null;
+    $result=$q->fetch() ?: null;
+    if ($result && teacherSchema($db)) {
+        $q=$db->prepare('SELECT display_name FROM teacher_classes WHERE class_id=?');$q->execute([$result['class_id']]);
+        $name=$q->fetchColumn();if($name!==false)$result['name']=$name;
+    }
+    return $result;
 }
 
 function registrationThrottle(\PDO $db, string $action, int $limit): void
@@ -77,7 +82,7 @@ function lockRegistrationClass(\PDO $db, string $id): void
 
 function occupiedSeats(\PDO $db, string $id, int $now): int
 {
-    $q = $db->prepare('SELECT COUNT(*) FROM users WHERE class_id=?');
+    $q = $db->prepare('SELECT COUNT(*) FROM users WHERE class_id=?' . (teacherSchema($db) ? ' AND NOT EXISTS (SELECT 1 FROM teachers WHERE teachers.user_id=users.id)' : ''));
     $q->execute([$id]);
     $count = (int) $q->fetchColumn();
     $q = $db->prepare('SELECT COUNT(*) FROM pending_registrations WHERE class_id=? AND expires_at>?');
@@ -145,7 +150,10 @@ function verifyRegistration(\PDO $db, array $config, array $body): array
         $pending = $find->fetch();
         if (!$pending || (int) $pending['expires_at'] <= $now || (int) $pending['token_expires_at'] <= $now)
             throw new ApiError(422, 'VERIFICATION_INVALID');
-        $info = invitation($db, $pending['invitation_hash'], $now);
+        // A reservation made before natural code expiry can still be confirmed
+        // within its own bounded token/reservation lifetime. Explicit revocation
+        // still invalidates it (invitation.active must remain 1).
+        $info = invitation($db, $pending['invitation_hash'], (int)$pending['created_at']);
         if (!$info || $info['class_id'] !== $pending['class_id']) throw new ApiError(422, 'VERIFICATION_INVALID');
         if (occupiedSeats($db, $pending['class_id'], $now) > (int) $info['capacity']) throw new ApiError(409, 'CLASS_FULL');
         $db->prepare('INSERT INTO users (id,email,password_hash,display_name,class_id,created_at) VALUES (?,?,?,?,?,?)')

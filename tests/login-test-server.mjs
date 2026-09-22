@@ -8,7 +8,7 @@ import { buildHostingerRelease } from '../scripts/build-hostinger-release.mjs';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const portable = join(root, '.cache/php-runtime/php-8.5.10/php.exe');
 const php = process.env.PHP_BINARY || (existsSync(portable) ? portable : 'php');
-const phpArgs = php === portable ? ['-n', '-d', `extension_dir=${dirname(php)}/ext`, '-d', 'extension=pdo_sqlite'] : [];
+const phpArgs = php === portable ? ['-n', '-d', `extension_dir=${dirname(php)}/ext`, '-d', 'extension=pdo_sqlite', '-d', 'extension=openssl'] : [];
 mkdirSync(join(root, '.cache'), { recursive: true });
 const temp = mkdtempSync(join(root, '.cache/login-browser-'));
 const webroot = join(temp, 'public_html');
@@ -24,6 +24,7 @@ const env = { ...process.env, AGENTPY_CONFIG: '', AGENTPY_ENVIRONMENT: 'developm
     AGENTPY_ORIGIN: 'http://127.0.0.1:4174', AGENTPY_DSN: `sqlite:${join(temp, 'browser_test.sqlite')}`,
     AGENTPY_DB_USER: '', AGENTPY_DB_PASSWORD: '', AGENTPY_SESSION_PATH: join(temp, 'sessions') };
 Object.assign(env, { AGENTPY_REGISTRATION_ENABLED: 'true', AGENTPY_PASSWORD_RESET_ENABLED: 'true', AGENTPY_MAIL_TRANSPORT: 'test', AGENTPY_MAIL_FROM: 'noreply@example.test' });
+env.AGENTPY_TEACHER_KEY_FILE=join(temp,'agentpy-private/teacher-code-key.bin');
 writeFileSync(join(root, '.cache/login-browser-fixture.json'), JSON.stringify({ dsn: env.AGENTPY_DSN, sessions: env.AGENTPY_SESSION_PATH }));
 function manage(command, input = {}) {
     const result = spawnSync(php, [...phpArgs, 'server/bin/manage.php', command], { cwd: root, env, input: JSON.stringify(input), encoding: 'utf8', windowsHide: true });
@@ -37,6 +38,9 @@ for (const engine of ['login-chromium', 'login-webkit']) {
     // Shell cases use a separate fixture account. The full suite must not spend
     // the same student's ten-login throttle bucket across unrelated scenarios.
     for (const name of ['student-a', 'student-b', 'shell-student', 'recovery-student','polish-student']) manage('create-user', { email: `${name}-${engine}@example.test`, password: 'Synthetic-browser-password-123!', name, classId: classInfo.id });
+    const teacher=JSON.parse(manage('create-user',{email:`teacher-${engine}@example.test`,password:'Synthetic-browser-password-123!',name:'Michael Fixture',classId:classInfo.id}));
+    const grant=spawnSync(php,[...phpArgs,'tests/backend-fixture.php','teacher-grant'],{cwd:root,env,input:JSON.stringify({id:teacher.id,limit:10}),encoding:'utf8',windowsHide:true});
+    if(grant.status!==0)throw Error('Teacher fixture setup failed');
 }
 const child = spawn(php, [...phpArgs, '-S', '127.0.0.1:4174', '-t', webroot], { env, cwd: root, stdio: 'inherit', windowsHide: true });
 for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => { child.kill(); });

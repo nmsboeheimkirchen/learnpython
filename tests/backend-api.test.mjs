@@ -10,12 +10,13 @@ import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
 import { registrationTests } from './registration-cases.mjs';
 import { recoveryTests } from './recovery-cases.mjs';
+import { teacherTests } from './teacher-cases.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const portable = join(root, '.cache/php-runtime/php-8.5.10/php.exe');
 const php = process.env.PHP_BINARY || (existsSync(portable) ? portable : 'php');
 const phpArgs = php === portable
-    ? ['-n', '-d', `extension_dir=${dirname(php)}/ext`, '-d', 'extension=pdo_sqlite', '-d', 'extension=pdo_mysql']
+    ? ['-n', '-d', `extension_dir=${dirname(php)}/ext`, '-d', 'extension=pdo_sqlite', '-d', 'extension=pdo_mysql', '-d', 'extension=openssl']
     : [];
 const password = 'Synthetic-test-passphrase-123!';
 const backends = [{ name: 'SQLite', dsn: null }];
@@ -404,6 +405,7 @@ for (const backend of backends) {
 
         await registrationTests({ t, fixture, env, phpCall, BrowserSession, url, workerUrl: worker2.url, ids, password, userB });
         await recoveryTests({t,fixture,env,phpCall,BrowserSession,url,workerUrl:worker2.url,ids,password});
+        await teacherTests({t,fixture,env,phpCall,BrowserSession,url,workerUrl:worker2.url,ids,password,newUser});
 
         await t.test('broken saved data is an error, never an empty account; disabled users lose access', async () => {
             fixture('corrupt-state', { id: userB.id });

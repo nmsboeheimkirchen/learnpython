@@ -10,6 +10,7 @@ require_once __DIR__ . '/registration.php';
 require_once __DIR__ . '/recovery.php';
 require_once __DIR__ . '/mail.php';
 require_once __DIR__ . '/smtp.php';
+require_once __DIR__ . '/teachers.php';
 
 final class ApiError extends \RuntimeException
 {
@@ -37,6 +38,9 @@ function config(): array
         $values[$key] = $env !== false ? $env : ($file[$key] ?? '');
     }
     $values['environment'] = $values['environment'] ?: 'production';
+    $values['teacher_key_file'] = getenv('AGENTPY_TEACHER_KEY_FILE') ?: ($path ? dirname($path).'/teacher-code-key.bin' : ($values['environment']==='development' && $values['session_path'] ? dirname($values['session_path']).'/teacher-code-key.bin' : ''));
+    if ($values['environment']!=='development' && $path && realpath(dirname($values['teacher_key_file']))!==realpath(dirname($path)))
+        throw new \RuntimeException('Teacher key must be private');
     $origin = parse_url($values['origin']);
     $local = $values['environment'] === 'development'
         && in_array($origin['host'] ?? '', ['127.0.0.1', 'localhost'], true);

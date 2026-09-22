@@ -35,6 +35,7 @@
         progress: '<path d="M5 20v-5M12 20V9M19 20V3"/>',
         save: '<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12l4 4v12a2 2 0 0 1-2 2Z"/><path d="M7 3v6h10V3M7 21v-8h10v8"/>',
         logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M9 12h12m-5-5 5 5-5 5"/>'
+        ,classes: '<circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M17 5a3 3 0 0 1 0 6M21 21v-3a6 6 0 0 0-3-5"/>'
     };
     function icon(name, filled = false) {
         return `<svg viewBox="0 0 24 24" width="24" height="24" fill="${filled ? "currentColor" : "none"}" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name]}</svg>`;
@@ -477,8 +478,8 @@
         const link = event.target.closest?.("a[href]");
         if (!link || event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || session?.profile || !session) return;
         const target = new URL(link.href, location.href);
-        const entry = /^(?:mission[1-4]_level1|agent_training_level1|pico_level1|pixelmuseum_briefing|helikopter_flucht_level1)\.html$/.test(target.pathname.split("/").pop());
-        if (target.origin === location.origin && (link.matches(".mission-start-action,.escape-coming-action") || entry || (link.matches('[data-resume-action]') && target.pathname !== location.pathname))) {
+        const entry = /^(?:mission[1-4]_level[1-4]|agent_training_level[1-3]|pico_level(?:[1-4]|2a)|pixelmuseum_(?:briefing|finale)|helikopter_flucht_level[12])\.html$/.test(target.pathname.split("/").pop());
+        if (target.origin === location.origin && target.pathname.split('/').pop()!=='missionen.html' && (link.matches(".mission-start-action,.escape-coming-action") || entry || (link.matches('[data-resume-action]') && target.pathname !== location.pathname))) {
             event.preventDefault(); event.stopImmediatePropagation(); guestMission(target.href);
         }
     }, true);
@@ -511,6 +512,9 @@
         logoutButton = button("Abmelden", logout);
         const progressButton = button("Fortschritt", progressDialog);
         const profileButton = button("Kontoinfo bearbeiten", accountDialog);
+        const classesButton = button("Meine Klassen", () => { closeMenu(); location.assign('lehrer.html'); });
+        classesButton.dataset.teacher = ''; classesButton.hidden = true;
+        classesButton.insertAdjacentHTML('afterbegin',icon('classes'));
         saveButton = button("Code speichern", saveCode);
         saveButton.disabled = true;
         progressButton.dataset.authenticated = ""; profileButton.dataset.authenticated = "";
@@ -525,7 +529,7 @@
         reloadButton = button("Seite neu laden", reload);
         exportButton = button("Code herunterladen (.py)", exportCode);
         for (const item of [logoutButton, progressButton, profileButton, retryButton, reloadButton, exportButton]) item.hidden = true;
-        panel.append(progressButton, profileButton, saveButton, logoutButton, message, retryButton, reloadButton, exportButton);
+        panel.append(classesButton, progressButton, profileButton, saveButton, logoutButton, message, retryButton, reloadButton, exportButton);
         ui.body.appendChild(panel);
         const headerActions = ui.querySelector("[data-account-actions], .account-toolbar");
         headerActions.appendChild(loginButton);
@@ -605,11 +609,19 @@
         iconButton(loginButton, "person", session?.profile ? "Benutzermenü" : "Anmelden", Boolean(session?.profile));
         logoutButton.hidden = !session?.profile;
         panel.querySelectorAll("[data-authenticated]").forEach(item => { item.hidden = !session?.profile; });
+        panel.querySelector('[data-teacher]').hidden = !session?.profile?.teacher;
         exportButton.hidden = !document.getElementById("python-editor");
         saveButton.disabled = !window.AgentCurrentLevel || invalidated;
     }
     let started = false;
     window.AgentAccount = Object.freeze({
+        // Dedicated teacher page reuses the verified identity and anti-stale-tab guard.
+        async teacherRequest(action, body) {
+            if (invalidated || !session?.profile) throw remote.error('AUTH_REQUIRED');
+            const result=await client.request(action,{body,csrfToken:session.csrfToken,profileId:session.profile.id});
+            if (invalidated || result.profile?.id!==session.profile.id) throw remote.error('PROFILE_CHANGED');
+            return result;
+        },
         editorChanged() { dirtyDraft = true; },
         start({ createGuest, attach } = {}) {
             if (started) throw new Error("Account bootstrap already started");
@@ -693,8 +705,9 @@
             }
             const {nextCourseTarget} = await import(progressModuleURL);
             const next = nextCourseTarget(data);
-            target.textContent = next.label; action.href = next.href;
-            action.replaceChildren(next.action + ' ');
+            const hasProgress = [data.completedCodes,data.attemptedCodes].some(map=>Object.values(map||{}).some(value=>typeof value==='string'));
+            target.textContent = next.label; action.href = hasProgress ? 'missionen.html' : 'mission1_start.html';
+            action.replaceChildren((hasProgress ? 'Setze fort' : 'Training starten') + ' ');
             const arrow = document.createElement('span'); arrow.setAttribute('aria-hidden','true'); arrow.textContent='→'; action.append(arrow);
         } catch (_) {
             target.textContent = 'Lernstand nicht verfügbar';

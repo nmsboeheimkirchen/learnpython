@@ -82,4 +82,5 @@ function migrateAccounts(\PDO $db): void
         $db->prepare('INSERT INTO schema_migrations (version, applied_at) VALUES (2, ?)')->execute([time()]);
     migrateRegistration($db);
     migrateRecovery($db);
+    migrateTeachers($db);
 }
