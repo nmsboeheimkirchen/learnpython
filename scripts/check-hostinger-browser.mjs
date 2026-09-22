@@ -90,6 +90,12 @@ for (const [name, engine, options] of [
         const native=await page.evaluate(()=>document.fullscreenEnabled && !!document.documentElement.requestFullscreen);
         if(native) await header.getByRole('button',{name:'Vollbild',exact:true}).click();
         await page.locator('#account-lesson').evaluate(frame=>{frame.contentWindow.location.href='mission1_start.html';});
+        // Home has a same-named link. Wait for the requested document before
+        // clicking, otherwise the test can open a guest dialog on the old home
+        // just as the mission document replaces it and closes that dialog.
+        const missionFrame=page.frames().find(frame=>frame.parentFrame()===page.mainFrame());
+        await missionFrame.waitForURL('**/mission1_start.html',{waitUntil:'domcontentloaded'});
+        await missionFrame.evaluate(async()=>{if(window.AgentLearningDataReady)await window.AgentLearningDataReady;});
         await lesson.getByRole('link',{name:/Training starten/}).click();
         await expect(page.getByRole('dialog',{name:'Im Gastmodus starten'})).toBeVisible();
         await page.getByRole('button',{name:'OK – Mission starten'}).click();

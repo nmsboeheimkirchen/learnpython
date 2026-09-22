@@ -1,12 +1,12 @@
-# Lehreransicht: freigegebener Plan, Umsetzung läuft
+# Lehreransicht: erster freigegebener Umfang umgesetzt
 
-Stand 22.09.2026. **Gestaltung freigegeben; Gruppenname ausdrücklich Lehrer:innen.** Umsetzung und beauftragter Datenreset nach Backup sind freigegeben. Dieser Plan ersetzt die früheren Vorschläge mit `.io`, Erhalt von Test/CTEST und 90 Tagen Codegültigkeit. Liveänderungen erst nach Tests.
+Stand 22.09.2026. **Lehrer:innen ist live eingerichtet.** Erster Umfang mit r9 ausgeliefert und in Chromium/WebKit geprüft; Betriebsdetails und aktueller Release in LOGIN-HANDOFF.md. Zwei andere Konten mit Lernständen sowie Test/CTEST nach frischer privater Sicherung entfernt. Bereits bestehendes `.com`-Konto samt seinem eigenen Lernstand erhalten und als Lehrkraft freigeschaltet. Dieser Plan ersetzt die früheren Vorschläge mit `.io`, Erhalt von Test/CTEST und 90 Tagen Codegültigkeit.
 
 ## Entwurf und Freigabe
 
 - Klickbarer Entwurf: `C:/Users/Cy-X/.codex/visualizations/2026/09/16/01a0aae0-d7f5-7652-92cb-0f8e6038c963/agentpy-lehrer-entwurf.html`. Ausschließlich lokale Beispieldaten, keine API-/Hostinger-Verbindung. Ansichten: Meine Klassen, Klassenmitglieder, Klasse erstellen, Kontomenü, Startseite, Fortsetzen über Missionsübersicht. Designsteuerung: aktive/abgelaufene Codes, leere/beispielhafte Klassen, vorhandener/fehlender Lernstand. Lucide-Symbole stehen direkt im Entwurf.
 - Der in der Nutzernachricht erwähnte Übersichtsscreenshot fehlt. Arbeitsannahme: Lernpfad-/Missionsübersicht mit abgeschlossenen und offenen Abschnitten, frühere Abschnitte wieder aufrufbar. Vor Implementierung ggf. mit Referenz abgleichen.
-- Noch keine Änderung an Anwendungscode, Datenbank, Rollen, SMTP oder Live-Release. Insbesondere noch keine Kontolöschung.
+- Entwurf anschließend freigegeben und implementiert. Die unten beschriebene einmalige Kontenbereinigung ist abgeschlossen und darf NICHT bei späteren Deployments wiederholt werden. SMTP/DNS und andere Websites unverändert.
 
 ## Startseite
 
@@ -15,7 +15,7 @@ Stand 22.09.2026. **Gestaltung freigegeben; Gruppenname ausdrücklich Lehrer:inn
 
 ## Einmaliger Neustart nach Entwurfsfreigabe
 
-- Neu vorgesehen ist ausdrücklich **michael@cybershoes.com**, NICHT das bisherige `.io`-Konto. Anzeigename Michael, interne Gruppe/Klasse **Lehrer:innen**, serverseitige Lehrerrolle, Limit zehn eigene Schülerklassen. Gruppe Lehrer:innen zählt nicht zu diesen zehn; Start ist 0/10.
+- Ziel ist ausdrücklich **michael@cybershoes.com**, NICHT das bisherige `.io`-Konto. Beim Bestandscheck bereits vorhanden; eigene Daten wurden erhalten. Anzeigename Michael, interne Gruppe/Klasse **Lehrer:innen**, serverseitige Lehrerrolle, Limit zehn eigene Schülerklassen. Gruppe Lehrer:innen zählt nicht zu diesen zehn; Start ist 0/10.
 - Temporäres Passwort wurde vom Nutzer vorgegeben; nicht in Entwurf, Handoff, Git, Kommandozeilen oder Logs wiederholen. Nur sicher entgegennehmen und gehasht speichern; Änderung durch Nutzer nach erster Anmeldung einplanen.
 - Nutzer verlangt ausdrücklich: alle anderen AGENT-PY-Konten samt Lernfortschritt entfernen, Klasse Test und Zugangscode CTEST ebenfalls entfernen. Das bisherige `.io`-Konto fällt unter diesen Reset. Exakte Zielmengen unmittelbar vor Ausführung read-only auflösen.
 - Vorher frisches privates Backup, Herkunft/Umfang/Restoreverfahren dokumentieren; die alte r7-Sicherung ist nicht aktuell. Backup bleibt eine Wiederherstellungskopie, kein aktiver Kontobestand. Nicht versehentlich aus altem Backup neue Nutzerdaten überschreiben.
@@ -52,7 +52,7 @@ Stand 22.09.2026. **Gestaltung freigegeben; Gruppenname ausdrücklich Lehrer:inn
 
 ## Abnahme vor Live-Freigabe
 
-1. Entwurf freigeben, frisches Backup und additive Migration. Anschließend einmaliger exakt begrenzter Datenreset mit Prüfung auf verwaiste Daten, alte Sitzungen und Mailjobs. Nur neues Michael-.com-Lehrerkonto in Lehrer bleibt; 0/10 eigene Klassen.
+1. Entwurf freigeben, frisches Backup und additive Migration. Anschließend einmaliger exakt begrenzter Datenreset mit Prüfung auf verwaiste Daten, alte Sitzungen und Mailjobs. Nur Michael-.com-Lehrerkonto in Lehrer:innen bleibt; 0/10 eigene Klassen. Abgeschlossen, nicht wiederholen.
 2. Schüler/Gäste/Lehrer einer anderen Klasse erhalten keinen Zugriff, auch nicht mit direkt manipulierter Klassen-ID.
 3. Test/CTEST und alte Nutzer/Lernstände entfernt. Michael legt benannte Klasse samt neuem Code an; neue Anmeldung erscheint offen und nach Bestätigung als Mitglied. Passwortreset ändert die Zuordnung nicht. Lehrerrolle niemals per Schülercode erlangbar.
 4. Fünf parallele Schüleranmeldungen, 32er-Grenze inklusive Reservierungen, Lehrerplatz ausgenommen. Parallele Klasse 10/11 wird zuverlässig begrenzt.

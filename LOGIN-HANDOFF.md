@@ -1,5 +1,42 @@
 # Übergabe: dev-login-save
 
+## ABGESCHLOSSEN 22.09.2026 – Lehrer:innen LIVE r10, GitGuardian geprüft
+
+**Maßgeblicher Endstand. Alle nachfolgenden Zwischenstände sind historisch. KEINE offenen Deployments, Resetaktionen oder Testprozesse.**
+
+- Live **https://agentpy.bildungdigital.at/** → **pilot-20260922-r10**, Code **9039ef44993f54ee656c99238daced9c1dd7c09d**,Schema5. Confirm+abschließendesinspecterfolgreich:pendingDeploymentfalse,privateSettingsUnchangedtrue,Workerheartbeat r10/ranAt1790098925/processed0.
+- **michael@cybershoes.com**: bestehendesKontoID/Lernstand/Belegeerhalten,Gruppe**Lehrer:innen**,AnzeigenameMichael,Lehrerrolle,Limit10eigeneKlassen. TemporäresPasswortwiebeauftragtübersecurestdin gesetzt,nirgendsinDocs/Git/Kommandogelegt;Nutzersolländern. AlteSitzungenwiderrufen. Kontoaktuellohnebearbeitete/abgeschlosseneAbschnitte,daherHomekorrekt**Trainingstarten**. MitgespeichertemKonto-/Browserstand**Setzefort**→Missionsübersicht,keinDirektlevel.
+- **EinmaligerResetabgeschlossen:**2ANDEREKonten+2Lernständegelöscht,Test/CTESTentfernt,abhängigeReservierungen/Resetlinks/alteQueuesbereinigt. Endbestand1Konto/1Gruppe/1Lernstand/1Lehrer,0Schülerklassen/0Beitrittscodes. **NiemalsReseterneutausführen!** AndereSites/DBs/DNS/Postfächer/SMTP-/DBpasswörter/Versandquotenunangetastet. Browser-GastständeaufNutzergerätwurdennichtgelöscht.
+- Funktion:Personenmenü→**MeineKlassen**→**Klasseerstellen**. Je32SuS,fünfzufälligeGroßbuchstaben,10Tagegültig,danachunterstrichen**generieren**. CodeerneuerungerhältMitglieder/Stand;0von10eigeneKlassen. TabelleBestätigt/E-Mailoffen/Prozent/erreichteAbschnitte. Superadmin,Mitbetreuung,CSVundSchülerkontenverwaltungnochseparaterzukünftigerUmfang,nichtfreigeschaltet.
+
+### Abnahme / Sourcezustand
+
+- **CI35759100820vollständiggrün** fürCode9039ef4:SQLite+MariaDB,Missionsbrowser,Logik,Hosting,54Login-/Lehrerbrowserfälle. Lokal36BackendtestsnachCursorfixgrün;GitGuardianCleanup13Hosting/Static+6Recoverybrowsergrün. AlteCI35754415788Fehlerbehoben(SQLitevorläufigenLesecursorvorTransaktionfreigeben,Fixturecleanuprobust,WebKit2Geräte-Test90sGesamtzeitbeiunverändertenAssertions).
+- r9echter.comLehrerlogininChromium/WebKit:ProfilLehrer:innen/0von10,Lernstandidentischvor/nach,LogoutentferntLehrerdaten. KeineLiveTestklasse,keineTestregistrierung,keineMailangelegt. WebKitlehrerScreenshotvisuellgeprüft: `.cache/hostinger-browser/webkit-teacher-r9.png`.
+- r10HTTPS/Cache/privatePfad-/Cookies-/Sessionchecksgrün;anonymeBrowsertestsbeiderEnginesgrün(Loginauge,RegistrierungseinstiegohneCTEST,Recoverymaske,Gastdialog,persistentesVollbild). SmokehelperNavigationswartebedingunggefixt:erstmission1_startDokumentabwartenstattgleichnamigenHomeLinkwährendNavigationklicken. KeineAppänderungdafür. R10gegenR9serverseitiggeprüft:einzigerRuntimeunterschied4ZeilenCursorfix+automatischeCommit/ReleaseMetadaten;LehrerUIunverändert.
+- Devbranch**dev-login-save**gepusht;main/Pagesunverändert. AbschlusscommitenthältnurDocs+livegeprüftenSmoketest,keinweiteresDeploymenterforderlich. UnbekanntenungetracktenRootdateinamenweiterNICHTausgeben/stagen;keingitadd.
+
+### Sicherungen / Betrieb
+
+- VorResetfrisch: `agentpy-private/backups/before-pilot-20260922-r9-reset.sql`,36181Bytes,SHA256 **4be3a198408bfa1576edbfd6e03d3b712273e96b08407ac96a7c8246d631fa05**,dazuprivate-reset-rows.json+Metadaten. TabellenexportisoliertmitFKswiederhergestelltundhashidentisch;SQL-DumpselbstnichtinMariaDBrestoregetestet. VorMigrationzusätzlichSchema4SQL32798Bytes/8738c7ce…erhalten. Keybackup `backups/teacher-code-key-pilot-20260922-r9.bin`. Allesprivat0600,keineInhalteheruntergeladen. Wiederherstellungnurgezielt,niebestehende/neueSchülerdatenblindüberschreiben.
+- r10Paket `.cache/hostinger/pilot-20260922-r10`,143Dateien,ManifestSHA256 **d3fdfb1f1b2f2fd6b0c2cb52bd6b5d038496585c79ceb47ed654f87194b95033**. VorigerWebrootr9: `backups/web-20260922173930-f47738a7b4`;r8zuvor `backups/web-20260922165554-3186d57928`.
+- FürspätereDiagnose `.cache/hostinger-confirmation-patch.mjs inspect` read-only. upload/verify/activate/confirmfertig,nichtwiederholen. `.cache/hostinger-teacher-rollout.mjs` ist **abgeschlossenerEinmal-Resetoperator**,nichtfürweitereDeploymentsbenutzen. PrivateKonfig/SMTP-/DB-/Teacherkeydateiennichtausgeben.
+
+### GitGuardian – kein produktives SMTP-Passwortleck
+
+- Alle5gemeldetenFundstellengeprüft; `SECURITY-REVIEW-20260922.md` enthältBelege+Zuordnung. **3Testcredentials:**tests/hostinger-setup.test.mjs,tests/login-e2e/recovery.spec.mjs,tests/static-release.test.mjs. **2Falsepositives:**scripts/check-hostinger-mail.mjsundserver/config.example.phpverweisenaufprivatenDateipfadstattPasswortinhalt.
+- AktivesSMTPpasswortaufServergegenrelevante**1368Gittextblobs/21.235.080Bytes**verglichen:0Treffer. PasswortbliebaufServer;keinallgemeinesAuditfremderSysteme/Binärdateienbehaupten. Testwertejetztrandomisiert,SMTPtestnursmtp.example.test,BeispielkonfigohneProduktivwerte,PreflightPfaderklärt. KeineScannerabschaltung/Globalignore/Historyrewrite/unnötigeSMTP-Rotation.
+- **HistorischeDashboardfundeNICHTgeschlossen**(keinGitGuardianZugriff);NutzerkannsieentsprechendalsTestcredentialbzwFalsepositiveignorieren. NeueCommitslöschendiehistorischenMeldungennichtautomatisch. BeiechterspätererCredentialoffenlegungRotation/WiderrufstattnurGitzeilenentfernen.
+
+**NächsterNutzerschritt:** mit.comundvereinbartemtemporäremPWanmelden→Person→MeineKlassen→benannteKlasseerstellen→neuenCodeanTest-SuSgeben→offeneBestätigung/Beitritt/Fortschrittbeobachten. DanachNutzerfeedback;Superadmin/CSV/Co-TeachererstgezieltnachPlanfreigabe.
+
+## r10 AKTIVIERT – letzte Livechecks/confirm noch offen
+
+- Code **9039ef44993f54ee656c99238daced9c1dd7c09d** gepusht; **CI35759100820 komplettgrün**,einschließlichbeiderDBs+54Loginbrowser. VorigeFehler35754415788sindüberholt. Lokal36Backendtestsgrün.
+- **pilot-20260922-r10 aktiviert,pending-healthcheck**,nochNICHTconfirmed. Alterr9Webroot `agentpy-private/backups/web-20260922173930-f47738a7b4`. 143Dateien,ManifestSHA256 **d3fdfb1f1b2f2fd6b0c2cb52bd6b5d038496585c79ceb47ed654f87194b95033**. KeinDBWrite/Reset/Migration;Config+Passwortdateien+Teacherkeyhashgleich.
+- Operator `.cache/hostinger-confirmation-patch.mjs`: inspect/activate/confirm. uploadbereitsfertig,nichtwiederholen. ErsterVerifyversuchstopptenurwegenCommit-/Release-MetadateninHTML/deploy-meta;Guardkorrigiertund**verifyerfolgreich**. ErlaubtprivateÄnderungexakt4Zeilenregistration.php(cursorclose),alleanderenDateienbytegleichbisaufgeprüfteMetadatenersetzung. KeinVerifyerneut(Checkpointdateiexistiert).
+- Geradegestartet: scripts/check-hostinger.mjsr10 + check-hostinger-browser.mjs --registration --polish --without-test-class. Ergebnisabholen;danachOperatorconfirm→inspectWorkerheartbeat→Abschlusshandoff/TEACHER-PLANcommit/push. KeinerneuterLehrerreset,keinCTESTwiederanlegen. r9-LehrerloginundLernstanderhaltbereitsinbeidenBrowserngeprüft;UIbytegleich.
+
 ## CHECKPOINT – r9 LIVE + CONFIRMED; kleine Bestätigungskorrektur wird noch geprüft
 
 - **r9 erfolgreichaktiviert undconfirmed**. Alterr8Webrootgesichert `agentpy-private/backups/web-20260922165554-3186d57928`. HTTPS/API/privatePfad/sessionchecksgrün;GastbrowserChromium+WebKitgrün. Echter.comLehrerloginbeideBrowsergrün:GruppeLehrer:innen,0von10Klassen,LogoutentferntprivateAnsicht,Lernstandidentisch,keineTestklasse/Mailangelegt. WebKitScreenshot `.cache/hostinger-browser/webkit-teacher-r9.png` visuellgeprüft.
