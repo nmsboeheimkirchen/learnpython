@@ -5,6 +5,7 @@ import { mkdir } from 'node:fs/promises';
 const base = 'https://agentpy.bildungdigital.at';
 const output = '.cache/hostinger-browser';
 const registrationEnabled = process.argv.includes('--registration');
+const polish = process.argv.includes('--polish');
 await mkdir(output, { recursive: true });
 for (const [name, engine, options] of [
     ['chromium', chromium, { viewport: { width: 1366, height: 768 } }],
@@ -27,9 +28,20 @@ for (const [name, engine, options] of [
         await expect(header.getByRole('button', { name: 'Anmelden', exact: true })).toBeVisible();
         await expect(header.getByRole('button', { name: 'Vollbild', exact: true })).toBeVisible();
         await expect(page.locator('html')).not.toHaveClass(/account-blocked/);
+        if(polish){
+            await expect(page.frameLocator('#account-lesson').locator('[data-next-target]')).toHaveText('System Access');
+            const logo=await page.locator('.account-shell-brand img').boundingBox();
+            if(!logo||logo.width<190)throw Error('Updated logo missing');
+            await page.screenshot({path:`${output}/${name}-home-r8.png`});
+        }
         await header.getByRole('button', { name: 'Anmelden', exact: true }).click();
         const dialog = page.getByRole('dialog', { name: 'Am Schulkonto anmelden' });
         await expect(dialog).toBeVisible();
+        if(polish){
+            const primary=await dialog.getByRole('button',{name:'Anmelden',exact:true}).evaluate(el=>+getComputedStyle(el).fontWeight);
+            const secondary=await dialog.getByRole('button',{name:'Abbrechen',exact:true}).evaluate(el=>+getComputedStyle(el).fontWeight);
+            if(primary<=secondary)throw Error('Missing primary action emphasis');
+        }
         await expect(dialog.getByLabel('E-Mail-Adresse')).toBeFocused();
         if (registrationEnabled) {
             await expect(dialog).toContainText('Zur Neuanmeldung brauchst du einen Klassencode');

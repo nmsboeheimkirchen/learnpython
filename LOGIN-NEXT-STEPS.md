@@ -1,5 +1,9 @@
 # Klassen und Konten: Planungsstand
 
+## Aktuell 22.09.2026 – Lehreransicht planen
+
+UI-Korrekturen als **r8** live, confirmed und getestet; Details oben in LOGIN-HANDOFF.md. Keine offenen Deployment-Schritte. Nutzer möchte die nächsten Schritte zur Lehrerschaft erläutert bekommen. Der Vorschlag steht in **TEACHER-PLAN.md**; Rollen-/Klassenverwaltung noch NICHT freigegeben oder implementiert. Michael cybershoes → Lehrer mit bestehender Testklasse und später10eigenenKlassen, Mitglieder-/Bestätigungs-/Fortschrittsübersicht zuerst; michael@3d.run später Superadmin. Vor Umsetzung Zustimmung abwarten. Frühere Planabschnitte unten sind historisch.
+
 ## Neuer Auftrag 21.09.2026 – CTEST, Bestätigung und Passwortreset
 
 **Abgeschlossen:** r7 auf Hostinger freigeschaltet und bestätigt. CTEST→Test, E-Mailbestätigung, Passwortreset und authentifiziertes SMTP sind live. ZweiteTestmail ohne Warnung empfangen, komplette CI und Live-Smokes erfolgreich. Nächster Schritt: Nutzer registriert eine neue Person mit einer noch nicht belegten E-Mail und testet Bestätigung/Login/Reset. Betriebsdetails oben in LOGIN-HANDOFF.md; keine offenen automatischen Deployment-Aufgaben.
