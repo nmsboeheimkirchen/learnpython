@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { randomBytes } from 'node:crypto';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -21,7 +22,7 @@ test('a Pages release contains public assets but no PHP source, database, creden
         'prototypes/private.php': '<?php // not public',
         'assets/images/preview.webp': 'test image bytes',
         'assets/config.php': '<?php /* must never be published statically */',
-        '.env': 'DATABASE_PASSWORD=do-not-publish',
+        '.env': 'DATABASE_PASSWORD='+randomBytes(24).toString('hex'), // Disposable exclusion fixture, not a credential.
         'server/src/bootstrap.php': 'private server code',
         'server/schema.sql': 'private schema',
         'tests/backend-fixture.php': 'test fixture',

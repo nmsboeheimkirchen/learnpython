@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { randomBytes } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -76,7 +77,8 @@ test('new password dialog fits a phone, rejects mismatch and clears secret input
 
 test('forgot password through shell preserves progress, invalidates another device and allows only the new password',async({page,browser})=>{
     const email=`recovery-student-${test.info().project.name}@example.test`;
-    const oldPassword='Synthetic-browser-password-123!',newPassword='12345678'; // Deliberately no composition requirement.
+    const oldPassword='Synthetic-browser-password-123!'; // Disposable localhost fixture only.
+    const newPassword=randomBytes(4).toString('hex'); // Eight characters, no upper-case/special requirement.
     const deviceContext=await browser.newContext(),device=await deviceContext.newPage();
     try {
         await shell(device);await login(device,email,oldPassword);

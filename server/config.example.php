@@ -23,11 +23,11 @@ return [
     'registration_enabled' => false,
     'password_reset_enabled' => false,
     // Authenticated SMTP: mailbox password in a private file beside config.php.
-    'smtp_host' => 'smtp.hostinger.com',
+    'smtp_host' => '', // Set your provider's hostname outside Git (Hostinger: smtp.hostinger.com).
     'smtp_port' => 465,
     'smtp_encryption' => 'ssl',
-    'smtp_user' => 'noreply@agentpy.bildungdigital.at',
-    'smtp_password_file' => __DIR__ . '/smtp-password.txt',
+    'smtp_user' => '', // Set the mailbox address outside Git; it must match mail_from.
+    'smtp_password_file' => '', // Absolute PRIVATE file path, NOT a password. Set outside Git.
     'mail_transport' => 'disabled', // disabled|sendmail|smtp; enable after real receipt/authentication check.
     'mail_from' => '',
     'mail_per_minute' => 10,

@@ -6,6 +6,9 @@ const base = 'https://agentpy.bildungdigital.at';
 const output = '.cache/hostinger-browser';
 const registrationEnabled = process.argv.includes('--registration');
 const polish = process.argv.includes('--polish');
+// After the explicitly requested pilot reset, CTEST no longer exists. Do not
+// recreate a permanent test invitation just to satisfy a production smoke test.
+const withoutTestClass = process.argv.includes('--without-test-class');
 await mkdir(output, { recursive: true });
 for (const [name, engine, options] of [
     ['chromium', chromium, { viewport: { width: 1366, height: 768 } }],
@@ -63,10 +66,13 @@ for (const [name, engine, options] of [
         if (registrationEnabled) {
             await dialog.getByRole('button',{name:'Neuanmeldung',exact:true}).click();
             const wizard=page.getByRole('dialog',{name:'Neuanmeldung'});
-            await wizard.getByLabel('Klassencode',{exact:true}).fill('CTEST');
-            await wizard.getByRole('button',{name:'Klassencode prüfen'}).click();
-            await expect(wizard).toContainText('Willkommen in Test!');
-            for (const name of ['Name','E-Mail-Adresse','Passwort (mindestens 8 Zeichen)']) await expect(wizard.getByLabel(name,{exact:true})).toBeVisible();
+            await expect(wizard.getByLabel('Klassencode',{exact:true})).toBeVisible();
+            if(!withoutTestClass){
+                await wizard.getByLabel('Klassencode',{exact:true}).fill('CTEST');
+                await wizard.getByRole('button',{name:'Klassencode prüfen'}).click();
+                await expect(wizard).toContainText('Willkommen in Test!');
+                for (const name of ['Name','E-Mail-Adresse','Passwort (mindestens 8 Zeichen)']) await expect(wizard.getByLabel(name,{exact:true})).toBeVisible();
+            }
             await page.screenshot({path:`${output}/${name}-registration.png`});
             // Do not create fake mail recipients or reset any real password.
             await wizard.getByRole('button',{name:'Abbrechen · Gastmodus'}).click();
@@ -91,6 +97,6 @@ for (const [name, engine, options] of [
         if(native) await expect(header.getByRole('button',{name:'Vollbild beenden'})).toHaveAttribute('aria-pressed','true');
         await expect(page.locator('.account-panel')).toBeHidden();
         if (scriptErrors || failedAssets.length) throw new Error('Script or asset failures');
-        console.log(JSON.stringify({ browser: name, ok: true, checks: ['home-assets', 'guest-ready', 'header-login-fullscreen', registrationEnabled ? 'CTEST-Test-registration-and-recovery' : 'restricted-registration', 'password-visibility', 'login-dialog', 'focus', 'dialog-fit', 'cancel','guest-mission-dialog','persistent-shell-fullscreen'], screenshot: `${output}/${name}-login.png` }));
+        console.log(JSON.stringify({ browser: name, ok: true, checks: ['home-assets', 'guest-ready', 'header-login-fullscreen', registrationEnabled ? (withoutTestClass ? 'registration-entry-and-recovery' : 'CTEST-Test-registration-and-recovery') : 'restricted-registration', 'password-visibility', 'login-dialog', 'focus', 'dialog-fit', 'cancel','guest-mission-dialog','persistent-shell-fullscreen'], screenshot: `${output}/${name}-login.png` }));
     } finally { await browser.close(); }
 }

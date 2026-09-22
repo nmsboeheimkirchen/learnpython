@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { randomBytes } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -27,19 +28,22 @@ function init(root) { return run([prepare, root, 'https://agentpy.example.test',
 test('SMTP adapter requires private credentials, verified TLS and aligned authenticated sender without leaking the secret', () => {
     const root=domain();assert.equal(init(root).status,0);
     const config=join(root,'agentpy-private/config.php'),secretFile=join(root,'agentpy-private/smtp-password.txt');
-    writeFileSync(join(root,'agentpy-private/database-password.txt'),'Synthetic-db-only');
+    // Disposable local values, generated per run; never production credentials.
+    const testSecret=randomBytes(24).toString('hex');
+    writeFileSync(join(root,'agentpy-private/database-password.txt'),randomBytes(24).toString('hex'));
     const env={AGENTPY_CONFIG:config,AGENTPY_MAIL_TRANSPORT:'smtp',AGENTPY_MAIL_FROM:'noreply@example.test',
-        AGENTPY_SMTP_HOST:'smtp.hostinger.com',AGENTPY_SMTP_PORT:'465',AGENTPY_SMTP_ENCRYPTION:'ssl',
-        AGENTPY_SMTP_USER:'noreply@example.test',AGENTPY_SMTP_PASSWORD_FILE:secretFile};
+        AGENTPY_SMTP_HOST:'smtp.example.test',AGENTPY_SMTP_PORT:'465',AGENTPY_SMTP_ENCRYPTION:'ssl',
+        AGENTPY_SMTP_USER:'noreply@example.test',AGENTPY_SMTP_PASSWORD_FILE:secretFile,
+        AGENTPY_TEST_EXPECTED_SMTP_PASSWORD:testSecret};
     const probe=`require 'server/src/bootstrap.php';try {$c=AgentPy\\config();$m=AgentPy\\smtpMessage($c,'recipient@example.test','SMTP fixture','Synthetic body');
-        if($m->Password!=='Synthetic-mail-only' || !$m->SMTPAuth || $m->SMTPDebug!==0 || $m->SMTPSecure!=='ssl' || $m->Port!==465
+        if($m->Password!==getenv('AGENTPY_TEST_EXPECTED_SMTP_PASSWORD') || !$m->SMTPAuth || $m->SMTPDebug!==0 || $m->SMTPSecure!=='ssl' || $m->Port!==465
           || $m->Sender!==$m->Username || $m->SMTPOptions['ssl']!==['verify_peer'=>true,'verify_peer_name'=>true,'allow_self_signed'=>false])exit(3);
         if(!$m->preSend() || !str_contains($m->getSentMIMEMessage(),'From: AGENT PY <noreply@example.test>')
           || str_contains($m->getSentMIMEMessage(),$m->Password))exit(4);echo 'OK';
     }catch(Throwable $e){exit(2);}`;
     assert.equal(run(['-r',probe],env).status,2);
     writeFileSync(secretFile,'REPLACE_WITH_MAILBOX_PASSWORD\n');assert.equal(run(['-r',probe],env).status,2);
-    writeFileSync(secretFile,'Synthetic-mail-only\r\n');
+    writeFileSync(secretFile,testSecret+'\r\n');
     const result=run(['-r',probe],env);assert.equal(result.status,0,result.stderr);assert.equal(result.stdout,'OK');
     for(const bad of [{AGENTPY_SMTP_PORT:'25'},{AGENTPY_SMTP_ENCRYPTION:''},{AGENTPY_SMTP_HOST:'host;injection'},
         {AGENTPY_SMTP_USER:'other@example.test'},{AGENTPY_SMTP_PASSWORD_FILE:join(root,'public_html/password.txt')}])

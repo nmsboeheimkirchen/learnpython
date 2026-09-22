@@ -57,7 +57,10 @@ if('${action}'==='prepare-smtp' || '${action}'==='smtp-status') {
     }
     try {
         require $stage.'/src/smtp.php';
-        $settings=['smtp_password_file'=>$private.'/smtp-password.txt','smtp_host'=>'smtp.hostinger.com','smtp_port'=>465,'smtp_encryption'=>'ssl','smtp_user'=>'noreply@agentpy.bildungdigital.at','mail_from'=>'noreply@agentpy.bildungdigital.at'];
+        // This is a private file PATH, never an embedded mailbox password.
+        $credentialPath=$private.'/smtp-password.txt';
+        $settings=['smtp_host'=>'smtp.hostinger.com','smtp_port'=>465,'smtp_encryption'=>'ssl','smtp_user'=>'noreply@agentpy.bildungdigital.at','mail_from'=>'noreply@agentpy.bildungdigital.at'];
+        $settings['smtp_password_file']=$credentialPath;
         $message=AgentPy\\smtpMessage($settings,'michael@cybershoes.io','AGENT PY: SMTP-Versandtest',"Hallo Michael,\\n\\ndiese Testmail wurde authentifiziert ueber dein Hostinger-Postfach verschickt. Bitte pruefe, ob sie im Posteingang und OHNE Absenderwarnung ankommt. Dein Konto und Lernstand bleiben unveraendert.\\n");
         $accepted=$message->send();
         echo json_encode(['acceptedByAuthenticatedSmtp'=>$accepted,'inboxAndAuthenticationNotYetConfirmed'=>true]);
