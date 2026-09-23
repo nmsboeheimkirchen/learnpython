@@ -1,5 +1,18 @@
 # Übergabe: dev-login-save
 
+## ABGESCHLOSSEN 23.09.2026 – r12 LIVE
+
+Dieser Abschnitt hat Vorrang vor allen historischen Checkpoints darunter.
+
+- Live: **https://agentpy.bildungdigital.at/**, Release **pilot-20260922-r12**, Code **200ceb7eda75c79847f158653c8df2a7199d0c06** auf `dev-login-save`. GitHub-Prüfung **35819706878 vollständig success**, einschließlich SQLite/MariaDB, Missionsbrowsern Chromium/WebKit und Konto-/Gerätewechseltests. Keine Pages-Veröffentlichung gestartet; main unverändert.
+- Lokal vollständig grün: **205 Logiktests, 49 Backend-/Hostingtests und 54 Konto-Browsertests**. Zusätzliche Oberflächenprüfung mit ausschließlich gemockten APIs in Chromium und WebKit ebenfalls grün. Screenshots von Fortschritt, Lehrerübersicht und beiden Löschdialogen visuell geprüft.
+- Releasepaket `.cache/hostinger/pilot-20260922-r12`: **143 Dateien**, Manifest SHA256 **7400b3df824d2af00e6b4412094f6e1a6ab25e097a4d9eef6860894b10441a7a**. Privat hochgeladen, serverseitig verifiziert, aktiviert, live geprüft und **confirmed**. Voriger Webroot gesichert unter `agentpy-private/backups/web-20260923045228-c009c12e55`. Settings-Snapshot `backups/before-pilot-20260922-r12-patch.json`. Operator `.cache/hostinger-r12.mjs` abgeschlossen; nur `inspect` erneut sinnvoll, **upload/verify/activate/confirm nicht wiederholen**.
+- Anonyme HTTPS-/Release-/Cache-/Private-Pfad-/Sessionchecks und Browser-Smokes beider Engines grün. Neue Dialoge auf dem ausgelieferten Frontend zusätzlich mit **vollständig gemockten APIs** geprüft; keine echte Anmeldung, Löschung, Registrierung oder Testmail. Screenshots `.cache/hostinger-browser/*-r12-*.png`.
+- Vorher/nachher unverändert: **Schema 5; 4 Konten, 4 Klassen, 4 Lernstände, 1 Lehrkraft, 3 Schülerklassen und 3 Beitrittscodes**. Private SMTP-/DB-/Registrierungs-/Lehrerschlüsseldateien hashgleich, `pendingDeployment=false`. Keine Migration, kein Reset, kein Datenbankwrite durch Deployment. Mail-Worker bereits r12, `ranAt=1790139183`, `processed=0`. Neue echte Daten weiterhin unbedingt erhalten!
+- Ausgeliefert: Klassenlöschung mit exakter Texteingabe LÖSCHEN und geschützte Mitgliedlöschung (auch offene Anmeldungen), Warnungen/Trash-Icon/dezenter Link; persönliche Mailanrede; Identitätszeile; Logout nach Hause mit Verify-Ausnahme; verlinkte freigeschaltete offene Levels, optionale Abschnitte/Stern/Farben/Lehrerlegende, beidseitiger anteiliger Projektbonus; reale 02-3-Kabeltest-Evidenz, AG-3-Projektwahl erst nach kompletter Abnahme, neutrale Bereitschaftstexte, feste lesbare H-1-Passphrase ohne Hochscrollen.
+- Offene Gewichtungsentscheidung transparent vorläufig umgesetzt: Missionen je 15 %, AG 10 %, erstes Projekt 15 %, Heli 15 % (H-1 10/H-2 5); zweites Projekt anteilig bis 20 Bonuspunkte, optionales 02-3 weitere 5. Maximal 125 %. Keine fiktiven Heli-Level zählen. Spätere Anpassung zentral in `assets/data/course-progress.js`.
+- Keine offenen Tests/Uploads/Aktivierungen. Nächster Nutzerschritt: Website neu laden und Änderungen testen; destruktive Funktionen nur bei tatsächlich entbehrlichen Testkonten/Klassen bestätigen. Gewichtungsannahmen bei nächster Rückmeldung finalisieren. Lokaler Testserver beendet. Abschlusscommit nur Handoff, kein neues Deployment nötig.
+
 ## IN ARBEIT – neuer Auftrag nach r11
 
 - Nutzer wünscht ab jetzt bei jedem Prompt eine subjektive Prozentbewertung: Gesamt, Präzision, Logik, Gewissenhaftigkeit, Struktur, KI-Eignung; pro Kategorie ein Verbesserungssatz. Am Ende dieses Turns liefern.
