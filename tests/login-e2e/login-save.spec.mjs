@@ -54,6 +54,8 @@ test('real login: a completed mission and exact code follow a student to another
     await page.getByRole('button', { name: 'Benutzermenü' }).click();
     await page.getByRole('button', { name: 'Abmelden', exact: true }).click();
     await expect(page.locator('.account-panel')).toContainText('Gastmodus');
+    await expect(page).toHaveURL(/\/index\.html$/);
+    await mission(page); // Logout goes home; guest code is still available when reopening the lesson.
     await expect.poll(() => page.evaluate(() => window.editor?.getValue())).toBe('GAST BLEIBT');
     await login(page, 'student-b'); await mission(page); await reset(page);
     expect(await page.evaluate(() => window.AgentLearningData.getCompletedCode('mission1_level1'))).toBeNull();

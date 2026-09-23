@@ -3,47 +3,19 @@
 
     const NOISE_CHARACTER = "?";
     const PASSWORD_LENGTH = 256;
-    const LOWERCASE_CHARACTERS = "abcdefghijklmnopqrstuvwxyz";
-    const UPPERCASE_CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    const DIGIT_CHARACTERS = "0123456789";
     const SPECIAL_CHARACTERS = "!#$%&()*+,-./:;<=>@[]^_{|}~";
-    const PASSWORD_CHARACTERS = LOWERCASE_CHARACTERS + UPPERCASE_CHARACTERS + DIGIT_CHARACTERS + SPECIAL_CHARACTERS;
+    // Public teaching material, not a credential. Decoding reveals a readable reward.
+    const PASSPHRASE = "Um Mitternacht tanzen 17 Gurken im Raumanzug auf dem Schuldach. Ein pinker Pinguin serviert dem Helikopter warmes Eis, waehrend die Direktorin mit einem Toaster Schach spielt. Agent, bring die singende Socke sicher heim und vergiss den Wackelpudding nicht!";
     const FAILURES = Object.freeze({
         RECEIVE_REQUIRED: "RECEIVE_REQUIRED",
         WRONG_PASSWORD: "WRONG_PASSWORD"
     });
 
-    function pick(characters, value) {
-        return characters[value % characters.length];
+    function createPassphrase() {
+        return PASSPHRASE;
     }
 
-    function createRandomPassword(randomSource = window.crypto) {
-        if (!randomSource || typeof randomSource.getRandomValues !== "function") {
-            throw new Error("Sicherer Zufallsgenerator nicht verfügbar.");
-        }
-
-        const entropy = new Uint32Array(PASSWORD_LENGTH * 2 - 1);
-        randomSource.getRandomValues(entropy);
-        const password = [
-            pick(LOWERCASE_CHARACTERS, entropy[0]),
-            pick(UPPERCASE_CHARACTERS, entropy[1]),
-            pick(DIGIT_CHARACTERS, entropy[2]),
-            pick(SPECIAL_CHARACTERS, entropy[3])
-        ];
-        for (let index = password.length; index < PASSWORD_LENGTH; index += 1) {
-            password.push(pick(PASSWORD_CHARACTERS, entropy[index]));
-        }
-
-        let entropyIndex = PASSWORD_LENGTH;
-        for (let index = password.length - 1; index > 0; index -= 1) {
-            const swapIndex = entropy[entropyIndex] % (index + 1);
-            entropyIndex += 1;
-            [password[index], password[swapIndex]] = [password[swapIndex], password[index]];
-        }
-        return password.join("");
-    }
-
-    function createState(password = createRandomPassword()) {
+    function createState(password = createPassphrase()) {
         if (typeof password !== "string" || password.length !== PASSWORD_LENGTH || password.includes(NOISE_CHARACTER)) {
             throw new TypeError(`Das Bordcomputer-Passwort muss aus ${PASSWORD_LENGTH} Zeichen ohne ${NOISE_CHARACTER} bestehen.`);
         }
@@ -111,7 +83,7 @@
         NOISE_CHARACTER,
         PASSWORD_LENGTH,
         SPECIAL_CHARACTERS,
-        createRandomPassword,
+        createPassphrase,
         createState
     });
 })();

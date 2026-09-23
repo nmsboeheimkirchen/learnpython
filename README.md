@@ -31,7 +31,7 @@ Die ersten vier Missionen führen neue Python-Werkzeuge nacheinander ein. Anschl
 
 ## Fortschritt und Daten
 
-Die Anwendung benötigt derzeit weder Benutzerkonto noch Backend. Lernfortschritt und Code werden ausschließlich im lokalen Browserspeicher des verwendeten Geräts gespeichert.
+Die statische GitHub-Pages-Version funktioniert ohne Benutzerkonto und Backend. Im Gastmodus liegen Lernfortschritt und Code ausschließlich im lokalen Browserspeicher. Der Hostinger-Pilot bietet zusätzlich bestätigte Schul- und Lehrer:innenkonten mit zentral gespeicherten Lernständen.
 
 Das bedeutet:
 
@@ -39,6 +39,14 @@ Das bedeutet:
 - Zwischen verschiedenen Geräten oder Browsern findet keine Synchronisierung statt.
 - Das Löschen der Browserdaten entfernt auch den gespeicherten Fortschritt.
 - Über **Fortschritt zurücksetzen** in der Navigation können die lokal gespeicherten Lerndaten gezielt gelöscht werden.
+
+### Hostinger: Konten, Klassen und Fortschrittsanzeige
+
+Lehrpersonen verwalten nur eigene Klassen. Schülerkonten können mit Warnung, ganze Klassen zusätzlich durch die exakte Eingabe **LÖSCHEN** entfernt werden. Dabei werden zugehörige Konten, Lernstände, Programmcode, offene Anmeldungen und Links gelöscht; Lehrer:innenkonten sind geschützt. Die Tests dafür arbeiten ausschließlich mit isolierten Datenbanken.
+
+Das Personenmenü zeigt Name, Klasse und E-Mail. Normales Abmelden führt zur Startseite; beim Bestätigen eines anderen Kontos bleibt der Bestätigungslink erhalten. Konto-Mails sprechen die Person mit ihrem Anzeigenamen an.
+
+Das zentrale Anzeigemodell steht in `assets/data/course-progress.js`: Missionen 1–4 je 15 %, Agententraining 10 %, ein Projekt 15 %, Helikopterflucht 15 %. Aktuell H-1/H-2 mit 10/5; bei weiteren Fluchtphasen neu gewichten. Das zweite Projekt zählt anteilig bis zu 20 Bonuspunkte, optionales 02-3 zusätzlich 5 (Maximum 125 %). Diese Gewichtung verändert keine gespeicherten Lösungen. Nicht abgeschlossene, freigeschaltete Levels sind aus der Kontofortschrittsanzeige direkt erreichbar. Die Lehreransicht erläutert Gewichte und unverbindliche Notenvorschläge.
 
 ## Technischer Aufbau
 

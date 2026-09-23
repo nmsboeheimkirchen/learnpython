@@ -434,6 +434,7 @@
     }
 
     async function validateRun(code) {
+        if (nextButton) nextButton.style.display = "none";
         recordRawPosition(activeTurtle);
         syncInventoryEvidence();
         const structure = typeof window.validateLevelSolution === "function"
@@ -483,8 +484,14 @@
 
     async function runProgram() {
         if (running) return;
+        if (nextButton) nextButton.style.display = "none";
 
         const generation = ++runGeneration;
+        if (completionTimer !== null) { window.clearTimeout(completionTimer); completionTimer = null; }
+        completionShown = false;
+        window.cancelSuccessCelebration?.();
+        const oldOverlay = document.getElementById('success-overlay');
+        if (oldOverlay) oldOverlay.style.display = 'none';
         cancelRequested = false;
         runState = core.createState(levelId);
         outputText = "";
@@ -550,6 +557,7 @@
         }
 
         runGeneration += 1;
+        if (nextButton) nextButton.style.display = "none";
         if (levelId === "agent_training_level3") {
             level3Phase = "guarded";
             applyLevel3Phase();
@@ -593,10 +601,10 @@
         "Cmd-Enter": runProgram
     });
 
-    const hasCompletedCode = window.getCompletedLevelCode?.(levelId) !== null;
+    const hasCompletedCode = typeof window.getCompletedLevelCode?.(levelId) === 'string';
     const restoredAttemptedCode = window.restoreAttemptedLevelCode?.(levelId);
     if (!restoredAttemptedCode) window.restoreCompletedLevelCode?.(levelId);
-    if (hasCompletedCode && nextButton) nextButton.style.display = "block";
+    if (nextButton) nextButton.style.display = hasCompletedCode ? "block" : "none";
     if (hasCompletedCode && levelId === "agent_training_level3") enterDirectInventoryPhase();
     applyLevel3Phase();
     stageMessage.textContent = levelConfig.stageMessage;

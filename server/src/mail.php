@@ -24,14 +24,14 @@ function claimMail(\PDO $db, array $config, int $now): ?array
             $counts->execute([$now - $window]);
             if ((int) $counts->fetchColumn() >= $limit) { $db->commit(); return null; }
         }
-        $q = $db->prepare("SELECT j.*, p.email, p.expires_at FROM mail_jobs j JOIN pending_registrations p ON p.id=j.registration_id JOIN class_invitations i ON i.code_hash=p.invitation_hash WHERE j.available_at<=? AND (j.state='queued' OR (j.state='sending' AND j.lease_until<=?)) AND p.expires_at>? AND i.active=1 AND i.expires_at>p.created_at ORDER BY j.created_at,j.id LIMIT 1");
+        $q = $db->prepare("SELECT j.*, p.email, p.display_name AS name, p.expires_at FROM mail_jobs j JOIN pending_registrations p ON p.id=j.registration_id JOIN class_invitations i ON i.code_hash=p.invitation_hash WHERE j.available_at<=? AND (j.state='queued' OR (j.state='sending' AND j.lease_until<=?)) AND p.expires_at>? AND i.active=1 AND i.expires_at>p.created_at ORDER BY j.created_at,j.id LIMIT 1");
         $q->execute([$now, $now, $now + 3600]);
         $job = $config['registration_enabled'] ? $q->fetch() : false;
         if ($job) { $job['mail_table']='mail_jobs'; $job['kind']='verify'; }
         if ($config['password_reset_enabled'] ?? false) {
             $db->prepare('DELETE FROM password_resets WHERE expires_at<=? OR (token_expires_at>0 AND token_expires_at<=?)')->execute([$now,$now]);
             $db->prepare('DELETE FROM recovery_mail_jobs WHERE expires_at<=?')->execute([$now]);
-            $q=$db->prepare("SELECT j.*,u.email FROM recovery_mail_jobs j JOIN users u ON u.id=j.user_id LEFT JOIN password_resets r ON r.id=j.reset_id WHERE u.active=1 AND j.available_at<=? AND j.expires_at>? AND (j.state='queued' OR (j.state='sending' AND j.lease_until<=?)) AND (j.kind='reset-notice' OR (r.expires_at>? AND (r.token_expires_at=0 OR r.token_expires_at>?))) ORDER BY j.created_at,j.id LIMIT 1");
+            $q=$db->prepare("SELECT j.*,u.email,u.display_name AS name FROM recovery_mail_jobs j JOIN users u ON u.id=j.user_id LEFT JOIN password_resets r ON r.id=j.reset_id WHERE u.active=1 AND j.available_at<=? AND j.expires_at>? AND (j.state='queued' OR (j.state='sending' AND j.lease_until<=?)) AND (j.kind='reset-notice' OR (r.expires_at>? AND (r.token_expires_at=0 OR r.token_expires_at>?))) ORDER BY j.created_at,j.id LIMIT 1");
             $q->execute([$now,$now,$now,$now,$now]); $recovery=$q->fetch();
             // Both types share the same lock, FIFO selection, minute/day budget and retry rules.
             if ($recovery && (!$job || [$recovery['created_at'],$recovery['id']] < [$job['created_at'],$job['id']])) {
@@ -71,11 +71,12 @@ function dispatchMail(\PDO $db, array $config, ?callable $testSender = null, ?in
     if ($job['kind']==='reset') {
         $link=$config['origin'].'/index.html#reset='.$job['token'];
         $subject='AGENT PY: Passwort zuruecksetzen';
-        $body="Hallo!\n\nHier kannst du ein neues Passwort fuer dein AGENT-PY-Konto festlegen:\n$link\n\nDer Link gilt eine Stunde ab dem ersten Versandversuch und nur einmal. Wenn du kein neues Passwort angefordert hast, ignoriere diese Nachricht. Dein Passwort bleibt dann unveraendert.\n";
+        $body="Hier kannst du ein neues Passwort fuer dein AGENT-PY-Konto festlegen:\n$link\n\nDer Link gilt eine Stunde ab dem ersten Versandversuch und nur einmal. Wenn du kein neues Passwort angefordert hast, ignoriere diese Nachricht. Dein Passwort bleibt dann unveraendert.\n";
     } elseif ($job['kind']==='reset-notice') {
         $subject='AGENT PY: Passwort wurde geaendert';
         $body="Das Passwort fuer dein AGENT-PY-Konto wurde soeben zurueckgesetzt. Alte Sitzungen wurden beendet; dein Lernstand bleibt erhalten.\n\nFalls du das nicht selbst warst, fordere auf ".$config['origin']." ein neues Passwort an und informiere deine Lehrperson.\n";
     }
+    $body = "Hallo " . preg_replace('/\\s+/u', ' ', trim($job['name'])) . "!\n\n" . $body;
     $accepted = false;
     try {
         if ($testSender) $accepted = $testSender($job['email'], $body) === true;

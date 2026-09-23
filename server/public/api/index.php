@@ -28,12 +28,14 @@ try {
     if ($method !== 'POST') throw new ApiError(405, 'METHOD_NOT_ALLOWED');
     requireMutation($config);
     $body = readBody();
-    if (in_array($action,['teacher-class','teacher-create-class','teacher-renew-code'],true)) {
+    if (in_array($action,['teacher-class','teacher-create-class','teacher-renew-code','teacher-delete-class','teacher-delete-member'],true)) {
         $user=\AgentPy\requireTeacher($db);
         jsonResponse(match($action){
             'teacher-class'=>\AgentPy\teacherClass($db,$config,$user,$body),
             'teacher-create-class'=>\AgentPy\createTeacherClass($db,$config,$user,$body),
-            'teacher-renew-code'=>\AgentPy\renewTeacherCode($db,$config,$user,$body)
+            'teacher-renew-code'=>\AgentPy\renewTeacherCode($db,$config,$user,$body),
+            'teacher-delete-class'=>\AgentPy\deleteTeacherClass($db,$config,$user,$body),
+            'teacher-delete-member'=>\AgentPy\deleteTeacherMember($db,$config,$user,$body)
         });
     }
     if ($action === 'check-invitation') jsonResponse(checkInvitation($db, $config, $body));

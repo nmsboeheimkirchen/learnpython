@@ -199,6 +199,7 @@ print("Position:", drohne.position())`));
 });
 
 test("Agent training levels 2 and 3 validate reusable commands and a real found item", async ({ page }) => {
+    test.setTimeout(60000); // Multiple real Turtle runs and two delayed success celebrations.
     const pageErrors = capturePageErrors(page);
 
     await page.goto("/agent_training_level2.html?e2e");
@@ -230,6 +231,7 @@ test("Agent training levels 2 and 3 validate reusable commands and a real found 
     await page.locator("#run-btn").click();
 
     await expect(page.locator("#run-status")).toHaveText("Weiter zum Inventar", { timeout: 12_000 });
+    await expect(page.locator("#next-level-btn")).toBeHidden();
     await expect(page.locator("#training-checks .is-passed")).toHaveCount(2);
     await expect(page.locator("#console-output")).toContainText("Gefunden: Datenchip");
     await expect(page.locator("#training-inventory-items")).toHaveText("leer");
@@ -285,6 +287,7 @@ test("Agent training levels 2 and 3 validate reusable commands and a real found 
     await expect(page.locator("#next-level-btn")).toBeVisible();
     await expect(page.locator("#next-level-btn")).toHaveText("Projekt wählen");
     await page.locator("#reset-btn").click();
+    await expect(page.locator("#next-level-btn")).toBeHidden();
     await expect(page.locator("#training-inventory-items")).toHaveText("leer");
     await expect(page.locator("#training-marks-layer .training-live-dot")).toHaveCount(0);
     await expect(page.locator('[data-training-phase="guarded"]')).toBeVisible();
@@ -293,6 +296,7 @@ test("Agent training levels 2 and 3 validate reusable commands and a real found 
     await page.evaluate(code => window.editor.setValue(code), level3SearchCode);
     await page.locator("#run-btn").click();
     await expect(page.locator("#run-status")).toHaveText("Weiter zum Inventar", { timeout: 12_000 });
+    await expect(page.locator("#next-level-btn")).toBeHidden();
     await expect(page.locator("#training-checks .is-passed")).toHaveCount(2);
     await expect(page.locator('[data-training-phase="guarded"]')).toBeHidden();
     await expect(page.locator('.training-task-card > [data-training-phase="direct"]')).toBeVisible();

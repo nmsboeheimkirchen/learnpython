@@ -26,14 +26,15 @@ function loadCore(randomSource = deterministicCrypto()) {
     return window.HelicopterAccessCore;
 }
 
-test("the helicopter computer generates a 256-character mixed password", () => {
+test("the helicopter computer reveals a fixed readable 256-character passphrase", () => {
     const source = readFileSync(new URL("../assets/helicopter-access-core.js", import.meta.url), "utf8");
     const core = loadCore();
-    const password = core.createRandomPassword();
+    const password = core.createPassphrase();
 
     assert.doesNotMatch(source, /seru#7/i);
     assert.doesNotMatch(source, /SIGNAL_PARTS/);
-    assert.match(source, /getRandomValues/);
+    assert.doesNotMatch(source, /getRandomValues/);
+    assert.match(password, /17 Gurken im Raumanzug/);
     assert.doesNotMatch(source, /Math\.random/);
     assert.equal(password.length, 256);
     assert.doesNotMatch(password, /\?/);
@@ -45,7 +46,7 @@ test("the helicopter computer generates a 256-character mixed password", () => {
 
 test("the signal alternates 256 password characters with exactly 255 question marks", () => {
     const core = loadCore();
-    const password = core.createRandomPassword();
+    const password = core.createPassphrase();
     const state = core.createState(password);
     const signal = state.receive();
     const decoded = signal.replaceAll(core.NOISE_CHARACTER, "");
@@ -60,7 +61,7 @@ test("the signal alternates 256 password characters with exactly 255 question ma
 
 test("the exact password is accepted regardless of how the learner produced it", () => {
     const core = loadCore();
-    const password = core.createRandomPassword();
+    const password = core.createPassphrase();
     const state = core.createState(password);
 
     assert.equal(state.check(password), true);
@@ -89,7 +90,7 @@ test("wrong output and a wrong password cannot grant helicopter access", () => {
 
 test("run resets clear evidence while preserving the page password", () => {
     const core = loadCore();
-    const password = core.createRandomPassword();
+    const password = core.createPassphrase();
     const first = core.createState(password);
     const signal = first.receive();
     first.check(signal.replaceAll(core.NOISE_CHARACTER, ""));
@@ -102,9 +103,9 @@ test("run resets clear evidence while preserving the page password", () => {
     assert.equal(second.receive(), signal);
 });
 
-test("different page secrets can be generated deterministically for testing", () => {
-    const first = loadCore(deterministicCrypto(1)).createRandomPassword();
-    const second = loadCore(deterministicCrypto(2)).createRandomPassword();
+test("the teaching passphrase stays identical across reloads and random sources", () => {
+    const first = loadCore(deterministicCrypto(1)).createPassphrase();
+    const second = loadCore(deterministicCrypto(2)).createPassphrase();
 
-    assert.notEqual(first, second);
+    assert.equal(first, second);
 });

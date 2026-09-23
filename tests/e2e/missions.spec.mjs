@@ -205,7 +205,7 @@ test("Missions 1 to 3 show Python code above a separate result area", async ({ p
         await expect(page.locator("#console-heading")).toHaveText("Ergebnis");
 
         const pageText = await page.locator("body").innerText();
-        expect(pageText).not.toMatch(/Python Terminal|Bereit für deine Befehle|schwarzen? Fenster|Drohnencode/i);
+        expect(pageText).not.toMatch(/Python Terminal|schwarzen? Fenster|Drohnencode/i);
     }
 });
 
@@ -288,6 +288,19 @@ test("optional Mission 2 level 3 starts without elif and can unlock Mission 3", 
     await expect(page).toHaveURL(/\/mission3_start\.html$/);
     const unlocked = await page.evaluate(() => JSON.parse(localStorage.getItem("unlockedLevels_v2")));
     expect(unlocked).toEqual(expect.arrayContaining(["link-m3-title", "link-m3-l1"]));
+});
+
+test("optional 02-3 requires the blue and exploding cable with unchanged code @ipad", async ({page})=>{
+    await page.goto('/mission2_level3.html');
+    await page.waitForFunction(()=>Boolean(window.editor));
+    await page.evaluate(()=>window.editor.setValue('kabel = input("Kabel: ")\nif kabel == "rot":\n    print("Entschärft!")\nelif kabel == "blau":\n    print("Nichts passiert.")\nelse:\n    print("KABUMM!")'));
+    const run=page.locator('#run-btn'),input=page.locator('.console-input');
+    await run.click();await input.fill('blau');await input.press('Enter');
+    await expect(page.locator('#status-text')).toContainText('anderen Farbe');
+    expect(await page.evaluate(()=>window.getCompletedLevelCode('mission2_level3'))).toBeNull();
+    await run.click();await input.fill('grün');await input.press('Enter');
+    await expect(page.locator('#status-text')).toContainText('Geschafft');
+    expect(await page.evaluate(()=>window.getCompletedLevelCode('mission2_level3'))).toContain('KABUMM');
 });
 
 test("Mission 3 levels provide the staged starter bonuses", async ({ page }) => {

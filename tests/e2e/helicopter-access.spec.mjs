@@ -31,7 +31,7 @@ test("@ipad the Bordcomputer layout keeps the mission, editor and help clear", a
     await expect(briefing).toContainText("receive()");
     await expect(briefing).toContainText("256");
     await expect(briefing).toContainText("255");
-    await expect(briefing).toContainText("Sonderzeichen");
+    await expect(briefing).toContainText("Passphrase");
     await expect(briefing).not.toContainText("darf nicht im Klartext");
     await expect(page.getByRole("status")).toHaveCount(1);
     await expect(page.getByRole("button", { name: "Bordcomputer starten" })).toHaveCount(2);
@@ -113,6 +113,7 @@ test("the real receive and replace chain grants access", async ({ page }) => {
     expect(run.output).toContain("BORDCOMPUTER: " + password + "\nACCESS GRANTED!\n");
     expect(signal).toHaveLength(511);
     expect(password).toHaveLength(256);
+    expect(password).toContain("17 Gurken im Raumanzug");
     expect([...signal].filter(character => character === "?")).toHaveLength(255);
     expect(signal).toBe([...password].join("?"));
     expect(password).toMatch(/[a-z]/);
@@ -133,10 +134,12 @@ test("the real receive and replace chain grants access", async ({ page }) => {
     const heroBounds = await page.locator("#access-hero").boundingBox();
     expect(nextBounds.y + nextBounds.height).toBeLessThanOrEqual(heroBounds.y);
     expect(nextBounds.x + nextBounds.width).toBeCloseTo(heroBounds.x + heroBounds.width, 0);
-    expect(await page.evaluate(() => window.scrollY)).toBeLessThan(scrollBeforeRun - 1);
+    expect(Math.abs(await page.evaluate(() => window.scrollY) - scrollBeforeRun)).toBeLessThan(12); // Small browser scroll anchoring when the next button appears.
+    await expect(page.locator("#console-output")).toBeInViewport();
 
     await page.setViewportSize({ width: 390, height: 844 });
     await runCode(page, correctCode);
+    await nextMission.scrollIntoViewIfNeeded();
     const phoneNextBounds = await nextMission.boundingBox();
     const dockBounds = await page.locator("#learning-nav-dock").boundingBox();
     expect(phoneNextBounds.y).toBeGreaterThanOrEqual(dockBounds.y + dockBounds.height);

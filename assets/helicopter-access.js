@@ -12,7 +12,6 @@
     const consoleOutput = byId("console-output");
     const resetButton = byId("reset-btn");
     const accessHero = byId("access-hero");
-    const missionNavigation = document.querySelector(".helicopter-mission-nav");
     const accessDisplay = byId("access-display");
     const accessMessage = byId("access-message");
     const nextLevelButton = byId("next-level-btn");
@@ -37,8 +36,7 @@
     editor.getInputField?.().setAttribute("aria-label", "Python-Code zum Entsperren des Bordcomputers");
 
     const defaultCode = textarea.value;
-    const testMode = new URLSearchParams(window.location.search).has("e2e");
-    const missionPassword = core.createRandomPassword();
+    const missionPassword = core.createPassphrase();
     const MODULE_PATH = "src/lib/bordcomputer.js";
     const MODULE_SOURCE = `
 var $builtinmodule = function () {
@@ -125,15 +123,6 @@ var $builtinmodule = function () {
         return "HINWEIS: Prüfe, ob du wirklich alle Störzeichen aus dem empfangenen Signal entfernt hast.";
     }
 
-    function revealResult() {
-        const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
-        (missionNavigation || accessHero).scrollIntoView?.({
-            behavior: testMode || reducedMotion ? "auto" : "smooth",
-            block: "start",
-            inline: "nearest"
-        });
-    }
-
     async function finishRun(code) {
         const snapshot = state.snapshot();
         const passed = snapshot.accessGranted;
@@ -150,7 +139,7 @@ var $builtinmodule = function () {
             }
             setAccessState("granted", "ACCESS GRANTED!");
             window.applyUnlocks?.();
-            revealResult();
+            // Keep the decoded message in view; do not scroll away from the result.
         } else {
             setAccessState("denied", "ACCESS DENIED!");
             const hint = deniedHint(snapshot);

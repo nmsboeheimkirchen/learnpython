@@ -9,7 +9,7 @@ export async function recoveryTests({t,fixture,env,phpCall,BrowserSession,url,wo
     t.after(()=>fixture('cleanup',{ids:users,classId:group.id}));
     const session=async(endpoint=url)=>{const s=new BrowserSession(endpoint,url);await s.request('session');return s;};
     const request=async(s,user)=>{const response=await s.request('request-password-reset',{email:user.email});assert.equal(response.status,202);return response.data;};
-    const tokenFor=user=>{invoke('mail-clear-attempts');const sent=invoke('mail-test',{count:10});return sent.messages.find(m=>m.to===user.email&&m.body.includes('#reset=')).body.match(/#reset=([a-f0-9]{64})/)[1];};
+    const tokenFor=user=>{invoke('mail-clear-attempts');const sent=invoke('mail-test',{count:10});const message=sent.messages.find(m=>m.to===user.email&&m.body.includes('#reset='));assert.ok(message.body.startsWith('Hallo Recovery test!\n\n'));return message.body.match(/#reset=([a-f0-9]{64})/)[1];};
     const next='Reset!888';
     const consume=(s,token)=>s.request('reset-password',{token,password:next,confirmation:next});
 
@@ -45,7 +45,7 @@ export async function recoveryTests({t,fixture,env,phpCall,BrowserSession,url,wo
         assert.equal((await anonymous.request('login',{email:user.email,password:next})).status,200);
         assert.deepEqual((await anonymous.request('state')).data.state,before);
         invoke('mail-clear-attempts');const notices=invoke('mail-test',{count:10}).messages.filter(m=>m.to===user.email);
-        assert.equal(notices.length,1);assert.match(notices[0].body,/Passwort.*zurueckgesetzt/);
+        assert.equal(notices.length,1);assert.ok(notices[0].body.startsWith('Hallo Recovery test!\n\n'));assert.match(notices[0].body,/Passwort.*zurueckgesetzt/);
         assert.ok(!notices[0].body.includes(next));assert.ok(!notices[0].body.includes(token));
     });
     await t.test('expired reset links fail and can be replaced; simultaneous consumption succeeds only once',async()=>{

@@ -1,6 +1,7 @@
 import {test,expect} from '@playwright/test';
+import {fixture} from './fixtures.mjs';
 const lesson=page=>page.frameLocator('#account-lesson');
-test('teacher menu, empty start, class creation, persistent join code and responsive roster',async({page,context})=>{
+test('teacher menu, empty start, class creation, persistent join code and responsive roster',async({page,context,browser})=>{
     await page.addInitScript(()=>{window.AgentAccountConfig={enabled:true,endpoint:'api/index.php',saveMode:'attempts',shell:true};});
     await page.goto('/');await page.getByRole('button',{name:'Anmelden',exact:true}).click();
     await page.getByLabel('E-Mail-Adresse',{exact:true}).fill(`teacher-${test.info().project.name}@example.test`);
@@ -24,9 +25,54 @@ test('teacher menu, empty start, class creation, persistent join code and respon
     await page.reload();await page.getByRole('button',{name:'Benutzermenü'}).click();await page.getByRole('button',{name:'Meine Klassen',exact:true}).click();
     await lesson(page).getByRole('button',{name:'Klasse ansehen'}).click();
     await expect(lesson(page).locator('.teacher-code strong')).toHaveText(code);
+    // Join in a separate disposable student session; confirm through the test mail sink.
+    const studentContext=await browser.newContext(),studentPage=await studentContext.newPage();
+    const email=`delete-pupil-${test.info().project.name}@example.test`;
+    await studentPage.goto('/');
+    const registered=await studentPage.evaluate(async({code,email})=>{
+        const session=await fetch('/api/index.php?action=session').then(r=>r.json());
+        const request=(action,body)=>fetch('/api/index.php?action='+action,{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':session.csrfToken},body:JSON.stringify(body)});
+        const checked=await request('check-invitation',{code});if(!checked.ok)return false;
+        return (await request('register',{name:'Ada Fixture',email,password:'Synthetic-browser-password-123!'})).ok;
+    },{code,email});
+    expect(registered).toBe(true);fixture('mail-clear-attempts');
+    const mail=fixture('mail-test',{count:100,perMinute:100,perDay:10000}).messages.find(m=>m.to===email);
+    expect(mail).toBeTruthy();const token=mail.body.match(/#verify=([a-f0-9]{64})/)[1];
+    await studentPage.evaluate(async token=>{
+        const s=await fetch('/api/index.php?action=session').then(r=>r.json());
+        const r=await fetch('/api/index.php?action=verify-email',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':s.csrfToken},body:JSON.stringify({token})});
+        if(!r.ok)throw Error('Fixture confirmation failed');
+    },token);
+    await studentContext.close();
+    await lesson(page).getByRole('button',{name:'Aktualisieren',exact:true}).click();
+    await expect(lesson(page).getByText('Ada Fixture',{exact:true})).toBeVisible();
+    await lesson(page).getByRole('button',{name:'Ada Fixture löschen',exact:true}).click();
+    const memberDialog=page.getByRole('dialog',{name:'Nutzer löschen'});
+    await expect(memberDialog).toContainText('gespeicherte Programmcode');
+    await expect(memberDialog.locator('input')).toHaveCount(0);
+    await memberDialog.getByRole('button',{name:'Abbrechen'}).click();
+    await expect(lesson(page).getByText('Ada Fixture',{exact:true})).toBeVisible();
+    await lesson(page).getByRole('button',{name:'Ada Fixture löschen',exact:true}).click();
+    await memberDialog.getByRole('button',{name:'Nutzer löschen',exact:true}).click();
+    await expect(lesson(page).getByText('Ada Fixture',{exact:true})).toHaveCount(0);
+    await expect(lesson(page).locator('.teacher-count')).toContainText('0 von 32');
     await page.setViewportSize({width:390,height:844});
     const frame=page.frames().find(f=>f.parentFrame()===page.mainFrame());expect(await frame.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
     await page.screenshot({path:test.info().outputPath('teacher-class.png')});
+    // Only disposable fixture classes are deleted. Cancellation must preserve them.
+    await lesson(page).getByRole('button',{name:'Klasse löschen',exact:true}).click();
+    const deletion=page.getByRole('dialog',{name:'Klasse löschen'});
+    await expect(deletion).toContainText('gespeicherten Programmcodes');
+    const confirm=deletion.getByRole('button',{name:'Klasse löschen',exact:true});
+    await expect(confirm).toBeDisabled();
+    await deletion.getByLabel('Tippe zur Bestätigung LÖSCHEN').fill('löschen');
+    await expect(confirm).toBeDisabled();
+    await deletion.getByRole('button',{name:'Abbrechen'}).click();
+    await expect(lesson(page).locator('.teacher-code strong')).toHaveText(code);
+    await lesson(page).getByRole('button',{name:'Klasse löschen',exact:true}).click();
+    await deletion.getByLabel('Tippe zur Bestätigung LÖSCHEN').fill('LÖSCHEN');
+    await expect(confirm).toBeEnabled();await confirm.click();
+    await expect(lesson(page).getByRole('heading',{name:'Deine erste Klasse'})).toBeVisible();
     // A real logout in another tab still erases private class data immediately.
     const other=await context.newPage();await other.goto('/app.html');
     await other.getByRole('button',{name:'Benutzermenü'}).click();await other.getByRole('button',{name:'Abmelden',exact:true}).click();

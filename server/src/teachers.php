@@ -99,7 +99,7 @@ function teacherClass(\PDO $db, array $config, array $user, array $body): array
         $members[]=['id'=>$row['id'],'name'=>$row['name'],'email'=>$row['email'],'status'=>(int)$row['active'] ? 'confirmed':'inactive',
             'completedIds'=>is_array($completed) ? array_keys(array_filter($completed,'is_string')) : null];
     }
-    $q=$db->prepare('SELECT display_name AS name,email FROM pending_registrations WHERE class_id=? AND expires_at>? ORDER BY display_name,email');
+    $q=$db->prepare('SELECT id,display_name AS name,email FROM pending_registrations WHERE class_id=? AND expires_at>? ORDER BY display_name,email');
     $q->execute([$class['id'],$now]);
     foreach($q->fetchAll() as $row)$members[]=$row+['status'=>'pending','completedIds'=>null];
     return ['profile'=>$user,'class'=>classSummary($db,$config,$class,$now),'members'=>$members,'serverTime'=>$now];
@@ -164,4 +164,50 @@ function renewTeacherCode(\PDO $db, array $config, array $user, array $body): ar
         $db->commit();
     } catch(\Throwable $e){if($db->inTransaction())$db->rollBack();throw $e;}
     return teacherClass($db,$config,$user,$body);
+}
+
+function deleteTeacherClass(\PDO $db, array $config, array $user, array $body): array
+{
+    exactFields($body,['classId','confirmation']);
+    if($body['confirmation']!=='LÖSCHEN')throw new ApiError(422,'DELETE_CONFIRMATION_REQUIRED');
+    ownClass($db,$user['id'],$body['classId']);
+    $db->beginTransaction();
+    try {
+        lockTeacher($db,$user['id']);
+        ownClass($db,$user['id'],$body['classId']);
+        lockRegistrationClass($db,$body['classId']);
+        $q=$db->prepare('SELECT COUNT(*) FROM users u JOIN teachers t ON t.user_id=u.id WHERE u.class_id=?');
+        $q->execute([$body['classId']]);
+        if((int)$q->fetchColumn()>0)throw new ApiError(409,'PROTECTED_TEACHER_ACCOUNT');
+        // FK cascades erase learning states, write receipts, reset links and mail jobs.
+        // The class cascade also revokes invitations and pending registrations.
+        $db->prepare('DELETE FROM users WHERE class_id=?')->execute([$body['classId']]);
+        $db->prepare('DELETE FROM classes WHERE id=?')->execute([$body['classId']]);
+        $db->prepare('INSERT INTO teacher_audit (id,teacher_id,class_id,action,created_at) VALUES (?,?,?,?,?)')
+            ->execute([bin2hex(random_bytes(16)),$user['id'],$body['classId'],'class-deleted',time()]);
+        $db->commit();
+    }catch(\Throwable $e){if($db->inTransaction())$db->rollBack();throw $e;}
+    return teacherClasses($db,$config,$user);
+}
+
+function deleteTeacherMember(\PDO $db, array $config, array $user, array $body): array
+{
+    exactFields($body,['classId','memberId','kind']);
+    if(!is_string($body['memberId']) || !preg_match('/^[a-f0-9]{32}$/D',$body['memberId']) || !in_array($body['kind'],['user','pending'],true))throw new ApiError(404,'MEMBER_NOT_FOUND');
+    ownClass($db,$user['id'],$body['classId']);
+    $db->beginTransaction();
+    try {
+        lockTeacher($db,$user['id']);ownClass($db,$user['id'],$body['classId']);lockRegistrationClass($db,$body['classId']);
+        if($body['kind']==='pending'){
+            $q=$db->prepare('DELETE FROM pending_registrations WHERE id=? AND class_id=?');
+        }else{
+            $q=$db->prepare('DELETE FROM users WHERE id=? AND class_id=? AND NOT EXISTS (SELECT 1 FROM teachers WHERE teachers.user_id=users.id)');
+        }
+        $q->execute([$body['memberId'],$body['classId']]);
+        if($q->rowCount()!==1)throw new ApiError(404,'MEMBER_NOT_FOUND');
+        $db->prepare('INSERT INTO teacher_audit (id,teacher_id,class_id,action,created_at) VALUES (?,?,?,?,?)')
+            ->execute([bin2hex(random_bytes(16)),$user['id'],$body['classId'],'member-deleted',time()]);
+        $db->commit();
+    }catch(\Throwable $e){if($db->inTransaction())$db->rollBack();throw $e;}
+    return teacherClass($db,$config,$user,['classId'=>$body['classId']]);
 }

@@ -40,8 +40,13 @@ test('home resumes guest state, keeps guest prompt and never substitutes it for 
     await expect(page.locator('.account-progress-done').first()).toContainText('01-1');
     await expect(page.locator('.account-progress-pending').first()).toContainText('01-2');
     await page.screenshot({path:test.info().outputPath('progress-overview.png')});
-    await page.getByRole('button',{name:'Schließen',exact:true}).click();
-    await page.getByRole('button',{name:'Benutzermenü'}).click();await page.getByRole('button',{name:'Kontoinfo bearbeiten'}).click();
+    await expect(page.getByRole('link',{name:'01-2: öffnen',exact:true})).toBeVisible();
+    await expect(page.getByRole('link',{name:/01-3/})).toHaveCount(0);
+    await expect(page.getByRole('dialog')).toContainText('* bedeutet optional');
+    await page.getByRole('link',{name:'01-2: öffnen',exact:true}).click();
+    await expect(lesson(page).locator('h1')).toContainText('Level 2: Pause');
+    await page.getByRole('button',{name:'Benutzermenü'}).click();
+    await expect(page.locator('.account-menu-identity')).toContainText('Klasse Browser Test');await page.getByRole('button',{name:'Kontoinfo bearbeiten'}).click();
     await expect(page.locator('.account-identity')).toContainText('Klasse:');
     await expect(page.locator('[data-class]')).toHaveText('Browser Test');
     await page.setViewportSize({width:390,height:844});
@@ -49,6 +54,10 @@ test('home resumes guest state, keeps guest prompt and never substitutes it for 
     const box=await page.getByRole('dialog').boundingBox();expect(box.x).toBeGreaterThanOrEqual(0);expect(box.x+box.width).toBeLessThanOrEqual(390);
     const logo=await page.locator('.account-shell-brand img').boundingBox(),controls=await page.locator('[data-account-actions]').boundingBox();
     expect(logo.width).toBeGreaterThanOrEqual(190);expect(logo.x+logo.width).toBeLessThan(controls.x);
+    await page.getByRole('button',{name:'Schließen',exact:true}).click();
+    await page.getByRole('button',{name:'Benutzermenü'}).click();await page.getByRole('button',{name:'Abmelden',exact:true}).click();
+    await expect(lesson(page).locator('[data-next-target]')).toBeVisible();
+    await expect(page.getByRole('button',{name:'Anmelden',exact:true})).toBeVisible();
 });
 test('guest-only static homepage also resumes browser progress without account requests',async({page})=>{
     const api=[];page.on('request',r=>{if(r.url().includes('/api/'))api.push(r.url());});

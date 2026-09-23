@@ -1,31 +1,65 @@
 // Versioned display policy; counts successful solutions, never views or skip unlocks.
-// Reserved escape phases are deliberately not fictitious completable level IDs.
-export const progressVersion = "2026-09-pilot";
+// Future course phases are not counted until they become actual available levels.
+export const progressVersion = "2026-09-weighted";
 export const groups = [
     ["Mission 1", "01", 15, ["mission1_level1", "mission1_level2", "mission1_level3"]],
     ["Mission 2", "02", 15, ["mission2_level1", "mission2_level2"]],
     ["Mission 3", "03", 15, ["mission3_level1", "mission3_level2", "mission3_level3"]],
     ["Mission 4", "04", 15, ["mission4_level1", "mission4_level2", "mission4_level3"]],
     ["Agententraining", "AG", 10, ["agent_training_level1", "agent_training_level2", "agent_training_level3"]],
-    ["PICO", "P", 20, ["pico_level1_navigation", "pico_level2", "pico_level3", "pico_level4_memory"]],
-    ["Pixelmuseum", "M", 20, ["pixelmuseum_briefing", "pixelmuseum_finale"]],
-    ["Flucht", "H", 10, ["helikopter_flucht_level1", "helikopter_flucht_level2", null, null]]
+    ["PICO", "P", 15, ["pico_level1_navigation", "pico_level2", "pico_level3", "pico_level4_memory"]],
+    ["Pixelmuseum", "M", 15, ["pixelmuseum_briefing", "pixelmuseum_finale"]],
+    ["Flucht", "H", 15, ["helikopter_flucht_level1", "helikopter_flucht_level2"]]
 ];
-export function calculateProgress(completed = {}) {
+// Display weights only: no saved solutions or unlocks are changed by this policy.
+// The two currently available escape levels cover H's 15%; revisit when H-3/H-4 exist.
+export const levelWeights = [[5,5,5],[7.5,7.5],[5,5,5],[5,5,5],[3,3,4],[3.75,3.75,3.75,3.75],[5,10],[10,5]];
+export const secondProjectBonus = 20;
+const unlocks = [
+    ['link-level1','link-level2','link-level3'],['link-m2-l1','link-m2-l2'],
+    ['link-m3-l1','link-m3-l2','link-m3-l3'],['link-m4-l1','link-m4-l2','link-m4-l3'],
+    ['link-agent-training-l1','link-agent-training-l2','link-agent-training-l3'],
+    ['link-pico-l1','link-pico-l2','link-pico-l3','link-pico-l4'],
+    ['link-museum-briefing','link-museum-finale'],['link-helicopter-level1','link-helicopter-level2']
+];
+const pageFor = id => ({pico_level1_navigation:'pico_level1',pico_level4_memory:'pico_level4'})[id] || id;
+const round = value => Math.round(value * 100) / 100;
+export const formatPercent = value => new Intl.NumberFormat('de-AT',{maximumFractionDigits:2}).format(value);
+export function calculateProgress(completed = {}, unlockedIds = []) {
     const done = id => id !== null && Object.hasOwn(completed, id) && typeof completed[id] === "string";
-    const parts = groups.map(([, , weight, ids]) => weight * ids.filter(done).length / ids.length);
-    const base = Math.floor(parts.slice(0, 5).reduce((a,b) => a+b, 0) + Math.max(parts[5], parts[6]) + parts[7]);
-    const bonus = (parts[5] === 20 && parts[6] === 20 ? 20 : 0) + (done("mission2_level3") ? 5 : 0);
+    const parts = groups.map(([, , , ids],g) => ids.reduce((sum,id,i)=>sum+(done(id)?levelWeights[g][i]:0),0));
+    // No chronology is stored: the further progressed path fills the required slot.
+    // Museum wins ties; the other path earns proportional bonus even before its finale.
+    const primaryProject = parts[5] > parts[6] ? 5 : 6;
+    const optionalProject = primaryProject === 5 ? 6 : 5;
+    const base = round(parts.slice(0, 5).reduce((a,b)=>a+b,0) + parts[primaryProject] + parts[7]);
+    const bonus = round(parts[optionalProject] / 15 * secondProjectBonus + (done("mission2_level3") ? 5 : 0));
+    const unlocked = new Set(['link-level1', ...unlockedIds]);
+    const section = (id,code,unlock,optional=false) => ({
+        id,code,completed:done(id),available:true,optional,
+        unlocked:done(id)||unlocked.has(unlock),href:pageFor(id)+'.html'
+    });
     return {
-        version: progressVersion, base, bonus,
-        label: base === 100 ? `${100 + bonus} %` : `${base} %${bonus ? ` + ${bonus} Bonuspunkte` : ""}`,
-        rows: groups.map(([label, prefix, , ids]) => ({ label,
-            codes: ids.flatMap((id,i) => done(id) ? [`${prefix}-${i+1}`] : []),
-            sections: ids.map((id,i) => ({code:`${prefix}-${i+1}`,completed:done(id),available:id!==null}))
-        })),
-        optionalCompleted: done("mission2_level3")
+        version:progressVersion,base,bonus,primaryProject,
+        label:base===100 ? `${formatPercent(100+bonus)} %` : `${formatPercent(base)} %${bonus ? ` + ${formatPercent(bonus)} Bonuspunkte` : ''}`,
+        rows:groups.map(([label,prefix,,ids],g)=>{
+            const sections=ids.map((id,i)=>section(id,`${prefix}-${i+1}`,unlocks[g][i],g===optionalProject));
+            if(g===1)sections.push(section('mission2_level3','02-3','link-m2-l3',true));
+            return {label,codes:sections.filter(s=>s.completed).map(s=>s.code),sections};
+        }),
+        optionalCompleted:done('mission2_level3')
     };
 }
+export const progressLegend = '* bedeutet optional: 02-3 und der zweite Projektpfad. Grün = geschafft, Orange = optional und offen. Bonus ersetzt keine Pflichtaufgabe.';
+export const teacherProgressGuide = [
+    ['Mission 1','15 %','15 %','5 % je Level','—'],
+    ['Mission 2','15 % + 5 %*','30 % + 5 %*','7,5 % je Pflichtlevel; 02-3: 5 %*','NG'],
+    ['Mission 3','15 %','45 % + 5 %*','5 % je Level','NG / G'],
+    ['Mission 4','15 %','60 % + 5 %*','5 % je Level','G / B'],
+    ['Agententraining','10 %','70 % + 5 %*','AG-1: 3 %, AG-2: 3 %, AG-3: 4 %','B'],
+    ['Projekt: Pixelmuseum oder PICO','15 %','85 % + 5 %*','Museum: Briefing 5 %, Finale 10 %; PICO: 3,75 % je Level','Gut / SG'],
+    ['Helikopterflucht','15 %','100 % + 5 %*','H-1: 10 %, H-2: 5 %','SG']
+];
 
 // Recommended continuation, not a claim about the last chronological visit.
 // Never treat unlock/skip flags as completed work. Only available required steps

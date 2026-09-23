@@ -87,7 +87,7 @@
     let controls = null;
     let invalidated = false;
     let checking = false;
-    let panel, message, loginButton, logoutButton, retryButton, reloadButton, exportButton, saveButton;
+    let panel, message, identityLine, loginButton, logoutButton, retryButton, reloadButton, exportButton, saveButton;
     let intendedMission = null;
     let dirtyDraft = false;
     let leavingAccount = false;
@@ -435,8 +435,9 @@
                 const result = await client.request("update-profile", { body: { name: form.elements.name.value }, csrfToken: session.csrfToken, profileId: session.profile.id });
                 if (invalidated || result.profile?.id !== session.profile.id) throw remote.error("PROFILE_CHANGED");
                 session.profile = result.profile;
+                renderIdentity();
                 form.querySelector('[role="status"]').textContent = "Anzeigename gespeichert.";
-                show(`${session.profile.name} · Klasse ${session.profile.className} · ${session.profile.email}`);
+                show("Kontoinfo aktualisiert.");
             } catch (failure) { form.querySelector('[role="status"]').textContent = failure.message; }
             finally { submit.disabled = false; }
         });
@@ -444,13 +445,13 @@
     }
     async function progressDialog() {
         const content = ui.createElement("div"); content.textContent = "Fortschritt wird geladen …";
-        simpleDialog("Fortschritt", content);
+        const dialog = simpleDialog("Fortschritt", content);
         try {
             const response = await client.request("state", { profileId: session.profile.id });
             if (invalidated || response.profile?.id !== session.profile.id) throw remote.error("PROFILE_CHANGED");
             const completed = response.state.data.completedCodes;
-            const { calculateProgress } = await import(progressModuleURL);
-            const progress = calculateProgress(completed);
+            const { calculateProgress, progressLegend } = await import(progressModuleURL);
+            const progress = calculateProgress(completed, response.state.data.unlockedIds);
             const title = ui.createElement("p"); title.className = "account-progress-number";
             title.textContent = progress.label;
             const list = ui.createElement("ul"); list.className = "account-progress-list";
@@ -458,22 +459,27 @@
                 const item = ui.createElement("li");
                 const title = ui.createElement('strong'); title.textContent = label + ': ';
                 item.append(title);
-                sections.forEach(({code, completed, available}, index) => {
+                sections.forEach(({code, completed, optional, unlocked, href}, index) => {
                     if(index) item.append(', ');
-                    const status = ui.createElement('span');
+                    const status = ui.createElement(!completed && unlocked ? 'a' : 'span');
                     status.className = completed ? 'account-progress-done' : 'account-progress-pending';
-                    status.textContent = code + (completed ? ' ✓' : available ? ' · offen' : ' · folgt');
-                    status.setAttribute('aria-label',code + (completed ? ': abgeschlossen' : available ? ': noch nicht abgeschlossen' : ': noch nicht im Kurs verfügbar'));
+                    if(optional) status.classList.add('account-progress-optional');
+                    status.textContent = code + (optional ? '*' : '') + (completed ? ' ✓' : unlocked ? ' · offen' : ' · gesperrt');
+                    status.setAttribute('aria-label',code + (optional ? ': optional' : '') + (completed ? ': abgeschlossen' : unlocked ? ': öffnen' : ': gesperrt'));
+                    if(status.tagName === 'A'){
+                        status.href = href;
+                        status.addEventListener('click',event=>{
+                            event.preventDefault();
+                            if(hasUnconfirmed() && !window.confirm('Nicht gespeicherten Code zuerst sichern. Trotzdem zum Level wechseln?'))return;
+                            dialog.close();location.assign(href);
+                        });
+                    }
                     item.append(status);
                 });
                 list.append(item);
             });
-            if (progress.optionalCompleted) {
-                const item = ui.createElement("li");
-                item.innerHTML = '<strong>Optional geschafft: </strong><span class="account-progress-done">02-3 ✓ (+5 Bonuspunkte)</span>'; list.append(item);
-            }
             const note = ui.createElement("p"); note.className = "account-muted";
-            note.textContent = "Erreichte Abschnitte, nicht die zeitliche Reihenfolge. Zwei Fluchtphasen fehlen noch im Kurs; dafür sind 5 % reserviert. Bonus ersetzt keine Pflichtaufgabe.";
+            note.textContent = progressLegend + " Freigeschaltete offene Abschnitte sind direkt anklickbar.";
             content.replaceChildren(title, list, note);
         } catch (failure) { content.textContent = failure.message; }
     }
@@ -518,8 +524,10 @@
             window.AgentLearningData?.dispose(); announceChange();
             // Preserve the original link only in the fragment during this reload.
             // Bootstrap removes it immediately again; never store it or use a query.
-            if (verificationToken) history.replaceState(null, "", location.pathname + location.search + '#verify=' + encodeURIComponent(verificationToken));
-            window.location.reload();
+            if (verificationToken) {
+                history.replaceState(null, "", location.pathname + location.search + '#verify=' + encodeURIComponent(verificationToken));
+                window.location.reload();
+            } else window.location.replace('index.html');
         } catch (failure) { show(failure.message); return {message: failure.message}; }
         finally { logoutButton.disabled = false; }
     }
@@ -559,7 +567,8 @@
         reloadButton = button("Seite neu laden", reload);
         exportButton = button("Code herunterladen (.py)", exportCode);
         for (const item of [logoutButton, progressButton, profileButton, retryButton, reloadButton, exportButton]) item.hidden = true;
-        panel.append(classesButton, progressButton, profileButton, saveButton, logoutButton, message, retryButton, reloadButton, exportButton);
+        identityLine=ui.createElement('p');identityLine.className='account-menu-identity';identityLine.dataset.authenticated='';identityLine.hidden=true;
+        panel.append(classesButton, progressButton, profileButton, saveButton, logoutButton, identityLine, message, retryButton, reloadButton, exportButton);
         ui.body.appendChild(panel);
         const headerActions = ui.querySelector("[data-account-actions], .account-toolbar");
         headerActions.appendChild(loginButton);
@@ -636,6 +645,7 @@
         }
     }, true);
     function renderIdentity() {
+        if(identityLine){identityLine.hidden=!session?.profile;identityLine.textContent=session?.profile ? `${session.profile.name} · Klasse ${session.profile.className} · ${session.profile.email}` : '';}
         iconButton(loginButton, "person", session?.profile ? "Benutzermenü" : "Anmelden", Boolean(session?.profile));
         logoutButton.hidden = !session?.profile;
         panel.querySelectorAll("[data-authenticated]").forEach(item => { item.hidden = !session?.profile; });
@@ -687,9 +697,7 @@
                             controls.subscribe(storageStatus);
                         }
                         logoutButton.hidden = false;
-                        const identity = session.profile.name && session.profile.className
-                            ? `${session.profile.name} · Klasse ${session.profile.className} · ${session.profile.email}` : session.profile.email;
-                        show(`${identity} · ${config.saveMode === "completion-only" ? "Nur erfolgreiche Abschlüsse werden zentral gesichert." : "Ausgeführter Code und Abschlüsse werden zentral gesichert."}`);
+                        show(config.saveMode === "completion-only" ? "Nur erfolgreiche Abschlüsse werden zentral gesichert." : "Ausgeführter Code und Abschlüsse werden zentral gesichert.");
                     }
                     renderIdentity();
                     if (invalidated) throw remote.error("PROFILE_CHANGED");

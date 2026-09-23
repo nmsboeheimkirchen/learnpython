@@ -57,6 +57,7 @@ export async function registrationTests({ t, fixture, env, phpCall, BrowserSessi
         assert.equal(existing.users,0); assert.equal(existing.jobs,1);
         assert.equal((await s.request('login',{email:body.email,password})).status,401);
         const sent = invoke('mail-test'); assert.equal(sent.messages.length,1);
+        assert.ok(sent.messages[0].body.startsWith(`Hallo ${body.name}!\n\n`));
         const token = sent.messages[0].body.match(/#verify=([a-f0-9]{64})/)[1];
         assert.notEqual(existing.pending.token_hash,token);
         const device = await session(workerUrl);

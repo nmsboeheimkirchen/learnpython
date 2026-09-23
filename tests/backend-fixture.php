@@ -139,6 +139,13 @@ switch ($argv[1] ?? '') {
     case 'course':
         echo json_encode(AgentPy\course(), JSON_THROW_ON_ERROR);
         break;
+    case 'deleted-user-counts':
+        $counts=[];
+        foreach (['users'=>'id','learning_states'=>'user_id','write_receipts'=>'user_id','auth_epochs'=>'user_id','password_resets'=>'user_id','recovery_mail_jobs'=>'user_id'] as $table=>$field) {
+            $q=$db->prepare("SELECT COUNT(*) FROM $table WHERE $field=?");$q->execute([$input['id']]);
+            $counts[$table]=(int)$q->fetchColumn();
+        }
+        echo json_encode($counts);break;
     case 'inspect':
         $query = $db->prepare('SELECT password_hash FROM users WHERE id = ?');
         $query->execute([$input['id']]);

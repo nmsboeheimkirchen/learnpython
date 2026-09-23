@@ -60,5 +60,65 @@ export async function teacherTests({t,fixture,env,phpCall,BrowserSession,url,wor
             assert.equal((await teacher.request('teacher-renew-code',{classId:room.id})).status,200);
             assert.equal((await teacher.request('teacher-create-class',{name:'Too many'})).data.error.code,'CLASS_LIMIT_REACHED');
         });
+        await t.test('deletion is scoped, confirmed and cascades only the selected classroom data',async()=>{
+            const roster=(await teacher.request('teacher-class',{classId:room.id})).data;
+            const member=roster.members[0],joinCode=roster.class.invitation.code;
+            const remove={classId:room.id,memberId:member.id,kind:'user'};
+            const confirmed=new BrowserSession(url);await confirmed.login(member.email);
+            const signup=new BrowserSession(url);await signup.request('session');
+            assert.equal((await signup.request('check-invitation',{code:joinCode})).status,200);
+            const email=`pending-delete-${randomUUID()}@example.test`;
+            assert.equal((await signup.request('register',{name:'Pending',email,password})).status,202);
+            const pending=(await teacher.request('teacher-class',{classId:room.id})).data.members.find(m=>m.status==='pending');
+            assert.match(pending.id,/^[a-f0-9]{32}$/);
+            for(const session of [guest,pupil,other]){
+                assert.ok([401,403,404].includes((await session.request('teacher-delete-member',remove)).status));
+                assert.ok([401,403,404].includes((await session.request('teacher-delete-class',{classId:room.id,confirmation:'LÖSCHEN'})).status));
+            }
+            assert.equal((await teacher.request('teacher-delete-member',remove,{headers:{'X-CSRF-Token':'bad'}})).status,403);
+            assert.equal((await teacher.request('teacher-delete-class',{classId:room.id,confirmation:'LÖSCHEN'},{headers:{Origin:'https://evil.example'}})).status,403);
+            assert.equal((await teacher.request('teacher-delete-class',{classId:room.id,confirmation:'löschen'})).status,422);
+            assert.equal((await teacher.request('teacher-delete-member',{...remove,memberId:b.id})).status,404);
+            assert.equal((await teacher.request('teacher-class',{classId:room.id})).data.class.members,1);
+            // Deleting one open registration cancels its mail without touching the confirmed pupil.
+            assert.equal((await teacher.request('teacher-delete-member',{classId:room.id,memberId:pending.id,kind:'pending'})).status,200);
+            assert.equal(JSON.parse(fixture('registration-inspect',{email})).pending,false);
+            const mails=JSON.parse(fixture('mail-test',{count:100,perMinute:100,perDay:10000})).messages;
+            assert.ok(!mails.some(m=>m.to===email));
+            fixture('teacher-grant',{id:member.id,limit:1});
+            assert.equal((await teacher.request('teacher-delete-member',remove)).status,404,'teachers are protected even in an owned class');
+            assert.equal((await teacher.request('teacher-delete-class',{classId:room.id,confirmation:'LÖSCHEN'})).data.error.code,'PROTECTED_TEACHER_ACCOUNT');
+            assert.equal((await teacher.request('teacher-class',{classId:room.id})).data.class.id,room.id);
+            assert.equal(JSON.parse(fixture('deleted-user-counts',{id:member.id})).users,1,'protected teacher account survived');
+            fixture('teacher-clean',{id:member.id});
+            await signup.request('forgot-password',{email:member.email});
+            assert.equal((await teacher.request('teacher-delete-member',remove)).status,200);
+            assert.equal((await confirmed.request('state')).status,401);
+            const remains=JSON.parse(fixture('deleted-user-counts',{id:member.id}));
+            assert.ok(Object.values(remains).every(count=>count===0),JSON.stringify(remains));
+            assert.equal((await teacher.request('teacher-delete-member',remove)).status,404);
+            // Populate again so class deletion proves its own cascades, not just an empty class.
+            const secondEmail=`class-delete-${randomUUID()}@example.test`;
+            await signup.request('check-invitation',{code:joinCode});
+            assert.equal((await signup.request('register',{name:'Delete with class',email:secondEmail,password})).status,202);
+            fixture('mail-clear-attempts');
+            const mail=JSON.parse(fixture('mail-test',{count:100,perMinute:100,perDay:10000})).messages.find(m=>m.to===secondEmail);
+            const token=mail.body.match(/#verify=([a-f0-9]{64})/)[1];
+            assert.equal((await signup.request('verify-email',{token})).status,200);await signup.login(secondEmail);
+            const secondId=signup.profile.id;ids.push(secondId);
+            await signup.write({type:'complete',levelId:'mission1_level1',code:'CLASS-DELETE-FIXTURE'},0);
+            await guest.request('check-invitation',{code:joinCode});
+            const pendingEmail=`class-pending-${randomUUID()}@example.test`;
+            assert.equal((await guest.request('register',{name:'Pending with class',email:pendingEmail,password})).status,202);
+            const result=await teacher.request('teacher-delete-class',{classId:room.id,confirmation:'LÖSCHEN'});
+            assert.equal(result.status,200,JSON.stringify(result.data));assert.equal(result.data.classes.length,1);
+            assert.equal(JSON.parse(fixture('registration-inspect',{email:pendingEmail})).pending,false);
+            assert.equal((await signup.request('state')).status,401);
+            assert.ok(Object.values(JSON.parse(fixture('deleted-user-counts',{id:secondId}))).every(n=>n===0));
+            assert.equal((await teacher.request('teacher-class',{classId:room.id})).status,404);
+            await guest.request('session');assert.equal((await guest.request('check-invitation',{code:joinCode})).status,422);
+            assert.equal((await other.request('teacher-classes')).data.classes.length,1);
+            assert.equal((await teacher.request('teacher-create-class',{name:'Freed slot'})).status,200);
+        });
     }finally{fixture('teacher-clean',{id:a.id});fixture('teacher-clean',{id:b.id});}
 }

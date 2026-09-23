@@ -510,6 +510,24 @@ test("clicking Code Ausführen stores the attempted code without marking the lev
     assert.equal(restored.storage.has("completedLevelCode_v1"), false);
 });
 
+test("Mission 2 level 3 requires both real cable tests and resets evidence on code changes", async () => {
+    const {context,elements,storage}=createRunnerContext();
+    let code='kabel = input("Welches Kabel? ")\nif kabel == "rot":\n    print("Entschärft!")\nelif kabel == "blau":\n    print("Nichts passiert.")\nelse:\n    print("KABUMM!")';
+    let input='blau',output='Nichts passiert.';
+    context.runit=callback=>callback(code,output,{inputValues:[input]});
+    vm.runInContext('setupLevel("mission2_level3")',context);
+    const run=elements.get('run-btn');
+    run.dispatch('click');await Promise.resolve();
+    assert.equal(storage.has('completedLevelCode_v1'),false);
+    assert.match(elements.get('status-text').textContent,/anderen Farbe/);
+    code+='\n# new program';input='grün';output='KABUMM!';
+    run.dispatch('click');await Promise.resolve();
+    assert.equal(storage.has('completedLevelCode_v1'),false,'old blue run cannot certify a new program');
+    input='blau';output='Nichts passiert.';
+    run.dispatch('click');await Promise.resolve();
+    assert.equal(JSON.parse(storage.get('completedLevelCode_v1')).mission2_level3,code);
+});
+
 test("Mission 3 level 2 keeps both required guesses across consecutive runs", async () => {
     const { context, elements, storage, timers } = createRunnerContext();
     const code = [
@@ -846,7 +864,8 @@ const validSolutions = [
     {
         level: "mission2_level3",
         code: 'kabel = input("Welches Kabel? ")\nif kabel == "rot":\n    print("Entschärft!")\nelif kabel == "blau":\n    print("Nichts passiert.")\nelse:\n    print("KABUMM!")',
-        output: "Welches Kabel? blau\nNichts passiert.\n"
+        output: "Welches Kabel? blau\nNichts passiert.\n",
+        evidence: { inputValues: ["blau"], sawExplosion: true }
     },
     {
         level: "mission3_level1",
@@ -1636,7 +1655,7 @@ test("Missions 1 to 3 use clear code and result labels without legacy wording", 
         );
         assert.doesNotMatch(
             html,
-            /Python Terminal|Bereit für deine Befehle|schwarzen? Fenster|Drohnencode/i,
+            /Python Terminal|schwarzen? Fenster|Drohnencode/i,
             `${page} enthält noch eine alte Bezeichnung`
         );
     }
@@ -2189,21 +2208,21 @@ test("the first helicopter level uses a runtime signal and one replace-based acc
     assert.doesNotMatch(html, /C\?O\?D\?E|Auch für Umlaute|verschwindet das alte Zeichen/);
     assert.match(html, /ort = "Böheimkirchen"[\s\S]*ort = ort\.replace\("ö", "oe"\)/);
     assert.match(html, /Dasselbe Werkzeug kann Texte für Dateinamen, URLs oder ältere Systeme anpassen\./);
-    assert.match(html, /256 zufällige Passwortzeichen/);
+    assert.match(html, /Passphrase mit 256 Zeichen/);
     assert.match(html, /255 <code>\?<\/code>/);
-    assert.match(html, /Sonderzeichen/);
+    assert.match(html, /geheime Nachricht lesen/);
     assert.doesNotMatch(html, /Das Passwort darf nicht im Klartext/i);
     assert.doesNotMatch(learnerFacingSource, /seru#7/i);
     assert.match(core, /const PASSWORD_LENGTH = 256/);
-    assert.match(core, /createRandomPassword/);
-    assert.match(core, /getRandomValues/);
+    assert.match(core, /createPassphrase/);
+    assert.doesNotMatch(core, /getRandomValues/);
     assert.match(core, /\[\.\.\.password\]\.join\(NOISE_CHARACTER\)/);
-    assert.match(runtime, /const missionPassword = core\.createRandomPassword\(\)/);
+    assert.match(runtime, /const missionPassword = core\.createPassphrase\(\)/);
     assert.match(runtime, /state = core\.createState\(missionPassword\)/);
     assert.doesNotMatch(runtime, /issuedSignalTokens|derivedPasswordTokens|installReplaceObserver/);
     assert.doesNotMatch(core, /TRANSFORM_REQUIRED|trustedTransform/);
     assert.doesNotMatch(runtime, /HINWEIS: Entferne alle \? mit replace/);
-    assert.match(runtime, /if \(passed\) \{[\s\S]*revealResult\(\);[\s\S]*\} else \{/);
+    assert.doesNotMatch(runtime, /scrollIntoView|revealResult/);
     assert.doesNotMatch(runtime, /lastResult = Object\.freeze\(\{ passed: false, error:[\s\S]{0,220}revealResult\(\)/);
     assert.match(runtime, /window\.completeLevelProgress\?\.\([\s\S]*"helikopter_flucht_level1"[\s\S]*\["link-helicopter-level2"\][\s\S]*\)/);
     assert.doesNotMatch(runtime, /window\.unlockLevel\?\./);

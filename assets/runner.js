@@ -394,7 +394,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const nextLevelButton = document.getElementById("next-level-btn");
     const nextLevelHref = nextLevelButton?.getAttribute?.("href");
     if (nextLevelHref) nextLevelButton.href = canonicalPageHref(nextLevelHref);
-    if(window.location.hash === '#l') {
+    if(window.location.hash === '#l' && document.body.dataset?.trainingLevel !== 'agent_training_level3') {
         document.querySelectorAll('.next-level-btn').forEach(btn => btn.style.display = 'block');
     }
 
@@ -761,16 +761,23 @@ const LEVEL_VALIDATORS = {
             { passed: output.includes("KABUMM"), message: "Gib im else-Zweig ‚KABUMM!‘ aus." }
         ]);
     },
-    mission2_level3({ statements, output }) {
+    mission2_level3({ statements, output, evidence = {} }) {
         const blueBranch = ["elif", "kabel", "==", stringToken("blau"), ":"];
-        return firstFailedRequirement([
+        const inputs = Array.isArray(evidence.inputValues) ? evidence.inputValues.map(String) : [];
+        const nextEvidence = {
+            sawBlue: Boolean(evidence.sawBlue || (inputs.includes('blau') && output.includes('Nichts passiert.'))),
+            sawExplosion: Boolean(evidence.sawExplosion || (inputs.some(value => value !== 'rot' && value !== 'blau') && output.includes('KABUMM!')))
+        };
+        const result = firstFailedRequirement([
             { passed: Boolean(findStatement(statements, ["kabel", "=", "input", "("])), message: "Lies die Kabelwahl mit input(...) in kabel ein." },
             { passed: Boolean(findStatement(statements, ["if", "kabel", "==", stringToken("rot"), ":"])), message: "Prüfe zuerst das rote Kabel mit if." },
             { passed: Boolean(findStatement(statements, blueBranch)), message: "Prüfe das blaue Kabel mit elif." },
             { passed: hasNestedStatement(statements, blueBranch, ["print", "(", stringToken("Nichts passiert."), ")"]), message: "Gib im blauen elif-Zweig ‚Nichts passiert.‘ aus." },
-            { passed: Boolean(findStatement(statements, ["else", ":"])), message: "Fange alle übrigen Kabel mit else ab." },
-            { passed: output.includes("Nichts passiert."), message: "Teste das Programm mit der Eingabe blau, bis ‚Nichts passiert.‘ erscheint." }
+            { passed: hasNestedStatement(statements, ["else", ":"], ["print", "(", stringToken("KABUMM!"), ")"]), message: "Gib im else-Zweig für alle übrigen Kabel ‚KABUMM!‘ aus." },
+            { passed: nextEvidence.sawBlue, message: "Teste dein Programm mit blau: ‚Nichts passiert.‘" },
+            { passed: nextEvidence.sawExplosion, message: "Teste denselben Code auch mit einer anderen Farbe, z. B. grün: ‚KABUMM!‘" }
         ]);
+        return { ...result, evidence: nextEvidence };
     },
     mission3_level1({ statements, output, evidence = {} }) {
         const whilePattern = ["while", "eingabe", "!=", stringToken("123"), ":"];
@@ -1168,6 +1175,7 @@ function setupLevel(levelId) {
     if (!runButton || !outcome) return;
     let successPopupTimeout = null;
     let validationEvidence = {};
+    let evidenceCode = null;
 
     const restoreCode = async () => {
         if (window.AgentAccountConfig?.enabled && !(await window.AgentLearningDataReady)) return;
@@ -1186,6 +1194,9 @@ function setupLevel(levelId) {
             saveAttemptedLevelCode(levelId, attemptedCode);
         }
         runit(async (code, output, executionEvidence = {}) => {
+            // Both cable branches must be exercised by the same submitted program.
+            if (levelId === 'mission2_level3' && evidenceCode !== code) validationEvidence = {};
+            evidenceCode = code;
             const result = validateLevelSolution(levelId, code, output, {
                 ...validationEvidence,
                 ...executionEvidence
