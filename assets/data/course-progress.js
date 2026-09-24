@@ -1,6 +1,6 @@
 // Versioned display policy; counts successful solutions, never views or skip unlocks.
 // Future course phases are not counted until they become actual available levels.
-export const progressVersion = "2026-09-weighted";
+export const progressVersion = "2026-09-escape-weights";
 export const groups = [
     ["Mission 1", "01", 15, ["mission1_level1", "mission1_level2", "mission1_level3"]],
     ["Mission 2", "02", 15, ["mission2_level1", "mission2_level2"]],
@@ -12,8 +12,9 @@ export const groups = [
     ["Flucht", "H", 15, ["helikopter_flucht_level1", "helikopter_flucht_level2"]]
 ];
 // Display weights only: no saved solutions or unlocks are changed by this policy.
-// The two currently available escape levels cover H's 15%; revisit when H-3/H-4 exist.
-export const levelWeights = [[5,5,5],[7.5,7.5],[5,5,5],[5,5,5],[3,3,4],[3.75,3.75,3.75,3.75],[5,10],[10,5]];
+// Requested H-1/H-2/H-3/H-4 weights: 4/4/4/3 (15 total, full course total 100).
+// H-3/H-4 do not exist yet: their 7 points are reserved, never awarded or invented.
+export const levelWeights = [[5,5,5],[7.5,7.5],[5,5,5],[5,5,5],[3,3,4],[3.75,3.75,3.75,3.75],[5,10],[4,4]];
 export const secondProjectBonus = 20;
 const unlocks = [
     ['link-level1','link-level2','link-level3'],['link-m2-l1','link-m2-l2'],
@@ -50,7 +51,7 @@ export function calculateProgress(completed = {}, unlockedIds = []) {
         optionalCompleted:done('mission2_level3')
     };
 }
-export const progressLegend = '* bedeutet optional: 02-3 und der zweite Projektpfad. Grün = geschafft, Orange = optional und offen. Bonus ersetzt keine Pflichtaufgabe.';
+export const progressLegend = '* kennzeichnet gesperrte oder optionale Levels. Rot = offen, Grün = geschafft; optionale Levels sind gedämpft orange-rot bzw. blaugrün. Ohne Link = noch gesperrt. Bonus ersetzt keine Pflichtaufgabe.';
 export const teacherProgressGuide = [
     ['Mission 1','15 %','15 %','5 % je Level','—'],
     ['Mission 2','15 % + 5 %*','30 % + 5 %*','7,5 % je Pflichtlevel; 02-3: 5 %*','NG'],
@@ -58,7 +59,7 @@ export const teacherProgressGuide = [
     ['Mission 4','15 %','60 % + 5 %*','5 % je Level','G / B'],
     ['Agententraining','10 %','70 % + 5 %*','AG-1: 3 %, AG-2: 3 %, AG-3: 4 %','B'],
     ['Projekt: Pixelmuseum oder PICO','15 %','85 % + 5 %*','Museum: Briefing 5 %, Finale 10 %; PICO: 3,75 % je Level','Gut / SG'],
-    ['Helikopterflucht','15 %','100 % + 5 %*','H-1: 10 %, H-2: 5 %','SG']
+    ['Helikopterflucht','15 %','100 % + 5 %*','4 % + 4 % + 4 % + 3 %; H-3/H-4 (7 %) noch nicht verfügbar','SG']
 ];
 
 // Recommended continuation, not a claim about the last chronological visit.

@@ -32,7 +32,7 @@ export async function teacherTests({t,fixture,env,phpCall,BrowserSession,url,wor
         await t.test('new class code joins the right class; pending and confirmed roster never includes tokens or source code',async()=>{
             const signup=new BrowserSession(url);await signup.request('session');
             assert.equal((await signup.request('check-invitation',{code})).data.className,room.name);
-            const email=`teacher-join-${randomUUID()}@example.test`;
+            const email=`teacher-join-${randomUUID()}@external.test`;
             assert.equal((await signup.request('register',{name:'Ada <script>',email,password})).status,202);
             let r=await teacher.request('teacher-class',{classId:room.id});assert.equal(r.data.class.pending,1);assert.equal(r.data.members[0].completedIds,null);
             // Code naturally expires after reservation; confirmation retains its own bounded lifetime.
@@ -67,7 +67,7 @@ export async function teacherTests({t,fixture,env,phpCall,BrowserSession,url,wor
             const confirmed=new BrowserSession(url);await confirmed.login(member.email);
             const signup=new BrowserSession(url);await signup.request('session');
             assert.equal((await signup.request('check-invitation',{code:joinCode})).status,200);
-            const email=`pending-delete-${randomUUID()}@example.test`;
+            const email=`pending-delete-${randomUUID()}@external.test`;
             assert.equal((await signup.request('register',{name:'Pending',email,password})).status,202);
             const pending=(await teacher.request('teacher-class',{classId:room.id})).data.members.find(m=>m.status==='pending');
             assert.match(pending.id,/^[a-f0-9]{32}$/);
@@ -98,7 +98,7 @@ export async function teacherTests({t,fixture,env,phpCall,BrowserSession,url,wor
             assert.ok(Object.values(remains).every(count=>count===0),JSON.stringify(remains));
             assert.equal((await teacher.request('teacher-delete-member',remove)).status,404);
             // Populate again so class deletion proves its own cascades, not just an empty class.
-            const secondEmail=`class-delete-${randomUUID()}@example.test`;
+            const secondEmail=`class-delete-${randomUUID()}@external.test`;
             await signup.request('check-invitation',{code:joinCode});
             assert.equal((await signup.request('register',{name:'Delete with class',email:secondEmail,password})).status,202);
             fixture('mail-clear-attempts');
@@ -108,7 +108,7 @@ export async function teacherTests({t,fixture,env,phpCall,BrowserSession,url,wor
             const secondId=signup.profile.id;ids.push(secondId);
             await signup.write({type:'complete',levelId:'mission1_level1',code:'CLASS-DELETE-FIXTURE'},0);
             await guest.request('check-invitation',{code:joinCode});
-            const pendingEmail=`class-pending-${randomUUID()}@example.test`;
+            const pendingEmail=`class-pending-${randomUUID()}@external.test`;
             assert.equal((await guest.request('register',{name:'Pending with class',email:pendingEmail,password})).status,202);
             const result=await teacher.request('teacher-delete-class',{classId:room.id,confirmation:'LÖSCHEN'});
             assert.equal(result.status,200,JSON.stringify(result.data));assert.equal(result.data.classes.length,1);

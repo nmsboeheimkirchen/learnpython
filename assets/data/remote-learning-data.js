@@ -20,6 +20,8 @@
         TEACHER_REQUIRED: "Diese Ansicht ist nur für freigeschaltete Lehrkräfte verfügbar.",
         CLASS_NOT_FOUND: "Diese Klasse ist nicht verfügbar oder gehört nicht zu deinen Klassen.",
         MEMBER_NOT_FOUND: "Dieses Schülerkonto ist nicht mehr in dieser Klasse. Bitte aktualisiere die Ansicht.",
+        MEMBER_CHANGED: "Die Adresse wurde inzwischen geändert. Bitte aktualisiere die Klassenansicht.",
+        EMAIL_UNAVAILABLE: "Diese Adresse wird bereits verwendet oder ist für eine Anmeldung reserviert.",
         DELETE_CONFIRMATION_REQUIRED: "Bitte tippe zur Bestätigung genau LÖSCHEN ein.",
         PROTECTED_TEACHER_ACCOUNT: "Diese Klasse enthält ein geschütztes Lehrer:innenkonto und kann nicht gelöscht werden.",
         CLASS_LIMIT_REACHED: "Du hast dein Klassenlimit erreicht.",

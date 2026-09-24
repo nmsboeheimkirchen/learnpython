@@ -2,10 +2,10 @@
     "use strict";
 
     const NOISE_CHARACTER = "?";
-    const PASSWORD_LENGTH = 256;
     const SPECIAL_CHARACTERS = "!#$%&()*+,-./:;<=>@[]^_{|}~";
     // Public teaching material, not a credential. Decoding reveals a readable reward.
-    const PASSPHRASE = "Um Mitternacht tanzen 17 Gurken im Raumanzug auf dem Schuldach. Ein pinker Pinguin serviert dem Helikopter warmes Eis, waehrend die Direktorin mit einem Toaster Schach spielt. Agent, bring die singende Socke sicher heim und vergiss den Wackelpudding nicht!";
+    const PASSPHRASE = "Ein Pinguin serviert dem Helikopter warmes Eis, waehrend die Seriuaner mit einem Toaster Schach spielen. Bring die singende Socke sicher heim.";
+    const PASSWORD_LENGTH = PASSPHRASE.length;
     const FAILURES = Object.freeze({
         RECEIVE_REQUIRED: "RECEIVE_REQUIRED",
         WRONG_PASSWORD: "WRONG_PASSWORD"

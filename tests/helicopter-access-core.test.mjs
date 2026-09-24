@@ -26,7 +26,7 @@ function loadCore(randomSource = deterministicCrypto()) {
     return window.HelicopterAccessCore;
 }
 
-test("the helicopter computer reveals a fixed readable 256-character passphrase", () => {
+test("the helicopter computer reveals a fixed readable 142-character passphrase", () => {
     const source = readFileSync(new URL("../assets/helicopter-access-core.js", import.meta.url), "utf8");
     const core = loadCore();
     const password = core.createPassphrase();
@@ -34,25 +34,24 @@ test("the helicopter computer reveals a fixed readable 256-character passphrase"
     assert.doesNotMatch(source, /seru#7/i);
     assert.doesNotMatch(source, /SIGNAL_PARTS/);
     assert.doesNotMatch(source, /getRandomValues/);
-    assert.match(password, /17 Gurken im Raumanzug/);
+    assert.equal(password, "Ein Pinguin serviert dem Helikopter warmes Eis, waehrend die Seriuaner mit einem Toaster Schach spielen. Bring die singende Socke sicher heim.");
     assert.doesNotMatch(source, /Math\.random/);
-    assert.equal(password.length, 256);
+    assert.equal(password.length, 142);
     assert.doesNotMatch(password, /\?/);
     assert.match(password, /[a-z]/);
     assert.match(password, /[A-Z]/);
-    assert.match(password, /[0-9]/);
     assert.ok([...password].some(character => core.SPECIAL_CHARACTERS.includes(character)));
 });
 
-test("the signal alternates 256 password characters with exactly 255 question marks", () => {
+test("the signal alternates 142 password characters with exactly 141 question marks", () => {
     const core = loadCore();
     const password = core.createPassphrase();
     const state = core.createState(password);
     const signal = state.receive();
     const decoded = signal.replaceAll(core.NOISE_CHARACTER, "");
 
-    assert.equal(signal.length, 511);
-    assert.equal([...signal].filter(character => character === core.NOISE_CHARACTER).length, 255);
+    assert.equal(signal.length, 283);
+    assert.equal([...signal].filter(character => character === core.NOISE_CHARACTER).length, 141);
     assert.equal(signal, [...password].join(core.NOISE_CHARACTER));
     assert.equal(decoded, password);
     assert.equal(state.snapshot().receiveCount, 1);

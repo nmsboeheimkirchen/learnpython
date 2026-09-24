@@ -349,7 +349,7 @@ function applyUnlocks() {
         learningData.grantUnlocks(unlockedLevels);
     }
 
-    if (window.location.hash === "#l") {
+    if (window.location.hash.toLowerCase() === "#l") {
         deviceSettings?.enableTeacherMode();
     }
 
@@ -394,7 +394,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const nextLevelButton = document.getElementById("next-level-btn");
     const nextLevelHref = nextLevelButton?.getAttribute?.("href");
     if (nextLevelHref) nextLevelButton.href = canonicalPageHref(nextLevelHref);
-    if(window.location.hash === '#l' && document.body.dataset?.trainingLevel !== 'agent_training_level3') {
+    if(deviceSettings?.isTeacherMode() && document.body.dataset?.trainingLevel !== 'agent_training_level3') {
         document.querySelectorAll('.next-level-btn').forEach(btn => btn.style.display = 'block');
     }
 
@@ -1136,7 +1136,16 @@ function createGuestLearningData() {
         context: { kind: "guest", profileId: "guest-local" },
         ...stores
     });
-    return { learningData: guest, deviceSettings: core.createDeviceSettings(stores.settingsStore) };
+    // Deliberately tab-session storage, never the persistent guest learning store.
+    const teacherKey = "agentpy-guest-teacher";
+    let teacher = false;
+    try { teacher = sessionStorage.getItem(teacherKey) === "true"; } catch (_) {}
+    const deviceSettings = Object.freeze({
+        isTeacherMode: () => teacher,
+        enableTeacherMode() { teacher = true; try { sessionStorage.setItem(teacherKey, "true"); } catch (_) {} return true; },
+        clear() { return stores.settingsStore.clear().ok; }
+    });
+    return { learningData: guest, deviceSettings };
 }
 
 function attachLearningData(stores) {
@@ -1574,24 +1583,14 @@ function triggerSuccess(isFinale = false, successMessage = "", options = {}) {
     }
 }
 
-// Fügt Lehrer-Cheat-Buttons ein, wenn ein #l am Ende der URL steht
-document.addEventListener("DOMContentLoaded", function() {
+// Identity/guest session decides availability, not a URL fragment on a pupil account.
+document.addEventListener("DOMContentLoaded", async () => {
+    if (window.AgentAccountConfig?.enabled && !(await window.AgentLearningDataReady)) return;
     if (window.location.hash.toLowerCase() === "#l") {
-        document.querySelectorAll(".test-btn").forEach(btn => {
-            btn.style.display = "block";
-        });
-        
-        // Fügt zu allen Level-Links automatisch das #l hinzu, damit man im Lehrer-Modus bleibt
-        document.querySelectorAll(".next-level-btn").forEach(btn => {
-            const currentOnclick = btn.getAttribute("onclick");
-            if (currentOnclick && currentOnclick.includes("window.location.href=")) {
-                const newOnclick = currentOnclick.replace("'", "#l'"); // e.g. 'level2.html' -> 'level2.html#l'
-                // Fallback falls doppelte anführungszeichen verwendet wurden
-                const finalOnclick = newOnclick.replace('"', '#l"');
-                btn.setAttribute("onclick", currentOnclick.replace(/href='([^']+)'/, "href='$1#l'").replace(/href="([^"]+)"/, 'href="$1#l"'));
-            }
-        });
+        deviceSettings?.enableTeacherMode();
+        history.replaceState(null, "", location.pathname + location.search);
+    }
+    if (deviceSettings?.isTeacherMode()) {
+        document.querySelectorAll(".test-btn").forEach(btn => { btn.style.display = "block"; });
     }
 });
-
-

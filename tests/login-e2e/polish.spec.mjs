@@ -32,6 +32,8 @@ test('home resumes guest state, keeps guest prompt and never substitutes it for 
         const state=await fetch('/api/index.php?action=state',{headers:{'X-Agentpy-Profile':session.profile.id}}).then(r=>r.json());
         const result=await fetch('/api/index.php?action=write',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':session.csrfToken,'X-Agentpy-Profile':session.profile.id},body:JSON.stringify({expectedRevision:state.state.revision,operationId:crypto.randomUUID(),command:{type:'complete',levelId:'mission1_level1',code:'print(1)'}})});
         if(!result.ok)throw Error('Fixture write failed');
+        const bonus=await fetch('/api/index.php?action=write',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':session.csrfToken,'X-Agentpy-Profile':session.profile.id},body:JSON.stringify({expectedRevision:state.state.revision+1,operationId:crypto.randomUUID(),command:{type:'complete',levelId:'mission2_level3',code:'# optional solution'}})});
+        if(!bonus.ok)throw Error('Optional fixture write failed');
     });
     await page.reload();await expect(lesson(page).locator('[data-next-target]')).toHaveText('System Access · 01-2');
     await page.screenshot({path:test.info().outputPath('home-resume.png')});
@@ -40,9 +42,15 @@ test('home resumes guest state, keeps guest prompt and never substitutes it for 
     await expect(page.locator('.account-progress-done').first()).toContainText('01-1');
     await expect(page.locator('.account-progress-pending').first()).toContainText('01-2');
     await page.screenshot({path:test.info().outputPath('progress-overview.png')});
-    await expect(page.getByRole('link',{name:'01-2: öffnen',exact:true})).toBeVisible();
+    await expect(page.getByRole('link',{name:'01-2: öffnen',exact:true})).toHaveText('01-2 · offen');
+    await expect(page.getByRole('link',{name:'01-1: abgeschlossen',exact:true})).toHaveText('01-1 ✓');
+    await expect(page.locator('.account-progress-list [aria-label="01-3: gesperrt"]')).toHaveText('01-3*');
+    await expect(page.locator('.account-progress-list [aria-label="P-1: optional: gesperrt"]')).toHaveText('P-1*');
+    await expect(page.locator('.account-progress-list [aria-label="P-1: optional: gesperrt"]')).toHaveCSS('color','rgb(216, 149, 135)');
+    await expect(page.getByRole('link',{name:'02-3: optional: abgeschlossen',exact:true})).toHaveText('02-3* ✓');
+    await expect(page.getByRole('link',{name:'02-3: optional: abgeschlossen',exact:true})).toHaveCSS('color','rgb(120, 215, 202)');
     await expect(page.getByRole('link',{name:/01-3/})).toHaveCount(0);
-    await expect(page.getByRole('dialog')).toContainText('* bedeutet optional');
+    await expect(page.getByRole('dialog')).toContainText('* kennzeichnet gesperrte oder optionale Levels');
     await page.getByRole('link',{name:'01-2: öffnen',exact:true}).click();
     await expect(lesson(page).locator('h1')).toContainText('Level 2: Pause');
     await page.getByRole('button',{name:'Benutzermenü'}).click();

@@ -51,11 +51,12 @@ window.TeacherSolutions = (() => {
     }
 
     function teacherModeActive() {
-        if (window.location.hash.toLowerCase() === "#l") return true;
         return window.AgentDeviceSettings?.isTeacherMode?.() === true;
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
+    document.addEventListener("DOMContentLoaded", async () => {
+        if (window.AgentAccountConfig?.enabled && !(await window.AgentLearningDataReady)) return;
+        if (window.location.hash.toLowerCase() === "#l") window.AgentDeviceSettings?.enableTeacherMode();
         if (!teacherModeActive()) return;
         document.querySelectorAll("[data-teacher-solution]").forEach(button => {
             button.style.display = "block";

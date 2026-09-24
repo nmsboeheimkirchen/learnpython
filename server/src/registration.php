@@ -82,12 +82,21 @@ function lockRegistrationClass(\PDO $db, string $id): void
 
 function occupiedSeats(\PDO $db, string $id, int $now): int
 {
-    $q = $db->prepare('SELECT COUNT(*) FROM users WHERE class_id=?' . (teacherSchema($db) ? ' AND NOT EXISTS (SELECT 1 FROM teachers WHERE teachers.user_id=users.id)' : ''));
-    $q->execute([$id]);
+    $q = $db->prepare('SELECT COUNT(*) FROM users u WHERE '.classMemberCondition($db) . (teacherSchema($db) ? ' AND NOT EXISTS (SELECT 1 FROM teachers WHERE teachers.user_id=u.id)' : ''));
+    $q->execute(classMemberParams($db,$id));
     $count = (int) $q->fetchColumn();
     $q = $db->prepare('SELECT COUNT(*) FROM pending_registrations WHERE class_id=? AND expires_at>?');
     $q->execute([$id, $now]);
     return $count + (int) $q->fetchColumn();
+}
+
+function classroomDomainMatches(\PDO $db, string $classId, string $email): bool
+{
+    if(!membershipSchema($db))return false;
+    $q=$db->prepare('SELECT u.email FROM teacher_classes t JOIN users u ON u.id=t.teacher_id WHERE t.class_id=? AND u.active=1');
+    $q->execute([$classId]);$teacherEmail=$q->fetchColumn();
+    // Exact normalized domain match, never substring/suffix; still requires valid class grant.
+    return is_string($teacherEmail) && strtolower(substr(strrchr($teacherEmail,'@'),1))===substr(strrchr($email,'@'),1);
 }
 
 function registerStudent(\PDO $db, array $config, array $body): array
@@ -102,22 +111,30 @@ function registerStudent(\PDO $db, array $config, array $body): array
     try { $name = accountLabel($body['name']); } catch (\RuntimeException) { throw new ApiError(422, 'INVALID_NAME'); }
     validateNewPassword($body['password']);
     $passwordHash = password_hash($body['password'], PASSWORD_BCRYPT, ['cost' => 12]);
+    $immediate = false;
     $db->beginTransaction();
     try {
         lockRegistrationClass($db, $grant['classId']);
         $info = invitation($db, $grant['hash'], $now);
         if (!$info || $info['class_id'] !== $grant['classId']) throw new ApiError(403, 'CLASS_CODE_REQUIRED');
+        $immediate = classroomDomainMatches($db,$info['class_id'],$email);
         $db->prepare('DELETE FROM pending_registrations WHERE expires_at<=?')->execute([$now]);
         $existing = $db->prepare('SELECT id FROM users WHERE email=? UNION ALL SELECT id FROM pending_registrations WHERE email=?');
         $existing->execute([$email, $email]);
         if (!$existing->fetchColumn()) {
             if (occupiedSeats($db, $info['class_id'], $now) >= (int) $info['capacity']) throw new ApiError(409, 'CLASS_FULL');
             $id = bin2hex(random_bytes(16));
+            if ($immediate) {
+                $db->prepare('INSERT INTO users (id,email,password_hash,display_name,class_id,created_at) VALUES (?,?,?,?,?,?)')->execute([$id,$email,$passwordHash,$name,$info['class_id'],$now]);
+                $db->prepare('INSERT INTO learning_states (user_id,revision,document,updated_at) VALUES (?,0,?,?)')->execute([$id,json_encode(emptyState(),JSON_THROW_ON_ERROR),$now]);
+                setEmailConfirmed($db,$id,false);
+            } else {
             $token = bin2hex(random_bytes(32));
             $db->prepare('INSERT INTO pending_registrations (id,email,password_hash,display_name,class_id,invitation_hash,token_hash,expires_at,created_at) VALUES (?,?,?,?,?,?,?,?,?)')
                 ->execute([$id, $email, $passwordHash, $name, $info['class_id'], $grant['hash'], hash('sha256', $token), $now + 172800, $now]);
             $db->prepare('INSERT INTO mail_jobs (id,registration_id,token,available_at,created_at) VALUES (?,?,?,?,?)')
                 ->execute([bin2hex(random_bytes(16)), $id, $token, $now, $now]);
+            }
         }
         $db->commit();
     } catch (\PDOException $error) {
@@ -126,7 +143,7 @@ function registerStudent(\PDO $db, array $config, array $body): array
         if (!in_array($error->getCode(), ['23000', '23505'], true)) throw $error;
     } catch (\Throwable $error) { if ($db->inTransaction()) $db->rollBack(); throw $error; }
     // Retain a short-lived grant so retry after a lost HTTP response is safe.
-    return ['accepted' => true, 'mailPolicy' => registrationPolicy($config) + ['dailyLimitReached' => dailyMailLimitReached($db, $config, $now)]];
+    return ['accepted' => true, 'immediate' => $immediate, 'mailPolicy' => registrationPolicy($config) + ['dailyLimitReached' => dailyMailLimitReached($db, $config, $now)]];
 }
 
 function verifyRegistration(\PDO $db, array $config, array $body): array
@@ -164,6 +181,7 @@ function verifyRegistration(\PDO $db, array $config, array $body): array
             ->execute([$pending['id'], $pending['email'], $pending['password_hash'], $pending['display_name'], $pending['class_id'], $now]);
         $db->prepare('INSERT INTO learning_states (user_id,revision,document,updated_at) VALUES (?,0,?,?)')
             ->execute([$pending['id'], json_encode(emptyState(), JSON_THROW_ON_ERROR), $now]);
+        setEmailConfirmed($db,$pending['id'],true);
         $db->prepare('DELETE FROM pending_registrations WHERE id=?')->execute([$pending['id']]);
         $db->commit();
     } catch (\Throwable $error) { if ($db->inTransaction()) $db->rollBack(); throw $error; }

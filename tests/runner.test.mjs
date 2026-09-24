@@ -2208,12 +2208,12 @@ test("the first helicopter level uses a runtime signal and one replace-based acc
     assert.doesNotMatch(html, /C\?O\?D\?E|Auch für Umlaute|verschwindet das alte Zeichen/);
     assert.match(html, /ort = "Böheimkirchen"[\s\S]*ort = ort\.replace\("ö", "oe"\)/);
     assert.match(html, /Dasselbe Werkzeug kann Texte für Dateinamen, URLs oder ältere Systeme anpassen\./);
-    assert.match(html, /Passphrase mit 256 Zeichen/);
-    assert.match(html, /255 <code>\?<\/code>/);
+    assert.match(html, /Passphrase mit 142 Zeichen/);
+    assert.match(html, /141 <code>\?<\/code>/);
     assert.match(html, /geheime Nachricht lesen/);
     assert.doesNotMatch(html, /Das Passwort darf nicht im Klartext/i);
     assert.doesNotMatch(learnerFacingSource, /seru#7/i);
-    assert.match(core, /const PASSWORD_LENGTH = 256/);
+    assert.match(core, /const PASSWORD_LENGTH = PASSPHRASE.length/);
     assert.match(core, /createPassphrase/);
     assert.doesNotMatch(core, /getRandomValues/);
     assert.match(core, /\[\.\.\.password\]\.join\(NOISE_CHARACTER\)/);

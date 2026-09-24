@@ -27,7 +27,7 @@ test('teacher menu, empty start, class creation, persistent join code and respon
     await expect(lesson(page).locator('.teacher-code strong')).toHaveText(code);
     // Join in a separate disposable student session; confirm through the test mail sink.
     const studentContext=await browser.newContext(),studentPage=await studentContext.newPage();
-    const email=`delete-pupil-${test.info().project.name}@example.test`;
+    const email=`delete-pupil-${test.info().project.name}@external.test`;
     await studentPage.goto('/');
     const registered=await studentPage.evaluate(async({code,email})=>{
         const session=await fetch('/api/index.php?action=session').then(r=>r.json());
@@ -62,7 +62,7 @@ test('teacher menu, empty start, class creation, persistent join code and respon
     // Only disposable fixture classes are deleted. Cancellation must preserve them.
     await lesson(page).getByRole('button',{name:'Klasse löschen',exact:true}).click();
     const deletion=page.getByRole('dialog',{name:'Klasse löschen'});
-    await expect(deletion).toContainText('gespeicherten Programmcodes');
+    await expect(deletion).toContainText('gespeicherte Programmcodes');
     const confirm=deletion.getByRole('button',{name:'Klasse löschen',exact:true});
     await expect(confirm).toBeDisabled();
     await deletion.getByLabel('Tippe zur Bestätigung LÖSCHEN').fill('löschen');

@@ -254,7 +254,14 @@
                         const password = form.elements.password.value;
                         const result = await registrationRequest("register", { name: form.elements.name.value, email: form.elements.email.value, password });
                         clearPasswords(form);
-                        phase = "sent"; render();
+                        phase = result.immediate ? "verified" : "sent"; render();
+                        if (result.immediate) {
+                            dialog.querySelector("h2").textContent = "Du kannst jetzt starten";
+                            dialog.querySelector("[data-intro]").textContent = "Bei einer neuen Anmeldung mit der E-Mail-Domain deiner Lehrperson kannst du sofort starten – ohne Bestätigungslink. Deine Lehrperson kann die Adresse prüfen und korrigieren.";
+                            dialog.querySelector('[type="submit"]').textContent = "Zur Anmeldung";
+                            dialog.querySelector("[data-cancel]").textContent = "Weiter im Gastmodus";
+                            return;
+                        }
                         // MAIL-TRANSPORT-LIMIT: derive the notice from the worker's server policy.
                         // Hosting/SMTP changes must update policy, queue and tests together.
                         const note = dialog.querySelector("[data-intro]");
@@ -338,8 +345,8 @@
     }
     function resumeAfterLogin() {
         leavingAccount = true;
-        if (intendedMission) window.location.assign(intendedMission);
-        else window.location.reload();
+        // A guest lesson must never become the landing page of another identity.
+        window.location.replace("index.html");
     }
     function recoveryDialog(token = null) {
         if (!recoveryEnabled()) { show("Passwort-Zurücksetzen ist noch nicht freigegeben."); return; }
@@ -461,10 +468,10 @@
                 item.append(title);
                 sections.forEach(({code, completed, optional, unlocked, href}, index) => {
                     if(index) item.append(', ');
-                    const status = ui.createElement(!completed && unlocked ? 'a' : 'span');
+                    const status = ui.createElement(completed || unlocked ? 'a' : 'span');
                     status.className = completed ? 'account-progress-done' : 'account-progress-pending';
                     if(optional) status.classList.add('account-progress-optional');
-                    status.textContent = code + (optional ? '*' : '') + (completed ? ' ✓' : unlocked ? ' · offen' : ' · gesperrt');
+                    status.textContent = code + (optional || !unlocked ? '*' : '') + (completed ? ' ✓' : unlocked ? ' · offen' : '');
                     status.setAttribute('aria-label',code + (optional ? ': optional' : '') + (completed ? ': abgeschlossen' : unlocked ? ': öffnen' : ': gesperrt'));
                     if(status.tagName === 'A'){
                         status.href = href;
@@ -479,7 +486,7 @@
                 list.append(item);
             });
             const note = ui.createElement("p"); note.className = "account-muted";
-            note.textContent = progressLegend + " Freigeschaltete offene Abschnitte sind direkt anklickbar.";
+            note.textContent = progressLegend + " Freigeschaltete und abgeschlossene Abschnitte sind direkt anklickbar.";
             content.replaceChildren(title, list, note);
         } catch (failure) { content.textContent = failure.message; }
     }
@@ -683,6 +690,7 @@
                         show("Gastmodus · nur in diesem Browser gespeichert.");
                     } else {
                         if (typeof session.profile.id !== "string" || typeof session.profile.email !== "string") throw remote.error("INVALID_RESPONSE");
+                        try { sessionStorage.removeItem("agentpy-guest-teacher"); } catch (_) { /* Optional guest preference. */ }
                         if (attach) {
                             const response = await client.request("state", { profileId: session.profile.id });
                             if (invalidated) throw remote.error("PROFILE_CHANGED");
@@ -691,8 +699,8 @@
                             controls = stores.controls;
                             const learningData = window.AgentLearningDataCore.createLearningSession({ context: { kind: "authenticated", profileId: session.profile.id }, ...stores });
                             // Device settings in logged-in mode stay ephemeral; do not open the guest store.
-                            let teacher = window.location.hash === "#l";
-                            const deviceSettings = Object.freeze({ isTeacherMode: () => teacher, enableTeacherMode: () => (teacher = true), clear: () => { teacher = false; return true; } });
+                            const teacher = Boolean(session.profile.teacher);
+                            const deviceSettings = Object.freeze({ isTeacherMode: () => teacher, enableTeacherMode: () => teacher, clear: () => true });
                             attach({ learningData, deviceSettings });
                             controls.subscribe(storageStatus);
                         }

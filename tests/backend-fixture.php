@@ -10,6 +10,23 @@ if (!str_starts_with($config['dsn'], 'sqlite:') && !preg_match('/(?:;|:)dbname=[
 $db = AgentPy\database($config);
 $input = json_decode(stream_get_contents(STDIN), true, 20, JSON_THROW_ON_ERROR);
 switch ($argv[1] ?? '') {
+    case 'test-membership-migration':
+        // Only disposable test DSNs pass the guard above. Exercise populated v5 -> v6.
+        $snapshot=fn()=>[$db->query('SELECT * FROM users ORDER BY id')->fetchAll(),$db->query('SELECT * FROM learning_states ORDER BY user_id')->fetchAll()];
+        $before=$snapshot();
+        $db->exec('DROP TABLE email_confirmations');$db->exec('DROP TABLE class_memberships');
+        $db->exec('DELETE FROM schema_migrations WHERE version=6');
+        AgentPy\migrateMemberships($db);
+        $q=$db->query('SELECT COUNT(*) FROM users');$count=(int)$q->fetchColumn();
+        if($count!==(int)$db->query('SELECT COUNT(*) FROM class_memberships')->fetchColumn())throw new RuntimeException('Backfill');
+        AgentPy\setEmailConfirmed($db,$input['id'],false);
+        AgentPy\migrateMemberships($db);
+        echo json_encode(['ok'=>$before===$snapshot(),'confirmed'=>AgentPy\emailConfirmed($db,$input['id']),'version'=>(int)$db->query('SELECT MAX(version) FROM schema_migrations')->fetchColumn()]);
+        break;
+    case 'membership-add':
+        $db->prepare('INSERT INTO class_memberships (user_id,class_id,created_at) VALUES (?,?,?)')->execute([$input['id'],$input['classId'],time()]);break;
+    case 'membership-inspect':
+        echo json_encode(['classes'=>AgentPy\accountClasses($db,$input['id']),'confirmed'=>AgentPy\emailConfirmed($db,$input['id'])]);break;
     case 'teacher-grant':
         $db->prepare('INSERT INTO teachers (user_id,class_limit) VALUES (?,?)')->execute([$input['id'],$input['limit']]);break;
     case 'teacher-expire':
@@ -26,7 +43,7 @@ switch ($argv[1] ?? '') {
     case 'init-v2-only':
         $db->exec(file_get_contents(dirname(__DIR__) . '/server/schema.sql'));
         if ((int) $db->query('SELECT COUNT(*) FROM users')->fetchColumn() !== 0) exit(1);
-        foreach (['invitation_secrets','teacher_classes','teachers','teacher_audit','recovery_mail_jobs','password_resets','auth_epochs','mail_jobs', 'pending_registrations', 'class_invitations', 'class_registration', 'mail_attempts', 'mail_dispatch_lock'] as $table)
+        foreach (['class_memberships','email_confirmations','invitation_secrets','teacher_classes','teachers','teacher_audit','recovery_mail_jobs','password_resets','auth_epochs','mail_jobs', 'pending_registrations', 'class_invitations', 'class_registration', 'mail_attempts', 'mail_dispatch_lock'] as $table)
             $db->exec('DROP TABLE IF EXISTS ' . $table);
         $db->exec('DELETE FROM schema_migrations');
         $db->prepare('INSERT INTO schema_migrations (version, applied_at) VALUES (2, ?)')->execute([time()]);

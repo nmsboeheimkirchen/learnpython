@@ -1,5 +1,22 @@
 # Übergabe: dev-login-save
 
+## IN ARBEIT – B1/F1–F3/LS1–LS4 und H-1 (24.09.2026)
+
+### Maßgeblicher Checkpoint nach Limitunterbrechung
+
+- Nutzer hat final **4+4+4+3=15%** für Helikopter bestätigt. H1/H2 je4Punkte implementiert; H3/H4 reservierte7Punkte, derzeit93Pflichtpunkte. Lehrertabelle konsistent, nichts fiktiv abgeschlossen.
+- Aktuell205Logiktests,53Backend/Hostingtests inklusive bevölkerter v5→v6 Migration grün.20gezielteKontoBrowserszenarien grün: je25Levelseiten alsGast/Teacher/Pupil proEngine;RegistrierungohneMail,EmailBestätigen/Korrigieren,Sessionwiderruf,Sharedclassdelete/Lernstanderhalt. H1Browser6/6grün nach Aktualisierung alter PassphraseAssertions.
+- Vollständige62KontoBrowsersuite läuft Session10798. ChromiumF1-Farbassertioninpolish.specfehlgeschlagen,Restbis31grün; Fehlernochprüfen. mission1_level4 nutztMetaRefreshnurimnoscript gegenkonkurrierendeWeiterleitung;Gastdurchlaufdreimal+Targetedgrün.
+- Neuer .cache/hostinger-r13.mjs vorbereitet/Syntaxgeprüft,Releasepilot-20260924-r13,Allowlist17Runtime-Dateien+neuesapp/membership-schema.sql. VorMigrationprivateSQLVollsicherung+Kernhashes,additivesSchema6,keinReset. NochKEINCommit/Push/Upload/MigrationdieserRunde,Liveweiterhinr12.
+- NeueDateienexplizitstagen:server/membership-schema.sql,tests/teacher-membership-cases.mjs,tests/login-e2e/teacher-mode.spec.mjs,tests/login-e2e/membership.spec.mjs. UnbekanntenRootdateinamenNICHTausgeben/stagen. NachfolgendeZwischenhinweiseggfüberholt.
+
+- Neuer Nutzerauftrag: Login aus Gastlevel immer Startseite; Fortschrittsfarben/Links/Markierungen exakt nach F1; #l nur Gast, tab-sessionweit; echte Lehrkräfte immer Musterlösungen. Navigation aller Levels testen.
+- LS1/LS3: echte Mehrfachzugehörigkeit ergänzen (bisher users.class_id nur eine Klasse), Klassendelete bewahrt gemeinsame Konten/Lernstände; konkrete E-Mail+weitere Klassen grün, Warnung knapp/rot; Doppelmitgliedschaft testen. Keine echten Benutzer zum Testen löschen.
+- LS2: gleiche Domain wie Klasseninhaber darf ohne Aktivierungslink aktiv werden, E-Mail bleibt gesondert unbestätigt; Lehrer bestätigt oder ändert E-Mail via Brief/Stift, Änderung widerruft Sessions und Resetlinks, Lernstand erhalten. Fremde Domain weiterhin Link. Reset für aktive unbestätigte Konten erlaubt. Testmatrix gleiche/fremde/falsche Domain, Bestätigung, Korrektur, Uniqueness, Owner/CSRF, Sessionwiderruf.
+- LS4: Spalten Kapitel/Wert/Leveldetails/Kumuliert/Notenvorschlag; gewünschte Heliwerte 5+4+4+3 ergeben16, nurH1/H2 implementiert. Async Rückfrage läuft:16mit7reserviert vs15 vsTeilprüfungen. Bis Antwort keine stillschweigende Umdeutung.
+- H1 exakte neue Passphrase: Ein Pinguin serviert dem Helikopter warmes Eis, waehrend die Seriuaner mit einem Toaster Schach spielen. Bring die singende Socke sicher heim.
+- Lokale Implementierung vorhanden, noch KEIN Deployment/Commit/Push dieser Runde. 205 Logiktests und52 Backend-/Hostingtests grün. Neue Tests in tests/teacher-membership-cases.mjs, tests/login-e2e/teacher-mode.spec.mjs; neues server/membership-schema.sql explizit stagen. Additive Schema6 mit class_memberships/email_confirmations, vorhandene Daten werden nur rückwärtskompatibel ergänzt. Browsermatrix14:13grün, Gast-Lehrermodus inChromium einmal beimLevelwechsel ohneAgentDeviceSettings; untersuchen. B1-erwartungen inaltenShelltestsnochanzupassen;LS2/3UI-Test undF1Detailsfehlen;HeligewichteRückfrageoffen. Live r12 bleibt; r12-Operator nicht für die nötige neue additive Migration verwenden. Bestehende Konten/Lernstände erhalten. Promptbewertung wieder6subjektiveWerte+jeVerbesserung.
+
 ## ABGESCHLOSSEN 23.09.2026 – r12 LIVE
 
 Dieser Abschnitt hat Vorrang vor allen historischen Checkpoints darunter.

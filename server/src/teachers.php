@@ -14,6 +14,58 @@ function migrateTeachers(\PDO $db): void
         $db->prepare('INSERT INTO schema_migrations (version,applied_at) VALUES (5,?)')->execute([time()]);
 }
 
+function membershipSchema(\PDO $db): bool
+{
+    return (int)$db->query('SELECT MAX(version) FROM schema_migrations')->fetchColumn() >= 6;
+}
+
+function migrateMemberships(\PDO $db): void
+{
+    // Idempotent additive migration; no account, credential or learning state rewrite.
+    $db->exec(file_get_contents(dirname(__DIR__).'/membership-schema.sql'));
+    $ignore=$db->getAttribute(\PDO::ATTR_DRIVER_NAME)==='mysql'?'INSERT IGNORE':'INSERT OR IGNORE';
+    $db->exec($ignore.' INTO class_memberships (user_id,class_id,created_at) SELECT id,class_id,created_at FROM users');
+    $db->exec($ignore.' INTO email_confirmations (user_id,confirmed,updated_at) SELECT id,1,created_at FROM users');
+    if(!$db->query('SELECT version FROM schema_migrations WHERE version=6')->fetchColumn())
+        $db->prepare('INSERT INTO schema_migrations (version,applied_at) VALUES (6,?)')->execute([time()]);
+}
+
+function classMemberCondition(\PDO $db): string
+{
+    // Primary-class fallback keeps old and new releases safe during a rolling switch.
+    return membershipSchema($db)
+        ? '(u.class_id=? OR EXISTS (SELECT 1 FROM class_memberships m WHERE m.user_id=u.id AND m.class_id=?))'
+        : 'u.class_id=?';
+}
+
+function classMemberParams(\PDO $db, string $id): array
+{
+    return membershipSchema($db)?[$id,$id]:[$id];
+}
+
+function accountClasses(\PDO $db, string $id, bool $lock = false): array
+{
+    $extra=membershipSchema($db)?' OR EXISTS (SELECT 1 FROM class_memberships m WHERE m.user_id=u.id AND m.class_id=c.id)':'';
+    $q=$db->prepare('SELECT c.id,COALESCE(t.display_name,c.name) AS name FROM users u JOIN classes c ON (c.id=u.class_id'.$extra.') LEFT JOIN teacher_classes t ON t.class_id=c.id WHERE u.id=? ORDER BY c.id'.($lock&&$db->getAttribute(\PDO::ATTR_DRIVER_NAME)==='mysql'?' FOR UPDATE':''));
+    $q->execute([$id]);return $q->fetchAll();
+}
+
+function emailConfirmed(\PDO $db, string $id): bool
+{
+    if(!membershipSchema($db))return true;
+    $q=$db->prepare('SELECT confirmed FROM email_confirmations WHERE user_id=?');$q->execute([$id]);
+    $value=$q->fetchColumn();return $value===false || (int)$value===1;
+}
+
+function setEmailConfirmed(\PDO $db, string $id, bool $confirmed): void
+{
+    if(!membershipSchema($db))return;
+    $db->prepare($db->getAttribute(\PDO::ATTR_DRIVER_NAME)==='mysql'
+        ? 'INSERT INTO email_confirmations (user_id,confirmed,updated_at) VALUES (?,?,?) ON DUPLICATE KEY UPDATE confirmed=VALUES(confirmed),updated_at=VALUES(updated_at)'
+        : 'INSERT INTO email_confirmations (user_id,confirmed,updated_at) VALUES (?,?,?) ON CONFLICT(user_id) DO UPDATE SET confirmed=excluded.confirmed,updated_at=excluded.updated_at')
+        ->execute([$id,$confirmed?1:0,time()]);
+}
+
 function teacherKey(array $config): string
 {
     $file = $config['teacher_key_file'];
@@ -71,8 +123,8 @@ function visibleInvitation(\PDO $db, array $config, string $classId, int $now): 
 
 function classSummary(\PDO $db, array $config, array $class, int $now): array
 {
-    $q=$db->prepare('SELECT COUNT(*) FROM users u WHERE u.class_id=? AND NOT EXISTS (SELECT 1 FROM teachers t WHERE t.user_id=u.id)');
-    $q->execute([$class['id']]);$members=(int)$q->fetchColumn();
+    $q=$db->prepare('SELECT COUNT(*) FROM users u WHERE '.classMemberCondition($db).' AND NOT EXISTS (SELECT 1 FROM teachers t WHERE t.user_id=u.id)');
+    $q->execute(classMemberParams($db,$class['id']));$members=(int)$q->fetchColumn();
     $q=$db->prepare('SELECT COUNT(*) FROM pending_registrations WHERE class_id=? AND expires_at>?');
     $q->execute([$class['id'],$now]);$pending=(int)$q->fetchColumn();
     return ['id'=>$class['id'],'name'=>$class['name'],'capacity'=>(int)$class['capacity'],'members'=>$members,'pending'=>$pending,
@@ -91,12 +143,13 @@ function teacherClass(\PDO $db, array $config, array $user, array $body): array
 {
     exactFields($body,['classId']);$class=ownClass($db,$user['id'],$body['classId']);$now=time();
     // Only completion IDs, never student source code, password hashes or verification tokens.
-    $q=$db->prepare('SELECT u.id,u.display_name AS name,u.email,u.active,s.document FROM users u LEFT JOIN learning_states s ON s.user_id=u.id WHERE u.class_id=? AND NOT EXISTS (SELECT 1 FROM teachers t WHERE t.user_id=u.id) ORDER BY u.display_name,u.email');
-    $q->execute([$class['id']]);$members=[];
+    $q=$db->prepare('SELECT u.id,u.display_name AS name,u.email,u.active,s.document FROM users u LEFT JOIN learning_states s ON s.user_id=u.id WHERE '.classMemberCondition($db).' AND NOT EXISTS (SELECT 1 FROM teachers t WHERE t.user_id=u.id) ORDER BY u.display_name,u.email');
+    $q->execute(classMemberParams($db,$class['id']));$members=[];
     foreach($q->fetchAll() as $row) {
         $document=$row['document']===null ? null : json_decode($row['document'],true,20,JSON_THROW_ON_ERROR);
         $completed=$document['completedCodes'] ?? null;
-        $members[]=['id'=>$row['id'],'name'=>$row['name'],'email'=>$row['email'],'status'=>(int)$row['active'] ? 'confirmed':'inactive',
+        $members[]=['id'=>$row['id'],'name'=>$row['name'],'email'=>$row['email'],'status'=>(int)$row['active'] ? (emailConfirmed($db,$row['id'])?'confirmed':'unverified'):'inactive',
+            'otherClasses'=>array_values(array_filter(accountClasses($db,$row['id']),fn($c)=>$c['id']!==$class['id'])),
             'completedIds'=>is_array($completed) ? array_keys(array_filter($completed,'is_string')) : null];
     }
     $q=$db->prepare('SELECT id,display_name AS name,email FROM pending_registrations WHERE class_id=? AND expires_at>? ORDER BY display_name,email');
@@ -166,6 +219,73 @@ function renewTeacherCode(\PDO $db, array $config, array $user, array $body): ar
     return teacherClass($db,$config,$user,$body);
 }
 
+function lockStudentMember(\PDO $db, string $classId, mixed $id): array
+{
+    if(!is_string($id)||!preg_match('/^[a-f0-9]{32}$/D',$id))throw new ApiError(404,'MEMBER_NOT_FOUND');
+    $db->prepare('UPDATE users SET active=active WHERE id=?')->execute([$id]);
+    $q=$db->prepare('SELECT u.id,u.email,u.display_name AS name FROM users u WHERE u.id=? AND '.classMemberCondition($db).' AND NOT EXISTS (SELECT 1 FROM teachers t WHERE t.user_id=u.id)'.($db->getAttribute(\PDO::ATTR_DRIVER_NAME)==='mysql'?' FOR UPDATE':''));
+    $q->execute([$id,...classMemberParams($db,$classId)]);
+    return $q->fetch() ?: throw new ApiError(404,'MEMBER_NOT_FOUND');
+}
+
+function removeClassMembership(\PDO $db, string $id, string $classId): void
+{
+    $classes=accountClasses($db,$id,true);
+    $others=array_values(array_filter($classes,fn($c)=>$c['id']!==$classId));
+    if($others){
+        // Move the legacy primary reference before deleting a class. Keep all learning data.
+        $db->prepare('UPDATE users SET class_id=? WHERE id=? AND class_id=?')->execute([$others[0]['id'],$id,$classId]);
+        $db->prepare('DELETE FROM class_memberships WHERE user_id=? AND class_id=?')->execute([$id,$classId]);
+    }else{
+        $db->prepare('DELETE FROM users WHERE id=?')->execute([$id]);
+    }
+}
+
+function previewTeacherDeletion(\PDO $db, array $config, array $user, array $body): array
+{
+    $result=teacherClass($db,$config,$user,$body);
+    return ['profile'=>$user,'class'=>$result['class'],'protectedMembers'=>array_values(array_filter($result['members'],fn($m)=>!empty($m['otherClasses'])))];
+}
+
+function changeTeacherEmail(\PDO $db, array $config, array $user, array $body, bool $confirmOnly): array
+{
+    exactFields($body,$confirmOnly?['classId','memberId','email']:['classId','memberId','email','previousEmail','name']);
+    ownClass($db,$user['id'],$body['classId']);
+    $email=normalizedEmail($body['email']);
+    if(!$confirmOnly){try{$name=accountLabel($body['name']);}catch(\RuntimeException){throw new ApiError(422,'INVALID_NAME');}}
+    $db->beginTransaction();
+    try{
+        lockTeacher($db,$user['id']);ownClass($db,$user['id'],$body['classId']);lockRegistrationClass($db,$body['classId']);
+        $member=lockStudentMember($db,$body['classId'],$body['memberId']);
+        if($member['email']!==($confirmOnly?$email:$body['previousEmail']))throw new ApiError(409,'MEMBER_CHANGED');
+        if($confirmOnly){
+            setEmailConfirmed($db,$member['id'],true);
+        }else{
+            if($email!==$member['email']){
+                $q=$db->prepare('SELECT id FROM users WHERE email=? UNION ALL SELECT id FROM pending_registrations WHERE email=?');
+                $q->execute([$email,$email]);if($q->fetchColumn())throw new ApiError(409,'EMAIL_UNAVAILABLE');
+                $db->prepare('UPDATE users SET email=? WHERE id=?')->execute([$email,$member['id']]);
+                setEmailConfirmed($db,$member['id'],false);
+                // Revocation and address replacement are one transaction; state is untouched.
+                $db->prepare($db->getAttribute(\PDO::ATTR_DRIVER_NAME)==='mysql'
+                    ? 'INSERT INTO auth_epochs (user_id,revision) VALUES (?,1) ON DUPLICATE KEY UPDATE revision=revision+1'
+                    : 'INSERT INTO auth_epochs (user_id,revision) VALUES (?,1) ON CONFLICT(user_id) DO UPDATE SET revision=revision+1')->execute([$member['id']]);
+                $db->prepare('DELETE FROM password_resets WHERE user_id=?')->execute([$member['id']]);
+                $db->prepare('DELETE FROM recovery_mail_jobs WHERE user_id=?')->execute([$member['id']]);
+            }
+            $db->prepare('UPDATE users SET display_name=? WHERE id=?')->execute([$name,$member['id']]);
+        }
+        $db->prepare('INSERT INTO teacher_audit (id,teacher_id,class_id,action,created_at) VALUES (?,?,?,?,?)')
+            ->execute([bin2hex(random_bytes(16)),$user['id'],$body['classId'],$confirmOnly?'email-confirmed':'member-updated',time()]);
+        $db->commit();
+    }catch(\PDOException $e){
+        if($db->inTransaction())$db->rollBack();
+        if(in_array($e->getCode(),['23000','23505'],true))throw new ApiError(409,'EMAIL_UNAVAILABLE');
+        throw $e;
+    }catch(\Throwable $e){if($db->inTransaction())$db->rollBack();throw $e;}
+    return teacherClass($db,$config,$user,['classId'=>$body['classId']]);
+}
+
 function deleteTeacherClass(\PDO $db, array $config, array $user, array $body): array
 {
     exactFields($body,['classId','confirmation']);
@@ -176,12 +296,14 @@ function deleteTeacherClass(\PDO $db, array $config, array $user, array $body): 
         lockTeacher($db,$user['id']);
         ownClass($db,$user['id'],$body['classId']);
         lockRegistrationClass($db,$body['classId']);
-        $q=$db->prepare('SELECT COUNT(*) FROM users u JOIN teachers t ON t.user_id=u.id WHERE u.class_id=?');
-        $q->execute([$body['classId']]);
+        $q=$db->prepare('SELECT COUNT(*) FROM users u JOIN teachers t ON t.user_id=u.id WHERE '.classMemberCondition($db));
+        $q->execute(classMemberParams($db,$body['classId']));
         if((int)$q->fetchColumn()>0)throw new ApiError(409,'PROTECTED_TEACHER_ACCOUNT');
-        // FK cascades erase learning states, write receipts, reset links and mail jobs.
-        // The class cascade also revokes invitations and pending registrations.
-        $db->prepare('DELETE FROM users WHERE class_id=?')->execute([$body['classId']]);
+        // Lock the actual current member set, not the earlier confirmation preview.
+        $q=$db->prepare('SELECT u.id FROM users u WHERE '.classMemberCondition($db).' ORDER BY u.id'.($db->getAttribute(\PDO::ATTR_DRIVER_NAME)==='mysql'?' FOR UPDATE':''));
+        $q->execute(classMemberParams($db,$body['classId']));
+        foreach($q->fetchAll(\PDO::FETCH_COLUMN) as $id)removeClassMembership($db,$id,$body['classId']);
+        // Class cascades revoke invitations and pending registrations only for this class.
         $db->prepare('DELETE FROM classes WHERE id=?')->execute([$body['classId']]);
         $db->prepare('INSERT INTO teacher_audit (id,teacher_id,class_id,action,created_at) VALUES (?,?,?,?,?)')
             ->execute([bin2hex(random_bytes(16)),$user['id'],$body['classId'],'class-deleted',time()]);
@@ -200,11 +322,12 @@ function deleteTeacherMember(\PDO $db, array $config, array $user, array $body):
         lockTeacher($db,$user['id']);ownClass($db,$user['id'],$body['classId']);lockRegistrationClass($db,$body['classId']);
         if($body['kind']==='pending'){
             $q=$db->prepare('DELETE FROM pending_registrations WHERE id=? AND class_id=?');
-        }else{
-            $q=$db->prepare('DELETE FROM users WHERE id=? AND class_id=? AND NOT EXISTS (SELECT 1 FROM teachers WHERE teachers.user_id=users.id)');
-        }
         $q->execute([$body['memberId'],$body['classId']]);
-        if($q->rowCount()!==1)throw new ApiError(404,'MEMBER_NOT_FOUND');
+            if($q->rowCount()!==1)throw new ApiError(404,'MEMBER_NOT_FOUND');
+        }else{
+            lockStudentMember($db,$body['classId'],$body['memberId']);
+            removeClassMembership($db,$body['memberId'],$body['classId']);
+        }
         $db->prepare('INSERT INTO teacher_audit (id,teacher_id,class_id,action,created_at) VALUES (?,?,?,?,?)')
             ->execute([bin2hex(random_bytes(16)),$user['id'],$body['classId'],'member-deleted',time()]);
         $db->commit();

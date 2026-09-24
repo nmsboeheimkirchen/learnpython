@@ -40,10 +40,13 @@ test('choice paths normalize independently; the second complete project adds its
     assert.equal(calculateProgress(completed([...museum,...pico.slice(0,1)])).bonus,5);
     assert.equal(calculateProgress(completed([...pico,...museum,...pico])).label,'15 % + 20 Bonuspunkte');
 });
-test('available required levels reach 100%; bonus is independent and legacy data has no invented chronology',()=>{
+test('escape weights award only implemented levels; unavailable future levels cannot inflate progress',()=>{
     const result=calculateProgress(completed([...groups.flatMap(g=>g[3]),'mission2_level3']));
-    assert.equal(result.label,'125 %');
-    assert.equal(calculateProgress(completed([...groups.slice(0,5).flatMap(g=>g[3]),...groups[6][3],...groups[7][3]])).label,'100 %');
+    assert.equal(result.label,'93 % + 25 Bonuspunkte');
+    assert.equal(calculateProgress(completed(['helikopter_flucht_level1'])).base,4);
+    assert.equal(calculateProgress(completed(['helikopter_flucht_level2'])).base,4);
+    assert.equal(calculateProgress(completed(['helikopter_flucht_level3','helikopter_flucht_level4'])).base,0);
+    assert.equal(calculateProgress(completed([...groups.slice(0,5).flatMap(g=>g[3]),...groups[6][3],...groups[7][3]])).label,'93 %');
     assert.equal(result.rows[1].sections[2].optional,true);
     assert.equal(result.rows[5].sections.every(s=>s.optional),true);
     assert.deepEqual(result.rows[7].codes,['H-1','H-2']);

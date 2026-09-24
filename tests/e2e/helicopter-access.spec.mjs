@@ -29,8 +29,8 @@ test("@ipad the Bordcomputer layout keeps the mission, editor and help clear", a
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Entsperre den Bordcomputer");
     const briefing = page.getByLabel("Nachricht von Agent PY");
     await expect(briefing).toContainText("receive()");
-    await expect(briefing).toContainText("256");
-    await expect(briefing).toContainText("255");
+    await expect(briefing).toContainText("142");
+    await expect(briefing).toContainText("141");
     await expect(briefing).toContainText("Passphrase");
     await expect(briefing).not.toContainText("darf nicht im Klartext");
     await expect(page.getByRole("status")).toHaveCount(1);
@@ -111,14 +111,13 @@ test("the real receive and replace chain grants access", async ({ page }) => {
     const signal = run.output.match(/SIGNAL EMPFANGEN: ([^\n]+)/)?.[1] ?? "";
     const password = signal.replaceAll("?", "");
     expect(run.output).toContain("BORDCOMPUTER: " + password + "\nACCESS GRANTED!\n");
-    expect(signal).toHaveLength(511);
-    expect(password).toHaveLength(256);
-    expect(password).toContain("17 Gurken im Raumanzug");
-    expect([...signal].filter(character => character === "?")).toHaveLength(255);
+    expect(signal).toHaveLength(283);
+    expect(password).toHaveLength(142);
+    expect(password).toBe("Ein Pinguin serviert dem Helikopter warmes Eis, waehrend die Seriuaner mit einem Toaster Schach spielen. Bring die singende Socke sicher heim.");
+    expect([...signal].filter(character => character === "?")).toHaveLength(141);
     expect(signal).toBe([...password].join("?"));
     expect(password).toMatch(/[a-z]/);
     expect(password).toMatch(/[A-Z]/);
-    expect(password).toMatch(/[0-9]/);
     expect(password).toMatch(/[^A-Za-z0-9]/);
     await expect(page.locator("body")).toHaveAttribute("data-access-state", "granted");
     await expect(page.locator("#access-message")).toHaveText("ACCESS GRANTED!");
@@ -160,7 +159,7 @@ test("the starter failure does not reveal the replace arguments in its output", 
     await expect(page.locator("#console-output")).toContainText("ACCESS DENIED!");
     const output = await page.locator("#console-output").textContent();
     const signal = output.match(/SIGNAL EMPFANGEN: ([^\n]+)/)?.[1] ?? "";
-    expect(signal).toHaveLength(511);
+    expect(signal).toHaveLength(283);
     expect(output).toContain("BORDCOMPUTER: " + signal + "\nACCESS DENIED!\n");
     await expect(page.locator("#console-output")).not.toContainText('replace("?", "")');
     await expect(page.locator("#console-output")).not.toContainText("Entferne alle ?");
@@ -182,7 +181,7 @@ print(signal)`);
     expect(intercepted.result.passed).toBe(false);
     const signal = intercepted.output.match(/SIGNAL EMPFANGEN: ([^\n]+)/)?.[1] ?? "";
     const password = signal.replaceAll("?", "");
-    expect(password).toHaveLength(256);
+    expect(password).toHaveLength(142);
 
     const hardcoded = await runCode(page, `import bordcomputer
 bordcomputer.pruefe(${JSON.stringify(password)})`);

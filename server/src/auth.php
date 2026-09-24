@@ -55,6 +55,8 @@ function currentUser(\PDO $db): ?array
         $name=$q->fetchColumn();if($name!==false)$user['className']=$name;
     }
     $user['teacher']=teacherProfile($db,$user['id']);
+    $user['emailVerified']=emailConfirmed($db,$user['id']);
+    if(membershipSchema($db))$user['classes']=accountClasses($db,$user['id']);
     return $user;
 }
 

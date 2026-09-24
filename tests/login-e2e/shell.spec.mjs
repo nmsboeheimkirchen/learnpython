@@ -45,7 +45,7 @@ test('shell keeps native fullscreen and top controls across mission and level na
     await page.screenshot({path:test.info().outputPath('guest-dialog.png')});
     expect(errors).toEqual([]);
 });
-test('guest login resumes intended mission; eye, menu, explicit draft save and account info', async ({page}) => {
+test('guest login lands on home; eye, menu, explicit draft save and account info', async ({page}) => {
     await open(page,'mission1_start.html');
     await lesson(page).getByRole('link',{name:/Training starten/}).click();
     await page.getByRole('dialog').getByRole('button',{name:'Anmelden',exact:true}).click();
@@ -57,7 +57,8 @@ test('guest login resumes intended mission; eye, menu, explicit draft save and a
     const eye = await page.getByRole('button',{name:'Passwort verbergen'}).boundingBox();
     expect(Math.abs(input.y+input.height/2-eye.y-eye.height/2)).toBeLessThan(2);
     await page.getByRole('dialog').getByRole('button',{name:'Anmelden',exact:true}).click();
-    await expect.poll(()=>child(page).url()).toContain('mission1_level1.html');
+    await expect(lesson(page).locator('[data-next-target]')).toBeVisible();
+    await navigate(page,'mission1_level1.html');
     await expect(page.getByRole('button',{name:'Benutzermenü'})).toBeVisible();
     await expect.poll(()=>child(page).evaluate(()=>!!window.editor)).toBe(true);
     await child(page).evaluate(async()=>{await window.AgentLearningData.resetLearningData(); window.editor.setValue('# Entwurf ohne Ausführung');});
@@ -88,6 +89,8 @@ test('guest login resumes intended mission; eye, menu, explicit draft save and a
 });
 test('shell honours failure/retry and clears account data after another tab logs out',async({page,context})=>{
     await open(page,'mission1_level1.html'); await login(page);
+    await expect(lesson(page).locator('[data-next-target]')).toBeVisible();
+    await navigate(page,'mission1_level1.html');
     await expect.poll(()=>child(page).evaluate(()=>!!window.editor)).toBe(true);
     let lost=false;
     await page.route('**/api/index.php?action=write',async route=>{
@@ -107,7 +110,8 @@ test('shell honours failure/retry and clears account data after another tab logs
 });
 test('deep link, Back and forward keep shell and exact lesson without duplicate controls',async({page})=>{
     await open(page,'mission1_level2.html#l');
-    await expect.poll(()=>child(page).url()).toContain('mission1_level2.html#l');
+    await expect.poll(()=>child(page).url()).toContain('mission1_level2.html');
+    await expect.poll(()=>child(page).evaluate(()=>location.hash)).toBe('');
     await navigate(page,'mission1_level3.html');
     await page.goBack();
     await expect.poll(()=>child(page).url()).toContain('mission1_level2.html');
@@ -150,6 +154,8 @@ test('special pages retain account controls, explicit save targets and small-scr
 });
 test('unsaved typing warns on logout; cancelled logout keeps account and explicit save resolves warning',async({page})=>{
     await open(page,'mission1_level1.html');await login(page);
+    await expect(lesson(page).locator('[data-next-target]')).toBeVisible();
+    await navigate(page,'mission1_level1.html');
     await expect.poll(()=>child(page).evaluate(()=>!!window.editor)).toBe(true);
     await child(page).evaluate(()=>window.editor.replaceRange('# Noch nicht gespeichert\n',{line:0,ch:0},undefined,'+input'));
     await page.getByRole('button',{name:'Benutzermenü'}).click();
