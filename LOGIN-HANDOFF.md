@@ -1,9 +1,42 @@
 # Übergabe: dev-login-save
 
-## IN ARBEIT – B1/F1–F3/LS1–LS4 und H-1 (24.09.2026)
+## ABGESCHLOSSEN 24.09.2026 – B1/F1–F3/LS1–LS4 und H-1 LIVE r13
 
-### Maßgeblicher Checkpoint nach Limitunterbrechung
+**Maßgeblicher Endstand. Alle folgenden Zwischenstände sind historisch. Keine offene Migration, Aktivierung oder Testsession.**
 
+- Live **https://agentpy.bildungdigital.at/**, Release **pilot-20260924-r13**, Code **0d96c82a73405d6bb53f24723e1ff6a05af59fcf** auf `dev-login-save`, Schema **6**. Aktivierung erfolgreich bestätigt, `pendingDeployment=false`. `main` und GitHub Pages nicht verändert.
+- CI **35973727851 vollständig success**: Logik, SQLite/MariaDB/Hosting, Missionsbrowser Chromium/WebKit und vollständige Konto-/Gerätewechseltests. Lokal 205 Logiktests und 53 Backend-/Hostingtests grün; 20 gezielte Konto-Browserfälle sowie 10 H-1-Fälle grün. Früherer reiner Farbfehler behoben, alle 6 Polish-Nachtests grün und anschließend volle CI erfolgreich.
+- B1: Login aus jedem Gastlevel führt nach Hause. F1: offene freigeschaltete Levels rot/verlinkt/„offen“, gesperrte rot/unverlinkt mit Stern ohne sichtbaren „gesperrt“-Zusatz, geschaffte grün/verlinkt mit Hakerl; optional gedämpft orange-rot bzw. blaugrün und Stern. F2/F3: Gast-`#l` tab-sessionweit; Fragment wird entfernt; echte Lehrkräfte immer Musterlösungen, Schülerkonten können sie nicht per URL aktivieren. Je 25 Levelseiten in beiden Engines für alle drei Rollen getestet.
+- LS1/LS3: Schema 6 ergänzt `class_memberships` und `email_confirmations` ohne Umschreiben alter Konten/Lernstände. Mehrfachmitgliedschaft behält Konto und Programmcode bei Klassen-/Mitgliedentfernung; grüne Warnung nennt E-Mail und andere Klassen. Ohne weitere Klasse bleibt die bestehende Löschfunktion wirksam. Rote kurze Warnung, exakte Eingabe LÖSCHEN bei Klasse. Keine neue Beitrittsoberfläche für bestehende Konten in zusätzliche Klassen implementiert; Mehrfachzugehörigkeit ist backendseitig abgesichert und in isolierten Fixtures getestet.
+- LS2: Klassencode plus exakte Domain des Klasseninhabers erlaubt sofortige Nutzung ohne Aktivierungsmail, Adresse bleibt getrennt unbestätigt. Grüner Brief „bestätigen?“ → Ja / Nein: Bearbeiten / Abbrechen. Stift für Name/E-Mail links vom Papierkorb bei bestehenden Konten. E-Mail-Wechsel widerruft Sitzungen/Resetlinks, erhält Lernstand; aktive unbestätigte Konten können Resetmail bekommen. Fremddomain weiterhin Aktivierungslink. Bearbeitung offener externer Registrierungen nicht erweitert.
+- LS4: Lehrertabelle Kapitel / Wert / Leveldetails / Kumuliert / Notenvorschlag. Finale Heligewichte **4 + 4 + 4 + 3 = 15 %**; H-1/H-2 je 4, H-3/H-4 fehlen noch und reservieren 7 Punkte. Aktuell 93 Pflichtpunkte erreichbar; 100 erst mit allen Fluchtleveln. Zweites Projekt bis 20 Bonuspunkte, optionales 02-3 zusätzlich 5 unverändert.
+- H-1-Passphrase exakt: **Ein Pinguin serviert dem Helikopter warmes Eis, waehrend die Seriuaner mit einem Toaster Schach spielen. Bring die singende Socke sicher heim.** Nach Erfolg kein Hochscrollen.
+- Paket `.cache/hostinger/pilot-20260924-r13`: **144 Dateien**, Manifest SHA256 **0db71afa7d742c63a12fc965bfdb7638b0d0c38a8c6c9d7f64fb6886309c6d28**. Privat hochgeladen, geprüft, migriert, aktiviert und bestätigt. Operator `.cache/hostinger-r13.mjs` abgeschlossen: nur `inspect` erneut sinnvoll, keine Wiederholung von upload/migrate/activate/confirm.
+- Private SQL-Vollsicherung vor Migration: `agentpy-private/backups/before-pilot-20260924-r13-schema5.sql`, **34684 Bytes**, SHA256 **eca14767b85f6def39f0bd09be562c7f53c79905fc5e3b84eb28eed82a54c6b7**. Nicht heruntergeladen/ausgegeben und nicht testweise zurückgespielt. Migrationsnachweis `backups/before-pilot-20260924-r13-migration.json` (completed=true), Settingsnachweis `backups/before-pilot-20260924-r13-patch.json`. Voriger Webroot `backups/web-20260924081950-7f48a6d220` gesichert.
+- Vorher/nachher sechs Kern-Datentabellen **hashgleich**: **3 Konten, 3 Klassen, 3 Lernstände, 1 Lehrkraft, 2 Schülerklassen, 2 Codes**. Private SMTP-/DB-/Registrierungs-/Lehrerschlüsseldateien ebenfalls unverändert. Worker bereits r13, `ranAt=1790238064`, `processed=0`. Keine echten Konten gelöscht, verändert oder neu zum Testen angelegt; kein Reset/keine Testmail.
+- Live HTTPS-/Cache-/Privatpfad-/Sessionchecks und anonyme Chromium/WebKit-Smokes grün. Neue Dialoge/Fortschritt/Lehrertabelle auf dem ausgelieferten Frontend zusätzlich mit **vollständig gemockten APIs** geprüft und Screenshots visuell geprüft (`.cache/hostinger-browser/*-r13-*.png`).
+- README aktualisiert; Abschlusscommit betrifft nur Dokumentation, kein weiteres Deployment nötig. Unbekannten ungetrackten Root-Dateinamen niemals ausgeben/stagen; ausschließlich explizite bekannte Pfade und `git status --porcelain --untracked-files=no` nutzen.
+- Nächster Nutzerschritt: Website neu laden und aktuelle Änderungen testen. Bestehende Daten weiterhin erhalten. Künftige H-3/H-4-Implementierung und Mehrklassen-Beitrittsoberfläche getrennt planen.
+
+## HISTORISCH – B1/F1–F3/LS1–LS4 und H-1 vor Release (24.09.2026)
+
+### Maßgeblicher Checkpoint vor Veröffentlichung
+
+Dieser Checkpoint hat Vorrang vor den historischen Zwischenständen darunter.
+
+- Code **0d96c82a73405d6bb53f24723e1ff6a05af59fcf** ist auf `dev-login-save` gepusht. CI **35973727851**: Logik, PHP/MariaDB und beide Missionsbrowser grün; Konto-Browserjob läuft noch.
+- Lokal: **205 Logiktests, 53 Backend-/Hostingtests, 20 gezielte Konto-Browserfälle und 10 H-1-Browserfälle grün**. Vollständige Konto-Suite zunächst 60/62 grün: ausschließlich die Farbe optionaler offener Levels war noch gelb. CSS korrigiert; **alle 6 Polish-Fälle danach grün**. Kein laufender lokaler Testprozess.
+- Finale Helikopter-Gewichte **4 + 4 + 4 + 3 = 15 %**. Nur H-1/H-2 existieren bereits: aktuell 93 Pflichtpunkte erreichbar, weitere 7 für H-3/H-4 reserviert. Keine fiktiven Abschlüsse.
+- Paket `.cache/hostinger/pilot-20260924-r13` fertig, Manifest SHA256 `0db71afa7d742c63a12fc965bfdb7638b0d0c38a8c6c9d7f64fb6886309c6d28`. Noch **nicht hochgeladen, migriert oder aktiviert**.
+- Live bleibt **r12 / Schema 5**: zuletzt 3 Konten, 3 Klassen, 3 Lernstände, 1 Lehrkraft, 2 Schülerklassen und 2 Beitrittscodes. `pendingDeployment=false`. Alle echten Daten erhalten; keinen früheren Reset ausführen.
+- Neuer Operator `.cache/hostinger-r13.mjs` ist geprüft und nur `inspect` wurde ausgeführt. Nach vollständigem CI-Erfolg: `upload` (verifiziert bereits) → `migrate` (private SQL-Vollsicherung und unveränderte Kern-Datenhashes; ausschließlich additive Schema-6-Tabellen) → `activate` → öffentliche Healthchecks / anonyme Browserchecks / neue UI mit vollständig gemockten APIs → `confirm` → `inspect`.
+- Tests decken doppelte Klassenzugehörigkeit und Lernstanderhalt, Registrierung ohne Aktivierungsmail bei exakter Lehrerdomain, separate Mailbestätigung, Korrektur/Sessionwiderruf, Reset unbestätigter aktiver Konten, Gast-#l und Lehrkräfte-/Schülerrollen über alle 25 Levelseiten in beiden Browserengines ab. Neue Lösch-/Maildialoge und Lehrertabelle visuell geprüft.
+- Unbekannten ungetrackten Root-Dateinamen niemals ausgeben oder stagen. Nur explizite bekannte Pfade stagen; `git status --porcelain --untracked-files=no` verwenden. Keine geheimen Inhalte in Handoff oder Ausgabe.
+
+### Historische Zwischenstände dieser Runde (überholt)
+
+- Code **0d96c82a73405d6bb53f24723e1ff6a05af59fcf** aufdev-login-savegesichert/gepusht,CI**35973727851**läuft. Releasepaket `.cache/hostinger/pilot-20260924-r13` gebaut,nochNICHThochgeladen/migriert/aktiviert. Liveinspectr12/Schema5mit**3Konten,3Klassen,3Lernständen,1Lehrer,2Schülerklassen,2Codes**,keinpending. DieserfrischeBestandhatVorrangvorälteren4erZahlen.
+- VollständigeKontoSuiteersteRunde:einzigerbisherigerFehlerbeideEnginesF1optionalgesperrtwarnochaltesGelb;CSSgezieltkorrigiertundimCommit. Nochmalpolish+vollesCIabwarten.10/10H1Browserfullmatrixgrün. NeueDialoge/Guide/ProgressmitALLAPIsmockedlokalbeideEnginesgrün,Deletion+Emaildialog+Guidevisuellgeprüft.
 - Nutzer hat final **4+4+4+3=15%** für Helikopter bestätigt. H1/H2 je4Punkte implementiert; H3/H4 reservierte7Punkte, derzeit93Pflichtpunkte. Lehrertabelle konsistent, nichts fiktiv abgeschlossen.
 - Aktuell205Logiktests,53Backend/Hostingtests inklusive bevölkerter v5→v6 Migration grün.20gezielteKontoBrowserszenarien grün: je25Levelseiten alsGast/Teacher/Pupil proEngine;RegistrierungohneMail,EmailBestätigen/Korrigieren,Sessionwiderruf,Sharedclassdelete/Lernstanderhalt. H1Browser6/6grün nach Aktualisierung alter PassphraseAssertions.
 - Vollständige62KontoBrowsersuite läuft Session10798. ChromiumF1-Farbassertioninpolish.specfehlgeschlagen,Restbis31grün; Fehlernochprüfen. mission1_level4 nutztMetaRefreshnurimnoscript gegenkonkurrierendeWeiterleitung;Gastdurchlaufdreimal+Targetedgrün.
