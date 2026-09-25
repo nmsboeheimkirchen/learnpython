@@ -13,6 +13,7 @@ require_once __DIR__ . '/smtp.php';
 require_once __DIR__ . '/teachers.php';
 require_once __DIR__ . '/roles.php';
 require_once __DIR__ . '/management.php';
+require_once __DIR__ . '/transfers.php';
 
 final class ApiError extends \RuntimeException
 {

@@ -95,6 +95,7 @@ function manageClassTeacher(\PDO $db,array $config,array $user,array $body,strin
         if($action==='transfer'){
             $limit=lockTeacher($db,$target);
             if(ownedClassCount($db,$target)>=$limit)throw new ApiError(409,'TARGET_CLASS_LIMIT_REACHED');
+            cancelClassTransfers($db,$c['id']);
             $db->prepare('UPDATE teacher_classes SET teacher_id=? WHERE class_id=?')->execute([$target,$c['id']]);
             $db->prepare('INSERT INTO class_teachers (class_id,user_id,created_at) VALUES (?,?,?)')->execute([$c['id'],$user['id'],time()]);
         }
@@ -114,6 +115,7 @@ function removeTeacherRole(\PDO $db,array $admin,string $id,bool $deleteAccount)
     $q=$db->prepare('SELECT class_id FROM teacher_classes WHERE teacher_id=? ORDER BY class_id');$q->execute([$id]);
     foreach($q->fetchAll(\PDO::FETCH_COLUMN) as $class){
         lockRegistrationClass($db,$class);
+        cancelClassTransfers($db,$class);
         $db->prepare('DELETE FROM class_teachers WHERE class_id=? AND user_id=?')->execute([$class,$admin['id']]);
         $db->prepare('UPDATE teacher_classes SET teacher_id=? WHERE class_id=?')->execute([$admin['id'],$class]);
     }

@@ -37,8 +37,8 @@ manage('create-invitation', { classId: classInfo.id, code: 'CTEST', expiresAt: M
 for (const engine of ['login-chromium', 'login-webkit']) {
     // Shell cases use a separate fixture account. The full suite must not spend
     // the same student's ten-login throttle bucket across unrelated scenarios.
-    for (const name of ['student-a', 'student-b', 'shell-student', 'recovery-student','polish-student','verification-student','mode-student','promote-student']) manage('create-user', { email: `${name}-${engine}@example.test`, password: 'Synthetic-browser-password-123!', name, classId: classInfo.id });
-    for(const teacherName of ['teacher','membership-teacher','admin','mgmt-owner','mgmt-co','mgmt-admin']){
+    for (const name of ['student-a', 'student-b', 'shell-student', 'recovery-student','polish-student','verification-student','mode-student','promote-student','transfer-student']) manage('create-user', { email: `${name}-${engine}@example.test`, password: 'Synthetic-browser-password-123!', name, classId: classInfo.id });
+    for(const teacherName of ['teacher','membership-teacher','admin','mgmt-owner','mgmt-co','mgmt-admin','transfer-owner','transfer-target']){
     const teacher=JSON.parse(manage('create-user',{email:`${teacherName}-${engine}@example.test`,password:'Synthetic-browser-password-123!',name:teacherName.startsWith('mgmt-')?teacherName:'Michael Fixture',classId:classInfo.id}));
     const grant=spawnSync(php,[...phpArgs,'tests/backend-fixture.php','teacher-grant'],{cwd:root,env,input:JSON.stringify({id:teacher.id,limit:10}),encoding:'utf8',windowsHide:true});
     if(grant.status!==0)throw Error('Teacher fixture setup failed');

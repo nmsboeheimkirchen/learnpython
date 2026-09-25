@@ -1,5 +1,7 @@
 # Login-/Speicher-Pilot: Integration und Hostinger-Testversion
 
+> **Historische Integrationsnotizen.** Der aktuelle, übergreifende Regelvertrag für Datenhaltung, Login, Schüler-/Lehrerverwaltung, Superadmin, Sonderfälle, Rechte und Testzuordnung steht in [ACCOUNT-SYSTEM.md](../ACCOUNT-SYSTEM.md). Die folgenden datierten Rolloutabschnitte enthalten frühere Einschränkungen und sind nicht die aktuelle Funktionsbeschreibung. Für den tatsächlich veröffentlichten Stand gilt der jüngste [LOGIN-HANDOFF.md](../LOGIN-HANDOFF.md)-Eintrag.
+
 ## Erweiterung 21.09.2026 – Passwort-Wiederherstellung
 
 Maßgeblicher Live-/Teststand: [LOGIN-HANDOFF.md](../LOGIN-HANDOFF.md). Die älteren Rolloutangaben unten sind historisch.

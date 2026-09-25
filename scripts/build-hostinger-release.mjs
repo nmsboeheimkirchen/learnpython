@@ -9,6 +9,7 @@ const privateFiles = ['src/bootstrap.php', 'src/auth.php', 'src/storage.php', 's
 privateFiles.push('src/smtp.php',...['Exception.php','PHPMailer.php','SMTP.php','LICENSE','README.agentpy.md'].map(file=>'vendor/phpmailer/'+file));
 privateFiles.push('src/teachers.php','teacher-schema.sql','membership-schema.sql','src/roles.php','roles-schema.sql');
 privateFiles.push('src/management.php','management-schema.sql');
+privateFiles.push('src/transfers.php','transfer-schema.sql');
 
 export function releaseFiles(root, prefix = '') {
     return readdirSync(join(root, prefix), { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name)).flatMap(entry => {

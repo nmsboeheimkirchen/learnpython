@@ -27,9 +27,18 @@ try {
     }
     if ($method === 'GET' && $action === 'admin-teachers') jsonResponse(\AgentPy\adminTeachers($db,\AgentPy\requireSuperadmin($db)));
     if ($method === 'GET' && $action === 'admin-accounts') jsonResponse(\AgentPy\adminAccounts($db,\AgentPy\requireSuperadmin($db)));
+    if ($method === 'GET' && $action === 'teacher-transfers') jsonResponse(\AgentPy\pendingStudentTransfers($db,\AgentPy\requireTeacher($db)));
     if ($method !== 'POST') throw new ApiError(405, 'METHOD_NOT_ALLOWED');
     requireMutation($config);
     $body = readBody();
+    if(in_array($action,['teacher-transfer-targets','teacher-transfer-student','teacher-decide-transfer'],true)){
+        $user=\AgentPy\requireTeacher($db);
+        jsonResponse(match($action){
+            'teacher-transfer-targets'=>\AgentPy\transferTargets($db,$user,$body),
+            'teacher-transfer-student'=>\AgentPy\requestStudentTransfer($db,$config,$user,$body),
+            'teacher-decide-transfer'=>\AgentPy\decideStudentTransfer($db,$config,$user,$body)
+        });
+    }
     if(in_array($action,['admin-revoke-teacher','admin-update-account','admin-delete-account'],true)){
         $user=\AgentPy\requireSuperadmin($db);
         jsonResponse(match($action){

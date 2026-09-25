@@ -6,6 +6,7 @@ import "./pixelmuseum-help-core.test.mjs";
 import "./helicopter-access-core.test.mjs";
 import "./helicopter-config-core.test.mjs";
 import "./legal-pages.test.mjs";
+import "./account-documentation.test.mjs";
 import "./learning-data-core.test.mjs";
 import "./local-learning-data.test.mjs";
 import "./remote-learning-data.test.mjs";

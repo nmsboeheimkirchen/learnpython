@@ -28,3 +28,4 @@
 .teacher-person-email{overflow-wrap:anywhere}.teacher-accounts{margin-top:20px}.teacher-accounts summary{cursor:pointer;text-decoration:underline;padding:12px 0}
 .teacher-account-list li{display:flex;gap:10px;align-items:center;flex-wrap:wrap;border-top:1px solid #294452;padding:14px 0}.teacher-account-list li[hidden]{display:none}.teacher-account-list li>div{flex:1;min-width:180px}.teacher-account-list p{margin:3px 0}
 .teacher-accounts input{padding:10px;border-radius:8px;max-width:100%;box-sizing:border-box}
+.teacher-transfer-row{border-top:1px solid #294452;margin-top:12px;padding-top:12px;overflow-wrap:anywhere}.teacher-transfer-row button{margin:4px 8px 4px 0}

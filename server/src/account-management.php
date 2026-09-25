@@ -86,4 +86,5 @@ function migrateAccounts(\PDO $db): void
     migrateMemberships($db);
     migrateRoles($db);
     migrateManagement($db);
+    migrateTransfers($db);
 }

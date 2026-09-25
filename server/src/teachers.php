@@ -236,6 +236,9 @@ function lockStudentMember(\PDO $db, string $classId, mixed $id, bool $allowTeac
 
 function removeClassMembership(\PDO $db, string $id, string $classId): void
 {
+    // A later rejoin must not revive an earlier transfer request from this class.
+    if($db->query('SELECT version FROM schema_migrations WHERE version=9')->fetchColumn())
+        $db->prepare('DELETE FROM student_transfers WHERE user_id=? AND source_class_id=?')->execute([$id,$classId]);
     $classes=accountClasses($db,$id,true);
     $others=array_values(array_filter($classes,fn($c)=>$c['id']!==$classId));
     if($others){

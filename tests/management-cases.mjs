@@ -15,7 +15,7 @@ export async function managementTests({t,fixture,BrowserSession,url,workerUrl,pa
         let room=await create(owner,'Transfer '+tag);
         await owner.s.request('teacher-add-teacher',{classId:room.id,email:co.u.email});
         await t.test('management migration preserves populated classes, co-teachers and learning data; is idempotent',()=>{
-            assert.deepEqual(JSON.parse(fixture('test-management-migration')),{preserved:true,version:8});
+            assert.deepEqual(JSON.parse(fixture('test-management-migration')),{preserved:true,version:9});
         });
         await t.test('school class names reject same-domain duplicates (case and spacing), allow other domains and reuse after deletion',async()=>{
             assert.equal((await co.s.request('teacher-create-class',{name:room.name.toUpperCase()})).data.error.code,'CLASS_NAME_TAKEN');
