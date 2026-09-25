@@ -9,8 +9,8 @@ Dieses Dokument beschreibt die beabsichtigten Regeln und ihre Umsetzung im aktue
 | --- | --- |
 | Zuletzt bestätigte Produktion | Hostinger `pilot-20260925-r14`, Schema 7; siehe jüngsten Eintrag in [LOGIN-HANDOFF.md](LOGIN-HANDOFF.md). |
 | Gepushter Verwaltungsstand | `2329ac48e8cadab721aaf692df27828af734c93e`, `dev-login-save`: Klassenbesitz, Rollenentzug, Kontenverwaltung, feste Schul-Domain, Schema 8. Noch nicht live. |
-| Neue Schülerübertragung | Schema 9, API, Oberfläche und Regressionstests als `ccf5472c5a9d219158ead62fd81b49ecf85ae42b` nach `dev-login-save` gepusht. CI 36152307210: Backend SQLite/MariaDB, Hosting, Logik und beide Missionsbrowser erfolgreich; Transfer-Browsertest in beiden Engines mit fehlerhaftem Selektor. Korrektur und zusätzliche Randfalltests werden separat nachgeprüft. |
-| Aktuelle Freigabegrenze | Reguläre Test- und Git-Freigaben funktionieren wieder; keine Sicherheitsprüfung wird umgangen. Lokal 280/280 Logik-/Backend-/Hostingtests erfolgreich, danach erweiterter Backendlauf 64/64 einschließlich drei zusätzlicher Randfälle. Git-Push und Hostinger-Veröffentlichung bleiben getrennt; für letztere sind Migration und Livechecks noch offen. |
+| Geprüfte Schülerübertragung | Schema 9, API, Oberfläche und Regressionstests auf `dev-login-save`, geprüfter Commit `d00c8da65369f9405afd6ee150fccc6262f630de`. **CI 36194686016 vollständig erfolgreich**: SQLite/MariaDB, Hosting, Logik, beide Missionsbrowser und 68/68 Konto-Browsertests. Lokaler Transfer-Nachlauf 2/2 erfolgreich, Dialogbilder geprüft. |
+| Veröffentlichungsgrenze | Dev-Push abgeschlossen; keine Sicherheitsprüfung umgangen. Lokal 280/280 Logik-/Backend-/Hostingtests erfolgreich, danach erweiterter Backendlauf 64/64 einschließlich drei zusätzlicher Randfälle. Git-Push und Hostinger-Veröffentlichung bleiben getrennt; für letztere sind Migration und Livechecks noch offen. |
 
 Die folgenden Funktionsbeschreibungen umfassen auch den noch unveröffentlichten Entwicklungsstand. Nach einer späteren Veröffentlichung diesen Statusblock und den Handoff aktualisieren. Historische Abschnitte in Handoff, TODO und `server/README.md` sind **keine neuen Aufträge**, insbesondere nicht zum Löschen echter Konten.
 
@@ -209,7 +209,7 @@ Lehrkraftnamen sind unterstrichen, Klick/Tippen zeigt die E-Mail. Das X am Co-Le
 
 Normale Besitzübertragung: Ziel muss schon Co-Lehrkraft sein und einen freien Platz im eigenen Klassenlimit haben. Klassen-ID, Code, Schüler, Fortschritt und ursprüngliche Schul-Domain bleiben. Bisheriger Inhaber wird Co-Lehrkraft, neuer Inhaber verliert seinen redundanten Co-Eintrag. Ein Inhaber darf nicht direkt „Klasse verlassen“, solange niemand den Besitz übernimmt. Offene Schülertransferanfragen an/von dieser Klasse werden beim Besitzerwechsel verworfen, damit eine frühere Zustimmungsbeziehung nicht still auf neue Personen übergeht.
 
-## 9. Schülerübertragung – neuer Entwicklungsstand, noch nicht vollständig getestet
+## 9. Schülerübertragung – getesteter Entwicklungsstand, noch nicht auf Hostinger
 
 Einstieg: Inhaber öffnet Klasse, in der Schülerzeile das Pfeilsymbol „einer anderen Klasse zuordnen“. Keine Aktionen für offene Neuanmeldungen oder Lehrerkonten. Modus und Ziel sind ausdrücklich zu wählen:
 
@@ -353,10 +353,10 @@ npm run test:e2e
 
 `test:backend` startet echte lokale PHP-API-Prozesse und testet SQLite; mit den vorgesehenen `AGENTPY_TEST_MYSQL_*`-Variablen zusätzlich MariaDB. Datenbankname muss auf `_test` enden. CI verwendet eine isolierte MariaDB-Serviceinstanz. `tests/backend-fixture.php` ist CLI-/Development-begrenzt; Fixture-Token, Testpasswörter und synthetische Daten dürfen niemals durch Produktivwerte ersetzt werden. Browserkonfiguration [playwright.login.config.mjs](playwright.login.config.mjs) führt Chromium und WebKit aus; das ersetzt nicht jeden physischen iPad-/Mailclienttest.
 
-### Noch offene Nachweise dieser Erweiterung
+### Aktueller Nachweis und zusätzliche Release-/Härtungsprüfungen
 
-- Nach Selektorkorrektur Transfer-Browsertests und erweiterten Backendstand vollständig ausführen, inklusive MariaDB; Screenshots auf Desktop-/Tabletbreite visuell kontrollieren.
-- CI des Verwaltungscommits `2329ac4` erfolgreich (36147400053); im Transferlauf 36152307210 sind ebenfalls alle bisherigen Konto-/Verwaltungsfälle grün (66/68). Nur die beiden neuen Transfer-Browserfälle benötigen den korrigierten Selektor und erneuten Nachweis.
+- **CI 36194686016 success** für `d00c8da65369f9405afd6ee150fccc6262f630de`: alle Jobs einschließlich erweiterter Transferfälle auf SQLite/MariaDB und 68/68 Konto-Browserfälle. Die zwei Fehler des alten Laufs 36152307210 betrafen einen inzwischen korrigierten Testselektor, nicht einen nachgewiesenen Fehler der Zielklassenauswahl.
+- Lokaler Transfer-Nachlauf in Chromium und WebKit **2/2**, Screenshots der Zuordnung/Annahme auf Desktop-/Tabletbreite visuell kontrolliert. Lokaler Backendnachlauf **64/64**, einschließlich Rollenentzug, Klassen-/Kontolöschung, Request-Cascade und zwischenzeitlich erteilter Lehrerrolle. Dies ist weiterhin kein Produktionsnachweis.
 - Vor Hostinger-Veröffentlichung: echte Schema-7→8→9-Migration auf gesicherter Bestandskopie sowie frischer Bestandsvergleich. Weitere gezielte Checks: wartende alte Schülerseite nach Transfer, angenommene echte Lehrereinladung während offener Schüleranfrage, genutzter/erneuerter Code und vorhandene Anfrage. Bestehende Foreign Keys/Transaktionen ersetzen diesen Nachweis nicht.
 - API-/Dialogfehler unter langsamem Netz, mehrfachen Klicks und verlorener Antwort prüfen. Keine Produktionskonten dafür löschen/verschieben.
 
