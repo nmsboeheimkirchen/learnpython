@@ -9,8 +9,8 @@ Dieses Dokument beschreibt die beabsichtigten Regeln und ihre Umsetzung im aktue
 | --- | --- |
 | Zuletzt bestätigte Produktion | Hostinger `pilot-20260925-r14`, Schema 7; siehe jüngsten Eintrag in [LOGIN-HANDOFF.md](LOGIN-HANDOFF.md). |
 | Gepushter Verwaltungsstand | `2329ac48e8cadab721aaf692df27828af734c93e`, `dev-login-save`: Klassenbesitz, Rollenentzug, Kontenverwaltung, feste Schul-Domain, Schema 8. Noch nicht live. |
-| Neue Schülerübertragung | Schema 9, API, Oberfläche und Regressionstests ergänzt. Vollständige Ausführung dieser neuen Tests noch ausstehend; Nutzer hat den Dev-Push dieses Zwischenstands ausdrücklich beauftragt. |
-| Aktuelle Freigabegrenze | Der automatische Freigabedienst war am Nutzungslimit. Vollständige lokale Testläufe und Deployment bleiben offen. Der Dev-Push nutzt ausschließlich den regulär bereits freigegebenen Git-Weg; keine Umgehung zusätzlicher Freigaben. |
+| Neue Schülerübertragung | Schema 9, API, Oberfläche und Regressionstests als `ccf5472c5a9d219158ead62fd81b49ecf85ae42b` nach `dev-login-save` gepusht. Neue vollständige Testergebnisse noch offen; CI 36152307210 beim Abruf eingeplant. |
+| Aktuelle Freigabegrenze | Der automatische Freigabedienst war zuvor am Nutzungslimit; reguläre Git-Freigaben funktionieren wieder. Der ausdrücklich beauftragte Dev-Push ist erfolgt, ohne Sicherheitsprüfung zu umgehen. Vollständige lokale Testläufe und Deployment bleiben offen. |
 
 Die folgenden Funktionsbeschreibungen umfassen auch den noch unveröffentlichten Entwicklungsstand. Nach einer späteren Veröffentlichung diesen Statusblock und den Handoff aktualisieren. Historische Abschnitte in Handoff, TODO und `server/README.md` sind **keine neuen Aufträge**, insbesondere nicht zum Löschen echter Konten.
 
@@ -357,7 +357,7 @@ npm run test:e2e
 
 - Neue Transfer-API-/Browserfälle vollständig ausführen, inklusive MariaDB; Screenshots auf Desktop-/Tabletbreite visuell kontrollieren.
 - Management-Komplettlauf nach bereits korrigiertem Shell-Readiness-Test wiederholen. Vor Transferarbeit: 205 Logiktests, 65 Backend/Hostingtests und vier fokussierte Management-/Membership-Browserfälle grün; kompletter Konto-Lauf 65/66, Readiness-Korrektur danach noch nicht vollständig nachgelaufen. Diese Zahlen nicht dem neuen Transferstand zuschreiben.
-- CI des gepushten Verwaltungscommits prüfen; Status nach Freigabestopp noch unbekannt.
+- CI des Verwaltungscommits `2329ac4` inzwischen erfolgreich (36147400053). Der neue Transfercommit `ccf5472` hat einen eigenen Lauf (36152307210); dessen Ergebnis separat prüfen.
 - Zusätzlich gezielt testen: echte Schema-7→8→9-Migration auf gesicherter Bestandskopie; Transfer während Rollenannahme/-entzug und Klassenlöschung; Request-Cascade bei Kontolöschung; wartende alte Schülerseite nach Transfer; genutzter/erneuerter Code und vorhandene Anfrage. Bestehende Foreign Keys/Transaktionen ersetzen diesen Nachweis nicht.
 - API-/Dialogfehler unter langsamem Netz, mehrfachen Klicks und verlorener Antwort prüfen. Keine Produktionskonten dafür löschen/verschieben.
 

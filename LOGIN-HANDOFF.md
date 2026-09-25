@@ -2,9 +2,11 @@
 
 ## AKTUELL – Dev-Sicherung ausdrücklich beauftragt, kein Live-Release
 
+- **Push erfolgreich:** Code und Systemdokumentation als `ccf5472c5a9d219158ead62fd81b49ecf85ae42b` auf `origin/dev-login-save`. GitHub-Lauf **36152307210** gestartet, beim letzten Abruf `queued`; Ergebnis noch offen. Voriger Verwaltungscommit `2329ac4` hat inzwischen **CI 36147400053 success**. Keine Aussage, dass neue Transfer-Tests bereits grün seien.
+- Regulärer Git-Eskalationsweg mit vorhandenen/erteilten Git-Freigaben funktioniert wieder; keine Sicherheitsprüfung umgangen. Die frühere Freigabeblockade ist historisch, kein aktueller pauschaler Grund gegen jeden neuen Testversuch. Der aktuelle Nutzerauftrag war ausschließlich Dev-Push, daher keine zusätzlichen Volltests oder Veröffentlichung durchgeführt. Für Fortsetzung reguläre Freigabe anfordern, falls erforderlich.
 - Nutzer beauftragt den Push auch ohne abgeschlossene Volltests. Nur reguläre, bereits freigegebene Git-Befehle verwenden; keine Umgehung weiterer Freigaben. Branch geprüft: `dev-login-save`, Ausgangscommit `2329ac48e8cadab721aaf692df27828af734c93e`.
 - Schülertransfer, Tests, Systemdokumentation und README werden als explizit ausgewählte Dateien gesichert. Kein `git add .`, keine privaten Konfigurationen/Cachedateien, keine unbekannte ungetrackte Root-Datei. `git diff --check` grün, Syntaxprüfung/Dateilinks wie unten dokumentiert; neue vollständige Backend-/Browserläufe weiter offen.
-- Dieser Abschnitt ersetzt die frühere Aussage, dass überhaupt kein Git-Push möglich sei: bereits genehmigte Git-Operationen werden jetzt genutzt. Hostinger bleibt **r14/Schema7**. Kein Upload, keine Migration, keine echten Konten verändert. Pushresultat anschließend nachtragen.
+- Dieser Abschnitt ersetzt die frühere Aussage, dass überhaupt kein Git-Push möglich sei. Hostinger bleibt **r14/Schema7**. Kein Upload, keine Migration, keine echten Konten verändert. Getrackter Worktree nach Codecommit sauber; anschließend nur dieser Dokumentationsnachtrag. Keine aktiven lokalen Testprozesse.
 
 ## AKTUELL – Erweiterung Schülertransfer/Dokumentation, Freigabedienst am Limit
 
