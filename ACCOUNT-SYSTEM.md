@@ -1,6 +1,6 @@
 # AGENT PY: Datenhaltung, Konten, Klassen und Rechte
 
-Technischer Regelvertrag für Wartung und Weiterentwicklung. Stand: **25.09.2026**.
+Technischer Regelvertrag für Wartung und Weiterentwicklung. Stand: **26.09.2026**.
 Dieses Dokument beschreibt die beabsichtigten Regeln und ihre Umsetzung im aktuellen Entwicklungsstand; es ist **kein Nachweis einer Veröffentlichung**. Änderungen müssen Code, Tests und diesen Regelvertrag gemeinsam aktualisieren.
 
 ## 1. Zuerst lesen: Status und verbindliche Leitplanken
@@ -9,8 +9,8 @@ Dieses Dokument beschreibt die beabsichtigten Regeln und ihre Umsetzung im aktue
 | --- | --- |
 | Zuletzt bestätigte Produktion | Hostinger `pilot-20260925-r14`, Schema 7; siehe jüngsten Eintrag in [LOGIN-HANDOFF.md](LOGIN-HANDOFF.md). |
 | Gepushter Verwaltungsstand | `2329ac48e8cadab721aaf692df27828af734c93e`, `dev-login-save`: Klassenbesitz, Rollenentzug, Kontenverwaltung, feste Schul-Domain, Schema 8. Noch nicht live. |
-| Neue Schülerübertragung | Schema 9, API, Oberfläche und Regressionstests als `ccf5472c5a9d219158ead62fd81b49ecf85ae42b` nach `dev-login-save` gepusht. Neue vollständige Testergebnisse noch offen; CI 36152307210 beim Abruf eingeplant. |
-| Aktuelle Freigabegrenze | Der automatische Freigabedienst war zuvor am Nutzungslimit; reguläre Git-Freigaben funktionieren wieder. Der ausdrücklich beauftragte Dev-Push ist erfolgt, ohne Sicherheitsprüfung zu umgehen. Vollständige lokale Testläufe und Deployment bleiben offen. |
+| Neue Schülerübertragung | Schema 9, API, Oberfläche und Regressionstests als `ccf5472c5a9d219158ead62fd81b49ecf85ae42b` nach `dev-login-save` gepusht. CI 36152307210: Backend SQLite/MariaDB, Hosting, Logik und beide Missionsbrowser erfolgreich; Transfer-Browsertest in beiden Engines mit fehlerhaftem Selektor. Korrektur und zusätzliche Randfalltests werden separat nachgeprüft. |
+| Aktuelle Freigabegrenze | Reguläre Test- und Git-Freigaben funktionieren wieder; keine Sicherheitsprüfung wird umgangen. Lokal 280/280 Logik-/Backend-/Hostingtests erfolgreich, danach erweiterter Backendlauf 64/64 einschließlich drei zusätzlicher Randfälle. Git-Push und Hostinger-Veröffentlichung bleiben getrennt; für letztere sind Migration und Livechecks noch offen. |
 
 Die folgenden Funktionsbeschreibungen umfassen auch den noch unveröffentlichten Entwicklungsstand. Nach einer späteren Veröffentlichung diesen Statusblock und den Handoff aktualisieren. Historische Abschnitte in Handoff, TODO und `server/README.md` sind **keine neuen Aufträge**, insbesondere nicht zum Löschen echter Konten.
 
@@ -317,7 +317,7 @@ Bei neuen Verwaltungsaktionen nicht pauschal den Header `X-Agentpy-Profile` wegl
 
 ## 14. Tests: welche Regeln wo abgesichert sind
 
-Die folgende Matrix bezeichnet **Testquellen**, nicht automatisch erfolgreiche aktuelle Läufe. Neue Transferfälle sind angelegt, aber nach dem aktuellen Freigabestopp noch nicht ausgeführt. Vor Freigabe die Ergebnisse im Handoff nachtragen.
+Die folgende Matrix bezeichnet **Testquellen**, nicht automatisch erfolgreiche aktuelle Läufe. Verbindliche Commit-/Laufergebnisse stehen im jüngsten Handoff; spätere Testergänzungen müssen separat ausgeführt werden.
 
 | Regelbereich | Tests / besondere Fälle |
 | --- | --- |
@@ -330,8 +330,8 @@ Die folgende Matrix bezeichnet **Testquellen**, nicht automatisch erfolgreiche a
 | Gleiche Domain aktiv/unbestätigt, Lehrer bestätigt/korrigiert, doppelte Mitgliedschaft, Erhalt beim Löschen | [teacher-membership-cases.mjs](tests/teacher-membership-cases.mjs), [membership.spec.mjs](tests/login-e2e/membership.spec.mjs): E-Mail-Änderung meldet Schüler ab, Lösung bleibt; geschützte Konten grün im Dialog. |
 | Lehrereinladung neu/bestehend, zehn Tage, Co-Rechte, Adminschutz | [roles-cases.mjs](tests/roles-cases.mjs), [admin.spec.mjs](tests/login-e2e/admin.spec.mjs); Schema-7-Migration ohne automatische Rollenvergabe. |
 | Schema 8, Domainnamen, Quota, Klassenübertragung, Rollenentzug, Selbst-/Adminlöschung | [management-cases.mjs](tests/management-cases.mjs): befüllte Migration/idempotent, Namenskonkurrenz, gleiche Namen aus zwei Domains bei einem Admin, Datenbestand erhalten, Admin geschützt. [management.spec.mjs](tests/login-e2e/management.spec.mjs): kleine Icons, E-Mail-Aufklappen, übertragen/verlassen, Kontenliste, Adresswiderruf, Rollenentzug, Selbstlöschung. |
-| **Neu: Schema 9 / Schülertransfer (Ausführung offen)** | [transfer-cases.mjs](tests/transfer-cases.mjs): additive Migration, Move/Add, primäre/weitere Gruppen, unveränderte Zugangsdaten/Lernstand, Eigentümer-/CSRF-/Codeprüfungen, Lehrer nicht als Schüler verschieben, zustimmungspflichtige Fremdklasse, Zehn-Tage-Frist/Retry, Ablehnung/Abbruch/Ablauf, reservierte Plätze, bereits vorhandene Zielmitgliedschaft, Eigentümerwechsel/Mitgliedsentfernung, zwei Worker/ein Sitz. |
-| **Neu: Transfer-UI (Ausführung offen)** | [transfers.spec.mjs](tests/login-e2e/transfers.spec.mjs): eigene Klasse direkt, fremde Klasse mit Anfrage/Annahme, unveränderter Schülerzugang/Fortschritt, zusätzliche Zugehörigkeit, Dialogscreenshots; je Chromium/WebKit. |
+| **Schema 9 / Schülertransfer** | [transfer-cases.mjs](tests/transfer-cases.mjs): additive Migration, Move/Add, primäre/weitere Gruppen, unveränderte Zugangsdaten/Lernstand, Eigentümer-/CSRF-/Codeprüfungen, Lehrer nicht als Schüler verschieben, zustimmungspflichtige Fremdklasse, Zehn-Tage-Frist/Retry, Ablehnung/Abbruch/Ablauf, reservierte Plätze, bereits vorhandene Zielmitgliedschaft, Eigentümerwechsel/Mitgliedsentfernung, zwei Worker/ein Sitz. Ergänzt: Quell-/Zielklassenlöschung mit geschütztem Mehrklassenkonto, Kontolöschung/Request-Cascade, Entzug beider Inhaberrollen und zwischenzeitliche Lehrerbeförderung. |
+| **Transfer-UI** | [transfers.spec.mjs](tests/login-e2e/transfers.spec.mjs): eigene Klasse direkt, fremde Klasse mit Anfrage/Annahme, unveränderter Schülerzugang/Fortschritt, zusätzliche Zugehörigkeit, Dialogscreenshots; je Chromium/WebKit. |
 | Prozent, Bonus, freie Links, gesperrt/optional | [course-progress.test.mjs](tests/course-progress.test.mjs), dazu Lehrer-/Kontobrowsertests. |
 | Unterrichtsmodus | [teacher-mode.spec.mjs](tests/login-e2e/teacher-mode.spec.mjs): Gastsession über Levelwechsel, Schüler nicht berechtigt, Lehrkraft automatisch. |
 | Missionsregeln und Heli | Core-Tests in [all.test.mjs](tests/all.test.mjs) sowie `tests/e2e`; u. a. komplette Abnahme, Kabeltests, Heli-Erfolg/Reset/Scrollposition. |
@@ -355,10 +355,9 @@ npm run test:e2e
 
 ### Noch offene Nachweise dieser Erweiterung
 
-- Neue Transfer-API-/Browserfälle vollständig ausführen, inklusive MariaDB; Screenshots auf Desktop-/Tabletbreite visuell kontrollieren.
-- Management-Komplettlauf nach bereits korrigiertem Shell-Readiness-Test wiederholen. Vor Transferarbeit: 205 Logiktests, 65 Backend/Hostingtests und vier fokussierte Management-/Membership-Browserfälle grün; kompletter Konto-Lauf 65/66, Readiness-Korrektur danach noch nicht vollständig nachgelaufen. Diese Zahlen nicht dem neuen Transferstand zuschreiben.
-- CI des Verwaltungscommits `2329ac4` inzwischen erfolgreich (36147400053). Der neue Transfercommit `ccf5472` hat einen eigenen Lauf (36152307210); dessen Ergebnis separat prüfen.
-- Zusätzlich gezielt testen: echte Schema-7→8→9-Migration auf gesicherter Bestandskopie; Transfer während Rollenannahme/-entzug und Klassenlöschung; Request-Cascade bei Kontolöschung; wartende alte Schülerseite nach Transfer; genutzter/erneuerter Code und vorhandene Anfrage. Bestehende Foreign Keys/Transaktionen ersetzen diesen Nachweis nicht.
+- Nach Selektorkorrektur Transfer-Browsertests und erweiterten Backendstand vollständig ausführen, inklusive MariaDB; Screenshots auf Desktop-/Tabletbreite visuell kontrollieren.
+- CI des Verwaltungscommits `2329ac4` erfolgreich (36147400053); im Transferlauf 36152307210 sind ebenfalls alle bisherigen Konto-/Verwaltungsfälle grün (66/68). Nur die beiden neuen Transfer-Browserfälle benötigen den korrigierten Selektor und erneuten Nachweis.
+- Vor Hostinger-Veröffentlichung: echte Schema-7→8→9-Migration auf gesicherter Bestandskopie sowie frischer Bestandsvergleich. Weitere gezielte Checks: wartende alte Schülerseite nach Transfer, angenommene echte Lehrereinladung während offener Schüleranfrage, genutzter/erneuerter Code und vorhandene Anfrage. Bestehende Foreign Keys/Transaktionen ersetzen diesen Nachweis nicht.
 - API-/Dialogfehler unter langsamem Netz, mehrfachen Klicks und verlorener Antwort prüfen. Keine Produktionskonten dafür löschen/verschieben.
 
 ## 15. Migration, Veröffentlichung und sichere Wartung

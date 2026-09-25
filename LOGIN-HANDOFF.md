@@ -1,5 +1,15 @@
 # Übergabe: dev-login-save
 
+## AKTUELL – Fortsetzung nach Dev-Push, Browser-Testkorrektur
+
+- **Weiterer Checkpoint 26.09.2026:** Drei zusätzliche Transfer-Randfälle implementiert und im vollständigen lokalen Backendlauf **64/64 grün** (Session 81264 beendet): Quell-/Zielklasse oder Konto löschen; Rollenentzug beider Inhaberseiten; inzwischen zum Lehrer beförderter Schüler. Geschützte Mehrklassenkonten/Lernstände erhalten, alte Anfragen nicht mehr annehmbar. Zusammen mit unveränderten Logik-/Hostingtests ergibt das 283 erfolgreiche lokale Tests, verteilt auf die dokumentierten Läufe.
+- Selektorkorrektur und diese Testergänzungen werden jetzt auf Dev gesichert, damit ein neuer vollständiger CI-Lauf erfolgen kann. Lokale alte Konto-Vollsuite Session 49360 läuft noch im WebKit-Teil; danach fokussierter Transferlauf mit korrigiertem Selektor. Veröffentlichung auf Hostinger ist **nicht** Bestandteil des Git-Pushs; dafür bleiben eigener Release-/Migrationsnachweis und Freigabe nötig.
+
+- Nutzer beauftragt Fortsetzung. HEAD `95c6b0c` auf `origin/dev-login-save`; Code/Transfer/Systemdokumentation darunter `ccf5472c5a9d219158ead62fd81b49ecf85ae42b`. Produktion unverändert **r14/Schema7**, keine echten Daten verändert.
+- **CI 36152307210:** Backend SQLite/MariaDB, Hosting, Logik und beide Missionsbrowser erfolgreich; Konto-Browser 66/68 erfolgreich. Ausschließlich neuer Transfer-Test hängt in beiden Engines beim exakten `getByLabel('Zielklasse')`: umschließendes Label enthält auch Optionstexte. Trace zeigt passende Zieloption vorhanden. Auf semantischen `getByRole('combobox', {name:'Zielklasse', exact:true})` korrigiert; noch kein abschließender grüner Wiederholungslauf.
+- Lokaler Gesamtcheck `tests/all.test.mjs tests/backend-api.test.mjs tests/hostinger-setup.test.mjs`: **280/280 erfolgreich**, einschließlich aller acht neuen Transfer-Backendfälle. Session 48161 beendet. Konto-Vollsuite Session 49360 läuft noch (begann vor Korrektur, Chromium-Transfer erwartbar fehlgeschlagen); anschließend gezielte Wiederholung erforderlich. Keine parallelen Playwright-Server auf Port 4174 starten.
+- Nächste Schritte: Browserkorrektur vollständig bestätigen/visuell prüfen, Systemstatus aktualisieren, explizit committen/pushen, frischen CI-Lauf prüfen. Hostinger erst nach grünen Tests und sicherer Schema7→8→9-Migrationsvorbereitung; `.cache/hostinger-r15.mjs` weiterhin ungeprüft/unbenutzt und noch auf Schema8 anzupassen. Ältere Aussagen „keine laufenden Prozesse“ oder „keine neuen Tests ausgeführt“ unten sind historisch.
+
 ## AKTUELL – Dev-Sicherung ausdrücklich beauftragt, kein Live-Release
 
 - **Push erfolgreich:** Code und Systemdokumentation als `ccf5472c5a9d219158ead62fd81b49ecf85ae42b` auf `origin/dev-login-save`. GitHub-Lauf **36152307210** gestartet, beim letzten Abruf `queued`; Ergebnis noch offen. Voriger Verwaltungscommit `2329ac4` hat inzwischen **CI 36147400053 success**. Keine Aussage, dass neue Transfer-Tests bereits grün seien.

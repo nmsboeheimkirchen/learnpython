@@ -124,5 +124,54 @@ export async function transferTests({t,fixture,BrowserSession,url,workerUrl,newU
             const states=[snapshot(p.u.id),snapshot(q.u.id)];assert.equal(states.filter(s=>s.primary===d.id).length,1);assert.equal(states.filter(s=>s.primary===a.id).length,1);
             assert.equal((await list(targetOwner)).filter(x=>[p.u.email,q.u.email].includes(x.email)).length,1);
         });
+        await t.test('deleting a source class, target class or account invalidates pending transfers without deleting shared pupils',async()=>{
+            const admin=await make();fixture('admin-grant',{id:admin.u.id});await admin.s.request('session');
+            for(const kind of ['source','target','account']){
+                const source=await create(owner,'delete-source'),target=await create(targetOwner,'delete-target');
+                const p=await make(false,{classId:source.id});fixture('membership-add',{id:p.u.id,classId:b.id});
+                await p.s.write({type:'complete',levelId:'mission1_level1',code:'KEEP AFTER CLASS DELETION'},0);
+                const before=snapshot(p.u.id);
+                assert.equal((await send(owner,p,source,target,'move',true)).status,200);
+                const request=(await list(targetOwner)).find(x=>x.email===p.u.email);assert.ok(request);
+                const result=kind==='account'
+                    ?await admin.s.request('admin-delete-account',{memberId:p.u.id,confirmation:true})
+                    :await (kind==='source'?owner:targetOwner).s.request('teacher-delete-class',{classId:(kind==='source'?source:target).id,confirmation:'LÖSCHEN',deleteClass:true,deleteExclusiveAccounts:true});
+                assert.equal(result.status,200,JSON.stringify(result.data));
+                assert.deepEqual(JSON.parse(fixture('transfer-inspect',{id:p.u.id})),[]);
+                assert.equal((await decide(targetOwner,request.id,'accept')).status,404);
+                if(kind==='account')assert.equal((await p.s.request('session')).data.profile,null);
+                else{
+                    const after=snapshot(p.u.id);assert.equal(after.preservedHash,before.preservedHash);assert.ok(after.classes.includes(b.id));
+                    assert.equal((await p.s.request('state')).data.state.data.completedCodes.mission1_level1,'KEEP AFTER CLASS DELETION');
+                    if(kind==='source'){assert.equal(after.primary,b.id);assert.ok(!after.classes.includes(source.id));}
+                    else assert.deepEqual(after,before);
+                }
+            }
+        });
+        await t.test('owner role revocation cancels requests on both sides while retaining pupil data',async()=>{
+            const admin=await make();fixture('admin-grant',{id:admin.u.id});await admin.s.request('session');
+            for(const side of ['source','target']){
+                const sourceOwner=await make(),destinationOwner=await make();
+                const source=await create(sourceOwner,'revoke-source'),target=await create(destinationOwner,'revoke-target');
+                const p=await make(false,{classId:source.id}),before=snapshot(p.u.id);
+                assert.equal((await send(sourceOwner,p,source,target,'add',true)).status,200);
+                const request=(await list(destinationOwner)).find(x=>x.email===p.u.email);assert.ok(request);
+                const revoked=side==='source'?sourceOwner:destinationOwner;
+                assert.equal((await admin.s.request('admin-revoke-teacher',{memberId:revoked.u.id,deleteAccount:false})).status,200);
+                assert.deepEqual(JSON.parse(fixture('transfer-inspect',{id:p.u.id})),[]);
+                assert.equal((await decide(side==='target'?admin:destinationOwner,request.id,'accept')).status,404);
+                assert.deepEqual(snapshot(p.u.id),before);
+                assert.equal((await revoked.s.request('session')).data.profile,null);
+            }
+        });
+        await t.test('a pupil promoted while approval is pending cannot be transferred as a pupil',async()=>{
+            const target=await create(targetOwner,'promotion'),p=await make(false,{classId:a.id});
+            assert.equal((await send(owner,p,a,target,'move',true)).status,200);
+            const request=(await list(targetOwner)).find(x=>x.email===p.u.email);assert.ok(request);
+            fixture('teacher-grant',{id:p.u.id,limit:10});const before=snapshot(p.u.id);
+            assert.equal((await decide(targetOwner,request.id,'accept')).data.error.code,'MEMBER_NOT_FOUND');
+            assert.deepEqual(snapshot(p.u.id),before);
+            assert.equal((await decide(targetOwner,request.id,'decline')).status,200);
+        });
     }finally{for(const {u} of people)fixture('teacher-clean',{id:u.id});}
 }

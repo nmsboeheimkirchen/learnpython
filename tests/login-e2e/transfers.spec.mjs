@@ -35,7 +35,7 @@ test('student transfer UI: own-class move, foreign approval and preserved studen
         await lesson(page).getByRole('button',{name:'transfer-student einer anderen Klasse zuordnen'}).click();
         const dialog=page.getByRole('dialog',{name:'Schüler:in zuordnen'});
         await expect(dialog.getByLabel('Art der Zuordnung')).toHaveValue('move');
-        await dialog.getByLabel('Zielklasse',{exact:true}).selectOption(b.id);
+        await dialog.getByRole('combobox',{name:'Zielklasse',exact:true}).selectOption(b.id);
         await expect(dialog.getByLabel('Klassencode der Zielklasse')).not.toBeVisible();
         await page.screenshot({path:test.info().outputPath('student-transfer-own.png')});
         await dialog.getByRole('button',{name:'Zuordnung bestätigen'}).click();
@@ -43,7 +43,7 @@ test('student transfer UI: own-class move, foreign approval and preserved studen
         await lesson(page).getByRole('button',{name:'Meine Klassen',exact:true}).click();await room(page,b.name);
         await expect(lesson(page).getByRole('button',{name:'Fortschritt von transfer-student',exact:true})).toHaveText('5 %');
         await lesson(page).getByRole('button',{name:'transfer-student einer anderen Klasse zuordnen'}).click();
-        await dialog.getByLabel('Art der Zuordnung').selectOption('add');await dialog.getByLabel('Zielklasse',{exact:true}).selectOption('');
+        await dialog.getByLabel('Art der Zuordnung').selectOption('add');await dialog.getByRole('combobox',{name:'Zielklasse',exact:true}).selectOption('');
         await dialog.getByLabel('Klassencode der Zielklasse').fill(c.invitation.code);
         await expect(dialog).toContainText('10 Tage');await expect(dialog).toContainText('reserviert keinen Platz');
         await dialog.getByRole('button',{name:'Zuordnung bestätigen'}).click();
