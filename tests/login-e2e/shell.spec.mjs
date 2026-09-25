@@ -103,9 +103,9 @@ test('shell honours failure/retry and clears account data after another tab logs
     const other=await context.newPage(); await other.goto('/app.html');
     await other.getByRole('button',{name:'Benutzermenü'}).click();
     await other.getByRole('button',{name:'Abmelden',exact:true}).click();
-    await expect(lesson(page).locator('html')).toHaveClass(/account-blocked/);
-    expect(await child(page).evaluate(()=>window.editor.getValue())).toBe('');
-    await expect(page.getByRole('button',{name:'Seite neu laden'})).toBeVisible();
+    await expect(lesson(page).locator('[data-next-target]')).toBeVisible();
+    await expect(page.getByRole('button',{name:'Anmelden',exact:true})).toBeVisible();
+    expect(await child(page).evaluate(()=>Boolean(window.editor))).toBe(false);
     await other.close();
 });
 test('deep link, Back and forward keep shell and exact lesson without duplicate controls',async({page})=>{
@@ -157,6 +157,7 @@ test('unsaved typing warns on logout; cancelled logout keeps account and explici
     await expect(lesson(page).locator('[data-next-target]')).toBeVisible();
     await navigate(page,'mission1_level1.html');
     await expect.poll(()=>child(page).evaluate(()=>!!window.editor)).toBe(true);
+    await child(page).evaluate(async()=>{await window.AgentLearningDataReady;});
     await child(page).evaluate(()=>window.editor.replaceRange('# Noch nicht gespeichert\n',{line:0,ch:0},undefined,'+input'));
     await page.getByRole('button',{name:'Benutzermenü'}).click();
     const warning=page.waitForEvent('dialog').then(async dialog=>{expect(dialog.message()).toContain('ungespeicherter Code');await dialog.dismiss();});

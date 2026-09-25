@@ -1,5 +1,6 @@
 import {calculateProgress,progressLegend,teacherProgressGuide} from './course-progress.js';
 const root=document.getElementById('teacher-content');
+const teacherLegend=progressLegend.replace('Ohne Link = noch gesperrt. ', 'Die Übersicht ist nur lesend; „offen“ bedeutet bereits freigeschaltet. ');
 const chrome=window.parent!==window && window.parent.location.origin===location.origin ? window.parent.document : document;
 const paths={edit:'<path d="m15 4 5 5M3 21l5-1L21 7a2 2 0 0 0-5-5L3 15v6Z"/>',trash:'<path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7"/>',users:'<circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M17 5a3 3 0 0 1 0 6M21 21v-3a6 6 0 0 0-3-5"/>',plus:'<path d="M12 5v14M5 12h14"/>',key:'<circle cx="8" cy="8" r="5"/><path d="m12 12 9 9m-4-4 3-3m-6 0 3-3"/>',copy:'<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H3V3h12v2"/>',refresh:'<path d="M20 7v5h-5M4 17v-5h5M5 8a8 8 0 0 1 13-4l2 3M19 16a8 8 0 0 1-13 4l-2-3"/>',back:'<path d="M20 12H4m6-6-6 6 6 6"/>',check:'<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 5 10 7 10-7m-14 11 3 3 5-5"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'};
 const el=(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;};
@@ -20,20 +21,21 @@ new MutationObserver(()=>{
 function fail(error){const node=el('p',error.message,'teacher-error');node.setAttribute('role','alert');root.replaceChildren(el('h1','Meine Klassen'),node,button('Erneut versuchen',()=>load(selected),'refresh'));}
 function dialog(title,content){const d=chrome.createElement('dialog');d.className='account-dialog';d.dataset.teacherDialog='';d.setAttribute('aria-label',title);d.append(el('h2',title),content);const close=button('Schließen',()=>d.close());close.className='account-close';d.append(close);d.addEventListener('close',()=>d.remove());chrome.body.append(d);d.showModal();return d;}
 function progressStatus(section){
-    const node=el('span',section.code+(section.optional?'*':'')+(section.completed?' ✓':' · offen'),
+    const node=el('span',section.code+(section.optional||!section.unlocked?'*':'')+(section.completed?' ✓':section.unlocked?' · offen':''),
         section.completed?'account-progress-done':'account-progress-pending');
     if(section.optional)node.classList.add('account-progress-optional');
     return node;
 }
+function progressList(p){
+    const list=el('ul',undefined,'account-progress-list teacher-progress-list');
+    for(const row of p.rows){const li=el('li');li.append(el('strong',row.label+': '));row.sections.forEach((s,i)=>{if(i)li.append(', ');li.append(progressStatus(s));});list.append(li);}
+    return list;
+}
 function details(member){
-    const p=calculateProgress(Object.fromEntries(member.completedIds.map(id=>[id,''])));
+    const p=calculateProgress(Object.fromEntries(member.completedIds.map(id=>[id,''])),member.unlockedIds||[]);
     const content=el('div');content.append(el('p',p.label,'account-progress-number'));
-    const list=el('ul',undefined,'account-progress-list');
-    for(const row of p.rows){
-        const li=el('li');li.append(el('strong',row.label+': '));
-        row.sections.forEach((s,i)=>{if(i)li.append(', ');li.append(progressStatus(s));});list.append(li);
-    }
-    content.append(list,el('p',progressLegend,'account-muted'));dialog(member.name,content);
+    const list=progressList(p);
+    content.append(list,el('p',teacherLegend,'account-muted'));dialog(member.name,content);
 }
 function progressGuide(){
     const guide=el('details',undefined,'teacher-progress-guide teacher-panel');
@@ -71,7 +73,14 @@ async function deleteDialog(c,member=null){
         : shared ? `${member.email} aus „${c.name}“ entfernen?`
         : `Konto ${member.email} endgültig löschen? Schülerdaten, Lernfortschritt und der gespeicherte Programmcode gehen verloren.`
         : `Klasse „${c.name}“ endgültig löschen?`,'teacher-danger'));
-    if(!member)form.append(el('p','Schülerkonten ohne weitere Klasse, Lernfortschritte und gespeicherte Programmcodes werden gelöscht. Beitrittscode und offene Anmeldungen entfallen.','teacher-danger'));
+    const confirmations=[];
+    if(!member){
+        for(const text of ['Klasse, Beitrittscode und offene Anmeldungen löschen?','Schülerkonten, die nicht auch in einer weiteren Klasse sind, samt Lernfortschritt und Programmcode löschen?']){
+            const label=el('label',undefined,'teacher-delete-check teacher-danger'),check=el('input');check.type='checkbox';check.required=true;
+            confirmations.push(check);label.append(check,el('span',text));form.append(label);
+        }
+        form.append(el('p','Konten, die auch einer anderen Klasse oder der Gruppe Lehrer:innen angehören, bleiben bestehen.','teacher-preserved'));
+    }
     if(protectedMembers.length){
         const protectedList=el('ul',undefined,'teacher-preserved');
         for(const m of protectedMembers)protectedList.append(el('li',`${m.email} – auch in: ${m.otherClasses.map(c=>c.name).join(', ')}. Konto, Lernfortschritt und Programmcode bleiben erhalten.`));
@@ -81,20 +90,22 @@ async function deleteDialog(c,member=null){
     let input;
     if(!member){const label=el('label','Tippe zur Bestätigung LÖSCHEN');input=el('input');input.name='confirmation';input.autocomplete='off';input.required=true;label.append(input);form.append(label);}
     const submit=el('button',member?(shared?'Aus Klasse entfernen':'Nutzer löschen'):'Klasse löschen');submit.type='submit';submit.disabled=!member;
-    if(input)input.addEventListener('input',()=>{submit.disabled=input.value!=='LÖSCHEN';});
+    const ready=()=>Boolean(member)||(input.value==='LÖSCHEN'&&confirmations.every(c=>c.checked));
+    if(input)input.addEventListener('input',()=>{submit.disabled=!ready();});
+    confirmations.forEach(c=>c.addEventListener('change',()=>{submit.disabled=!ready();}));
     form.append(error,submit);
     const d=dialog(member?'Nutzer löschen':'Klasse löschen',form),cancel=d.querySelector('.account-close');cancel.textContent='Abbrechen';
     let busy=false;d.addEventListener('cancel',e=>{if(busy)e.preventDefault();});
     form.addEventListener('submit',async e=>{
-        e.preventDefault();if(busy||(!member&&input.value!=='LÖSCHEN'))return;
+        e.preventDefault();if(busy||!ready())return;
         busy=true;submit.disabled=true;cancel.disabled=true;
         try{
             const result=await api(member?'teacher-delete-member':'teacher-delete-class',member
                 ? {classId:c.id,memberId:member.id,kind:member.status==='pending'?'pending':'user'}
-                : {classId:c.id,confirmation:input.value});
+                : {classId:c.id,confirmation:input.value,deleteClass:true,deleteExclusiveAccounts:true});
             d.close();member?renderDetail(result):renderList(result);
         }catch(failure){error.textContent=failure.message;}
-        finally{busy=false;submit.disabled=false;cancel.disabled=false;}
+        finally{busy=false;submit.disabled=!ready();cancel.disabled=false;}
     });
 }
 
@@ -124,10 +135,39 @@ function emailDialog(c,member,confirmOnly){
     });
 }
 
+function fieldsForm(title,fields,action,body,done){
+    const form=el('form'),error=el('p');error.setAttribute('role','alert');
+    for(const [name,label,type,value]of fields){const item=el('label',label),input=el('input');input.name=name;input.type=type;input.required=true;input.value=value??'';if(type==='number'){input.min=1;input.max=100;}item.append(input);form.append(item);}
+    const submit=el('button',action==='admin-invite-teacher'?'Einladung senden':action==='teacher-add-teacher'?'Lehrkraft hinzufügen':'Speichern');submit.type='submit';form.append(error,submit);
+    const d=dialog(title,form);d.querySelector('.account-close').textContent='Abbrechen';
+    form.addEventListener('submit',async event=>{event.preventDefault();submit.disabled=true;try{const input=Object.fromEntries(new FormData(form));if(input.classLimit)input.classLimit=Number(input.classLimit);const r=await api(action,{...body,...input});d.close();done(r);}catch(e){error.textContent=e.message;}finally{submit.disabled=false;}});
+}
+function adminPanel(){
+    const section=el('section',undefined,'teacher-panel');section.append(el('h2','Verwaltete Lehrer:innen'),el('p','Lehrkräfte werden geladen …'));
+    api('admin-teachers').then(r=>{
+        if(!section.isConnected||document.documentElement.classList.contains('account-invalidated'))return;
+        section.replaceChildren(el('h2','Verwaltete Lehrer:innen'),el('p','Gruppe Lehrer:innen · Neue und bestehende Nutzer erhalten eine Einladung per E-Mail. Gültig für 10 Tage.','teacher-sub'));
+        section.append(button('Lehrkraft hinzufügen',()=>fieldsForm('Lehrkraft einladen',[['email','E-Mail-Adresse','email',''],['classLimit','Eigene Klassen (1–100)','number',10]],'admin-invite-teacher',{},()=>load(null)),'plus'));
+        const list=el('ul');
+        for(const t of r.teachers){const li=el('li');li.append(el('strong',t.name+' · '),el('span',t.email+' · '+t.ownedClasses+' von '+t.classLimit+' eigenen Klassen '),button('Limit ändern',()=>fieldsForm('Klassenlimit ändern',[['classLimit','Eigene Klassen (1–100)','number',t.classLimit]],'admin-teacher-limit',{memberId:t.id},()=>load(null)),'edit','teacher-link'));list.append(li);}
+        section.append(list);
+        if(r.invitations.length){section.append(el('h3','Offene Einladungen'));const pending=el('ul');for(const i of r.invitations)pending.append(el('li',i.email+' · '+i.classLimit+' Klassen · gültig bis '+new Intl.DateTimeFormat('de-AT').format(new Date(i.expiresAt*1000))));section.append(pending);}
+    }).catch(e=>{if(section.isConnected)section.append(el('p',e.message,'teacher-error'));});return section;
+}
+async function addTeacher(c){
+    try{
+        const r=await api('teacher-candidates',{classId:c.id});if(selected!==c.id)return;
+        const content=el('div');content.append(el('p','Nur bereits freigeschaltete Lehrkräfte können mitunterrichten. Sie sehen Fortschritt und können Schülerdaten bearbeiten. Klassenverwaltung und Löschungen bleiben beim Inhaber.'));
+        let d;
+        for(const t of r.candidates)content.append(button(t.name+' · '+t.email,()=>{d.close();fieldsForm('Lehrkraft hinzufügen',[['email','E-Mail-Adresse','email',t.email]],'teacher-add-teacher',{classId:c.id},renderDetail);},'plus'));
+        if(!r.candidates.length)content.append(el('p','Keine weiteren Lehrkräfte mit deiner E-Mail-Domain verfügbar.','account-muted'));
+        content.append(button('Über E-Mail hinzufügen',()=>{d.close();fieldsForm('Lehrkraft hinzufügen',[['email','E-Mail-Adresse','email','']],'teacher-add-teacher',{classId:c.id},renderDetail);},'plus'));
+        d=dialog('Lehrpersonen hinzufügen',content);
+    }catch(e){dialog('Lehrperson hinzufügen nicht möglich',el('p',e.message));}
+}
 function newClass(){const form=el('form');const label=el('label','Klassenname');const input=el('input');input.name='name';input.required=true;input.maxLength=100;input.autocomplete='off';label.append(input);const submit=el('button','Klasse erstellen');submit.type='submit';const error=el('p');error.setAttribute('role','alert');form.append(label,el('p','32 Schülerplätze · 5 Großbuchstaben · Beitrittscode 10 Tage gültig','account-muted'),submit,error);const d=dialog('Neue Klasse',form);d.querySelector('.account-close').textContent='Abbrechen';form.addEventListener('submit',async event=>{event.preventDefault();submit.disabled=true;try{const r=await api('teacher-create-class',{name:input.value});d.close();selected=r.class.id;renderDetail(r);}catch(e){error.textContent=e.message;}finally{submit.disabled=false;}});input.focus();}
-function renderList(r){clearTimeout(timer);selected=null;root.replaceChildren();const header=el('div',undefined,'teacher-head'),heading=el('div');heading.append(el('h1','Meine Klassen'),el('p',`${r.classes.length} von ${r.classLimit} Klassen · ${r.profile.name}`,'teacher-muted'));const add=button('Klasse erstellen',newClass,'plus','teacher-primary');add.disabled=r.classes.length>=r.classLimit;header.append(heading,add);root.append(header,el('p','Gruppe: '+r.profile.className,'teacher-sub'));if(!r.classes.length){const empty=el('section',undefined,'teacher-panel teacher-empty');empty.append(el('h2','Deine erste Klasse'),el('p','Benenne deine Klasse. Du erhältst einen Beitrittscode für deine Schüler:innen.','teacher-muted'));root.append(empty);}for(const c of r.classes){const row=el('article',undefined,'teacher-panel teacher-row');const label=el('div');label.append(el('h2',c.name),el('p',`${c.members} / ${c.capacity} Schüler:innen · ${c.pending} E-Mail offen`,'teacher-sub'));row.append(icon('users'),label,button('Klasse ansehen',()=>load(c.id)));root.append(row);}}
-function renderDetail(r){clearTimeout(timer);selected=r.class.id;const c=r.class;root.replaceChildren(button('Meine Klassen',()=>load(null),'back','teacher-link'));const header=el('div',undefined,'teacher-head'),heading=el('div');heading.append(el('h1',c.name),el('p','Klasseninhaber: '+r.profile.name,'teacher-muted'));header.append(heading);root.append(header);const box=el('section',undefined,'teacher-panel'),code=el('div',undefined,'teacher-code');code.append(icon('key'),el('span','Beitrittscode:'));if(c.invitation){code.append(el('strong',c.invitation.code));const copy=button('',async()=>{try{await navigator.clipboard.writeText(c.invitation.code);copy.setAttribute('aria-label','Beitrittscode kopiert');status.textContent='Beitrittscode kopiert.';}catch{status.textContent='Bitte den angezeigten Code markieren und kopieren.';}},'copy');copy.setAttribute('aria-label','Beitrittscode kopieren');code.append(copy,el('span','gültig bis '+new Intl.DateTimeFormat('de-AT',{timeZone:'Europe/Vienna'}).format(new Date(c.invitation.expiresAt*1000)),'teacher-sub'));const delay=Math.max(0,(c.invitation.expiresAt-r.serverTime)*1000);timer=setTimeout(()=>load(c.id),Math.min(delay+1000,2147483647));}else{const generate=button('generieren',async()=>{generate.disabled=true;try{renderDetail(await api('teacher-renew-code',{classId:c.id}));}catch(e){status.textContent=e.message;generate.disabled=false;}},undefined,'teacher-link');code.append(generate);}const status=el('p',undefined,'teacher-sub');status.setAttribute('role','status');const count=el('div',undefined,'teacher-count');count.append(el('span',`${c.members} von ${c.capacity} Schülerplätzen belegt · ${c.pending} reserviert · ${c.free} frei`),button('Klasse löschen',()=>deleteDialog(c),undefined,'teacher-link teacher-delete'));box.append(code,count,status);root.append(box);const section=el('div',undefined,'teacher-head');section.append(el('h2','Schüler:innen'),button('Aktualisieren',()=>load(c.id),'refresh'));root.append(section,progressGuide());if(!r.members.length){root.append(el('p','Noch keine Anmeldungen. Teile den Beitrittscode mit deiner Klasse.','teacher-panel teacher-empty'));return;}const wrap=el('div',undefined,'teacher-table-wrap'),table=el('table');table.setAttribute('aria-label','Mitglieder und Lernfortschritt');const head=el('thead'),hr=el('tr');for(const text of ['Name / E-Mail','Anmeldung','Fortschritt','Erreichte Abschnitte','Aktionen']){const th=el('th',text);th.scope='col';hr.append(th);}head.append(hr);table.append(head);const body=el('tbody');for(const m of r.members){const row=el('tr'),name=el('td');name.append(el('strong',m.name),el('small',m.email));const state=el('td');state.dataset.label='Anmeldung';const status=m.status==='unverified'?button('bestätigen?',()=>emailDialog(c,m,true),'check','teacher-status teacher-verify'):el('span',undefined,'teacher-status'+(m.status==='confirmed'?'':' teacher-pending'));if(m.status!=='unverified')status.append(icon(m.status==='confirmed'?'check':'clock'),m.status==='confirmed'?'Bestätigt':m.status==='pending'?'E-Mail offen':'Inaktiv');else status.setAttribute('aria-label','E-Mail von '+m.name+' bestätigen?');state.append(status);const value=el('td'),sections=el('td');value.dataset.label='Fortschritt';sections.dataset.label='Erreichte Abschnitte';if(m.completedIds===null){value.textContent=m.status==='pending'?'—':'Nicht verfügbar';sections.textContent='—';}else{const p=calculateProgress(Object.fromEntries(m.completedIds.map(id=>[id,''])));value.textContent=p.label;const completed=p.rows.flatMap(row=>row.sections).filter(s=>s.completed);
-if(completed.length){const show=button('',()=>details(m),undefined,'teacher-link');show.setAttribute('aria-label','Fortschritt von '+m.name);completed.forEach((s,i)=>{if(i)show.append(', ');show.append(progressStatus(s));});sections.append(show);}else sections.textContent='Noch kein Abschnitt';}const actions=el('td'),remove=button('',()=>deleteDialog(c,m),'trash','teacher-delete');remove.setAttribute('aria-label',m.name+' löschen');remove.title='Nutzer löschen';if(m.status!=='pending'){const edit=button('',()=>emailDialog(c,m,false),'edit','teacher-edit');edit.setAttribute('aria-label',m.name+' bearbeiten');edit.title='Kontoinfo bearbeiten';actions.append(edit);}actions.append(remove);row.append(name,state,value,sections,actions);body.append(row);}table.append(body);wrap.append(table);root.append(wrap,el('p',progressLegend,'teacher-sub'));}
+function renderList(r){clearTimeout(timer);selected=null;root.replaceChildren();if(r.profile.superadmin)root.append(adminPanel());const header=el('div',undefined,'teacher-head'),heading=el('div');heading.append(el('h1','Meine Klassen'),el('p',`${r.ownedCount??r.classes.length} von ${r.classLimit} eigenen Klassen · ${r.profile.name}`,'teacher-muted'));const add=button('Klasse erstellen',newClass,'plus','teacher-primary');add.disabled=(r.ownedCount??r.classes.length)>=r.classLimit;header.append(heading,add);root.append(header,el('p','Gruppe: '+r.profile.className,'teacher-sub'));if(!r.classes.length){const empty=el('section',undefined,'teacher-panel teacher-empty');empty.append(el('h2','Deine erste Klasse'),el('p','Benenne deine Klasse. Du erhältst einen Beitrittscode für deine Schüler:innen.','teacher-muted'));root.append(empty);}for(const c of r.classes){const row=el('article',undefined,'teacher-panel teacher-row');const label=el('div');label.append(el('h2',c.name+(c.isOwner===false?' · gemeinsam':'')),el('p',`${c.members} / ${c.capacity} Schüler:innen · ${c.pending} E-Mail offen`,'teacher-sub'));row.append(icon('users'),label,button('Klasse ansehen',()=>load(c.id)));root.append(row);}}
+function renderDetail(r){clearTimeout(timer);selected=r.class.id;const c=r.class;root.replaceChildren(button('Meine Klassen',()=>load(null),'back','teacher-link'));const header=el('div',undefined,'teacher-head'),heading=el('div');heading.append(el('h1',c.name),el('p','Klasseninhaber: '+(c.ownerName||r.profile.name),'teacher-muted'));header.append(heading);if(c.isOwner!==false)header.append(button('Lehrpersonen hinzufügen',()=>addTeacher(c),'plus'));root.append(header);if(c.teachers?.length)root.append(el('p','Weitere Lehrkräfte: '+c.teachers.map(t=>t.name).join(', '),'teacher-sub'));const box=el('section',undefined,'teacher-panel'),code=el('div',undefined,'teacher-code');code.append(icon('key'),el('span','Beitrittscode:'));if(c.invitation){code.append(el('strong',c.invitation.code));const copy=button('',async()=>{try{await navigator.clipboard.writeText(c.invitation.code);copy.setAttribute('aria-label','Beitrittscode kopiert');status.textContent='Beitrittscode kopiert.';}catch{status.textContent='Bitte den angezeigten Code markieren und kopieren.';}},'copy');copy.setAttribute('aria-label','Beitrittscode kopieren');code.append(copy,el('span','gültig bis '+new Intl.DateTimeFormat('de-AT',{timeZone:'Europe/Vienna'}).format(new Date(c.invitation.expiresAt*1000)),'teacher-sub'));const delay=Math.max(0,(c.invitation.expiresAt-r.serverTime)*1000);timer=setTimeout(()=>load(c.id),Math.min(delay+1000,2147483647));}else{const generate=button('generieren',async()=>{generate.disabled=true;try{renderDetail(await api('teacher-renew-code',{classId:c.id}));}catch(e){status.textContent=e.message;generate.disabled=false;}},undefined,'teacher-link');generate.disabled=c.isOwner===false;code.append(generate);}const status=el('p',undefined,'teacher-sub');status.setAttribute('role','status');const count=el('div',undefined,'teacher-count');count.append(el('span',`${c.members} von ${c.capacity} Schülerplätzen belegt · ${c.pending} reserviert · ${c.free} frei`),button('Klasse löschen',()=>deleteDialog(c),undefined,'teacher-link teacher-delete'));if(c.isOwner===false)count.querySelector('button')?.remove();box.append(code,count,status);root.append(box);const section=el('div',undefined,'teacher-head');section.append(el('h2','Schüler:innen'),button('Aktualisieren',()=>load(c.id),'refresh'));root.append(section,progressGuide());if(!r.members.length){root.append(el('p','Noch keine Anmeldungen. Teile den Beitrittscode mit deiner Klasse.','teacher-panel teacher-empty'));return;}const wrap=el('div',undefined,'teacher-table-wrap'),table=el('table');table.setAttribute('aria-label','Mitglieder und Lernfortschritt');const head=el('thead'),hr=el('tr');for(const text of ['Name / E-Mail','Anmeldung','Fortschritt','Levelübersicht','Aktionen']){const th=el('th',text);th.scope='col';hr.append(th);}head.append(hr);table.append(head);const body=el('tbody');for(const m of r.members){const row=el('tr'),name=el('td');name.append(el('strong',m.name),el('small',m.email));const state=el('td');state.dataset.label='Anmeldung';const status=m.status==='unverified'&&!m.isTeacher?button('bestätigen?',()=>emailDialog(c,m,true),'check','teacher-status teacher-verify'):el('span',undefined,'teacher-status'+(m.status==='confirmed'?'':' teacher-pending'));if(m.status!=='unverified'||m.isTeacher)status.append(icon(m.status==='confirmed'?'check':'clock'),m.status==='confirmed'?'Bestätigt':m.status==='pending'?'E-Mail offen':'Inaktiv');else status.setAttribute('aria-label','E-Mail von '+m.name+' bestätigen?');state.append(status);const value=el('td'),sections=el('td');value.dataset.label='Fortschritt';sections.dataset.label='Levelübersicht';if(m.completedIds===null){value.textContent=m.status==='pending'?'—':'Nicht verfügbar';sections.textContent='—';}else{const p=calculateProgress(Object.fromEntries(m.completedIds.map(id=>[id,''])),m.unlockedIds||[]);value.append(button(p.label,()=>details(m),undefined,'teacher-link'));value.firstChild.setAttribute('aria-label','Fortschritt von '+m.name);sections.append(progressList(p));}const actions=el('td'),remove=button('',()=>deleteDialog(c,m),'trash','teacher-delete');remove.setAttribute('aria-label',m.name+' löschen');remove.title='Nutzer löschen';if(m.status!=='pending'&&!m.isTeacher){const edit=button('',()=>emailDialog(c,m,false),'edit','teacher-edit');edit.setAttribute('aria-label',m.name+' bearbeiten');edit.title='Kontoinfo bearbeiten';actions.append(edit);}if(c.isOwner!==false)actions.append(remove);row.append(name,state,value,sections,actions);body.append(row);}table.append(body);wrap.append(table);root.append(wrap,el('p',teacherLegend,'teacher-sub'));}
 async function load(id=null){const ticket=++version;selected=id;root.replaceChildren(el('p','Klassen werden geladen …'));try{const r=await api(id?'teacher-class':'teacher-classes',id?{classId:id}:undefined);if(ticket!==version)return;id?renderDetail(r):renderList(r);}catch(e){if(ticket===version)fail(e);}}
 if(window.AgentAccountConfig?.enabled && await window.AgentLearningDataReady)await load();
 else root.replaceChildren(el('h1','Meine Klassen'),el('p','Bitte melde dich mit einem freigeschalteten Lehrer:innenkonto an.'));

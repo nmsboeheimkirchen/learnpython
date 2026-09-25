@@ -23,7 +23,7 @@
             const target = new URL("app.html", base);
             const [path, hash] = screen.split("#");
             target.searchParams.set("screen", path);
-            if (hash && !/^(verify|reset)=/.test(hash)) target.hash = hash;
+            if (hash && !/^(verify|reset|teacher-invite)=/.test(hash)) target.hash = hash;
             history.replaceState(null, "", target);
             document.title = child.document.title || "AGENT PY";
         } catch (_) { /* Browser blocks reading an external target; never trust it. */ }
@@ -33,5 +33,5 @@
         // Its pageshow handler rechecks identity before enabling the lesson.
     });
     frame.src = screenFromAddress();
-    if (/^#(?:verify|reset)=/.test(location.hash)) history.replaceState(null,"",location.pathname+location.search);
+    if (/^#(?:verify|reset|teacher-invite)=/.test(location.hash)) history.replaceState(null,"",location.pathname+location.search);
 })();

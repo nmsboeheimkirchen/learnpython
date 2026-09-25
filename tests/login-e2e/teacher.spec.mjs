@@ -62,7 +62,7 @@ test('teacher menu, empty start, class creation, persistent join code and respon
     // Only disposable fixture classes are deleted. Cancellation must preserve them.
     await lesson(page).getByRole('button',{name:'Klasse löschen',exact:true}).click();
     const deletion=page.getByRole('dialog',{name:'Klasse löschen'});
-    await expect(deletion).toContainText('gespeicherte Programmcodes');
+    await expect(deletion).toContainText('Lernfortschritt und Programmcode');
     const confirm=deletion.getByRole('button',{name:'Klasse löschen',exact:true});
     await expect(confirm).toBeDisabled();
     await deletion.getByLabel('Tippe zur Bestätigung LÖSCHEN').fill('löschen');
@@ -71,12 +71,16 @@ test('teacher menu, empty start, class creation, persistent join code and respon
     await expect(lesson(page).locator('.teacher-code strong')).toHaveText(code);
     await lesson(page).getByRole('button',{name:'Klasse löschen',exact:true}).click();
     await deletion.getByLabel('Tippe zur Bestätigung LÖSCHEN').fill('LÖSCHEN');
+    await expect(confirm).toBeDisabled();
+    await deletion.getByRole('checkbox').nth(0).check();await expect(confirm).toBeDisabled();
+    await deletion.getByRole('checkbox').nth(1).check();
     await expect(confirm).toBeEnabled();await confirm.click();
     await expect(lesson(page).getByRole('heading',{name:'Deine erste Klasse'})).toBeVisible();
     // A real logout in another tab still erases private class data immediately.
     const other=await context.newPage();await other.goto('/app.html');
     await other.getByRole('button',{name:'Benutzermenü'}).click();await other.getByRole('button',{name:'Abmelden',exact:true}).click();
-    await expect(lesson(page).locator('html')).toHaveClass(/account-invalidated/);
+    await expect(lesson(page).locator('[data-next-target]')).toBeVisible();
+    await expect(page.getByRole('button',{name:'Anmelden',exact:true})).toBeVisible();
     await expect(lesson(page).getByText('1A <b>Beispiel</b>',{exact:true})).toHaveCount(0);
     await other.close();
 });

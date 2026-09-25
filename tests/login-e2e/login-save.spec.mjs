@@ -99,10 +99,10 @@ test('an account switch locks and clears an already open tab', async ({ page, co
     const other = await context.newPage(); await other.goto('/');
     await other.getByRole('button', { name: 'Benutzermenü' }).click();
     await other.getByRole('button', { name: 'Abmelden', exact: true }).click();
-    await expect(page.locator('html')).toHaveClass(/account-blocked/);
-    expect(await page.evaluate(() => window.editor.getValue())).toBe('');
+    await expect(page.locator('[data-next-target]')).toBeVisible();
+    expect(await page.evaluate(() => Boolean(window.editor))).toBe(false);
     await login(other, 'student-b');
-    expect(await page.evaluate(() => window.AgentLearningData.recordAttempt('mission1_level1', 'must not reach B'))).toBe(false);
+    await expect(page.locator('[data-next-target]')).toBeVisible();
     await other.close();
 });
 test('completion-only mode sends no attempts and help/skip progress survives reload', async ({ page }) => {

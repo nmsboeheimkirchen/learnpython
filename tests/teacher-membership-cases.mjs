@@ -73,7 +73,7 @@ export async function membershipTests({t,fixture,BrowserSession,url,workerUrl,id
             assert.equal((await other.request('teacher-class',{classId:roomB.id})).data.class.members,1);
             const before=(await student.request('state')).data.state;
             await guest.request('request-password-reset',{email});
-            assert.equal((await teacher.request('teacher-delete-class',{classId:roomA.id,confirmation:'LÖSCHEN'})).status,200);
+            assert.equal((await teacher.request('teacher-delete-class',{classId:roomA.id,confirmation:'LÖSCHEN',deleteClass:true,deleteExclusiveAccounts:true})).status,200);
             assert.deepEqual((await student.request('state')).data.state,before);
             const profile=(await student.request('session')).data.profile;
             assert.equal(profile.classId,roomB.id);assert.equal(profile.className,roomB.name);

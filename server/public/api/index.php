@@ -25,10 +25,17 @@ try {
     if ($method === 'GET' && $action === 'teacher-classes') {
         jsonResponse(\AgentPy\teacherClasses($db,$config,\AgentPy\requireTeacher($db)));
     }
+    if ($method === 'GET' && $action === 'admin-teachers') jsonResponse(\AgentPy\adminTeachers($db,\AgentPy\requireSuperadmin($db)));
     if ($method !== 'POST') throw new ApiError(405, 'METHOD_NOT_ALLOWED');
     requireMutation($config);
     $body = readBody();
-    if (in_array($action,['teacher-class','teacher-create-class','teacher-renew-code','teacher-delete-class','teacher-delete-member','teacher-delete-preview','teacher-confirm-email','teacher-update-member'],true)) {
+    if (in_array($action,['admin-invite-teacher','admin-teacher-limit'],true)) {
+        $user=\AgentPy\requireSuperadmin($db);
+        jsonResponse($action==='admin-invite-teacher'?\AgentPy\inviteTeacher($db,$config,$user,$body):\AgentPy\updateTeacherLimit($db,$user,$body));
+    }
+    if ($action==='teacher-invitation-info') jsonResponse(\AgentPy\teacherInvitationInfo($db,$body));
+    if ($action==='accept-teacher-invitation') jsonResponse(\AgentPy\acceptTeacherInvitation($db,$body));
+    if (in_array($action,['teacher-class','teacher-create-class','teacher-renew-code','teacher-delete-class','teacher-delete-member','teacher-delete-preview','teacher-confirm-email','teacher-update-member','teacher-candidates','teacher-add-teacher'],true)) {
         $user=\AgentPy\requireTeacher($db);
         jsonResponse(match($action){
             'teacher-class'=>\AgentPy\teacherClass($db,$config,$user,$body),
@@ -38,7 +45,9 @@ try {
             'teacher-delete-member'=>\AgentPy\deleteTeacherMember($db,$config,$user,$body),
             'teacher-delete-preview'=>\AgentPy\previewTeacherDeletion($db,$config,$user,$body),
             'teacher-confirm-email'=>\AgentPy\changeTeacherEmail($db,$config,$user,$body,true),
-            'teacher-update-member'=>\AgentPy\changeTeacherEmail($db,$config,$user,$body,false)
+            'teacher-update-member'=>\AgentPy\changeTeacherEmail($db,$config,$user,$body,false),
+            'teacher-candidates'=>\AgentPy\teacherCandidates($db,$user,$body),
+            'teacher-add-teacher'=>\AgentPy\addClassTeacher($db,$config,$user,$body)
         });
     }
     if ($action === 'check-invitation') jsonResponse(checkInvitation($db, $config, $body));

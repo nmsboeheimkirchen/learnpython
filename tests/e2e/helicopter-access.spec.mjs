@@ -123,6 +123,7 @@ test("the real receive and replace chain grants access", async ({ page }) => {
     await expect(page.locator("#access-message")).toHaveText("ACCESS GRANTED!");
     await expect(page.locator("#access-message")).toHaveCSS("color", "rgb(105, 243, 162)");
     await expect(glow).toHaveCSS("opacity", "0.78");
+    for(const selector of [".helicopter-hero-title",".agent-briefing",".access-display",".helicopter-hero-shade"])await expect(page.locator(selector)).toHaveCSS("opacity","0");
     const nextMission = page.locator("#next-level-btn");
     await expect(nextMission).toBeVisible();
     await expect(nextMission).toContainText("Nächster Auftrag");
@@ -203,6 +204,7 @@ test("every run starts fresh and a Python error cannot preserve access", async (
     expect(freshFailure.result.passed).toBe(false);
     expect(freshFailure.state).toMatchObject({ receiveCount: 0, checkCount: 0, accessGranted: false });
     await expect(page.locator("body")).toHaveAttribute("data-access-state", "denied");
+    for(const selector of [".helicopter-hero-title",".agent-briefing",".access-display",".helicopter-hero-shade"])await expect(page.locator(selector)).toHaveCSS("opacity","1");
 
     const errored = await runCode(page, correctCode + "\nraise Exception('Abbruch')");
     expect(errored.result.passed).toBe(false);

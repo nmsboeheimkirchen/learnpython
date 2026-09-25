@@ -108,6 +108,7 @@
         openMenu();
         loginButton?.classList.add("account-attention");
         if (erase) {
+            if (invalidated) return;
             invalidated = true;
             // A temporary focus/session check is not an identity change.
             document.documentElement.classList.add("account-invalidated");
@@ -117,6 +118,10 @@
             ui.querySelectorAll(".account-dialog").forEach(dialog => { dialog.close(); dialog.remove(); });
             panel?.querySelectorAll("[data-authenticated]").forEach(item => { item.hidden = true; });
             if (saveButton) saveButton.disabled = true;
+            // A revoked identity must never leave its private lesson on screen.
+            // Navigate only this shell child: fullscreen stays intact.
+            leavingAccount = true;
+            window.location.replace("index.html");
         }
     }
     function snapshotCode() { return window.editor?.getValue?.() ?? document.getElementById("python-editor")?.value ?? ""; }
@@ -522,7 +527,45 @@
             event.preventDefault(); event.stopImmediatePropagation(); guestMission(target.href);
         }
     }, true);
-    async function logout(verificationToken = null) {
+    async function teacherInvitationDialog(token) {
+        const content=ui.createElement("div"),dialog=simpleDialog("Einladung als Lehrkraft",content);
+        content.textContent="Einladung wird geprüft …";
+        try {
+            const current=await client.request("session");
+            const info=await client.request("teacher-invitation-info",{body:{token},csrfToken:current.csrfToken});
+            if(invalidated||!dialog.isConnected)return;
+            const form=ui.createElement("form"),intro=ui.createElement("p"),alert=ui.createElement("p");
+            alert.setAttribute("role","alert");
+            intro.textContent=info.email+" · Gruppe Lehrer:innen · bis zu "+info.classLimit+" eigene Klassen";
+            form.append(intro);
+            if(current.profile&&current.profile.email!==info.email){
+                const warning=ui.createElement("p");warning.className="account-muted";warning.textContent="Du bist mit einem anderen Konto angemeldet. Melde dich zuerst ab.";
+                form.append(warning,button("Abmelden",()=>logout(token,"teacher-invite")));content.replaceChildren(form);return;
+            }
+            if(!info.existing){
+                for(const [name,title,type] of [["name","Name","text"],["password","Passwort (mindestens 8 Zeichen)","password"],["confirmation","Passwort wiederholen","password"]]){
+                    const label=ui.createElement("label"),input=ui.createElement("input");
+                    label.textContent=title;input.name=name;input.type=type;input.required=true;
+                    input.autocomplete=type==="password"?"new-password":"name";label.append(input);form.append(label);
+                }
+                passwordVisibility(form);passwordVisibility(form,"confirmation");
+            }else{
+                const note=ui.createElement("p");note.textContent="Dein bestehendes Konto, Passwort und Lernfortschritt bleiben erhalten.";form.append(note);
+            }
+            const submit=ui.createElement("button");submit.type="submit";submit.textContent="Einladung annehmen";form.append(alert,submit);
+            form.addEventListener("submit",async event=>{
+                event.preventDefault();submit.disabled=true;
+                try{
+                    const s=await client.request("session");
+                    await client.request("accept-teacher-invitation",{csrfToken:s.csrfToken,body:{token,name:form.elements.name?.value||"",password:form.elements.password?.value||"",confirmation:form.elements.confirmation?.value||""}});
+                    leavingAccount=true;window.AgentLearningData?.dispose();announceChange();
+                    location.replace("index.html?role-updated="+Date.now()+"#teacher-added");
+                }catch(failure){alert.textContent=failure.message;submit.disabled=false;}
+            });
+            content.replaceChildren(form);
+        }catch(failure){content.textContent=failure.message;}
+    }
+    async function logout(verificationToken = null, tokenKind = "verify") {
         if (hasUnconfirmed() && !window.confirm("Nicht bestätigte Änderungen oder ungespeicherter Code gehen beim Abmelden verloren. Code zuvor sichern. Trotzdem abmelden?")) return;
         logoutButton.disabled = true;
         try {
@@ -532,7 +575,7 @@
             // Preserve the original link only in the fragment during this reload.
             // Bootstrap removes it immediately again; never store it or use a query.
             if (verificationToken) {
-                history.replaceState(null, "", location.pathname + location.search + '#verify=' + encodeURIComponent(verificationToken));
+                history.replaceState(null, "", location.pathname + location.search + '#' + tokenKind + '=' + encodeURIComponent(verificationToken));
                 window.location.reload();
             } else window.location.replace('index.html');
         } catch (failure) { show(failure.message); return {message: failure.message}; }
@@ -609,7 +652,7 @@
         if (["error", "conflict"].includes(status.type)) openMenu();
         if (["PROFILE_CHANGED", "AUTH_REQUIRED", "CSRF_MISMATCH"].includes(status.error?.code)) {
             // A changed account must not display the previous person's editor.
-            block(status.error, status.error.code === "PROFILE_CHANGED");
+            block(status.error, true);
         }
     }
     async function checkIdentity() {
@@ -710,7 +753,15 @@
                     renderIdentity();
                     if (invalidated) throw remote.error("PROFILE_CHANGED");
                     document.documentElement.classList.remove("account-blocked");
-                    if (/^#verify=/.test(window.location.hash)) {
+                    if (/^#teacher-invite=/.test(window.location.hash)) {
+                        const token=window.location.hash.slice(16);
+                        history.replaceState(null,"",window.location.pathname+window.location.search);
+                        teacherInvitationDialog(token);
+                    } else if (window.location.hash==='#teacher-added') {
+                        history.replaceState(null,"",window.location.pathname+window.location.search);
+                        show("Einladung angenommen. Bitte melde dich mit deinem Lehrer:innenkonto an.");
+                        loginDialog();
+                    } else if (/^#verify=/.test(window.location.hash)) {
                         const token = window.location.hash.slice(8);
                         history.replaceState(null, "", window.location.pathname + window.location.search);
                         registrationDialog(token);

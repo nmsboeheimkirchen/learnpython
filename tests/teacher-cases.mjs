@@ -73,10 +73,10 @@ export async function teacherTests({t,fixture,env,phpCall,BrowserSession,url,wor
             assert.match(pending.id,/^[a-f0-9]{32}$/);
             for(const session of [guest,pupil,other]){
                 assert.ok([401,403,404].includes((await session.request('teacher-delete-member',remove)).status));
-                assert.ok([401,403,404].includes((await session.request('teacher-delete-class',{classId:room.id,confirmation:'LÖSCHEN'})).status));
+                assert.ok([401,403,404].includes((await session.request('teacher-delete-class',{classId:room.id,confirmation:'LÖSCHEN',deleteClass:true,deleteExclusiveAccounts:true})).status));
             }
             assert.equal((await teacher.request('teacher-delete-member',remove,{headers:{'X-CSRF-Token':'bad'}})).status,403);
-            assert.equal((await teacher.request('teacher-delete-class',{classId:room.id,confirmation:'LÖSCHEN'},{headers:{Origin:'https://evil.example'}})).status,403);
+            assert.equal((await teacher.request('teacher-delete-class',{classId:room.id,confirmation:'LÖSCHEN',deleteClass:true,deleteExclusiveAccounts:true},{headers:{Origin:'https://evil.example'}})).status,403);
             assert.equal((await teacher.request('teacher-delete-class',{classId:room.id,confirmation:'löschen'})).status,422);
             assert.equal((await teacher.request('teacher-delete-member',{...remove,memberId:b.id})).status,404);
             assert.equal((await teacher.request('teacher-class',{classId:room.id})).data.class.members,1);
@@ -86,8 +86,8 @@ export async function teacherTests({t,fixture,env,phpCall,BrowserSession,url,wor
             const mails=JSON.parse(fixture('mail-test',{count:100,perMinute:100,perDay:10000})).messages;
             assert.ok(!mails.some(m=>m.to===email));
             fixture('teacher-grant',{id:member.id,limit:1});
-            assert.equal((await teacher.request('teacher-delete-member',remove)).status,404,'teachers are protected even in an owned class');
-            assert.equal((await teacher.request('teacher-delete-class',{classId:room.id,confirmation:'LÖSCHEN'})).data.error.code,'PROTECTED_TEACHER_ACCOUNT');
+            assert.equal((await teacher.request('teacher-delete-member',remove)).data.error.code,'PROTECTED_TEACHER_ACCOUNT','teachers are protected even in an owned class');
+            assert.equal((await teacher.request('teacher-delete-class',{classId:room.id,confirmation:'LÖSCHEN',deleteClass:true,deleteExclusiveAccounts:true})).data.error.code,'PROTECTED_TEACHER_ACCOUNT');
             assert.equal((await teacher.request('teacher-class',{classId:room.id})).data.class.id,room.id);
             assert.equal(JSON.parse(fixture('deleted-user-counts',{id:member.id})).users,1,'protected teacher account survived');
             fixture('teacher-clean',{id:member.id});
@@ -110,7 +110,7 @@ export async function teacherTests({t,fixture,env,phpCall,BrowserSession,url,wor
             await guest.request('check-invitation',{code:joinCode});
             const pendingEmail=`class-pending-${randomUUID()}@external.test`;
             assert.equal((await guest.request('register',{name:'Pending with class',email:pendingEmail,password})).status,202);
-            const result=await teacher.request('teacher-delete-class',{classId:room.id,confirmation:'LÖSCHEN'});
+            const result=await teacher.request('teacher-delete-class',{classId:room.id,confirmation:'LÖSCHEN',deleteClass:true,deleteExclusiveAccounts:true});
             assert.equal(result.status,200,JSON.stringify(result.data));assert.equal(result.data.classes.length,1);
             assert.equal(JSON.parse(fixture('registration-inspect',{email:pendingEmail})).pending,false);
             assert.equal((await signup.request('state')).status,401);

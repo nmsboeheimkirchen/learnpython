@@ -11,6 +11,7 @@ require_once __DIR__ . '/recovery.php';
 require_once __DIR__ . '/mail.php';
 require_once __DIR__ . '/smtp.php';
 require_once __DIR__ . '/teachers.php';
+require_once __DIR__ . '/roles.php';
 
 final class ApiError extends \RuntimeException
 {

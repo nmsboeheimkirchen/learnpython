@@ -12,6 +12,7 @@ import { registrationTests } from './registration-cases.mjs';
 import { recoveryTests } from './recovery-cases.mjs';
 import { teacherTests } from './teacher-cases.mjs';
 import { membershipTests } from './teacher-membership-cases.mjs';
+import { rolesTests } from './roles-cases.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const portable = join(root, '.cache/php-runtime/php-8.5.10/php.exe');
@@ -156,7 +157,10 @@ for (const backend of backends) {
         const userA = newUser();
         const userB = newUser();
         await t.test('additive v6 migration preserves populated accounts and learning states and repeats without confirming unverified email',()=>{
-            assert.deepEqual(JSON.parse(fixture('test-membership-migration',{id:userA.id})),{ok:true,confirmed:false,version:6});
+            assert.deepEqual(JSON.parse(fixture('test-membership-migration',{id:userA.id})),{ok:true,confirmed:false,version:7});
+        });
+        await t.test('additive v7 migration preserves populated v6 data, grants no roles and is idempotent',()=>{
+            assert.deepEqual(JSON.parse(fixture('test-roles-migration')),{preserved:true,superadmins:0,version:7});
         });
         const { child, url } = await startServer(env, port);
         const children = [child];
@@ -411,6 +415,7 @@ for (const backend of backends) {
         await recoveryTests({t,fixture,env,phpCall,BrowserSession,url,workerUrl:worker2.url,ids,password});
         await teacherTests({t,fixture,env,phpCall,BrowserSession,url,workerUrl:worker2.url,ids,password,newUser});
         await membershipTests({t,fixture,BrowserSession,url,workerUrl:worker2.url,ids,password,newUser});
+        await rolesTests({t,fixture,BrowserSession,url,ids,password,newUser});
 
         await t.test('broken saved data is an error, never an empty account; disabled users lose access', async () => {
             fixture('corrupt-state', { id: userB.id });

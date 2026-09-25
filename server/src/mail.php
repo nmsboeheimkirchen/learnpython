@@ -38,6 +38,13 @@ function claimMail(\PDO $db, array $config, int $now): ?array
                 $job=$recovery; $job['mail_table']='recovery_mail_jobs';
             }
         }
+        if ($config['registration_enabled'] && rolesSchema($db)) {
+            $q=$db->prepare("SELECT j.*,i.email,COALESCE(u.display_name,'Lehrkraft') AS name,i.expires_at FROM teacher_mail_jobs j JOIN teacher_invitations i ON i.id=j.invitation_id LEFT JOIN users u ON u.email=i.email WHERE j.available_at<=? AND (j.state='queued' OR (j.state='sending' AND j.lease_until<=?)) AND i.expires_at>? AND i.accepted_at=0 ORDER BY j.created_at,j.id LIMIT 1");
+            $q->execute([$now,$now,$now]);$invitation=$q->fetch();
+            if($invitation&&(!$job||[$invitation['created_at'],$invitation['id']]<[$job['created_at'],$job['id']])){
+                $job=$invitation;$job['mail_table']='teacher_mail_jobs';$job['kind']='teacher-invite';
+            }
+        }
         if (!$job) { $db->commit(); return null; }
         $job['lease_id'] = bin2hex(random_bytes(16));
         $db->prepare("UPDATE " . $job['mail_table'] . " SET state='sending',lease_until=?,lease_id=?,attempts=attempts+1 WHERE id=?")
@@ -68,7 +75,11 @@ function dispatchMail(\PDO $db, array $config, ?callable $testSender = null, ?in
     $link = $config['origin'] . '/index.html#verify=' . $job['token'];
     $body = "Willkommen bei AGENT PY!\n\nBitte bestaetige deine E-Mail-Adresse:\n$link\n\nDer Link ist 24 Stunden gueltig (hoechstens bis zum Ablauf deiner Anmeldung).\nFalls du dich nicht angemeldet hast, ignoriere diese Nachricht.\n";
     $subject='AGENT PY: E-Mail bestaetigen';
-    if ($job['kind']==='reset') {
+    if ($job['kind']==='teacher-invite') {
+        $link=$config['origin'].'/index.html#teacher-invite='.$job['token'];
+        $subject='AGENT PY: Einladung als Lehrkraft';
+        $body="Du bist in die Gruppe Lehrer:innen eingeladen. Nimm deine Einladung hier an:\n$link\n\nDer Link gilt zehn Tage ab Einladung. Ein bestehendes Konto und sein Lernfortschritt bleiben erhalten. Ohne Annahme wird keine Lehrerrolle vergeben.\n";
+    } elseif ($job['kind']==='reset') {
         $link=$config['origin'].'/index.html#reset='.$job['token'];
         $subject='AGENT PY: Passwort zuruecksetzen';
         $body="Hier kannst du ein neues Passwort fuer dein AGENT-PY-Konto festlegen:\n$link\n\nDer Link gilt eine Stunde ab dem ersten Versandversuch und nur einmal. Wenn du kein neues Passwort angefordert hast, ignoriere diese Nachricht. Dein Passwort bleibt dann unveraendert.\n";

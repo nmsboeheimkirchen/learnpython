@@ -158,7 +158,7 @@
     text-transform: uppercase;
 }
 
-.helicopter-config-page .agent-briefing {
+.helicopter-access-page .agent-briefing {
     background: transparent;
     box-shadow: none;
     -webkit-backdrop-filter: none;
@@ -481,6 +481,25 @@
 
 .helicopter-access-page[data-access-state="denied"] .helicopter-terminal-glow {
     background: radial-gradient(circle at 61% 85%, rgba(255, 68, 92, 0.48), transparent 24%);
+}
+
+/* Reveal the success scene without changing hero height or scrolling the code. */
+.helicopter-access-page[data-access-state="granted"] .helicopter-hero-title,
+.helicopter-access-page[data-access-state="granted"] .agent-briefing,
+.helicopter-access-page[data-access-state="granted"] .access-display {
+    opacity: 0;
+    pointer-events: none;
+}
+.helicopter-access-page[data-access-state="granted"] .helicopter-hero-shade {
+    opacity: 0;
+}
+.helicopter-hero-title, .agent-briefing, .access-display, .helicopter-hero-shade {
+    transition: opacity 280ms ease;
+}
+@media (prefers-reduced-motion: reduce) {
+    .helicopter-hero-title, .agent-briefing, .access-display, .helicopter-hero-shade {
+        transition: none;
+    }
 }
 
 .access-display.is-granted {

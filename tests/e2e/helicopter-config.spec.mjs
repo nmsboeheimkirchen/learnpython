@@ -127,6 +127,7 @@ test("semantic JSON with both targets open succeeds while the cockpit stays offl
     const run = await applyConfig(page, successfulConfig);
     expect(run.result).toEqual({ passed: true, failure: null });
     expect(run.state).toEqual({ accessState: "granted", hangarState: "open" });
+    for(const selector of [".helicopter-hero-title",".agent-briefing",".access-display",".helicopter-hero-shade"])await expect(page.locator(selector)).toHaveCSS("opacity","0");
     expect(run.output).toContain("HELIKOPTERZUGANG OFFEN");
     expect(run.output).toContain("HANGARTOR OFFEN");
     expect(run.output).toContain("Hauptdisplay online · Navigation offline · Rotor offline");
