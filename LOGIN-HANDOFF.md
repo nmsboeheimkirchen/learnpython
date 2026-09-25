@@ -1,5 +1,20 @@
 # Übergabe: dev-login-save
 
+## AKTUELL 25.09.2026 – r15 Verwaltung begonnen, live unverändert r14
+
+- Finaler Backend-/Hostinglauf **65/65 grün**, Logik **205/205 grün**. Neue Verwaltungs- und Membership-UI vier Fälle in Chromium/WebKit grün. Vollständige Konto-Suite läuft; ein vorhandener Shell-Test griff vor `AgentLearningDataReady` auf Speicher zu → Readiness-Abwarten ergänzt. Visuelle Prüfung: Plus jetzt 20px; Rollenentzug-Checkbox auf bereits bewährte kompakte Checkbox-Gestaltung umgestellt.
+- Frischer Live-Read: r14/schema7, **5 Konten, 3 Klassen, 5 Lernstände, 4 Lehrkräfte, 2 Schülerklassen, 2 Codes, 4 Zusatzmitgliedschaften, 5 Bestätigungsdatensätze**, kein pending deployment, private Settings hashgleich. Keine Live-Daten verändert. Vor Migration erneut sichern/prüfen, nicht frühere Bestandszahlen übernehmen.
+
+- Zwischenstand: Backend/UI implementiert, noch uncommitted und **nicht live**. Neue private Dateien `server/src/management.php`, `server/management-schema.sql`, Tests `tests/management-cases.mjs`, `tests/login-e2e/management.spec.mjs` explizit stagen. Schema8 ersetzt Besitzer/Namens-Unique durch feste Schul-Domain+normalisierten Namenshash; gefüllte Migration/idempotent lokal getestet. Konflikte vorhandener Klassen brechen Migration ab statt umzubenennen. `Ohne Klasse` ist rollenloser Bestand für entzogene Lehrkräfte ohne andere Schülergruppe.
+- **52 Backendtests SQLite grün** einschließlich neue Rechte, Migration, Namensrennen, Transfer, Besitzerquota, Adminübernahme gleicher Namen aus zwei Domains, Entzug mit Schülerzugang, Adressänderung/Sitzungswiderruf und Löschung. MariaDB/CI noch offen. Erster alter Browserlauf 4/6 grün: neue Farbüberschreibung versehentlich unnötig → entfernt; Mitgliedschaftstestnamen pro Engine getrennt. Neue Verwaltungs-/Membership-Browsertests laufen, Logiktests laufen. Danach vollständige Konto-Suite, visuelle Dialogprüfung, Handoff, Dev-Push/CI und erst anschließend sichere Veröffentlichung mit frischem Backup/Bestandsprüfung.
+
+- Nutzer bestätigt r14. Neue Aufgaben: Lehrkraftnamen anklickbar/E-Mail, kleine Dialog-Plusicons, Co-Teacher entfernen/verlassen, Klassenübertragung, Lehrrolle entziehen optional mit Kontolöschung, aufklappbare Superadmin-Kontenliste mit Name/E-Mail bearbeiten/löschen, Selbstlöschung ohne eigene Klassen, Klassennamen eindeutig je ursprünglicher Schul-Domain. Schülertransfer **nur besprechen**, nicht implementieren.
+- Alle drei Rückfragen beantwortet: Rollenentzug ohne Kontolöschung erhält Schülerzugang; normale Übertragung nur bei freiem Klassenlimit, automatische Übernahme durch Superadmin ausgenommen; ursprüngliche Schul-Domain bleibt dauerhaft an der Klasse.
+- Bestehende Konten/Lernstände erhalten; keine echten Lösch-/Übertragungstests auf Produktion. Superadmin selbst vor Rollenentzug/Selbstlöschung schützen. Änderungen an Name/E-Mail sind keine Schülertransfers.
+- Startpunkt sauberer getrackter Worktree HEAD 0657849. r15 noch nicht veröffentlicht; Schema7/live pilot-20260925-r14. Unbekannten ungetrackten Root-Dateinamen niemals ausgeben/stagen. Explizite Dateipfade; keine alten Operator-Mutationen wiederholen.
+- Technisch beachten: Dialoge liegen im Eltern-Shell-Dokument, teacher-ui.css nur im Child (Ursache übergroßes Plus). teacher_classes hat noch UNIQUE(teacher_id,display_name); das muss für domänenübergreifende Übernahmen gleicher Namen sicher migriert werden. users.class_id Pflichtfeld: ehemalige Lehrer ohne Schülerklasse benötigen neutralen, rollenlosen Bestand statt irreführender Lehrergruppe; im UI als ohne Klasse darstellen.
+
+
 ## ABGESCHLOSSEN 25.09.2026 – Superadmin und Co-Teaching LIVE r14
 
 **Maßgeblicher Endstand. Keine offenen Tests, Migrationen oder Aktivierungen. Ältere Abschnitte sind historisch.**

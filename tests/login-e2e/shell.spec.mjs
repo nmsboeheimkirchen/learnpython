@@ -61,7 +61,7 @@ test('guest login lands on home; eye, menu, explicit draft save and account info
     await navigate(page,'mission1_level1.html');
     await expect(page.getByRole('button',{name:'Benutzermenü'})).toBeVisible();
     await expect.poll(()=>child(page).evaluate(()=>!!window.editor)).toBe(true);
-    await child(page).evaluate(async()=>{await window.AgentLearningData.resetLearningData(); window.editor.setValue('# Entwurf ohne Ausführung');});
+    await child(page).evaluate(async()=>{await window.AgentLearningDataReady;await window.AgentLearningData.resetLearningData(); window.editor.setValue('# Entwurf ohne Ausführung');});
     await page.getByRole('button',{name:'Benutzermenü'}).click();
     await page.getByRole('button',{name:'Code speichern',exact:true}).click();
     await expect(page.locator('.account-panel')).toContainText('Entwurf zentral gespeichert');

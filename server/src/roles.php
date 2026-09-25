@@ -36,7 +36,7 @@ function classAccess(\PDO $db, string $teacher, mixed $classId): array
 {
     if(!is_string($classId)||!preg_match('/^[a-f0-9]{32}$/D',$classId))throw new ApiError(404,'CLASS_NOT_FOUND');
     $shared=rolesSchema($db)?' OR EXISTS (SELECT 1 FROM class_teachers ct WHERE ct.class_id=t.class_id AND ct.user_id=?)':'';
-    $q=$db->prepare('SELECT t.class_id AS id,t.display_name AS name,r.capacity,t.teacher_id AS ownerId,u.display_name AS ownerName FROM teacher_classes t JOIN class_registration r ON r.class_id=t.class_id JOIN users u ON u.id=t.teacher_id WHERE t.class_id=? AND (t.teacher_id=?'.$shared.')');
+    $q=$db->prepare('SELECT t.class_id AS id,t.display_name AS name,r.capacity,t.teacher_id AS ownerId,u.display_name AS ownerName,u.email AS ownerEmail,n.school_domain AS schoolDomain FROM teacher_classes t JOIN class_registration r ON r.class_id=t.class_id JOIN users u ON u.id=t.teacher_id LEFT JOIN class_namespaces n ON n.class_id=t.class_id WHERE t.class_id=? AND (t.teacher_id=?'.$shared.')');
     $q->execute(rolesSchema($db)?[$classId,$teacher,$teacher]:[$classId,$teacher]);
     $row=$q->fetch()?:throw new ApiError(404,'CLASS_NOT_FOUND');$row['isOwner']=$row['ownerId']===$teacher;return $row;
 }
@@ -77,7 +77,7 @@ function adminTeachers(\PDO $db,array $user): array
 {
     if(!isSuperadmin($db,$user['id']))throw new ApiError(403,'ADMIN_REQUIRED');
     $teachers=$db->query('SELECT u.id,u.display_name AS name,u.email,t.class_limit AS classLimit,(SELECT COUNT(*) FROM teacher_classes c WHERE c.teacher_id=u.id) AS ownedClasses FROM teachers t JOIN users u ON u.id=t.user_id ORDER BY u.display_name,u.email')->fetchAll();
-    foreach($teachers as &$t){$t['classLimit']=(int)$t['classLimit'];$t['ownedClasses']=(int)$t['ownedClasses'];}unset($t);
+    foreach($teachers as &$t){$t['classLimit']=(int)$t['classLimit'];$t['ownedClasses']=(int)$t['ownedClasses'];$t['superadmin']=isSuperadmin($db,$t['id']);}unset($t);
     $q=$db->prepare('SELECT id,email,class_limit AS classLimit,expires_at AS expiresAt FROM teacher_invitations WHERE accepted_at=0 AND expires_at>? ORDER BY created_at');$q->execute([time()]);
     return ['profile'=>$user,'teachers'=>$teachers,'invitations'=>$q->fetchAll()];
 }

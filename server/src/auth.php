@@ -56,6 +56,7 @@ function currentUser(\PDO $db): ?array
     }
     $user['teacher']=teacherProfile($db,$user['id']);
     $user['superadmin']=isSuperadmin($db,$user['id']);
+    $user['canDeleteAccount']=!$user['superadmin'] && (!$user['teacher'] || ownedClassCount($db,$user['id'])===0);
     $user['emailVerified']=emailConfirmed($db,$user['id']);
     if(membershipSchema($db))$user['classes']=accountClasses($db,$user['id']);
     return $user;

@@ -26,9 +26,24 @@ try {
         jsonResponse(\AgentPy\teacherClasses($db,$config,\AgentPy\requireTeacher($db)));
     }
     if ($method === 'GET' && $action === 'admin-teachers') jsonResponse(\AgentPy\adminTeachers($db,\AgentPy\requireSuperadmin($db)));
+    if ($method === 'GET' && $action === 'admin-accounts') jsonResponse(\AgentPy\adminAccounts($db,\AgentPy\requireSuperadmin($db)));
     if ($method !== 'POST') throw new ApiError(405, 'METHOD_NOT_ALLOWED');
     requireMutation($config);
     $body = readBody();
+    if(in_array($action,['admin-revoke-teacher','admin-update-account','admin-delete-account'],true)){
+        $user=\AgentPy\requireSuperadmin($db);
+        jsonResponse(match($action){
+            'admin-revoke-teacher'=>\AgentPy\adminRevokeTeacher($db,$user,$body),
+            'admin-update-account'=>\AgentPy\adminUpdateAccount($db,$user,$body),
+            'admin-delete-account'=>\AgentPy\deleteAccount($db,$user,$body,true)
+        });
+    }
+    if($action==='delete-account')jsonResponse(\AgentPy\deleteAccount($db,requireUser($db),$body,false));
+    if(in_array($action,['teacher-remove-teacher','teacher-leave-class','teacher-transfer-class'],true)){
+        $user=\AgentPy\requireTeacher($db);
+        $operation=match($action){'teacher-remove-teacher'=>'remove','teacher-leave-class'=>'leave','teacher-transfer-class'=>'transfer'};
+        jsonResponse(\AgentPy\manageClassTeacher($db,$config,$user,$body,$operation));
+    }
     if (in_array($action,['admin-invite-teacher','admin-teacher-limit'],true)) {
         $user=\AgentPy\requireSuperadmin($db);
         jsonResponse($action==='admin-invite-teacher'?\AgentPy\inviteTeacher($db,$config,$user,$body):\AgentPy\updateTeacherLimit($db,$user,$body));

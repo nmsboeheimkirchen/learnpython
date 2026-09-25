@@ -10,6 +10,12 @@ if (!str_starts_with($config['dsn'], 'sqlite:') && !preg_match('/(?:;|:)dbname=[
 $db = AgentPy\database($config);
 $input = json_decode(stream_get_contents(STDIN), true, 20, JSON_THROW_ON_ERROR);
 switch ($argv[1] ?? '') {
+    case 'test-management-migration':
+        $snapshot=function()use($db){$out=[];foreach(['users','classes','learning_states','teachers','teacher_classes','class_teachers','class_memberships','email_confirmations','class_invitations']as $table){$rows=array_map(fn($row)=>json_encode($row),$db->query('SELECT * FROM '.$table)->fetchAll());sort($rows);$out[$table]=$rows;}return $out;};
+        $before=$snapshot();$db->exec('DROP TABLE class_namespaces');$db->exec('DELETE FROM schema_migrations WHERE version=8');
+        $db->exec('CREATE UNIQUE INDEX old_owner_name ON teacher_classes (teacher_id,display_name)');
+        AgentPy\migrateManagement($db);AgentPy\migrateManagement($db);
+        echo json_encode(['preserved'=>$before===$snapshot(),'version'=>(int)$db->query('SELECT MAX(version) FROM schema_migrations')->fetchColumn()]);break;
     case 'admin-grant':
         $db->prepare('INSERT INTO superadmins (user_id,created_at) VALUES (?,?)')->execute([$input['id'],time()]);break;
     case 'teacher-invite-expire':
@@ -57,7 +63,7 @@ switch ($argv[1] ?? '') {
     case 'init-v2-only':
         $db->exec(file_get_contents(dirname(__DIR__) . '/server/schema.sql'));
         if ((int) $db->query('SELECT COUNT(*) FROM users')->fetchColumn() !== 0) exit(1);
-        foreach (['teacher_mail_jobs','teacher_invitations','class_teachers','superadmins','class_memberships','email_confirmations','invitation_secrets','teacher_classes','teachers','teacher_audit','recovery_mail_jobs','password_resets','auth_epochs','mail_jobs', 'pending_registrations', 'class_invitations', 'class_registration', 'mail_attempts', 'mail_dispatch_lock'] as $table)
+        foreach (['class_namespaces','teacher_mail_jobs','teacher_invitations','class_teachers','superadmins','class_memberships','email_confirmations','invitation_secrets','teacher_classes','teachers','teacher_audit','recovery_mail_jobs','password_resets','auth_epochs','mail_jobs', 'pending_registrations', 'class_invitations', 'class_registration', 'mail_attempts', 'mail_dispatch_lock'] as $table)
             $db->exec('DROP TABLE IF EXISTS ' . $table);
         $db->exec('DELETE FROM schema_migrations');
         $db->prepare('INSERT INTO schema_migrations (version, applied_at) VALUES (2, ?)')->execute([time()]);
@@ -145,7 +151,7 @@ switch ($argv[1] ?? '') {
         $tables = $mysql ? $db->query('SHOW TABLES')->fetchAll(PDO::FETCH_COLUMN)
             : $db->query("SELECT name FROM sqlite_master WHERE type='table'")->fetchAll(PDO::FETCH_COLUMN);
         if (in_array('users', $tables, true) && (int) $db->query('SELECT COUNT(*) FROM users')->fetchColumn() !== 0) exit(1);
-        foreach (['invitation_secrets','teacher_classes','teachers','teacher_audit','recovery_mail_jobs','password_resets','auth_epochs','mail_jobs', 'pending_registrations', 'class_invitations', 'class_registration', 'mail_attempts', 'mail_dispatch_lock', 'write_receipts', 'learning_states', 'users', 'classes', 'schema_migrations', 'login_limits'] as $table)
+        foreach (['class_namespaces','invitation_secrets','teacher_classes','teachers','teacher_audit','recovery_mail_jobs','password_resets','auth_epochs','mail_jobs', 'pending_registrations', 'class_invitations', 'class_registration', 'mail_attempts', 'mail_dispatch_lock', 'write_receipts', 'learning_states', 'users', 'classes', 'schema_migrations', 'login_limits'] as $table)
             $db->exec('DROP TABLE IF EXISTS ' . $table);
         $db->exec('CREATE TABLE users (id VARCHAR(32) PRIMARY KEY, email VARCHAR(254) NOT NULL UNIQUE, password_hash VARCHAR(255) NOT NULL, active INTEGER NOT NULL DEFAULT 1, created_at BIGINT NOT NULL)');
         $db->exec("INSERT INTO users (id,email,password_hash,created_at) VALUES ('legacy','legacy@example.test','synthetic-not-a-hash',0)");

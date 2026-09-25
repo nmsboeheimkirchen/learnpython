@@ -434,6 +434,7 @@
         ui.body.append(dialog); dialog.showModal(); return dialog;
     }
     async function accountDialog() {
+        try{const fresh=await client.request('session');if(!fresh.profile||fresh.profile.id!==session.profile.id){block(remote.error('PROFILE_CHANGED'),true);return;}session=fresh;}catch(failure){show(failure.message);return;}
         const form = ui.createElement("form");
         form.className = 'account-profile-form';
         form.innerHTML = '<dl class="account-identity"><div><dt>E-Mail:</dt><dd data-email></dd></div><div><dt>Klasse:</dt><dd data-class></dd></div></dl><label>Anzeigename<input name="name" required maxlength="100" autocomplete="name"></label><button type="submit">Namen speichern</button><p role="status"></p><p class="account-muted">Die E-Mail-Adresse ist dein Anmeldename. Änderungen sind später möglich.</p>';
@@ -453,7 +454,24 @@
             } catch (failure) { form.querySelector('[role="status"]').textContent = failure.message; }
             finally { submit.disabled = false; }
         });
-        simpleDialog("Kontoinfo bearbeiten", form);
+        const d=simpleDialog("Kontoinfo bearbeiten", form);
+        if(session.profile.canDeleteAccount)form.append(button('Konto löschen',()=>{d.close();deleteOwnAccountDialog();}));
+        else if(!session.profile.superadmin){const note=ui.createElement('p');note.className='account-muted';note.textContent='Konto löschen: Übertrage oder lösche zuerst deine eigenen Klassen.';form.append(note);}
+    }
+    function deleteOwnAccountDialog(){
+        const form=ui.createElement('form');
+        form.innerHTML='<p class="teacher-danger">Dein Konto, alle Gruppenzugehörigkeiten, dein Lernfortschritt und dein gespeicherter Programmcode werden endgültig gelöscht. Das kann nicht rückgängig gemacht werden.</p><label>Dein Passwort<input name="password" type="password" autocomplete="current-password" required></label><p role="alert"></p><button type="submit">Konto endgültig löschen</button>';
+        const d=simpleDialog('Konto löschen',form),cancel=d.querySelector('.account-close');cancel.textContent='Abbrechen';
+        const submit=form.querySelector('[type="submit"]');let busy=false;
+        d.addEventListener('cancel',event=>{if(busy)event.preventDefault();});
+        form.addEventListener('submit',async event=>{
+            event.preventDefault();if(busy)return;busy=true;submit.disabled=true;cancel.disabled=true;
+            try{
+                await client.request('delete-account',{body:{password:form.elements.password.value,confirmation:true},csrfToken:session.csrfToken,profileId:session.profile.id});
+                leavingAccount=true;window.AgentLearningData?.dispose();announceChange();d.close();window.location.replace('index.html');
+            }catch(failure){form.querySelector('[role="alert"]').textContent=failure.message;}
+            finally{busy=false;submit.disabled=false;cancel.disabled=false;}
+        });
     }
     async function progressDialog() {
         const content = ui.createElement("div"); content.textContent = "Fortschritt wird geladen …";

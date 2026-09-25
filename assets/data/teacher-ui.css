@@ -23,3 +23,8 @@
 .teacher-page .teacher-verify{color:#97d5b4;background:transparent;border-color:transparent;text-decoration:underline}
 .teacher-page .teacher-edit{padding:9px;color:#a5bfcb;background:transparent;border-color:transparent}
 .teacher-page .teacher-progress-list{margin:0;padding-left:18px;min-width:290px;font-size:12px;line-height:1.65}.teacher-page .teacher-progress-list li{margin:0 0 5px}.teacher-page .account-progress-pending{color:#e6a8af}.teacher-table-wrap{overflow-x:auto}
+.teacher-team{margin-bottom:22px}.teacher-team-list,.teacher-account-list{list-style:none;padding:0}
+.teacher-team-list li{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.teacher-person-email{overflow-wrap:anywhere}.teacher-accounts{margin-top:20px}.teacher-accounts summary{cursor:pointer;text-decoration:underline;padding:12px 0}
+.teacher-account-list li{display:flex;gap:10px;align-items:center;flex-wrap:wrap;border-top:1px solid #294452;padding:14px 0}.teacher-account-list li[hidden]{display:none}.teacher-account-list li>div{flex:1;min-width:180px}.teacher-account-list p{margin:3px 0}
+.teacher-accounts input{padding:10px;border-radius:8px;max-width:100%;box-sizing:border-box}

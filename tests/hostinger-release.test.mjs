@@ -22,6 +22,7 @@ function fixture() {
         'server/registration-schema.sql': '-- registration schema',
         'server/recovery-schema.sql': '-- recovery schema', 'server/src/recovery.php': '<?php // recovery',
         'server/src/smtp.php': '<?php // SMTP adapter',
+        'server/src/management.php': '<?php // class and account management', 'server/management-schema.sql': '-- school namespaces',
         'server/src/teachers.php': '<?php // teacher functions', 'server/teacher-schema.sql': '-- teacher schema', 'server/membership-schema.sql': '-- membership schema', 'server/roles-schema.sql':'-- roles schema', 'server/src/roles.php':'<?php // role functions',
         'server/vendor/phpmailer/Exception.php': '<?php // vendor', 'server/vendor/phpmailer/PHPMailer.php': '<?php // vendor',
         'server/vendor/phpmailer/SMTP.php': '<?php // vendor', 'server/vendor/phpmailer/LICENSE': 'license', 'server/vendor/phpmailer/README.agentpy.md': 'provenance',

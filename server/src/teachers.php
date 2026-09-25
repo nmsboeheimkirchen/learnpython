@@ -159,7 +159,7 @@ function teacherClass(\PDO $db, array $config, array $user, array $body): array
     $q=$db->prepare('SELECT id,display_name AS name,email FROM pending_registrations WHERE class_id=? AND expires_at>? ORDER BY display_name,email');
     $q->execute([$class['id'],$now]);
     foreach($q->fetchAll() as $row)$members[]=$row+['status'=>'pending','completedIds'=>null];
-    return ['profile'=>$user,'class'=>classSummary($db,$config,$class,$now)+['isOwner'=>$class['isOwner'],'ownerName'=>$class['ownerName'],'teachers'=>classTeacherList($db,$class['id'])],'members'=>$members,'serverTime'=>$now];
+    return ['profile'=>$user,'class'=>classSummary($db,$config,$class,$now)+['isOwner'=>$class['isOwner'],'ownerName'=>$class['ownerName'],'ownerEmail'=>$class['ownerEmail'],'schoolDomain'=>$class['schoolDomain'],'teachers'=>classTeacherList($db,$class['id'])],'members'=>$members,'serverTime'=>$now];
 }
 
 function issueTeacherCode(\PDO $db, array $config, string $teacher, string $classId, int $now): array
@@ -198,14 +198,16 @@ function createTeacherClass(\PDO $db, array $config, array $user, array $body): 
         $limit=lockTeacher($db,$user['id']);
         $q=$db->prepare('SELECT COUNT(*) FROM teacher_classes WHERE teacher_id=?');$q->execute([$user['id']]);
         if((int)$q->fetchColumn()>=$limit)throw new ApiError(409,'CLASS_LIMIT_REACHED');
-        $q=$db->prepare('SELECT class_id FROM teacher_classes WHERE teacher_id=? AND display_name=?');$q->execute([$user['id'],$name]);
+        $domain=strtolower(substr(strrchr($user['email'],'@'),1));$nameKey=classNameKey($name);
+        $q=$db->prepare('SELECT class_id FROM class_namespaces WHERE school_domain=? AND name_key=?');$q->execute([$domain,$nameKey]);
         if($q->fetchColumn())throw new ApiError(409,'CLASS_NAME_TAKEN');
         $id=bin2hex(random_bytes(16));$now=time();
-        // Legacy classes.name remains unique. Public names are owner-scoped, so two
-        // teachers can both create "1A" without leaking another teacher's class.
+        // Public names are unique within the original school domain, not the current owner.
         $db->prepare('INSERT INTO classes (id,name,created_at) VALUES (?,?,?)')->execute([$id,'class-'.$id,$now]);
         $db->prepare('INSERT INTO class_registration (class_id) VALUES (?)')->execute([$id]);
         $db->prepare('INSERT INTO teacher_classes (class_id,teacher_id,display_name) VALUES (?,?,?)')->execute([$id,$user['id'],$name]);
+        try{$db->prepare('INSERT INTO class_namespaces (class_id,school_domain,name_key) VALUES (?,?,?)')->execute([$id,$domain,$nameKey]);}
+        catch(\PDOException $e){if(in_array($e->getCode(),['23000','23505'],true))throw new ApiError(409,'CLASS_NAME_TAKEN');throw $e;}
         issueTeacherCode($db,$config,$user['id'],$id,$now);$db->commit();
     } catch(\Throwable $e){if($db->inTransaction())$db->rollBack();throw $e;}
     return teacherClass($db,$config,$user,['classId'=>$id]);

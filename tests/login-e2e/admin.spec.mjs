@@ -36,12 +36,12 @@ test('superadmin invites new and existing teachers; external collaborator can re
         await pupil.getByLabel('E-Mail-Adresse',{exact:true}).fill(email);await pupil.getByLabel('Passwort',{exact:true}).fill(password);
         await pupil.getByRole('dialog').getByRole('button',{name:'Anmelden',exact:true}).click();
         await expect(pupil.getByRole('button',{name:'Benutzermenü'})).toBeVisible();expect(secretRequests).toEqual([]);
-        await lesson(page).getByRole('button',{name:'Klasse erstellen',exact:true}).click();await page.getByLabel('Klassenname').fill('Gemeinsam UI');
+        await lesson(page).getByRole('button',{name:'Klasse erstellen',exact:true}).click();await page.getByLabel('Klassenname').fill('Gemeinsam UI '+test.info().project.name);
         await page.getByRole('dialog').getByRole('button',{name:'Klasse erstellen',exact:true}).click();
         await lesson(page).getByRole('button',{name:'Lehrpersonen hinzufügen'}).click();
         await page.getByRole('button',{name:'Über E-Mail hinzufügen'}).click();await page.getByLabel('E-Mail-Adresse',{exact:true}).fill(email);
         await page.getByRole('dialog').getByRole('button',{name:'Lehrkraft hinzufügen',exact:true}).click();
-        await expect(lesson(page).getByText('Weitere Lehrkräfte: Alex Teacher')).toBeVisible();
+        await expect(lesson(page).getByRole('button',{name:'Alex Teacher',exact:true})).toBeVisible();
         await classes(pupil);await expect(lesson(pupil).getByRole('heading',{name:'Verwaltete Lehrer:innen'})).toHaveCount(0);
         await expect(lesson(pupil).getByText(/0 von 10 eigenen Klassen/)).toBeVisible();
         await lesson(pupil).getByRole('button',{name:'Klasse ansehen'}).click();

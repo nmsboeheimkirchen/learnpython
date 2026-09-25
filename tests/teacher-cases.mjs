@@ -23,7 +23,8 @@ export async function teacherTests({t,fixture,env,phpCall,BrowserSession,url,wor
             assert.match(code,/^[A-Z]{5}$/);assert.ok(room.invitation.expiresAt>=start+864000&&room.invitation.expiresAt<=start+864005);
             assert.deepEqual(JSON.parse(fixture('teacher-key-check',{code})),{encrypted:true,hasPrivateKey:true});
             assert.equal((await teacher.request('teacher-create-class',{name:room.name})).status,409);
-            assert.equal((await other.request('teacher-create-class',{name:room.name})).status,200,'names scoped per teacher');
+            assert.equal((await other.request('teacher-create-class',{name:room.name})).status,409,'names scoped to school domain');
+            assert.equal((await other.request('teacher-create-class',{name:'Independent class'})).status,200);
             assert.equal((await other.request('teacher-class',{classId:room.id})).status,404);
             assert.equal((await other.request('teacher-renew-code',{classId:room.id})).status,404);
             assert.equal((await teacher.request('teacher-class',{classId:'bad'})).status,404);

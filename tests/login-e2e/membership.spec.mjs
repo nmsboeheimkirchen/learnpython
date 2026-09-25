@@ -25,8 +25,8 @@ async function api(page,action,body){
 test('same-domain signup, teacher confirmation/correction, logout and shared-class deletion preserve progress',async({page,browser})=>{
     test.setTimeout(120000);
     await open(page);await login(page,`membership-teacher-${test.info().project.name}@example.test`);
-    const a=(await api(page,'teacher-create-class',{name:'A – gemeinsam'})).class;
-    const b=(await api(page,'teacher-create-class',{name:'B – bleibt'})).class;
+    const a=(await api(page,'teacher-create-class',{name:'A – gemeinsam '+test.info().project.name})).class;
+    const b=(await api(page,'teacher-create-class',{name:'B – bleibt '+test.info().project.name})).class;
     const studentContext=await browser.newContext(),pupil=await studentContext.newPage();
     try{
         await open(pupil);
