@@ -1,6 +1,18 @@
 # Hostinger: Testveröffentlichung und Rückfall
 
-## Aktuell 21.09.2026 – r7 mit Neuanmeldung und Passwortreset freigeschaltet
+## Aktuell 26.09.2026 – r15, Verwaltung und Schülertransfer veröffentlicht
+
+**https://agentpy.bildungdigital.at/** läuft bestätigt mit **`pilot-20260926-r15`**, Herkunft `d00c8da65369f9405afd6ee150fccc6262f630de`, Schema **9**, `pendingDeployment=false`. Klassenbesitz-/Schülertransfer, Rollenentzug, Kontenverwaltung und feste Schul-Domain sind live. Verbindliche Regeln: [ACCOUNT-SYSTEM.md](ACCOUNT-SYSTEM.md); detaillierter Abschluss: [LOGIN-HANDOFF.md](LOGIN-HANDOFF.md).
+
+- Alle CI-Jobs **36194686016 erfolgreich**, einschließlich SQLite/MariaDB und 68/68 Konto-Browsertests. Private Bestandskopie auf Hostinger nach SQLite, zweite Kopie zweimal migriert; danach kurzzeitiges API-Gate, Workerlock, frisches SQL-Backup und echte Migration 7→8→9. Alle **24 bisherigen Datentabellen hashgleich**. Keine Testkonten oder Testmails auf Produktion erzeugt.
+- 150 Paketdateien manifestverifiziert. Manifest SHA256 `515b2b6fd018f641bad9a679ce753f93ffa08494ace1a710809c5d18cd88fe43`. HTTPS-/Session-/Privatpfadchecks, anonyme Chromium-/WebKit-Smokes und rein lesende Klassen-/Adminabfragen grün; Mailworker folgt r15. Private Konfiguration und Passwörter unverändert.
+- Private SQL-Sicherung `agentpy-private/backups/before-pilot-20260926-r15-schema7.sql`, **31993 Bytes**, SHA256 `18550e7883c8e7cf050afc026fdef72a96a4988ae44ee3f6f1d3975971091874`. **SQL-Restore nicht getestet**. Vorige Website gesichert in `agentpy-private/backups/web-20260926093059-4f02894463`.
+- `.cache/hostinger-r15.mjs` ist ein bereits ausgeführter lokaler Operator, kein wiederholbarer allgemeiner Publishbefehl. Kein erneutes `upload`, `rehearse`, `cutover` oder `confirm`. Bei Bedarf ausschließlich aktuellen Zustand inspizieren. Neue Releases brauchen frische Prüfungen und Sicherungen.
+- **Kein blindes Web-/Datenbankrollback:** Alte r14-Verwaltung kennt die neuen festen Namensräume nicht. Bei Problemen Verwaltungszugriff gezielt sperren und kompatiblen Fix ausliefern; alte SQL-Sicherung nicht über neuere Lernstände zurückspielen.
+
+**Alle folgenden zeitbezogenen Zustände, Konten/CTEST-Angaben und konkreten Rückfallbefehle sind historisch. Nicht ohne aktuelle Prüfung ausführen.**
+
+## Historisch 21.09.2026 – r7 mit Neuanmeldung und Passwortreset freigeschaltet
 
 **pilot-20260921-r7** aus **a814006946b726b703cb5c45a8a7c8ec7e35275b** bestätigt live, Schema4. CTEST führt zur bestehenden Klasse Test (32Plätze, Codeablauf20.12.2026). Registrierung/E-Mail-Bestätigung und Passwortreset aktiviert. SMTP über smtp.hostinger.com:465 mit geprüften Zertifikaten und privatem Postfachpasswort; Nutzer bestätigt echte Testmail **ohne Absenderwarnung**. Mailquote weiterhin konservativ10/Minute,100/24Stunden, alle Kontomails teilen sie. Minutencron und neue Dispatcher-Version bestätigt. Keine Änderung an anderen Websites, persönlichem Passwort oder Lernstand.
 

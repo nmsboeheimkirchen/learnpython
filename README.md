@@ -25,7 +25,7 @@ Unter **Personenmenü → Meine Klassen** verwalten freigeschaltete Lehrkräfte 
 
 Der Klasseninhaber verwaltet Codes, Löschungen und zusätzliche Lehrkräfte. Gemeinsame Klassen zählen nur zu seinem Klassenlimit. Beim Entfernen/Löschen werden weitere Klassenzugehörigkeiten und Lehrerrollen berücksichtigt, damit nicht versehentlich weiterhin benötigte Konten und Lernstände verloren gehen.
 
-Der Superadmin verwaltet Lehrereinladungen und Klassenlimits. Der neuere Entwicklungsstand ergänzt Klassenbesitzübertragung, Verlassen gemeinsamer Klassen, Rollenentzug, globale Kontenverwaltung und Schülertransfer: **verschieben** oder **zusätzlich zuordnen**, bei fremdem Inhaber erst nach Zustimmung. Diese Ergänzungen sind noch nicht sämtlich veröffentlicht; der [aktuelle Handoff](LOGIN-HANDOFF.md) nennt den verbindlichen Live- und Teststand.
+Der Superadmin verwaltet Lehrereinladungen, Klassenlimits, Lehrerrollen und alle Konten. Die Verwaltung unterstützt außerdem Klassenbesitzübertragung, Verlassen gemeinsamer Klassen und Schülertransfer: **verschieben** oder **zusätzlich zuordnen**, bei fremdem Inhaber erst nach Zustimmung. Diese Funktionen sind auf Hostinger veröffentlicht; der [aktuelle Handoff](LOGIN-HANDOFF.md) nennt den verbindlichen Live- und Teststand.
 
 Alle Detailregeln, Berechtigungen, Sonderfälle und zugehörigen Tests stehen im unten verlinkten Systemdokument. Diese README bleibt bewusst der Überblick.
 

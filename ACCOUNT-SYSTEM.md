@@ -7,12 +7,12 @@ Dieses Dokument beschreibt die beabsichtigten Regeln und ihre Umsetzung im aktue
 
 | Stand | Bedeutung |
 | --- | --- |
-| Zuletzt bestätigte Produktion | Hostinger `pilot-20260925-r14`, Schema 7; siehe jüngsten Eintrag in [LOGIN-HANDOFF.md](LOGIN-HANDOFF.md). |
-| Gepushter Verwaltungsstand | `2329ac48e8cadab721aaf692df27828af734c93e`, `dev-login-save`: Klassenbesitz, Rollenentzug, Kontenverwaltung, feste Schul-Domain, Schema 8. Noch nicht live. |
+| Zuletzt bestätigte Produktion | Hostinger **`pilot-20260926-r15`, Schema 9**, Deployment bestätigt, `pendingDeployment=false`; siehe jüngsten Eintrag in [LOGIN-HANDOFF.md](LOGIN-HANDOFF.md). |
+| Veröffentlichte Verwaltung | Klassenbesitz, Rollenentzug, Kontenverwaltung, feste Schul-Domain und Schülertransfer sind in r15 enthalten. Herkunft: `d00c8da65369f9405afd6ee150fccc6262f630de`, `dev-login-save`. |
 | Geprüfte Schülerübertragung | Schema 9, API, Oberfläche und Regressionstests auf `dev-login-save`, geprüfter Commit `d00c8da65369f9405afd6ee150fccc6262f630de`. **CI 36194686016 vollständig erfolgreich**: SQLite/MariaDB, Hosting, Logik, beide Missionsbrowser und 68/68 Konto-Browsertests. Lokaler Transfer-Nachlauf 2/2 erfolgreich, Dialogbilder geprüft. |
-| Veröffentlichungsgrenze | Dev-Push abgeschlossen; keine Sicherheitsprüfung umgangen. Lokal 280/280 Logik-/Backend-/Hostingtests erfolgreich, danach erweiterter Backendlauf 64/64 einschließlich drei zusätzlicher Randfälle. Git-Push und Hostinger-Veröffentlichung bleiben getrennt; für letztere sind Migration und Livechecks noch offen. |
+| Releaseprüfung | Private Bestandskopie mit zweimaliger SQLite-Migrationsprobe, MariaDB-Pfad in CI, danach Live-Migration 7→8→9 mit frischer SQL-Sicherung und **24 unveränderten Datentabellen**. HTTPS, anonyme Chromium-/WebKit-Oberfläche, rein lesende Klassen-/Adminabfragen und Mailworker erfolgreich geprüft. Keine echten Konten für Funktionstests verändert. |
 
-Die folgenden Funktionsbeschreibungen umfassen auch den noch unveröffentlichten Entwicklungsstand. Nach einer späteren Veröffentlichung diesen Statusblock und den Handoff aktualisieren. Historische Abschnitte in Handoff, TODO und `server/README.md` sind **keine neuen Aufträge**, insbesondere nicht zum Löschen echter Konten.
+Die folgenden Funktionsbeschreibungen entsprechen dem r15-Anwendungsstand; ausdrücklich als Ideen oder Grenzen bezeichnete Funktionen bleiben ausgenommen. Nach einer späteren Veröffentlichung diesen Statusblock und den Handoff aktualisieren. Historische Abschnitte in Handoff, TODO und `server/README.md` sind **keine neuen Aufträge**, insbesondere nicht zum Löschen echter Konten.
 
 ### Unveränderliche Grundregeln bei normalen Erweiterungen
 
@@ -209,7 +209,7 @@ Lehrkraftnamen sind unterstrichen, Klick/Tippen zeigt die E-Mail. Das X am Co-Le
 
 Normale Besitzübertragung: Ziel muss schon Co-Lehrkraft sein und einen freien Platz im eigenen Klassenlimit haben. Klassen-ID, Code, Schüler, Fortschritt und ursprüngliche Schul-Domain bleiben. Bisheriger Inhaber wird Co-Lehrkraft, neuer Inhaber verliert seinen redundanten Co-Eintrag. Ein Inhaber darf nicht direkt „Klasse verlassen“, solange niemand den Besitz übernimmt. Offene Schülertransferanfragen an/von dieser Klasse werden beim Besitzerwechsel verworfen, damit eine frühere Zustimmungsbeziehung nicht still auf neue Personen übergeht.
 
-## 9. Schülerübertragung – getesteter Entwicklungsstand, noch nicht auf Hostinger
+## 9. Schülerübertragung – seit r15 auf Hostinger
 
 Einstieg: Inhaber öffnet Klasse, in der Schülerzeile das Pfeilsymbol „einer anderen Klasse zuordnen“. Keine Aktionen für offene Neuanmeldungen oder Lehrerkonten. Modus und Ziel sind ausdrücklich zu wählen:
 
@@ -357,7 +357,8 @@ npm run test:e2e
 
 - **CI 36194686016 success** für `d00c8da65369f9405afd6ee150fccc6262f630de`: alle Jobs einschließlich erweiterter Transferfälle auf SQLite/MariaDB und 68/68 Konto-Browserfälle. Die zwei Fehler des alten Laufs 36152307210 betrafen einen inzwischen korrigierten Testselektor, nicht einen nachgewiesenen Fehler der Zielklassenauswahl.
 - Lokaler Transfer-Nachlauf in Chromium und WebKit **2/2**, Screenshots der Zuordnung/Annahme auf Desktop-/Tabletbreite visuell kontrolliert. Lokaler Backendnachlauf **64/64**, einschließlich Rollenentzug, Klassen-/Kontolöschung, Request-Cascade und zwischenzeitlich erteilter Lehrerrolle. Dies ist weiterhin kein Produktionsnachweis.
-- Vor Hostinger-Veröffentlichung: echte Schema-7→8→9-Migration auf gesicherter Bestandskopie sowie frischer Bestandsvergleich. Weitere gezielte Checks: wartende alte Schülerseite nach Transfer, angenommene echte Lehrereinladung während offener Schüleranfrage, genutzter/erneuerter Code und vorhandene Anfrage. Bestehende Foreign Keys/Transaktionen ersetzen diesen Nachweis nicht.
+- Hostinger r15: alle 25 ursprünglichen Tabellen privat auf demselben Server nach SQLite kopiert, Datenvergleich/Fremdschlüssel geprüft und eine zweite Kopie zweimal 7→8→9 migriert. Der MariaDB-Migrationspfad wurde separat in CI geprüft; die anschließende echte Live-Migration erhielt alle 24 bisherigen Datentabellen hashgleich. SQL-Restore ist **nicht** getestet. HTTPS-/Session-/Privatpfadchecks, anonyme Chromium-/WebKit-Smokes und reine Live-Leseabfragen für alle vier Lehrkräfte, Klassendetails, Transferanfragen und Superadminlisten erfolgreich; kein neuer angemeldeter/destruktiver End-to-End-Test auf echten Konten.
+- Zusätzliche Härtungsfälle: wartende alte Schülerseite nach Transfer, angenommene echte Lehrereinladung während offener Schüleranfrage, genutzter/erneuerter Code und vorhandene Anfrage. Bestehende Foreign Keys/Transaktionen ersetzen gezielte Tests nicht.
 - API-/Dialogfehler unter langsamem Netz, mehrfachen Klicks und verlorener Antwort prüfen. Keine Produktionskonten dafür löschen/verschieben.
 
 ## 15. Migration, Veröffentlichung und sichere Wartung
@@ -374,7 +375,7 @@ Hostinger-Paket enthält statische öffentliche Dateien/API-Einstieg und getrenn
 
 Branch `dev-login-save`: Anwendungstests ohne Pages-Deployment. `main`: getestetes statisches Pages-Deployment. Hostinger ist ein davon getrennter, ausdrücklich kontrollierter Releaseweg. Ein Git-Push veröffentlicht nicht automatisch das Kontobackend auf Hostinger.
 
-Vor Veröffentlichung: vollständige Tests, frische Bestandsinspektion, private SQL-Sicherung, Wartungs-/Rollbackplan, vollständiges Paket, Migration und erneuter Bestandserhaltvergleich. Erst dann aktivieren, HTTPS-/Session-/Privatpfad-/Worker-Smokes, bestätigtes Deployment und aktualisierten Handoff. Ein alter Releasehelper darf nicht nur wegen ähnlichem Namen ausgeführt werden; der lokale r15-Entwurf ist derzeit **nicht schema9-fertig und nicht freigegeben**.
+Vor Veröffentlichung: vollständige Tests, frische Bestandsinspektion, private SQL-Sicherung, Wartungs-/Rollbackplan, vollständiges Paket, Migration und erneuter Bestandserhaltvergleich. Erst dann aktivieren, HTTPS-/Session-/Privatpfad-/Worker-Smokes, bestätigtes Deployment und aktualisierten Handoff. Ein alter Releasehelper darf nicht nur wegen ähnlichem Namen ausgeführt werden. Der lokale Operator `.cache/hostinger-r15.mjs` ist auf Schema 9 angepasst und für dieses Release bereits vollständig ausgeführt: **Upload, Migration, Aktivierung und Bestätigung nicht wiederholen**. Eine neue Veröffentlichung benötigt einen neuen geprüften Ablauf mit frischer Sicherung.
 
 Rollback ist kein blindes Datenbank-Downgrade. Nach Passwortreset keine Authversion ohne Epochprüfung einsetzen; nach neuen Rollen-/Namensregeln keine alten Verwaltungsaktionen freigeben, die diese umgehen. Registrierung/Recovery oder Verwaltungszugriff nötigenfalls gezielt abschalten, aktuellen Authschutz behalten und kompatiblen Code-Fix ausliefern. Kein Zurückspielen alter SQL-Daten ohne ausdrücklichen Wiederherstellungsplan, weil dadurch neuere Lernstände verloren gehen können.
 
