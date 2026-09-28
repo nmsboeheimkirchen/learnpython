@@ -1,0 +1,24 @@
+.nullpunkt-level2 .energy-cell-ring{fill:#80ffc026;stroke:#b6ffd6;stroke-width:2;stroke-dasharray:4 4}
+.nullpunkt-level2 .nullpunkt-cell-label{left:8%;top:72%;padding:5px 7px;font-size:clamp(.5rem,.85vw,.68rem)}
+.nullpunkt-level2 .nullpunkt-charge-status{position:absolute;z-index:8;left:8%;bottom:8%;padding:10px 14px;border:1px solid #9fffca88;border-radius:10px;background:#05241eeb;color:#bdffda;font-size:clamp(.7rem,1.3vw,1rem);font-weight:800;pointer-events:none}
+.nullpunkt-level2 .nullpunkt-charge-status[hidden]{display:none}
+.nullpunkt-level2.nullpunkt-charging .energy-cell-ring{stroke-width:4;filter:drop-shadow(0 0 8px #8affbe)}
+.nullpunkt-level2.nullpunkt-charging #nullpunkt-drone{filter:drop-shadow(0 0 10px #8affbe)}
+.nullpunkt-level2 .nullpunkt-code-help{margin:8px 0 0;font-size:.78rem;color:#bce9e9}
+.nullpunkt-level2 .nullpunkt-code-help summary{cursor:pointer;min-height:32px;display:list-item;align-content:center;font-weight:750}
+.nullpunkt-level2 .nullpunkt-code-help ol{padding-left:20px;margin:8px 0;line-height:1.7}
+.nullpunkt-level2 .nullpunkt-code-help code{white-space:normal;overflow-wrap:anywhere}
+.nullpunkt-level2 .nullpunkt-learning-step{display:block;margin-bottom:5px;color:#9fffd0;font-size:.73rem;font-weight:800}
+.nullpunkt-level2 #search-task[hidden],.nullpunkt-level2 #equipment-task[hidden],.nullpunkt-level2 .nullpunkt-help[hidden],.nullpunkt-level2 #nullpunkt-help-panel[hidden]{display:none}
+.nullpunkt-level2 .nullpunkt-help{margin:0 0 10px;font-size:.78rem;line-height:1.5}
+.nullpunkt-level2 .nullpunkt-help button{width:100%;min-height:40px;padding:8px 12px;font-size:.78rem}
+.nullpunkt-level2 #nullpunkt-help-panel{margin-top:8px;padding:10px 12px;border:1px solid #86efce40;border-radius:10px;background:#142932;color:#d2e8e5}
+.nullpunkt-level2 #nullpunkt-help-panel strong{color:#9fffd0;font-size:.72rem}
+.nullpunkt-level2 #nullpunkt-help-panel p{margin:6px 0 0}
+.nullpunkt-level2 #nullpunkt-help-panel code{white-space:normal;overflow-wrap:anywhere;color:#bce9e9}
+.nullpunkt-level2 .nullpunkt-equipment-hud{position:absolute;z-index:7;top:12px;left:185px;max-width:calc(100% - 197px);display:flex;flex-direction:column;gap:5px;padding:9px 12px;border:1px solid #baffdc50;border-radius:9px;background:#031317eb;color:#d9f9eb;font:11px ui-monospace,Consolas,monospace;overflow-wrap:anywhere}
+.nullpunkt-level2 .nullpunkt-equipment-hud[hidden],.nullpunkt-level2 .nullpunkt-list-warning[hidden]{display:none}
+.nullpunkt-level2 .nullpunkt-step-heading{display:flex;align-items:flex-start;gap:10px;justify-content:space-between}
+.nullpunkt-level2 .nullpunkt-list-warning{color:#ff8d87;font-size:.76rem;font-weight:750;line-height:1.4;flex:1}
+.nullpunkt-level2 .nullpunkt-learning-step{flex:1}
+@media(max-width:600px){.nullpunkt-level2 .nullpunkt-equipment-hud{top:6px;left:143px;max-width:calc(100% - 149px);font-size:9px;padding:6px 8px}.nullpunkt-level2 .nullpunkt-step-heading{flex-wrap:wrap}}

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="de">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PICO – Terminal-Layoutprobe</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#050a10;color:#e5eff0;font-family:system-ui,sans-serif}main{max-width:1232px;margin:auto;padding:20px 16px 32px}header{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:14px}h1{font-size:clamp(19px,2.2vw,27px);margin:0}header p{color:#8caaa9;font-size:12px;margin:0}.stage{position:relative;width:100%;aspect-ratio:1672/941;border-radius:14px;overflow:hidden}.art{display:block;width:100%;height:100%;object-fit:contain}.screen{position:absolute;left:12%;top:40.8%;width:48.8%;height:30.5%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(6px,.8vw,12px);--tile:clamp(44px,5vw,64px);font-size:clamp(10px,1vw,13px)}.screen-label{color:#9bbcb7;letter-spacing:.15em;margin:0;text-transform:uppercase}.row{display:grid;grid-template-columns:repeat(4,minmax(44px,1fr));gap:clamp(6px,1vw,12px);width:min(100%,380px)}button{font:inherit;cursor:pointer}button:focus-visible{outline:3px solid white;outline-offset:3px}.module,.slot{height:var(--tile);min-width:44px;min-height:44px;border-radius:9px;font-size:clamp(23px,3vw,36px);line-height:1;color:#cefff0;background:#0d232a;border:1px solid #417b76}.module[aria-pressed="true"]{border-color:#e9fff8;box-shadow:0 0 14px #87ffc833;background:#215047}.slot{border-style:dashed;color:#719792;background:#071418}.slot.filled{border-style:solid;color:#e3fff5;background:#123830}.screen::before{content:"";position:absolute;z-index:-1;inset:0;background:#00101240}.instructions{margin:18px 0 0;padding:18px;border:1px solid #243942;border-radius:14px;background:#0b151f}h2{font-size:16px;margin:0 0 8px}.instructions p{font-size:14px;color:#b2c6ca;line-height:1.5;margin:8px 0}.rules{display:flex;flex-wrap:wrap;gap:8px;padding:0;margin:12px 0;list-style:none}.rules li{background:#152830;border:1px solid #294149;border-radius:7px;padding:8px 10px;font-size:13px}.actions{display:flex;gap:10px;flex-wrap:wrap}.actions button{padding:10px 16px;min-height:44px;border:1px solid #7eaaa3;border-radius:9px;background:#b8f6df;color:#081b18}.actions button.secondary{background:#0d2028;color:#c4dcdb;border-color:#395357}#feedback{min-height:21px;color:#bcf7de}.note{font-size:12px!important;color:#779597!important}
+@media(max-width:700px){header{align-items:flex-start;flex-direction:column;gap:5px}.stage{aspect-ratio:auto;background:#07131c;border:1px solid #294149}.art{height:auto}.screen{position:relative;left:auto;top:auto;width:100%;height:auto;padding:20px 16px;gap:12px;--tile:48px;font-size:12px}.row{max-width:340px}.instructions{padding:14px}.screen-label{font-size:11px}}
+</style>
+<main>
+<header><h1>PICO · Wartungszugang</h1><p>Layoutprobe · keine gespeicherten Lernstände</p></header>
+<div class="stage">
+  <img class="art" src="../assets/images/finales/pico-command-terminal-v1.webp" alt="Frontales futuristisches Terminal vor dem goldenen Quantenrechner hinter Spiegelglas in der Kommandozentrale des Lords.">
+  <section class="screen" aria-label="Vier Module verbinden">
+    <p class="screen-label">Wartungskette</p>
+    <div class="row slots" aria-label="Zielplätze"></div>
+    <div class="row modules" aria-label="Verfügbare Module"></div>
+  </section>
+</div>
+<section class="instructions">
+<h2>Setze die vier Module in die richtige Reihenfolge.</h2>
+<p>Ziehe ein Modul auf einen Platz oder tippe zuerst das Modul und dann den Platz an. Mit Tab und Enter geht es ebenfalls.</p>
+<ul class="rules"><li>● Kreis am Anfang</li><li>★ Stern am Ende</li><li>▲ Dreieck direkt vor ■ Quadrat</li></ul>
+<div class="actions"><button id="check">Verbindung prüfen</button><button id="reset" class="secondary">Neu anordnen</button></div>
+<p id="feedback" role="status">Wähle ein Modul aus.</p>
+<p class="note">Die Hinweise stehen außerhalb des Displays. Auf schmalen Mobilansichten öffnet sich die Bedienfläche unter dem Bild.</p>
+</section>
+</main>
+<script>
+const symbols=['■','★','●','▲'],names={'■':'Quadrat','★':'Stern','●':'Kreis','▲':'Dreieck'};
+let order=['','','',''], selected='';
+const slots=document.querySelector('.slots'), modules=document.querySelector('.modules'),feedback=document.querySelector('#feedback');
+function place(index,symbol){if(!symbols.includes(symbol))return;order=order.map(value=>value===symbol?'':value);order[index]=symbol;selected='';render();feedback.textContent=names[symbol]+' auf Platz '+(index+1)+'.';}
+function render(){const focused=document.activeElement.dataset.key;slots.replaceChildren();modules.replaceChildren();order.forEach((symbol,index)=>{const button=document.createElement('button');button.dataset.key='slot-'+index;button.className='slot'+(symbol?' filled':'');button.textContent=symbol||'·';button.setAttribute('aria-label','Platz '+(index+1)+(symbol?': '+names[symbol]:': leer'));button.onclick=()=>{if(selected)place(index,selected);else if(symbol){selected=symbol;order[index]='';render();}};button.ondragover=event=>event.preventDefault();button.ondrop=event=>{event.preventDefault();place(index,event.dataTransfer.getData('text/plain'));};slots.append(button);});symbols.forEach(symbol=>{const button=document.createElement('button');button.dataset.key='module-'+symbol;button.className='module';button.textContent=symbol;button.draggable=true;button.setAttribute('aria-label','Modul '+names[symbol]);button.setAttribute('aria-pressed',String(selected===symbol));button.onclick=()=>{selected=symbol;render();feedback.textContent=names[symbol]+' gewählt. Wähle einen Zielplatz.';};button.ondragstart=event=>event.dataTransfer.setData('text/plain',symbol);modules.append(button);});if(focused)[...document.querySelectorAll('[data-key]')].find(button=>button.dataset.key===focused)?.focus({preventScroll:true});}
+document.querySelector('#check').onclick=()=>feedback.textContent=order.join('')==='●▲■★'?'Verbindung hergestellt.':'Die Verbindung passt noch nicht. Prüfe die drei Hinweise.';
+document.querySelector('#reset').onclick=()=>{order=['','','',''];selected='';render();feedback.textContent='Wähle ein Modul aus.';};
+render();
+</script>
+</html>

@@ -1,0 +1,30 @@
+.nullpunkt-mission .drone-mission-intro h1{font-size:clamp(2.1rem,4vw,4rem);line-height:1.05}
+.nullpunkt-mission .drone-mission-main{padding-top:26px}
+.nullpunkt-mission .skip-link:not(:focus){clip-path:inset(50%);width:1px;height:1px;overflow:hidden}
+.nullpunkt-mission .drone-mission-intro>div{max-width:1000px}
+.nullpunkt-mission .mission-scene-shade{background:linear-gradient(180deg,#0207110a 50%,#02071155)}
+/* Python remains the movement engine; the displayed marker and trail are SVG. */
+.nullpunkt-mission #pico-mission-turtle{opacity:0;pointer-events:none}
+.nullpunkt-mission .mission-stage{aspect-ratio:1672/941}
+.nullpunkt-mission .mission-stage-overlay{z-index:3;pointer-events:none}
+.nullpunkt-mission #flight-trail{fill:none;stroke:#b9ffe2;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;opacity:.85}
+.nullpunkt-mission .target-ring{fill:#baffdf15;stroke:#c4ffdf;stroke-width:2;stroke-dasharray:4 4}
+.nullpunkt-mission .nullpunkt-drone{position:absolute;z-index:6;left:11.98%;top:39.81%;width:clamp(34px,6%,54px);transform:translate(-50%,-50%);filter:drop-shadow(0 4px 3px #000);pointer-events:none}
+.nullpunkt-mission .nullpunkt-drone svg{display:block;width:100%;height:auto;overflow:visible}
+.nullpunkt-mission .rotor{fill:#052329bf;stroke:#d8fff0;stroke-width:2.3}
+.nullpunkt-mission .drone-arm{stroke:#a3d7c7;stroke-width:4;stroke-linecap:round}
+.nullpunkt-mission .drone-body{fill:#c5e9e2;stroke:#07161b;stroke-width:2}
+.nullpunkt-mission .drone-led{fill:#73ffd0}
+.nullpunkt-mission.energy-depleted .drone-led{fill:#ff886f}
+.nullpunkt-mission .nullpunkt-target-label{left:68%;top:36%;transform:translate(-50%,-100%);font-size:clamp(.5rem,.85vw,.68rem);padding:5px 7px;white-space:nowrap}
+.nullpunkt-mission .nullpunkt-hud{position:absolute;z-index:7;left:12px;top:12px;display:grid;grid-template-columns:auto auto;gap:6px 16px;min-width:165px;padding:9px 12px;border:1px solid #baffdc50;border-radius:9px;background:#031317db;font:11px ui-monospace,Consolas,monospace;color:#d9f9eb}
+.nullpunkt-mission .nullpunkt-hud .mission-energy-track{grid-column:1/-1;height:5px;margin:0}
+.nullpunkt-mission .nullpunkt-coordinates{display:flex;gap:10px;font-size:10px;color:#abcac1}
+.nullpunkt-mission .nullpunkt-link{color:#9adebf;font-size:10px;text-align:right}
+.nullpunkt-mission .nullpunkt-energy-warning{position:absolute;z-index:8;left:0;right:0;top:50%;transform:translateY(-50%);padding:20px 10px;border-block:2px solid #ff8c7d;background:#3a070deb;color:#fff0d6;text-align:center;font-size:clamp(.95rem,2vw,1.8rem);font-weight:850;line-height:1.25;text-shadow:0 0 16px #ff4222;box-shadow:0 0 30px #ff3d294d;pointer-events:none}
+.nullpunkt-mission .nullpunkt-energy-warning[hidden]{display:none}
+.nullpunkt-mission .nullpunkt-energy-warning.is-blinking{animation:nullpunkt-energy-alarm 1.4s ease-in-out 5}
+@keyframes nullpunkt-energy-alarm{0%,100%{opacity:1}50%{opacity:.4}}
+@media(prefers-reduced-motion:reduce){.nullpunkt-mission .nullpunkt-energy-warning.is-blinking{animation:none}}
+.nullpunkt-mission .mission-target-legend{font-size:.75rem}
+@media(max-width:600px){.nullpunkt-mission .nullpunkt-hud{left:6px;top:6px;min-width:130px;gap:4px 9px;padding:6px 8px;font-size:10px}.nullpunkt-mission .nullpunkt-coordinates,.nullpunkt-mission .nullpunkt-link{font-size:8px}.nullpunkt-mission .mission-section-heading{flex-wrap:wrap}.nullpunkt-mission .nullpunkt-target-label{top:33%;left:68%;font-size:8px}}

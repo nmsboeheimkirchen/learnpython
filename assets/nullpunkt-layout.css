@@ -1,0 +1,9 @@
+/* Shared compact editor layout for all Operation Nullpunkt stages. */
+.pico-mission-theme .mission-code-panel{padding:18px}
+.pico-mission-theme .mission-task-card{padding:12px 14px;margin:0 0 10px}
+.pico-mission-theme .mission-task-card h2{margin:0 0 8px;font-size:1rem}
+.pico-mission-theme .mission-task-card p{margin:0 0 8px;font-size:.8rem;line-height:1.5}
+.pico-mission-theme .mission-task-card p:last-child{margin-bottom:0}
+.pico-mission-theme .mission-code-hint{margin:8px 0;padding:8px 10px}
+.pico-mission-theme .mission-control-bar--top{grid-template-columns:minmax(0,1fr) minmax(0,1fr);margin:0 0 10px}
+.pico-mission-theme .mission-control-bar--top button{padding:8px 10px}

@@ -8,7 +8,7 @@ Eine browserbasierte Lernplattform, in der Schüler:innen Python durch aufeinand
 
 ## Lernangebot
 
-System Access, Bombe entschärfen, Safe-Knacker und Geheimdienst-Chat vermitteln Ausgaben, Variablen, Eingaben, Bedingungen und Schleifen. Im Agententraining folgen Koordinaten und eigene Funktionen. Danach stehen PICO und Pixelmuseum als Projektwege zur Verfügung; beide führen zur gemeinsamen Helikopterflucht, deren letzte zwei Levels noch in Entwicklung sind.
+System Access, Bombe entschärfen, Safe-Knacker und Geheimdienst-Chat vermitteln Ausgaben, Variablen, Eingaben, Bedingungen und Schleifen. Im Agententraining folgen Koordinaten und eigene Funktionen. Danach stehen Operation Nullpunkt (mit dem Quantenrechner PICO) und Pixelmuseum als Projektwege zur Verfügung; beide führen zur gemeinsamen Helikopterflucht, deren letzte zwei Levels noch in Entwicklung sind.
 
 Python läuft mit lokal eingebundenem [Skulpt](https://skulpt.org/) im Browser; [CodeMirror](https://codemirror.net/5/) stellt den Editor bereit. Für die Lernseiten ist keine lokale Python-Installation nötig.
 

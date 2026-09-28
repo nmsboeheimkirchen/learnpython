@@ -62,17 +62,16 @@ window.AgentNavigation = (() => {
         },
         {
             number: "P",
-            title: "PICO: Rettungssignal",
+            title: "Operation Nullpunkt",
             titleId: "link-pico-title",
             href: "pico_level1.html",
-            description: "Energie finden, die Funkbase erreichen und PICO ohne verwertbare Spuren zurücklassen.",
+            description: "Dringe mit der Drohne in die Kommandozentrale ein und stoppe den Quantenangriff des Lords.",
             unitLabel: "Level",
             levels: [
-                { id: "link-pico-l1", href: "pico_level1.html", number: "1", label: "Reicht die Energie?" },
+                { id: "link-pico-l1", href: "pico_level1.html", number: "1", label: "Stoppe den Quantenangriff!" },
                 { id: "link-pico-l2", href: "pico_level2.html", number: "2", label: "Finden und aufladen" },
-                { id: "link-pico-l2a", href: "pico_level2a.html", number: "2a", label: "Status-Cockpit" },
-                { id: "link-pico-l3", href: "pico_level3.html", number: "3", label: "Zur Funkbase" },
-                { id: "link-pico-l4", href: "pico_level4.html", number: "4", label: "Drohne zerstören" }
+                { id: "link-pico-l3", href: "pico_level3.html", number: "3", label: "Öffne den Wartungszugang" },
+                { id: "link-pico-l4", href: "pico_level4.html", number: "4", label: "Schalte PICO aus" }
             ]
         },
         {

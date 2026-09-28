@@ -119,7 +119,7 @@
             button.setAttribute("aria-busy", String(nextRunning));
             button.innerHTML = nextRunning
                 ? '<span class="mission-spinner" aria-hidden="true"></span> ' + (config.runningLabel || "Drohne unterwegs")
-                : '<span aria-hidden="true">▶</span> ' + (config.runLabel || "Mission starten");
+                : '<span aria-hidden="true">▶</span> ' + (button.getAttribute("data-mission-run-label") || config.runLabel || "Mission starten");
         });
         resetButtons.forEach(button => {
             button.textContent = nextRunning
@@ -355,7 +355,7 @@
         if (/TimeLimit|timed out|Execution exceeded/i.test(raw)) {
             return "Dein Programm läuft zu lange. Prüfe besonders Schleifen und wiederholte Bewegungen.";
         }
-        return raw;
+        return config.formatError?.(raw) || raw;
     }
 
     async function finishRun(code) {
@@ -406,8 +406,13 @@
         try {
             config.onRunStart?.(code);
             configureSkulpt();
-            await Sk.misceval.asyncToPromise(() => Sk.importMainWithBody("<stdin>", false, code, true));
+            const executionCode = config.prepareCode?.(code) ?? code;
+            await Sk.misceval.asyncToPromise(() => Sk.importMainWithBody("<stdin>", false, executionCode, true));
             if (generation !== runGeneration) return null;
+            // Include final Python assignments before waiting for a mission animation.
+            if (config.beforeFinish) syncPythonState();
+            await config.beforeFinish?.();
+            if (generation !== runGeneration || cancelRequested) return null;
             const result = await finishRun(code);
             if (!outputText.trim()) consoleOutput.textContent = config.emptyOutput || "Programm beendet – noch ohne Textausgabe.";
             return result;
@@ -436,6 +441,7 @@
     function resetMission() {
         if (running) {
             cancelRequested = true;
+            config.onRunCancel?.();
             Sk.execStart = new Date(0);
             setRunning(true);
             setStatus("Mission wird gestoppt", "warning");
@@ -497,7 +503,8 @@
     const attempted = config.levelId && window.restoreAttemptedLevelCode?.(config.levelId);
     const restored = !attempted && config.levelId &&
         window.restoreCompletedLevelCode?.(config.levelId);
-    const inherited = !attempted && !restored && config.inheritCode && config.levelId &&
+    const inherited = !attempted && !restored &&
+        (typeof config.inheritCode === "function" ? config.inheritCode() : config.inheritCode) && config.levelId &&
         window.restoreLevelCode?.(config.levelId);
     if ((restored || attempted || inherited) && config.resetToLoadedCode) resetCode = editor.getValue();
     if (hasCompletedCode) {

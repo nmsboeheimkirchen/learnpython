@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Operation Nullpunkt · Drohnenkamera</title>
+  <link rel="stylesheet" href="pico-drone-camera.css">
+  <script src="pico-drone-camera.js" defer></script>
+</head>
+<body>
+<main>
+  <header>
+    <div><p class="eyebrow">Operation Nullpunkt</p><h1>Drohnenkamera</h1></div>
+    <p class="location">PICO <span>/</span> Kommandozentrale</p>
+  </header>
+  <div class="viewer">
+    <div class="camera" role="img" aria-label="Drohnenkamera: PICO im Normalbetrieb, mit Akkuanzeige und stabiler Verbindung.">
+      <img class="frame" src="../assets/images/finales/pico-command-terminal-v1.webp" alt="" draggable="false">
+      <img class="frame" src="../assets/images/finales/pico-command-failure-1.webp" alt="" draggable="false">
+      <img class="frame" src="../assets/images/finales/pico-command-failure-2.webp" alt="" draggable="false">
+      <img class="frame" src="../assets/images/finales/pico-command-failure-3.webp" alt="" draggable="false">
+      <div class="alarm-light" aria-hidden="true"></div>
+      <div class="terminal-interface" aria-hidden="true">
+        <div class="terminal-caption"><span class="tiny-dot"></span> WARTUNGSZUGANG</div>
+        <div class="terminal-modules"><span>●</span><span>▲</span><span>■</span><span>★</span></div>
+        <div class="terminal-line"></div>
+      </div>
+      <canvas class="screen-noise" width="420" height="160" aria-hidden="true"></canvas>
+      <div class="lens-shade" aria-hidden="true"></div>
+      <div class="hud" aria-hidden="true">
+        <div class="hud-top">
+          <div class="hud-pill"><span class="live-dot"></span> LIVE <span class="hud-divider">/</span> CAM 01</div>
+          <div class="hud-pill telemetry">
+            <svg viewBox="0 0 24 18" class="signal" fill="currentColor"><path d="M1 13h3v4H1zm6-4h3v8H7zm6-4h3v12h-3zm6-4h3v16h-3z"/></svg>
+            <span class="link-label">LINK</span><span class="hud-divider">/</span>
+            <svg viewBox="0 0 30 16" class="battery" fill="none" stroke="currentColor"><rect x="1" y="1" width="24" height="14" rx="2"/><path d="M27 5v6" stroke-width="3"/><rect x="4" y="4" width="17" height="8" rx="1" fill="currentColor" stroke="none"/></svg>
+            <span>82<span class="percent">%</span></span>
+          </div>
+        </div>
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div class="side-scale left"></div><div class="side-scale right"></div>
+        <div class="hud-bottom"><span>OPTIK 01 <b>·</b> 24 FPS</span><span><span class="stable-mark">⊕</span> STABILISIERT</span></div>
+      </div>
+    </div>
+  </div>
+  <nav class="stages" aria-label="Bildzustand auswählen">
+    <button type="button" data-stage="0" aria-pressed="true"><span>00</span> Normalbetrieb</button>
+    <button type="button" data-stage="1" aria-pressed="false"><span>01</span> Kühlung fällt aus</button>
+    <button type="button" data-stage="2" aria-pressed="false"><span>02</span> Rauch & Störungen</button>
+    <button type="button" data-stage="3" aria-pressed="false"><span>03</span> Stillstand</button>
+  </nav>
+  <div class="transport">
+    <button type="button" id="play" class="play" disabled>Wird geladen …</button>
+    <label class="timeline"><span>Überblendung</span><input id="phase" type="range" min="0" max="3" step="0.01" value="0" aria-label="Überblendung zwischen Normalbetrieb und drei Ausfallstufen"></label>
+    <label class="check"><input id="motion" type="checkbox" checked> Bewegung</label>
+    <label class="check"><input id="show-hud" type="checkbox" checked> Anzeigen</label>
+  </div>
+  <p id="description" role="status">Die Drohne schwebt vor dem Wartungsterminal. Akku und Steuerverbindung bleiben sichtbar.</p>
+  <footer><span>Bildvorschau · noch keine aktive Mission</span><a href="../assets/images/finales/pico-command-lab-v2.webp">Raumübersicht ansehen ↗</a></footer>
+</main>
+</body>
+</html>

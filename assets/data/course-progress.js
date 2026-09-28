@@ -7,7 +7,7 @@ export const groups = [
     ["Mission 3", "03", 15, ["mission3_level1", "mission3_level2", "mission3_level3"]],
     ["Mission 4", "04", 15, ["mission4_level1", "mission4_level2", "mission4_level3"]],
     ["Agententraining", "AG", 10, ["agent_training_level1", "agent_training_level2", "agent_training_level3"]],
-    ["PICO", "P", 15, ["pico_level1_navigation", "pico_level2", "pico_level3", "pico_level4_memory"]],
+    ["Operation Nullpunkt", "P", 15, ["pico_level1_navigation", "pico_level2", "pico_level3", "pico_level4_memory"]],
     ["Pixelmuseum", "M", 15, ["pixelmuseum_briefing", "pixelmuseum_finale"]],
     ["Flucht", "H", 15, ["helikopter_flucht_level1", "helikopter_flucht_level2"]]
 ];
@@ -58,7 +58,7 @@ export const teacherProgressGuide = [
     ['Mission 3','15 %','45 % + 5 %*','5 % je Level','NG / G'],
     ['Mission 4','15 %','60 % + 5 %*','5 % je Level','G / B'],
     ['Agententraining','10 %','70 % + 5 %*','AG-1: 3 %, AG-2: 3 %, AG-3: 4 %','B'],
-    ['Projekt: Pixelmuseum oder PICO','15 %','85 % + 5 %*','Museum: Briefing 5 %, Finale 10 %; PICO: 3,75 % je Level','Gut / SG'],
+    ['Projekt: Pixelmuseum oder Operation Nullpunkt','15 %','85 % + 5 %*','Museum: Briefing 5 %, Finale 10 %; Nullpunkt: 3,75 % je Level','Gut / SG'],
     ['Helikopterflucht','15 %','100 % + 5 %*','4 % + 4 % + 4 % + 3 %; H-3/H-4 (7 %) noch nicht verfügbar','SG']
 ];
 
@@ -68,7 +68,7 @@ export const teacherProgressGuide = [
 export function nextCourseTarget({completedCodes = {}, attemptedCodes = {}} = {}) {
     const done = id => Object.hasOwn(completedCodes,id) && typeof completedCodes[id] === 'string';
     const attempted = id => Object.hasOwn(attemptedCodes,id) && typeof attemptedCodes[id] === 'string';
-    const titles = ['System Access','Bombe entschärfen','Safe-Knacker','Geheimdienst-Chat','Drohnensteuerung','PICO','Pixelmuseum','Flucht'];
+    const titles = ['System Access','Bombe entschärfen','Safe-Knacker','Geheimdienst-Chat','Drohnensteuerung','Operation Nullpunkt','Pixelmuseum','Flucht'];
     const href = id => ({pico_level1_navigation:'pico_level1',pico_level4_memory:'pico_level4'})[id] || id;
     const nextIn = index => {
         const group = groups[index], position = group[3].findIndex(id=>id && !done(id));

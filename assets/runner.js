@@ -1029,7 +1029,7 @@ const LEVEL_OUTCOMES = {
     },
     pico_level1_navigation: {
         unlocks: ["link-pico-l2"],
-        successMessage: "Die Energiezelle ist erreicht."
+        successMessage: "Das Energieproblem beim Flug zu PICO ist erkannt."
     },
     pico_level2: {
         unlocks: ["link-pico-l2a", "link-pico-l3"],

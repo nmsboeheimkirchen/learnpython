@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="description" content="PICO Level 2: Finde die Energiezelle mit suche_hier, untersuche den Fund und lade die Drohne auf.">
+    <meta name="description" content="Operation Nullpunkt: Finde die Energiezelle in der Kommandozentrale und lade deine Drohne auf.">
     <meta name="color-scheme" content="dark">
-    <title>PICO 2 – Finden und aufladen</title>
+    <title>Operation Nullpunkt 2 – Finden und aufladen</title>
     <script src="assets/vendor/skulpt/1.2.0/skulpt.min.js"></script>
     <script src="assets/vendor/skulpt/1.2.0/skulpt-stdlib.js"></script>
     <script src="assets/data/learning-data-core.js?v=20260903-1"></script>
@@ -16,108 +16,116 @@
     <script src="assets/data/account-bootstrap.js?v=20260916-1"></script>
 
     <script src="assets/runner.js?v=20260827-2"></script>
-    <script src="assets/teacher-solutions.js?v=20260721-5"></script>
+    <script src="assets/teacher-solutions.js?v=20260928-2"></script>
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="assets/vendor/codemirror/5.65.2/monokai.min.css">
     <link rel="stylesheet" href="assets/style.css?v=20260722-2">
     <link rel="stylesheet" href="assets/drone-mission.css?v=20260831-1">
+    <link rel="stylesheet" href="assets/nullpunkt-layout.css?v=20260927-1">
+    <link rel="stylesheet" href="assets/nullpunkt-drone.css?v=20260927-3">
+    <link rel="stylesheet" href="assets/nullpunkt-level2.css?v=20260927-2">
 </head>
-<body class="drone-mission-page pico-mission-theme" data-mission-level="pico_level2" data-pico-level="2">
+<body class="drone-mission-page pico-mission-theme nullpunkt-mission nullpunkt-level2" data-mission-level="pico_level2" data-pico-level="2">
     <a class="skip-link" href="#python-editor">Zum Python-Editor</a>
     <div id="navigation-root"></div>
-    <script src="assets/navigation.js?v=20260722-1"></script>
-
+    <script src="assets/navigation.js?v=20260927-1"></script>
     <main id="main-content" class="drone-mission-main">
         <div class="progress-container pico-progress">
             <span class="level-badge">Level 2 von 4</span>
             <div class="progress-bar-bg" aria-hidden="true"><div class="progress-bar-fill" id="progress-fill" style="width:50%"></div></div>
-            <span id="status-text" role="status">Warte auf deinen Code</span>
-            <a id="next-level-btn" class="next-level-btn pico-next-level-btn" href="pico_level2a.html" style="display:none">Weiter zu Level 2a</a>
+            <span id="status-text" role="status">Schritt 1: Fund untersuchen</span>
+            <a id="next-level-btn" class="next-level-btn pico-next-level-btn" href="pico_level3.html" style="display:none">Weiter zu Level 3</a>
         </div>
         <section class="drone-mission-intro" aria-labelledby="mission-title">
             <div>
-                <p class="mission-kicker">PICO · Level 2 von 4</p>
+                <p class="mission-kicker">Operation Nullpunkt · Level 2 von 4</p>
                 <h1 id="mission-title">Finden und aufladen</h1>
-                <p>Die Energiezelle ist erreicht. Untersuche jetzt den echten Fund, gib ihn aus und nimm genau dieses Ergebnis in deine Ausrüstung auf.</p>
+                <p>Plane deinen Flug neu: Nutze die knappe Startenergie zuerst für die grüne Flasche am linken Rand. Finde heraus, was darin steckt und wie es deiner Drohne helfen kann.</p>
             </div>
-            <ul class="mission-concepts" aria-label="Werkzeuge dieses Levels"><li>suche_hier()</li><li>print()</li><li>append()</li></ul>
         </section>
-
         <div class="drone-mission-workspace">
             <section class="mission-stage-panel" aria-labelledby="stage-title">
                 <div class="mission-section-heading">
-                    <div><span class="mission-eyebrow">Live-Missionsansicht</span><h2 id="stage-title">Energiepunkt</h2></div>
-                    <span id="run-status" class="mission-run-status is-ready" role="status">Bereit zum Untersuchen</span>
+                    <div><span class="mission-eyebrow">Taktische Übersicht</span><h2 id="stage-title">Die Kommandozentrale</h2></div>
+                    <span id="run-status" class="mission-run-status is-ready" role="status">Bereit zur Suche</span>
                 </div>
-                <div class="mission-stage" aria-label="Rettungsstation mit Aufzug, Energiezelle und Funkbase.">
-                    <img class="mission-scene" src="assets/images/finales/pico-rescue-station.webp" alt="" width="1536" height="1024" fetchpriority="high">
+                <div class="mission-stage" aria-label="Kommandozentrale des Lords. Die Drohne startet am Zugang bei minus 365, 55. Die Energieflasche steht bei minus 455, minus 85.">
+                    <img class="mission-scene" src="assets/images/finales/pico-command-lab-v2.webp" alt="Kommandozentrale mit Zugang links, Kartenwand, Treppenabgang und goldenem Quantenrechner rechts." width="1672" height="941" fetchpriority="high">
                     <div class="mission-scene-shade" aria-hidden="true"></div>
                     <svg class="mission-stage-overlay" viewBox="0 0 960 540" preserveAspectRatio="none" aria-hidden="true">
-                        <circle class="mission-target-pulse" cx="100" cy="360" r="34"></circle>
-                        <circle class="mission-target-pulse mission-target-beacon" cx="824" cy="256" r="34"></circle>
+                        <polyline id="flight-trail" points=""></polyline>
+                        <ellipse class="energy-cell-ring" cx="25" cy="355" rx="18" ry="12"></ellipse>
                     </svg>
                     <div id="pico-mission-turtle" class="mission-turtle-target" aria-hidden="true"></div>
-                    <div class="mission-stage-label mission-start-label"><span aria-hidden="true">⬒</span> Aufzug</div>
-                    <div class="mission-stage-label mission-beacon-label"><span aria-hidden="true">◉</span> Funkbase (340, 15)</div>
-                    <div id="energy-cell-reveal" class="energy-cell-reveal"><span id="pico-cell-label"><span aria-hidden="true">ϟ</span> Energiezelle (−380, −90)</span></div>
-                    <div class="mission-energy-hud pico-mission-hud" aria-label="Drohnenstatus"><div class="pico-hud-grid"><small>DROHNE</small><small>TRANSPONDER</small><small>ENERGIE</small><strong id="drone-name">–</strong><strong id="transponder-state">–</strong><strong id="energy-value">10 %</strong><div class="mission-coordinate-hud" aria-label="Aktuelle Drohnenposition"><span>X <strong id="coordinate-x">−365</strong></span><span>Y <strong id="coordinate-y">55</strong></span></div><span class="pico-hud-spacer" aria-hidden="true"></span><div id="energy-meter" class="mission-energy-track" role="progressbar" aria-label="Energie der Drohne" aria-valuemin="0" aria-valuemax="100" aria-valuenow="10"><span id="energy-fill" style="width:10%"></span></div></div></div>
-                    <div id="pico-result-message" class="pico-result-message" role="status" aria-live="assertive"></div>
-                    <div id="stage-discovery-message" class="stage-discovery-message" role="status" hidden></div>
+                    <div id="nullpunkt-drone" class="nullpunkt-drone" aria-hidden="true">
+                        <svg viewBox="0 0 64 64"><ellipse cx="32" cy="55" rx="20" ry="5" fill="#0007"/>
+                            <path class="drone-arm" d="M16 16L48 48M16 48L48 16"/>
+                            <circle class="rotor" cx="15" cy="15" r="11"/><circle class="rotor" cx="49" cy="15" r="11"/><circle class="rotor" cx="15" cy="49" r="11"/><circle class="rotor" cx="49" cy="49" r="11"/>
+                            <path d="M7 15h16M15 7v16M41 15h16M49 7v16M7 49h16M15 41v16M41 49h16M49 41v16" stroke="#9de9d3" stroke-width="2"/>
+                            <rect class="drone-body" x="23" y="19" width="18" height="27" rx="8"/>
+                            <circle cx="32" cy="24" r="4" fill="#0d2c35"/><circle class="drone-led" cx="32" cy="38" r="3"/>
+                        </svg>
+                    </div>
+                    <div id="energy-cell-label" class="mission-stage-label nullpunkt-cell-label">Energieflasche (−455, −85)</div>
+                    <div id="charge-status" class="nullpunkt-charge-status" role="status" hidden></div>
+                    <div class="nullpunkt-hud" aria-label="Drohnenstatus">
+                        <span>AKKU</span><strong id="energy-value">10 %</strong>
+                        <div id="energy-meter" class="mission-energy-track" role="progressbar" aria-label="Energie der Drohne" aria-valuemin="0" aria-valuemax="100" aria-valuenow="10"><span id="energy-fill" style="width:10%"></span></div>
+                        <div class="nullpunkt-coordinates"><span>X <strong id="coordinate-x">−365</strong></span><span>Y <strong id="coordinate-y">55</strong></span></div><span class="nullpunkt-link">LINK ●</span>
+                    </div>
+                    <div id="equipment-hud" class="nullpunkt-equipment-hud" role="status" hidden><strong id="equipment-name"></strong><span id="equipment-items">leer</span></div>
+                    <div id="energy-warning" class="nullpunkt-energy-warning" role="alert" hidden><span aria-hidden="true">⚠</span> Akku: kritischer Zustand!</div>
                 </div>
-                <div class="mission-target-legend"><span><strong>Fundort</strong> Energiezelle (−380, −90)</span><span><strong>Regel</strong> Nur ein echter Fund lädt</span></div>
+                <div class="mission-target-legend" aria-label="Bekannte Orte"><span><strong>Start</strong> Zugang (−365, 55)</span><span><strong>Ziel</strong> Energieflasche (−455, −85)</span><span><strong>Ausrüstung</strong> <span id="equipment-value">leer</span></span></div>
                 <section class="mission-feedback" aria-labelledby="validation-title">
-                    <div><span class="mission-eyebrow">Laufzeit-Feedback</span><h2 id="validation-title">Noch nicht ausgeführt</h2><p id="validation-message">Erreiche die Energiezelle, untersuche den echten Fund und nimm ihn in die Ausrüstung auf.</p></div>
+                    <div><span class="mission-eyebrow">Einsatzprotokoll</span><h2 id="validation-title">Noch nicht ausgeführt</h2><p id="validation-message">Untersuche die grüne Flasche und mache deinen Fund im Flugprotokoll sichtbar.</p></div>
                     <ul id="checks-list" class="mission-checks" aria-label="Prüfergebnisse"></ul>
                 </section>
             </section>
-
-            <section class="mission-code-panel" id="editor-panel" aria-labelledby="code-title">
-                <div class="mission-section-heading"><div><span class="mission-eyebrow">Energie sichern</span><h2 id="code-title">Python-Kontrollraum</h2></div><span class="mission-save-note">Code wird übernommen</span></div>
-                <div class="mission-task-card">
-                    <h2>Untersuche den Fund</h2>
-                    <p><code>suche_hier()</code> liefert am richtigen Ort die Energiezelle zurück. Übersetze die drei Blöcke selbst in Python.</p>
-                    <p class="mission-touch-note">Tippe auf einen Block oder fahre mit der Maus darüber. In der Erklärblase siehst du jeweils nur den einzelnen Python-Schritt.</p>
-                    <div class="block-hint pico-code-blocks" aria-label="Drei getrennte Codehinweise">
-                        <div class="makecode-block block-tooltip" tabindex="0" aria-describedby="pico-l2-tip-search">setze <span class="makecode-var-pill">fund</span> auf <span class="makecode-input">drohne.suche_hier()</span><span class="tooltiptext" id="pico-l2-tip-search" role="tooltip">fund = drohne.suche_hier()</span></div>
-                        <div class="makecode-block block-tooltip" tabindex="0" aria-describedby="pico-l2-tip-print">zeige Text <span class="makecode-input">"Gefunden:"</span> und <span class="makecode-var-pill">fund</span><span class="tooltiptext" id="pico-l2-tip-print" role="tooltip">print("Gefunden:", fund)</span></div>
-                        <div class="makecode-block block-tooltip" tabindex="0" aria-describedby="pico-l2-tip-append">füge <span class="makecode-var-pill">fund</span> zu <span class="makecode-input">ausruestung</span> hinzu<span class="tooltiptext" id="pico-l2-tip-append" role="tooltip">ausruestung.append(fund)</span></div>
+            <section class="mission-code-panel" id="editor-panel" aria-label="Python-Code für deine Drohne">
+                <div class="mission-task-card" id="nullpunkt-task" aria-live="polite">
+                    <div class="nullpunkt-step-heading"><span id="list-warning" class="nullpunkt-list-warning" role="alert" hidden></span><span id="learning-step" class="nullpunkt-learning-step">Schritt 1 von 2 · Fund untersuchen</span></div>
+                    <div id="search-task">
+                        <p>Fliege zu <strong>(−455, −85)</strong>. Untersuche die Flasche und gib deinen Fund im Flugprotokoll aus.</p>
+                        <details class="nullpunkt-code-help"><summary>Hilfe zur Suche aufklappen</summary><ol><li>Fund speichern: <code>fund = drohne.suche_hier()</code></li><li>Fund ansehen: <code>print(fund)</code></li></ol><p>Fliege zuerst zum Fundort.</p></details>
                     </div>
-                    <p class="mission-observation-note">Nur Text auszugeben oder eine erfundene Energiezelle anzuhängen lädt nicht.</p>
+                    <div id="equipment-task" hidden>
+                        <p>Eine Energiezelle! Damit sie den Akku versorgt, muss sie zur Ausrüstung gehören. Lege oben in deinem Code eine leere Liste namens <code>ausruestung</code> an. Ergänze nach der Suche die Aufnahme deines Fundes in diese Liste und starte den Flug erneut.</p>
+                    </div>
+                </div>
+                <aside id="nullpunkt-help" class="nullpunkt-help" aria-label="Deine Zentrale" hidden>
+                    <button id="nullpunkt-help-btn" class="mission-secondary-action" type="button" aria-controls="nullpunkt-help-panel" aria-expanded="false">Hilfe von der Zentrale anfordern</button>
+                    <div id="nullpunkt-help-panel" role="status" hidden><strong id="nullpunkt-help-level"></strong><p id="nullpunkt-help-message"></p></div>
+                </aside>
+                <div class="mission-control-bar mission-control-bar--top" aria-label="Flugsteuerung über dem Editor">
+                    <button class="mission-primary-action" type="button" data-mission-run data-mission-run-label="Flug starten"><span aria-hidden="true">▶</span> Flug starten</button>
+                    <button class="mission-secondary-action" type="button" data-mission-reset>↺ Startcode laden</button>
                 </div>
                 <label class="mission-editor-label" for="python-editor"><span>Python-Code für deine Drohne</span><small id="editor-shortcut-hint">Strg/⌘ + Enter startet</small></label>
-                <textarea id="python-editor" spellcheck="false">import turtle
-
-status = {"DROHNE": "PICO", "TRANSPONDER": "suche"}
-ausruestung = []
+                <textarea id="python-editor" spellcheck="false"># Operation Nullpunkt - Level 2
+import turtle
 
 drohne = turtle.Turtle()
-drohne.shape("turtle")
-drohne.color("#55f6ff")
-drohne.speed(0)
 drohne.hideturtle()
 drohne.penup()
+drohne.speed(0)
 drohne.goto(-365, 55)
 drohne.speed(3)
-drohne.showturtle()
-drohne.pendown()
 turtle.Screen().delay(35)
 
-def fahre_zu(x, y):
+def fliege_zu(x, y):
     drohne.goto(x, y)
 
-status["DROHNE"] = "PICO"
-
-fahre_zu(-380, -90)
-
-# Untersuche und sichere hier den echten Fund:
+# Neuer Flug: zuerst zur Energieflasche (-455, -85).
+# Ergaenze Flug, Suche und Ausgabe hier:
 </textarea>
-                <div class="mission-control-bar">
-                    <button id="run-btn" class="mission-primary-action" type="button"><span aria-hidden="true">▶</span> Finden und aufladen</button>
-                    <button id="reset-btn" class="mission-secondary-action" type="button">↺ Level-Code laden</button>
+                <div class="mission-control-bar" aria-label="Programmaktionen">
+                    <button id="run-btn" class="mission-primary-action" type="button"><span aria-hidden="true">▶</span> Flug starten</button>
+                    <button id="reset-btn" class="mission-secondary-action" type="button">↺ Startcode laden</button>
                     <button id="presentation-btn" class="mission-secondary-action" type="button" aria-pressed="false">◫ Präsentieren</button>
                 </div>
-                <button class="test-btn" type="button" data-teacher-solution="pico_level2">Musterlösung (Für Lehrer)</button>
-                <div class="mission-console-card"><div class="mission-console-title"><span>Fundprotokoll</span><span aria-hidden="true"></span></div><pre id="console-output" aria-live="polite">Die Energiezelle wartet auf ihre Untersuchung.</pre></div>
+                <button class="test-btn" type="button" data-teacher-solution="nullpunkt_level2">Musterlösung (Für Lehrer)</button>
+                <div class="mission-console-card"><div class="mission-console-title"><span>Flugprotokoll</span></div><pre id="console-output" aria-live="polite">Plane deinen Flug zur grünen Energieflasche.</pre></div>
             </section>
         </div>
     </main>
@@ -125,8 +133,11 @@ fahre_zu(-380, -90)
     <script src="assets/vendor/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="assets/vendor/codemirror/5.65.2/python.min.js"></script>
     <script src="assets/drone-mission-core.js?v=20260721-2"></script>
-    <script src="assets/pico-mission-core.js?v=20260721-2"></script>
-    <script src="assets/pico-mission.js?v=20260722-1"></script>
-    <script src="assets/drone-mission.js?v=20260831-1"></script>
+    <script src="assets/nullpunkt-level1-core.js?v=20260927-3"></script>
+    <script src="assets/nullpunkt-drone.js?v=20260927-3"></script>
+    <script src="assets/nullpunkt-level2-core.js?v=20260927-2"></script>
+    <script src="assets/nullpunkt-python-names.js?v=20260928-1"></script>
+    <script src="assets/nullpunkt-level2.js?v=20260928-1"></script>
+    <script src="assets/drone-mission.js?v=20260928-1"></script>
 </body>
 </html>

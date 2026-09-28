@@ -688,7 +688,7 @@ test("PICO carries code through optional level 2a without making it a gate", () 
 test("the earlier PICO discovery checkpoint is not mistaken for the new navigation completion", () => {
     const { context, storage } = createRunnerContext({
         completedLevelCode_v1: JSON.stringify({
-            pico_level1: "fahre_zu(340, 15)"
+            pico_level1: "fliege_zu(340, 15)"
         })
     });
 
@@ -1513,10 +1513,10 @@ const teacherSolutionExpectations = new Map([
     ["agent_training_level1", /drohne\.pendown\(\)[\s\S]*drohne\.goto\(160, 80\)[\s\S]*drohne\.dot\(30,/],
     ["agent_training_level2", /def markiere\(\):[\s\S]*gehe_zu\(80, 130\)/],
     ["agent_training_level3", /gehe_zu\(-210, -65\)[\s\S]*fund = drohne\.suche_hier\(\)[\s\S]*print\("Gefunden:", fund\)/],
-    ["pico_level1", /fahre_zu\(340, 15\)/],
-    ["pico_level2", /fund = drohne\.suche_hier\(\)[\s\S]*ausruestung\.append\(fund\)/],
+    ["nullpunkt_level1", /fliege_zu\(220, 15\)/],
+    ["nullpunkt_level2", /fliege_zu\(-455, -85\)[\s\S]*fund = drohne\.suche_hier\(\)[\s\S]*ausruestung\.append\(fund\)/],
     ["pico_level2a", /status\["TRANSPONDER"\] = "aufgeladen"/],
-    ["pico_level3", /signal_erfolgreich = drohne\.sende\(\)/],
+    ["nullpunkt_level3", /drohne\.goto\(-455, -85\)[\s\S]*fliege_zu\(220, 15\)/],
     ["pico_level4", /if signal_erfolgreich:[\s\S]*status\["DROHNE"\] = "self-destroy"[\s\S]*status\["TRANSPONDER"\] = "delete"/],
     ["pixelmuseum_briefing", /def melde_inventar\(liste\):[\s\S]*drohne\.goto\(-250, 60\)[\s\S]*inventar\.append\(fund\)[\s\S]*drohne\.goto\(-390, 45\)[\s\S]*melde_inventar\(inventar\)/],
     ["pixelmuseum_finale", /def melde_inventar\(liste\):[\s\S]*drohne\.goto\(-390, 45\)[\s\S]*drohne\.goto\(250, -60\)[\s\S]*alarm_hacken\("SERU-7"\)[\s\S]*drohne\.goto\(0, 115\)[\s\S]*melde_inventar\(inventar\)/],
@@ -1552,14 +1552,15 @@ test("teacher solutions are centralized and available for every level", () => {
         assert.match(editor.value, expectedCode);
         assert.equal(editor.focused, true);
 
-        const html = readFileSync(new URL(`../${levelId}.html`, import.meta.url), "utf8");
+        const pageName = levelId.replace(/^nullpunkt_level/, "pico_level");
+        const html = readFileSync(new URL(`../${pageName}.html`, import.meta.url), "utf8");
         assert.match(html, /assets\/teacher-solutions\.js/);
         assert.match(html, new RegExp(`data-teacher-solution="${levelId}"`));
         assert.doesNotMatch(html, /onclick="[^"]*(?:atob|editor\.setValue)/);
     }
 
     assert.equal(window.TeacherSolutions.load("pico_level1_cell"), true);
-    assert.match(editor.value, /fahre_zu\(-380, -90\)/);
+    assert.match(editor.value, /fliege_zu\(-380, -90\)/);
 });
 
 test("stored teacher mode keeps PICO solutions visible after hashless navigation", () => {
@@ -2109,12 +2110,9 @@ test("project choice opens PICO and the required Pixelmuseum briefing", () => {
     assert.match(projectChoiceCss, /@media \(forced-colors: active\)/);
 });
 
-test("the public PICO path shares one runtime and uses TRANSPONDER from level 1", () => {
+test("Nullpunkt levels have their own brief while legacy PICO 2a and 4 retain their runtime", () => {
     const pages = [
-        "pico_level1.html",
-        "pico_level2.html",
         "pico_level2a.html",
-        "pico_level3.html",
         "pico_level4.html"
     ];
 
@@ -2131,11 +2129,14 @@ test("the public PICO path shares one runtime and uses TRANSPONDER from level 1"
     }
 
     const level1 = readFileSync(new URL("../pico_level1.html", import.meta.url), "utf8");
-    assert.match(level1, /Reicht die Energie\?/);
-    assert.match(level1, /Gib deiner Drohne einen Namen und programmiere diesen Flug\./);
-    assert.match(level1, /status = \{"DROHNE": "PICO", "TRANSPONDER": "suche"\}/);
-    assert.match(level1, /status\["DROHNE"\] = "PICO"/);
-    assert.match(level1, /id="energy-advice"[^>]+type="button"/);
+    assert.match(level1, /Stoppe den Quantenangriff!/);
+    assert.match(level1, /assets\/nullpunkt-level1-core\.js/);
+    assert.match(level1, /assets\/nullpunkt-level1\.js/);
+    assert.match(level1, /assets\/drone-mission\.js/);
+    assert.match(level1, /data-mission-level="pico_level1_navigation"/);
+    assert.match(level1, /data-teacher-solution="nullpunkt_level1"/);
+    assert.match(level1, /id="nullpunkt-drone"/);
+    assert.doesNotMatch(level1, /Reicht die Energie\?|Gib deiner Drohne einen Namen|TRANSPONDER/);
 
     const level2a = readFileSync(new URL("../pico_level2a.html", import.meta.url), "utf8");
     assert.match(level2a, /Optionales Level 2a/);
@@ -2407,8 +2408,8 @@ test("both homepage options keep distinct light moods and one shared logo while 
         assert.doesNotMatch(html, /checkpoint|observatorium|observation|beobacht/i);
         assert.match(html, /<h2 id="future-title">Die 5\. Mission <span class="course-no-break">wählst du\.<\/span><\/h2>/);
         assert.match(html, /Artefakt der Seruianer/);
-        assert.match(html, /Rettungscode zur Basis/);
-        assert.match(html, /Helikopter des bösen Lords hacken/);
+        assert.match(html, variant.page === "index-a.html" ? /Rettungscode zur Basis/ : /Quantenangriff des bösen Lords/);
+        assert.match(html, variant.page === "index-a.html" ? /Helikopter des bösen Lords hacken/ : /seinen Helikopter hacken/);
         assert.doesNotMatch(html, /Diese nächsten Abschnitte werden später freigeschaltet/);
         assert.equal((html.match(/class="course-route-card(?:\s[^"]*)?"/g) ?? []).length, 3);
         assert.equal((html.match(/class="course-route-visual"/g) ?? []).length, 3);
@@ -2418,7 +2419,9 @@ test("both homepage options keep distinct light moods and one shared logo while 
         assert.match(html, /class="course-route-card-copy">\s*<span>Vorbereitung<\/span>\s*<h3>Drohne<\/h3>/);
         assert.match(html, /<h2 class="course-kicker course-learning-title" id="learning-title">So kommst du voran<\/h2>/);
         assert.doesNotMatch(html, /Ein Auftrag nach dem anderen\./);
-        assert.match(html, /pico-rescue-station\.webp[^>]+loading="lazy"[^>]+decoding="async"[^>]+fetchpriority="low"/);
+        assert.match(html, variant.page === "index-a.html"
+            ? /pico-rescue-station\.webp[^>]+loading="lazy"[^>]+decoding="async"[^>]+fetchpriority="low"/
+            : /pico-command-lab-v2\.webp[^>]+loading="lazy"[^>]+decoding="async"[^>]+fetchpriority="low"/);
         assert.match(html, /pixel-museum\.webp[^>]+loading="lazy"[^>]+decoding="async"[^>]+fetchpriority="low"/);
         assert.match(html, /class="course-home-finale-image"[^>]+helicopter-hangar-closed\.webp[^>]+loading="lazy"[^>]+fetchpriority="low"/);
         assert.ok(

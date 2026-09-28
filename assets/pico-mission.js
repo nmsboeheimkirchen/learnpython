@@ -475,7 +475,13 @@
         targetId: "pico-mission-turtle",
         defaultCode: byId("python-editor").value,
         unlocks: LEVEL_UNLOCKS[level],
-        inheritCode: level !== "1",
+        // Legacy follow-ups cannot consume a new Nullpunkt route. Own saves win.
+        inheritCode: () => {
+            if (level === "1") return false;
+            const sourceIds = { "2": ["pico_level1_navigation"], "2a": ["pico_level2"], "3": ["pico_level2a", "pico_level2"], "4": ["pico_level3"] }[level] || [];
+            const previous = sourceIds.map(id => window.getCompletedLevelCode?.(id)).find(code => code != null);
+            return !(previous || "").includes("# Operation Nullpunkt");
+        },
         resetToLoadedCode: level !== "1",
         droneApi: {
             suche_hier(context) {
