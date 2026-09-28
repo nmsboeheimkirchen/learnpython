@@ -272,6 +272,16 @@ Klasse löschen entfernt Code, offene Anmeldungen/Mailjobs und betroffene Transf
 
 Eine einzige Berechnung in `course-progress.js` versorgt Konto- und Lehreransicht. Prozentwerte werden nicht als zweite Wahrheit in der DB gespeichert. Ein Eintrag mit String-Lösung in `completedCodes` zählt; kein Fortschritt nur durch Besuch, Versuch oder Unlock. Bestehende stabile Level-IDs bleiben auch bei späterer Umbenennung von PICO erhalten oder benötigen eine explizite Datenmigration.
 
+**Lokaler Missionsumbau vom 28.09.2026 (noch nicht veröffentlicht):** Operation
+Nullpunkt verwendet weiterhin `pico_level2` und `pico_level3`. Sucherfolg in Level 2
+und Anflug in Level 3 sind nur Zwischenziele. Neue Abschlüsse werden erst nach
+Aufnahme bzw. gelöstem Quantenregister und der dreisekündigen Prüfanzeige gespeichert; gespeichert wird weiterhin der
+Original-Python-Code über die vorhandene Lernstandsschnittstelle. Alte Abschlüsse
+behalten ihre Gutschrift, erzeugen aber keinen behaupteten Flug oder gelösten neuen
+Registerzustand. Hinweisstufen, Zwischenziele und zufällige Registeraufgaben sind
+seitenlokal. Keine Änderung an API, Schema, Gewichten oder Bestand. Öffentliche
+Änderungen und Kompatibilitätsentscheidung: MAIN-08/09/10 in `MISSION-MAIN-PORT.md`.
+
 | Abschnitt | Pflichtpunkte | Levelgewichte |
 | --- | --- | --- |
 | Missionen 1, 3, 4 | Je 15 | Je 5 / 5 / 5 |

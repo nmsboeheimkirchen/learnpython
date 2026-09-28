@@ -3,6 +3,13 @@
 Stand: 28.09.2026. Arbeitsbranch: `dev-login-save`.
 Ausgangspunkt vor diesen Änderungen: `4d8bcbe`.
 
+**Lokal gesichert:** `a36189e` – `mission-public: implement Nullpunkt levels 1-3
+and requested terminal analysis`. Dieser Commit enthält MAIN-01 bis MAIN-10,
+inklusive Renderings/Vorschauen und Tests. 219 Logiktests und 35 Browserprüfungen
+grün. Keine Veröffentlichung; Level 4 bleibt bis zum nächsten Umbau alter Inhalt.
+Systemvertrag und privater Handoff sind als separater Dokumentationsnachtrag
+geführt und gehören nicht zur öffentlichen Missionsübernahme.
+
 ## Trennung von Missionsinhalt und Kontosystem
 
 Missionsänderungen sollen später einzeln nach `main` übernommen werden.
@@ -513,8 +520,7 @@ den bisherigen Missionsablauf; der Sabotageumbau folgt separat.
 Der Nutzer hat den lokalen Commit der bisherigen Missionsarbeit freigegeben.
 MAIN-01 bis MAIN-10 bilden den öffentlich übertragbaren Missionsstand. Historische
 Angaben „noch nicht committet“ oben beschreiben frühere Zwischenstände. Kein Push,
-kein Release und keine Übernahme nach main. Commit-Zuordnung und abgeschlossene
-Prüfergebnisse werden nach der lokalen Sicherung ergänzt.
+kein Release und keine Übernahme nach main. Commit-Zuordnung steht oben.
 
 Abschlussprüfung: 219/219 Logiktests und 35/35 Browserprüfungen erfolgreich
 (Chromium-Schullaptop, WebKit/iPad, Handyansicht). Geprüft sind fehlende automatische

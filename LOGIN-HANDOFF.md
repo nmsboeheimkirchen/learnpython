@@ -1,5 +1,239 @@
 # Übergabe: dev-login-save
 
+## LOKAL COMMITTET 28.09.2026 – Nullpunkt 1–3 und Analyse auf Anfrage
+
+- Missionsstand **`a36189e`** auf `dev-login-save`, Präfix `mission-public:`.
+  Enthält die bisherige Missionsarbeit MAIN-01 bis MAIN-10 einschließlich der
+  Bilder, Vorschauen und Tests. Handoff/Systemvertrag separat dokumentiert.
+  Kein Push, Release oder Merge; Produktion weiterhin unverändert r15.
+- **219/219 Logiktests und 35/35 Browserprüfungen erfolgreich** (Chromium und
+  WebKit/iPad). Laptop-, iPad- und Handyansichten einschließlich Prüfhaken,
+  angeforderter Analyse und UNLOCKED visuell kontrolliert. Keine aktiven Tests.
+- Alle aktiven PICO-Starter und Lehrerbeispiele verwenden `fliege_zu`.
+  Gespeicherte eigene Funktionsnamen/Originalcode bleiben unverändert.
+- Zentrale oberhalb des Rätsels: anfangs und nach Tests kein automatischer
+  Hinweis, kein „Denkspur“. Erste Anfrage enthält den gewünschten allgemeinen
+  Einsetzhinweis für Zeile 1. Analyse zeigt korrekte Prüfzeilen mit eingesetzten
+  aktuellen Zahlen untereinander und Restmöglichkeiten als Zusammenfassung.
+  Keine Zielverteilung/Änderungsrichtung. Jede weitere Analyse erfordert einen
+  neuen Test, auch nach drei Anfragen; direkte Event-Aufrufe umgehen die Sperre
+  nicht. Pfeiländerungen entfernen alte Haken und die alte Analyse sofort.
+- Grüne Haken je erfüllter Bedingung; bei 4/4 bleiben sie exakt 3000 ms sichtbar,
+  bei gesperrter Eingabe. Danach dauerhaft UNLOCKED und Abschluss über die
+  bestehende Schnittstelle. Münzdialog erst auf „Weiter zu Level 4“.
+  Reset/Neustart und geänderter Flugcode können keine späte Freigabe auslösen.
+- Portierbare Änderungen in `MISSION-MAIN-PORT.md` markiert. Keine Backend-,
+  Speicheradapter-, Schema- oder Gewichtsänderung. Bestandsschutz bleibt erhalten.
+- Vorschau http://127.0.0.1:4173/pico_level3.html aktiv, Server-Sitzung 51524.
+  Zum Testen Seite neu laden; alter eigener Code bleibt absichtlich geladen,
+  neuer Starter über „Startcode laden“. Level 4 enthält noch den alten Ablauf;
+  nächster Missionsumbau ist fiktive Sabotage mit vorbereiteten Ausfallbildern.
+  Nicht automatisch veröffentlichen. Alte Zwischenstände unten sind historisch.
+
+## LOKAL FERTIG 28.09.2026 – Level 2 Lernfolge und Level 3 Quantenregister
+
+- **Verbindlicher Abschlussstand:** 218/218 Logiktests und 31/31 Browserprüfungen
+  grün (Chromium, WebKit/iPad). Nach abschließender Tablet-Layoutkorrektur zusätzlich
+  7/7 Level-3-Browserprüfungen grün, einschließlich Grenzen aller Registerelemente.
+  Die nachstehenden Zwischenstände sind überholt; keine aktiven Testprozesse.
+- Level 2: zwei Aufgaben, keine vorbereitete Ausrüstungsliste; Suchhilfe nur
+  aufklappbar. Hinweis 3 erst nach gültigem ausgeführtem Listenaufbau. Namen mit
+  Groß-/Kleinschreibung und Umlauten akzeptiert, tatsächlicher Listeninhalt neben
+  Akku, rote Namens-/Reihenfolgewarnungen. Aufnahme prüft echtes append am Fundort.
+- Skulpt-Umlautproblem durch gezielte Bezeichneranpassung in
+  `assets/nullpunkt-python-names.js` gelöst. Kommentare/Strings/Originalcode bleiben
+  unverändert, interne Namen nicht in Fehlermeldungen zeigen. Optionaler Hook in
+  gemeinsamer Drohnenlaufzeit; keine Hersteller- oder Backenddatei angepasst.
+- Level 3: tatsächlicher Anflug ab geladener Flasche, dann Terminalkamera mit
+  Q-04. 14 mögliche Zielcodes, jede Variante eindeutig geprüft. Hinweise nach
+  zwei Fehlversuchen anforderbar; 4 Münzen und Abschluss erst nach Registerlösung.
+  Laptop im gezeichneten Display; Tablet-Hochformat/Handy bis 1000 px mit größerer
+  Bedienfläche unter dem Bild. Visuelle Prüfung auf Laptop, Tablet und Handy.
+- Bestandsschutz/Abschlussnachweis in `ACCOUNT-SYSTEM.md` Abschnitt 12 und MAIN-09
+  festgelegt: historische Gutschrift bleibt, daraus keinen neuen Registerzustand
+  ableiten; neue Abschlüsse nur nach tatsächlichem Anflug + Registerprüfung.
+- Öffentlich übertragbare Arbeit als **MAIN-08/MAIN-09** in `MISSION-MAIN-PORT.md`
+  markiert. Keine Backendänderung, keine Migration, kein Commit/Push/Release.
+  `dev-login-save`, lokale Vorschau auf Port 4173 aktiv (Level 3 HTTP 200).
+- Zum Testen bestehende Seite neu laden und bei altem gespeicherten Starter
+  „Startcode laden“ wählen; vorhandene Versuche wurden absichtlich nicht ersetzt.
+  Level 4 ist noch alter Inhalt; nächster Umbau: fiktive Sabotage/Ausfallbilder.
+  Einmaligen Helper `.cache/build-nullpunkt-level3.cjs` **nicht erneut ausführen**.
+
+### Verlauf / überholte Zwischenstände
+
+- Nachtrag aus Nutzerdatei `Eingefügter Text.txt`: Hinweis 1 exakt inhaltlich
+  übernehmen; Hinweis 3 erst nach ausgeführter gültiger Liste. Schreibweisen
+  ausruestung/Ausrüstung/AUSRÜSTUNG/Ausruestung/AUSRUESTUNG akzeptieren und als
+  eigenes HUD-Feld rechts neben Akku anzeigen. Namensfehler bzw. durch spätere
+  Leerung gelöschte Funde rot neben Schritt 2 erklären. Liste darf zunächst auch
+  weiter unten stehen: Reihenfolge wird erst bei der Aufnahme relevant.
+- Anschließend Level 3 lokal umsetzen: geladene Drohne zu PICO fliegen, direkt
+  zur vorhandenen Terminal-Nahaufnahme wechseln. Vier Pfeilschalter +1/−1,
+  „QUANTENREGISTER Q-04“, „PRÜFDATEN“, keine behaupteten physikalischen Messungen.
+  Zufällige eindeutig lösbare Varianten; vereinfachte vierte Summenbedingung,
+  gestufte Hilfe und nur Anzahl erfüllter Bedingungen bei Fehlern. Weiter zu 4.
+- Zwischenstand vor Nachtrag: erste Zweiteilung fertig, 215 Logiktests grün,
+  8/9 Browsertests grün; langer iPad-Gesamttest lief ins 25-s-Testzeitlimit.
+  Neue Anforderungen sind noch in Umsetzung; diese Zahlen kein Abschlussbeleg.
+- Checkpoint 28.09.: Namensvarianten, HUD-Liste, Hinweis-3-Sperre und roter
+  Reihenfolgehinweis umgesetzt. Level 3 startet geladen an der Flasche, fliegt
+  zu (220,15) und öffnet die Terminalkamera. Q-04 erzeugt 14 mögliche Zielcodes,
+  jeweils eindeutig: Prüfdaten mit zwei Produkten, Gesamtsumme und einfacher
+  Zweier-Summe oder -Differenz. Neues `nullpunkt-register-core.js`, `nullpunkt-level3.js/.css`.
+  217/217 Logiktests grün. Browserlauf 31 Tests (Level 1/2/3 und altes 2a/4),
+  Sitzung 58726, läuft noch. Sichtprüfung, MAIN-08/09 und Abschluss ausstehend.
+
+- Nutzerkorrektur: zuerst Fund suchen/speichern/ausgeben; aufklappbar nur die
+  beiden Beispiele dafür. Erst danach eigener Auftrag zur Ausrüstungsliste
+  und Aufnahme. `ausruestung = []` aus dem Starter entfernen; Lernende ergänzen
+  die Liste selbst. Aufnahme nicht mehr als fertige Lösung im Aufgabentext.
+- Umsetzung lokal auf `dev-login-save`: Sucherfolg als Zwischenziel ohne
+  Levelabschluss/Freischaltung/Münzen; vorhandenen Code für Schritt 2 behalten.
+  Schrittweise Hilfe der Zentrale, konkrete Syntax erst nach weiteren Hinweisen.
+  Leere Liste vor Aufnahme prüfen, Ladesequenz und vier Münzen erst am Ende.
+- Keine Backend-/Speicheränderung, kein Commit/Push/Release. Öffentliche
+  Übernahmemarkierung MAIN-08 folgt. Tests und Abschlussstand noch ausstehend.
+
+## LOKAL FERTIG 27.09.2026 – Level 2: Finden und aufladen
+
+- Nutzerauftrag: Level 2 lokal auf Operation Nullpunkt umstellen. Neues Raumbild,
+  namenlose SVG-Drohne, Akku links oben, kompakter Editor und oberer Startknopf.
+- Neuer Anlauf ab Zugang (-365,55) mit 10 %: Route zuerst zur Energieflasche
+  (-455,-85). Gemeinsames Start-Flugbudget für Level 1/2 auf 180 anpassen,
+  damit rund 167 Einheiten zur Flasche erreichbar sind; PICO bleibt unerreichbar.
+- Lernschritte: `suche_hier()`, Fund ausgeben, in `ausruestung` aufnehmen;
+  tatsächlichen Fund/Ort und Aufnahme nach Suche prüfen, sichtbare Ladesequenz.
+- Direkt weiter zu Level 3; optionales altes 2a entfällt im neuen Ablauf.
+  `pico_level2` und vorhandene gespeicherte Versuche/Abschlüsse erhalten.
+  Alte Folgelevels dürfen den neuen Code nicht ungeprüft erben.
+- Gemeinsame Drohnenansicht aus Level 1 wiederverwenden; Alarm mit sieben Sekunden
+  und Abbruchschutz auch bei falschen Level-2-Routen. Gewichtung erst im Gesamtumbau.
+  Keine Backendänderung, kein Commit, Push oder Deployment.
+- Checkpoint 2: Level 2 mit Such-/Aufnahmelogik und rund 2,6 Sekunden sichtbarer
+  Ladesequenz umgesetzt. Gemeinsame Darstellung in `nullpunkt-drone.js/.css`,
+  Level 1 benutzt sie ebenfalls. Neue Lösung `nullpunkt_level2`, vier Goldmünzen.
+  214/214 Logiktests grün; Chromium-Tests für neue Level 1/2 und alte Folgelevels
+  grün. WebKit läuft noch. Als letzten Randfall die Aufnahme nach einer weiteren
+  asynchronen Bewegung vor der Schlussauswertung absichern, danach Sichtprüfung.
+- Abschließender Checkpoint: **214/214 Logiktests und 22/22 Browserprüfungen grün**.
+  Obiger Zwischenstand ist überholt. Chromium und WebKit/iPad: tatsächlicher Flug,
+  Ladesequenz, fehlende Ausgabe, erfundener Fund, Suche am falschen Ort, Abbruch,
+  Reset/Reload und alte Abschlüsse geprüft. Neuer Code bleibt aus alten Folgelevels
+  heraus; eigene gespeicherte Folgelevel-Versuche haben Vorrang. Keine aktiven Tests.
+- Schlusszustand wird vor einer Lade-/Alarmwartephase aus Python synchronisiert,
+  damit auch eine Aufnahme nach einer asynchronen Bewegung korrekt zählt.
+  iPad-Abbruchtest löst den Stop-Knopf gezielt während der Ladephase aus; ein
+  langsames Scrollen darf die 2,6 Sekunden lange Animation im Test nicht überholen.
+- Laptop-, Lade- und Handyansicht visuell geprüft. Drohnensymbol am linken Bildrand
+  vollständig sichtbar. Gemeinsame `nullpunkt-drone.css` ersetzt die frühere
+  `nullpunkt-level1.css`. `git diff --check` ohne Fehler.
+- Öffentliche Übernahmeliste: **MAIN-07** in `MISSION-MAIN-PORT.md`.
+  Vorschau: `http://127.0.0.1:4173/pico_level2.html`.
+  Nächster fachlicher Schritt: Level 3 mit Anflug und logischem Terminalrätsel.
+  Level 3/4 selbst sind noch alter Funktionsstand; 2a bleibt nur als alte URL erhalten.
+
+## LOKAL FERTIG 27.09.2026 – Akkuwarnung, sieben Sekunden Pause, kompakter Editor
+
+- Neuer Auftrag: Bei Akku-Stopp „Akku: kritischer Zustand!“ quer über das Bild,
+  blinkend und einmaliger kurzer Warnton; sieben Sekunden bis zur Fortsetzung.
+  Alten Zusatzhinweis unter dem Bild entfernen. Startknopf auch oberhalb des
+  Codes und kompaktere Anweisungen ohne doppelte Überschrift, auch in Folgelevels.
+- Umsetzung: eigener Level-1-Alarm ab tatsächlicher Entleerung; sieben Sekunden
+  vor Auswertung, Freischaltung und Erfolgsdialog. Währenddessen alle Startknöpfe
+  und Tastatur-/API-Neustart gesperrt. Stoppen löst das Warten auf und setzt sauber
+  zurück; keine verspätete Erfolgsmeldung. Der alte Hinweisblock ist entfernt.
+- Ein Web-Audio-Warnton (270 ms) je Entleerung, Audiofreigabe beim echten Startklick
+  oder Tastaturstart. Rotes Warnband pulsiert langsam; reduzierte Bewegung beachtet.
+  Keine externen Tondateien oder Netzwerkabhängigkeit.
+- `assets/nullpunkt-layout.css` für Level 1, 2, 2a, 3, 4: kompakte Anweisungen,
+  keine dekorative Editor-Doppelüberschrift, „Flug starten“ und Zurücksetzen auch
+  über dem Code. Bestehende Folgelevel-Logik weiterhin alt; Pixelmuseum unverändert.
+- Prüfung: 210/210 Logiktests und 14/14 Browserprüfungen grün. Chromium/WebKit:
+  6999 ms noch gesperrt, ab 7000 ms Fortsetzung; ein Tonaufruf je Entleerung mit
+  instrumentiertem Audio, Abbruch und erneuter Flug ohne alte Timer. Obere Knöpfe
+  aller fünf Seiten, alte Folgelevel, Speicherung/Reload/Reset ebenfalls geprüft.
+  Laptop-/Handy- und Alarmbilder visuell kontrolliert; `git diff --check` grün.
+- Öffentliche Übernahmeliste: MAIN-06 in `MISSION-MAIN-PORT.md`. Keine laufenden
+  Tests. Lokale Vorschau weiterhin Port 4173. Kein Commit, Push oder Deployment.
+
+## LOKAL FERTIG 27.09.2026 – neues Raumbild und besser sichtbarer Akku
+
+- Nutzerkorrektur: neues Kommandozentralenbild `ChatGPT-Bild 27. Sept. 2026, 14_57_17.png`
+  verwenden, „Zahlungsnetz“ durch „Zahlungssystem“ ersetzen, Akkuanzeige links oben.
+- Umsetzung lokal auf `dev-login-save`: Raumübersicht als `pico-command-lab-v2.webp`
+  in Level 1, Startseiten, Projektwahl und Vorschau-Verweis; bestehende Nahaufnahme
+  und Ausfallbilder bleiben erhalten. Anzeige auf Desktop und Handy links oben.
+- Neues WebP ohne Beschnitt: 1672 × 941, Qualität 94, 387970 Bytes.
+  3/3 Browserprüfungen erfolgreich (Chromium, WebKit/iPad, Handybreite),
+  Laptop- und Handydarstellung visuell kontrolliert. 2/2 bestehende Prüfungen
+  für Startseiten-Referenzen und Übereinstimmung von öffentlicher/B-Startseite grün.
+  `git diff --check` ohne Fehler. Keine neuen Prüfprozesse mehr aktiv.
+- Öffentliche Änderungen als MAIN-05 in `MISSION-MAIN-PORT.md` markiert.
+  Vorschau weiterhin `http://127.0.0.1:4173/pico_level1.html`.
+  Kein Commit, Push oder Deployment. Keine Änderungen an Speicher/Backend.
+
+## LOKAL FERTIG 27.09.2026 – Operation Nullpunkt, Übersicht und Level 1
+
+Aktueller Nutzerauftrag: Missionsübersicht aktualisieren und **nur Level 1 lokal**
+auf den freigegebenen PICO-/Nullpunkt-Entwurf umstellen; sichtbare Drohne statt Turtle.
+Regelmäßige Checkpoints hier ausdrücklich gewünscht. Keine Veröffentlichung beauftragt.
+Der darunter dokumentierte Hostinger-Livestand bleibt davon unabhängig unverändert.
+
+- Branch `dev-login-save`; vorhandene lokale Änderungen an `index.html`,
+  `projektwahl.html`, `tests/e2e/project-choice.spec.mjs` erhalten (Museum vor PICO).
+- Verbindlicher Plan und Portierungstrennung: `MISSION-MAIN-PORT.md`.
+  Mission **Operation Nullpunkt – Stoppe den Quantenangriff**; PICO ist der Rechner,
+  Drohne namenlos. Level 1: Energieproblem beim direkten Flug zum Rechner erkennen.
+  Später 4 Levels mit 3/4/4/4 Punkten, aber Level 2–4 jetzt nicht neu implementieren.
+- Aktuelle Bilder: `pico-command-lab-v1.webp` und `pico-command-terminal-v1.webp`
+  unter `assets/images/finales/`; Innenraum der Kommandozentrale. Alte Bergpanoramen
+  sind historische Entwürfe. Drei Ausfallbilder und Kameraeffektvorschau existieren,
+  dokumentiert in `PICO-CAMERA-PROMPTS.md`. Keine Erfolgsmeldung im Kamerabild.
+- Checkpoint 2: Übersicht, Startseite, Projektwahl und Fortschrittslabels auf
+  Operation Nullpunkt umgestellt; Navigation zeigt vier geplante Level ohne 2a.
+  Neue Level-1-Seite mit Kommandozentrale, SVG-Drohnensymbol und Laufzeitkern
+  `assets/nullpunkt-level1{,-core}.js` plus CSS lokal implementiert, noch ungetestet.
+  Überschrift nach Nutzerkorrektur **Stoppe den Quantenangriff!**, Auftrag
+  **Steuere die Drohne zu PICO.** Keine Vorwegnahme des Energieproblems.
+  START (-365,55), Wartungsterminal (220,15), Startakku 10 %, Flugbudget 145.
+- Fachliche Entscheidung: Level 1 endet nach echtem, energiebedingtem Abbruch
+  eines Flugauftrags zu PICO. Kein Name, kein zweiter Suchauftrag. Bestehende
+  Abschlüsse behalten unter `pico_level1_navigation` Gültigkeit; vorhandener
+  Code wird erhalten und beim Laden nicht ungeprüft als neuer Flug simuliert.
+  Umgewichtung 3/4/4/4 erst mit dem übrigen Missionsumbau, aktuell unverändert.
+  Level 2–4 weiterhin alter Funktionsstand; neue Übersicht benennt den Zielplan.
+- Übergangsschutz: alter Level 2 übernimmt den neuen Nullpunkt-Direktflugcode
+  nicht als Starter, eigene gespeicherte Level-2-Versuche haben weiter Vorrang.
+  Konfigurationsfunktion für `inheritCode` wird erst nach Datenbereitschaft geprüft.
+- Checkpoint 3: **13/13 Browserprüfungen grün** (Chromium und WebKit/iPad,
+  zusätzlich Handybreite und echte Animation). Flugprüfung, falsches Ziel,
+  gedruckte Scheinlösung, Speichern/Reload/Reset, bestehender alter Abschluss,
+  Level-2-Übergang, Navigation und unveränderte alte Folgelevels geprüft.
+  Gesamter Logiklauf zuletzt 208/210: nur veraltete Text-/Musterlösungszuordnungen
+  in `tests/runner.test.mjs` offen, aktuell in Korrektur. Neue Kernprüfungen grün.
+  Start-/Handybilder visuell geprüft; abschließend UI-Statusreset und Handoff
+  abrunden. `index-b.html` bleibt wie vertraglich getestet Kopie der Startseite.
+- Abschließender Checkpoint: **210/210 Logiktests grün**, erster Browserlauf
+  **13/13 grün**, nach UI-Statusreset und Textkorrekturen **8/8 grün** (Level 1
+  Chromium/WebKit und öffentliche Startseite). Keine aktiven Prüfprozesse;
+  `git diff --check` grün. Lokale Vorschau wird über Port 4173 bereitgestellt.
+  Der darunter erwähnte Stand 208/210 ist damit überholt. Kein Commit/Push/Release.
+- Nächster fachlicher Schritt erst auf Folgeauftrag: Level 2 mit der neuen
+  Energieflasche am linken Rand umsetzen. Ihre tatsächlichen Koordinaten liegen
+  ungefähr bei (-455,-85); vom Start sind das rund 167 Einheiten. Das aktuell
+  auf 145 Einheiten kalibrierte Flugbudget vor Integration entsprechend erhöhen
+  (z. B. auf 180), damit die Flasche erreichbar bleibt. Danach Level 3/4,
+  Kompatibilität des neuen Rätsels und Umgewichtung 3/4/4/4 gemeinsam bearbeiten.
+- Öffentliche Übernahmeliste und genaue Übergangsgrenzen in MAIN-04 der
+  `MISSION-MAIN-PORT.md`. Die Navigation zeigt bereits die geplanten vier Titel;
+  Level 2–4 selbst enthalten noch die bisherige Logik. Das alte optionale 2a
+  ist nur aus der Übersicht entfernt, seine URL und gespeicherten Daten bleiben.
+- Speicherung/Backend nicht verändern. Bestehende Level-IDs und echte Lernstände
+  erhalten; erforderliche Kompatibilitätsentscheidung vor Änderungen dokumentieren.
+  Pixelmuseum unverändert. Keine unbekannten ungetrackten Root-Dateien ausgeben
+  oder stagen; kein `git add -A`. Keine alten Hostinger-Operatoren ausführen.
+
 ## ABGESCHLOSSEN 26.09.2026 – Hostinger r15 / Schema 9 bestätigt live
 
 **Maßgeblicher Endstand. Sämtliche darunterliegenden Zwischenstände sind historisch; keine offenen Aktivierungen, Migrationen oder Testprozesse.**
