@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1672 941">
+  <defs><filter id="edge" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="15"/></filter></defs>
+  <path fill="white" filter="url(#edge)" d="M-40-40H845V345H1070V981H-40Z"/>
+</svg>

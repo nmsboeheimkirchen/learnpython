@@ -1,6 +1,17 @@
 (() => {
     'use strict';
     const byId=id=>document.getElementById(id),core=window.DroneMissionCore,register=window.NullpunktRegisterCore;
+    const reauth=Boolean(window.NullpunktTerminalOnly);
+    const reauthToken=new URLSearchParams(location.search).get('reauthToken');
+    const notifyParent=data=>window.parent.postMessage({...data,token:reauthToken},location.protocol==='file:'?'*':location.origin);
+    if(reauth){
+        document.body.classList.add('nullpunkt-reauth');
+        byId('mission-title').textContent='Öffne den Zugang erneut';
+        document.querySelector('.terminal-intro p').textContent='PICO hat den Wartungszugang gesperrt. Löse das neue Zugangsrätsel des Lords. Dein letzter Kalibrierversuch bleibt erhalten.';
+        byId('register-continue').textContent='Zurück zu deinem Codeversuch';
+        const sendSize=()=>notifyParent({type:'nullpunkt:terminal-size',height:byId('main-content').scrollHeight+32});
+        new ResizeObserver(sendSize).observe(byId('main-content'));
+    }
     const flight=window.NullpunktLevel1Core.createState({start:window.NullpunktLevel1Core.ENERGY_CELL,initialEnergy:100,initiallyCharged:true});
     const view=window.NullpunktDroneView.create(flight);
     let reached=false,solved=false,flownCode='',task=register.generate(),values=[1,1,1,1],failures=0,helpLevel=0;
@@ -101,6 +112,7 @@
     // Keep UNLOCKED visible until the learner chooses to continue to the reward.
     byId('register-continue').addEventListener('click',()=>{
         if(!solved||!reached)return;
+        if(reauth){notifyParent({type:'nullpunkt:terminal-unlocked'});return;}
         window.triggerSuccess?.(false,'Das Quantenregister ist korrekt eingestellt. Der Wartungszugang von PICO ist offen.',{rewardCount:4,title:'ZUGANG FREIGEGEBEN',celebration:'coins',primaryHref:'pico_level4.html',primaryLabel:'Weiter zu Level 4',closeLabel:'Zurück zum Terminal',statusLabel:'LEVEL 3 GESCHAFFT!'});
     });
     byId('back-to-flight').addEventListener('click',()=>showCamera(false));
@@ -113,10 +125,10 @@
             checks:[{label:'Wartungsterminal erreicht',passed:reached},{label:'Quantenregister korrekt eingestellt',passed:solved}]};
     }
     window.DRONE_MISSION_CONFIG={
-        levelId:'pico_level3',targetId:'pico-mission-turtle',defaultCode:byId('python-editor').value,inheritCode:false,unlocks:['link-pico-l4'],
+        levelId:reauth?null:'pico_level3',targetId:'pico-mission-turtle',defaultCode:byId('python-editor').value,inheritCode:false,unlocks:reauth?[]:['link-pico-l4'],
         runLabel:'Flug starten',runningLabel:'Drohne unterwegs',readyLabel:'Bereit für PICO',resetLabel:'↺ Startcode laden',
         resetOutput:'Die Drohne wartet mit vollem Akku an der Energieflasche.',initialMessage:'Fliege zum Wartungsterminal bei (220, 15).',initialChecks:['Wartungsterminal erreichen','Quantenregister öffnen'],
-        resetHud(){flight.reset();view.reset();reached=false;flownCode='';showCamera(false);resetRegister();byId('return-to-terminal').hidden=true;byId('next-level-btn').style.display='none';byId('status-text').textContent='Bereit für PICO';byId('progress-fill').style.width='75%';},
+        resetHud(){flight.reset();view.reset();reached=reauth;flownCode=reauth?window.editor.getValue():'';showCamera(reauth);resetRegister();byId('return-to-terminal').hidden=true;byId('next-level-btn').style.display='none';byId('status-text').textContent='Bereit für PICO';byId('progress-fill').style.width='75%';},
         onRunStart(code){flownCode=code;view.prepareAudio();},onRunCancel(){view.clearAlarm();},onRunError(){view.clearAlarm();reached=false;byId('return-to-terminal').hidden=true;},
         limitTurtleMovement:flight.limitMovement,
         onTurtleFrame(point){const frame=flight.recordFrame(point);view.render();const state=flight.snapshot();reached=Boolean(state.initialized&&state.travelled>1&&!state.depleted&&core.isNear(state.current,window.NullpunktLevel1Core.TARGET,20));if(frame.stop)view.showEnergyWarning();return frame.stop?frame:null;},

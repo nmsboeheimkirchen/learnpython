@@ -144,7 +144,7 @@ test('PICO editors keep an upper flight button and compact instructions',async({
  for(const level of ['1','2','2a','3','4']){
   await open(page,`/pico_level${level}.html?e2e`);
   const upperRun=page.locator('[data-mission-run]');
-  await expect(upperRun).toHaveText('▶ Flug starten');
+  await expect(upperRun).toHaveText(level==='4'?'▶ Programm testen & hochladen':'▶ Flug starten');
   await expect(page.locator('#editor-panel > .mission-section-heading')).toHaveCount(0);
   const button=await upperRun.boundingBox(),editor=await page.locator('.CodeMirror').boundingBox();
   expect(button.y+button.height).toBeLessThan(editor.y);
@@ -157,6 +157,6 @@ test('PICO editors keep an upper flight button and compact instructions',async({
   await page.evaluate(()=>window.DroneMissionRuntime.editor.setValue('print("Oberer Startknopf")'));
   await upperRun.click();
   await expect(page.locator('#console-output')).toContainText('Oberer Startknopf');
-  await expect(upperRun).toHaveText('▶ Flug starten');
+  await expect(upperRun).toHaveText(level==='4'?'▶ Programm testen & hochladen':'▶ Flug starten');
  }
 });

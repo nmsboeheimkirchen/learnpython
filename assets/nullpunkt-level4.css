@@ -1,0 +1,79 @@
+.nullpunkt-level4 .drone-mission-intro{margin-bottom:12px}
+.nullpunkt-level4 .drone-mission-intro>div{max-width:none}
+.nullpunkt-level4 .drone-mission-intro p:not(.mission-kicker){margin:0;color:#bfd0df;font-size:.98rem;line-height:1.5}
+.nullpunkt-level4 .drone-mission-intro p+p{margin-top:8px}
+.nullpunkt-level4 .pico-progress{margin-bottom:20px}
+.nullpunkt-level4 .drone-mission-main{padding-top:26px}
+.nullpunkt-level4 .skip-link:not(:focus){clip-path:inset(50%);width:1px;height:1px;overflow:hidden}
+.nullpunkt-level4 .drone-mission-intro h1{font-size:clamp(2rem,3.8vw,3.5rem);margin-bottom:8px}
+.nullpunkt-level4 .mission-stage-panel{padding:18px}
+.calibration-camera{position:relative;aspect-ratio:1672/941;isolation:isolate;overflow:hidden;border-radius:14px;border:1px solid #436d73;background:#020608;container-type:inline-size}
+.calibration-frame,.calibration-layer{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none}
+.calibration-layer{opacity:0}
+#calibration-core-darkness{filter:brightness(.055) saturate(.45);mask-image:url(pico-effects-core-mask.svg)}
+#calibration-bar-blackout{filter:brightness(.035) saturate(.2);mask-image:url(pico-effects-bar-mask.svg)}
+.calibration-smoke{transition:opacity 1.8s ease}
+.calibration-smoke img{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;opacity:.88}
+.calibration-camera[data-smoke-active="true"] .calibration-smoke img{animation:calibration-smoke-breathe 5.8s ease-in-out infinite alternate}
+.calibration-camera[data-smoke-active="true"] #calibration-smoke-heavy img{animation-duration:4.6s;animation-delay:-2s}
+.calibration-foreground{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;mask-image:url(pico-effects-foreground-mask.svg)}
+#calibration-core-darkness,#calibration-bar-blackout,.calibration-foreground{mask-size:100% 100%;mask-repeat:no-repeat;mask-mode:alpha}
+.calibration-telemetry{position:absolute;left:11.6%;top:39.6%;width:49%;height:33%;padding:1cqw;display:flex;flex-direction:column;justify-content:space-between;background:#031016c9;border-radius:1cqw;color:#c9ffe8;font:clamp(9px,1.45cqw,18px)/1.3 ui-monospace,Consolas,monospace}
+.calibration-readings{display:grid;grid-template-columns:repeat(2,1fr);gap:.5cqw 2cqw}
+.calibration-readings div{display:flex;align-items:center;justify-content:space-between;gap:4px}
+.calibration-readings span{color:#8eacb1;font-size:.85em}
+.calibration-readings strong{font-size:1.6em;font-variant-numeric:tabular-nums;font-weight:600}
+.calibration-camera[data-wide-values="true"] .calibration-readings strong{font-size:1.05em}
+.calibration-camera[data-wide-values="true"] #calibration-sum{font-size:1.2em}
+.calibration-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid #9bd2c844;padding-top:.6cqw}
+.calibration-checksum{display:flex;align-items:center;gap:1cqw;font-size:1em}
+#calibration-sum{color:#a6f5b3;font-size:1.8em;font-variant-numeric:tabular-nums}
+.calibration-counter{font-size:.75em;color:#9ebcb9}
+.calibration-link{position:absolute;top:3%;right:2%;font:clamp(8px,1cqw,12px) ui-monospace,monospace;padding:6px 8px;border:1px solid #6da4a266;background:#04141de6;color:#c5ffe4;border-radius:5px}
+#calibration-alarm{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0;mix-blend-mode:screen}
+.calibration-camera[data-alarm-active="true"] #calibration-alarm{animation:calibration-alarm-pulse 1.8s ease-in-out infinite alternate}
+#calibration-room-tint,#calibration-room-flare{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 2.2s ease}
+#calibration-room-tint{background:linear-gradient(110deg,#b11d16,#fc2814 75%,#e7421c);mix-blend-mode:color}
+#calibration-room-flare{mix-blend-mode:screen}
+#calibration-room-flare::before{content:"";position:absolute;inset:0;opacity:0;background:radial-gradient(ellipse at 78% 60%,#fff7d9 0%,#ffbe85 20%,#ff4930 60%,#c7281d 100%)}
+.calibration-camera[data-surge-active="true"] #calibration-room-flare::before{animation:calibration-room-flash 1.6s ease-in-out infinite}
+.calibration-camera[data-surge-active="true"] #calibration-alarm{animation:calibration-alarm-flash 1.6s ease-in-out infinite}
+#calibration-noise,#calibration-screen-blackout{position:absolute;left:11.1%;top:39%;width:50.6%;height:33.9%;border-radius:1cqw;opacity:0;pointer-events:none;background:#010408}
+#calibration-noise{image-rendering:auto}
+#calibration-alert{position:absolute;left:11.1%;top:48%;width:50.6%;padding:1cqw;display:flex;flex-direction:column;align-items:center;gap:.8cqw;border-block:1px solid #ffa256;background:#371609f5;color:#fff2d8;text-align:center;font:700 clamp(10px,2cqw,28px)/1.25 ui-monospace,monospace}
+#calibration-alert .calibration-stop-hint{font-size:.5em;font-weight:400}
+#calibration-alert[data-severity="locked"]{background:#3a090bf5;color:#ffc9bc}
+#calibration-alert[data-severity="locked"] .calibration-stop-hint{display:none}
+#calibration-relogin{font-size:clamp(10px,1.1cqw,16px);min-height:44px;padding:6px 10px}
+#calibration-return-note{padding:12px;border:1px solid #79ac9c;border-radius:10px;color:#ceffdd;font-size:.9rem;line-height:1.5}
+#calibration-reauth iframe{display:block;width:100%;min-height:600px;border:0;border-radius:14px}
+.calibration-reauth .drone-mission-workspace,.calibration-reauth .drone-mission-intro,.calibration-reauth .progress-container,.calibration-reauth .presentation-controls{display:none!important}
+#calibration-telemetry,#calibration-noise,#calibration-screen-blackout{transition:none}
+.calibration-camera[data-effect-stage="idle"] .calibration-smoke,.calibration-camera[data-effect-stage="idle"] #calibration-room-tint,.calibration-camera[data-effect-stage="idle"] #calibration-room-flare{transition:none}
+.calibration-note{color:#b7ccd0;font-size:.8rem;line-height:1.5;margin:10px 0}
+.nullpunkt-level4 .CodeMirror{height:330px}
+.nullpunkt-level4 .mission-section-heading h2{font-size:1.25rem}
+.nullpunkt-level4 .calibration-help-card{margin:10px 0;border:1px solid #527d79;border-radius:12px;padding:10px 12px;background:#13232d}
+.calibration-help-card button{width:100%;min-height:44px}
+.calibration-help-card p{font-size:.85rem;line-height:1.6;margin:12px 0 0;color:#c9dbd9;white-space:pre-line}
+.calibration-help-card button:disabled{opacity:.55;cursor:default}
+#calibration-ending{margin-top:15px;padding:18px;border:1px solid #71ad97;border-radius:12px;background:#12252a}
+#calibration-ending p{font-size:.95rem;line-height:1.6;margin:0 0 12px}
+.nullpunkt-level4 [hidden]{display:none!important}
+.calibration-running .drone-mission-workspace{grid-template-columns:1fr}
+.calibration-running .mission-code-panel{display:none}
+.calibration-running .mission-stage-panel{padding:12px}
+.calibration-running .mission-feedback,.calibration-running .calibration-note{display:none}
+.calibration-running .drone-mission-intro{display:none}
+.calibration-stop{display:none}
+.calibration-running .calibration-stop{display:inline-flex}
+.calibration-running .presentation-controls{display:none!important}
+.nullpunkt-level4.presentation-mode .mission-stage-panel>.calibration-camera,.nullpunkt-level4.presentation-mode .mission-stage-panel>#calibration-ending:not([hidden]){display:block}
+.nullpunkt-level4.presentation-mode.calibration-running .mission-section-heading{display:flex}
+@keyframes calibration-alarm-pulse{from{filter:brightness(.2)}to{filter:brightness(1)}}
+@keyframes calibration-smoke-breathe{from{opacity:.66}to{opacity:1}}
+@keyframes calibration-room-flash{0%,40%,100%{opacity:.03}58%,64%{opacity:1}80%{opacity:.08}}
+@keyframes calibration-alarm-flash{0%,40%,100%{filter:brightness(.3)}58%,64%{filter:brightness(3)}80%{filter:brightness(.5)}}
+@media(max-width:760px){.nullpunkt-level4 .mission-stage-panel{padding:10px}.nullpunkt-level4 .mission-section-heading{flex-wrap:wrap}.calibration-footer{font-size:.82em;gap:4px}.calibration-checksum{gap:.7cqw}.calibration-link{padding:3px 5px}.calibration-telemetry{font-size:clamp(8px,1.6cqw,12px)}.nullpunkt-level4 .CodeMirror{height:350px}}
+.calibration-camera[data-reduced-motion="true"] #calibration-alarm{animation:none}
+@media(prefers-reduced-motion:reduce){.calibration-camera[data-alarm-active="true"] #calibration-alarm,.calibration-camera[data-smoke-active="true"] .calibration-smoke img{animation:none}.calibration-camera[data-surge-active="true"] #calibration-room-flare::before{animation:none;opacity:.08}.calibration-smoke{transition:none}}

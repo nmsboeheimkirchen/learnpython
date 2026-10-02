@@ -2,6 +2,7 @@
 .nullpunkt-mission .drone-mission-main{padding-top:26px}
 .nullpunkt-mission .skip-link:not(:focus){clip-path:inset(50%);width:1px;height:1px;overflow:hidden}
 .nullpunkt-mission .drone-mission-intro>div{max-width:1000px}
+.nullpunkt-level1 .drone-mission-intro{margin-bottom:8px}
 .nullpunkt-mission .mission-scene-shade{background:linear-gradient(180deg,#0207110a 50%,#02071155)}
 /* Python remains the movement engine; the displayed marker and trail are SVG. */
 .nullpunkt-mission #pico-mission-turtle{opacity:0;pointer-events:none}

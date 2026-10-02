@@ -1517,7 +1517,7 @@ const teacherSolutionExpectations = new Map([
     ["nullpunkt_level2", /fliege_zu\(-455, -85\)[\s\S]*fund = drohne\.suche_hier\(\)[\s\S]*ausruestung\.append\(fund\)/],
     ["pico_level2a", /status\["TRANSPONDER"\] = "aufgeladen"/],
     ["nullpunkt_level3", /drohne\.goto\(-455, -85\)[\s\S]*fliege_zu\(220, 15\)/],
-    ["pico_level4", /if signal_erfolgreich:[\s\S]*status\["DROHNE"\] = "self-destroy"[\s\S]*status\["TRANSPONDER"\] = "delete"/],
+    ["nullpunkt_level4", /def kalibrieren\(werte\):[\s\S]*werte\[i\] = werte\[i\] \+ 1[\s\S]*werte\[i\] = werte\[i\] - 1/],
     ["pixelmuseum_briefing", /def melde_inventar\(liste\):[\s\S]*drohne\.goto\(-250, 60\)[\s\S]*inventar\.append\(fund\)[\s\S]*drohne\.goto\(-390, 45\)[\s\S]*melde_inventar\(inventar\)/],
     ["pixelmuseum_finale", /def melde_inventar\(liste\):[\s\S]*drohne\.goto\(-390, 45\)[\s\S]*drohne\.goto\(250, -60\)[\s\S]*alarm_hacken\("SERU-7"\)[\s\S]*drohne\.goto\(0, 115\)[\s\S]*melde_inventar\(inventar\)/],
     ["helikopter_flucht_level1", /signal = bordcomputer\.receive\(\)[\s\S]*passwort = signal\.replace\("\?", ""\)[\s\S]*bordcomputer\.pruefe\(passwort\)/],
@@ -2110,10 +2110,9 @@ test("project choice opens PICO and the required Pixelmuseum briefing", () => {
     assert.match(projectChoiceCss, /@media \(forced-colors: active\)/);
 });
 
-test("Nullpunkt levels have their own brief while legacy PICO 2a and 4 retain their runtime", () => {
+test("Nullpunkt levels have their own brief while optional legacy PICO 2a retains its runtime", () => {
     const pages = [
-        "pico_level2a.html",
-        "pico_level4.html"
+        "pico_level2a.html"
     ];
 
     for (const page of pages) {
@@ -2144,10 +2143,11 @@ test("Nullpunkt levels have their own brief while legacy PICO 2a and 4 retain th
     assert.match(level2a, /status\["TRANSPONDER"\] = "aufgeladen"/);
 
     const level4 = readFileSync(new URL("../pico_level4.html", import.meta.url), "utf8");
-    assert.match(level4, /Drohne zerstören und die Daten darauf löschen/);
-    assert.match(level4, /damit sie dem bösen Lord nicht in die Hände fällt/);
-    assert.match(level4, /status\["DROHNE"\] = "self-destroy"/);
-    assert.match(level4, /status\["TRANSPONDER"\] = "delete"/);
+    assert.match(level4, /data-mission-level="pico_level4_memory"/);
+    assert.match(level4, /assets\/nullpunkt-calibration-core\.js/);
+    assert.match(level4, /data-teacher-solution="nullpunkt_level4"/);
+    assert.match(level4, /def kalibrieren\(werte\):/);
+    assert.doesNotMatch(level4, /self-destroy|drohne\.sende\(\)/);
 });
 
 test("the helicopter starts behind a closed gate and keeps matching open and closed artwork", () => {
@@ -2421,7 +2421,7 @@ test("both homepage options keep distinct light moods and one shared logo while 
         assert.doesNotMatch(html, /Ein Auftrag nach dem anderen\./);
         assert.match(html, variant.page === "index-a.html"
             ? /pico-rescue-station\.webp[^>]+loading="lazy"[^>]+decoding="async"[^>]+fetchpriority="low"/
-            : /pico-command-lab-v2\.webp[^>]+loading="lazy"[^>]+decoding="async"[^>]+fetchpriority="low"/);
+            : /pico-command-lab-v3\.webp[^>]+loading="lazy"[^>]+decoding="async"[^>]+fetchpriority="low"/);
         assert.match(html, /pixel-museum\.webp[^>]+loading="lazy"[^>]+decoding="async"[^>]+fetchpriority="low"/);
         assert.match(html, /class="course-home-finale-image"[^>]+helicopter-hangar-closed\.webp[^>]+loading="lazy"[^>]+fetchpriority="low"/);
         assert.ok(

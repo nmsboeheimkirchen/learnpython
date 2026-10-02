@@ -527,3 +527,287 @@ Abschlussprüfung: 219/219 Logiktests und 35/35 Browserprüfungen erfolgreich
 Hinweise, eingesetzte Zahlen, korrekte Restmengen, Testsperre zwischen Anfragen,
 einzelne Haken, genau drei Sekunden vor UNLOCKED, Reset, Altstände und Übergänge.
 Laptop-, iPad- und Handy-Bilder visuell geprüft. Vorschau auf Port 4173 aktiv.
+
+## MAIN-11: Kürzere Anweisung im Terminalteil von Level 3
+
+28.09.2026, lokaler Nachtrag nach a36189e. `pico_level3.html` markiert den Absatz
+„Die Drohne ist aufgeladen … um den Wartungszugang zu öffnen“ als Flugbriefing.
+`assets/nullpunkt-level3.css` blendet ihn nur bei aktiver Terminalkamera aus.
+Überschrift und Terminalanweisung bleiben sichtbar, beim Rückweg zum Flugcode
+erscheint das Flugbriefing wieder. Kein Rätsel-/Speicher-/Backendumbau.
+Die anschließende Kalibrier-Sabotage für Level 4 ist als MAIN-12 umgesetzt.
+
+## MAIN-12: Level 4 – Kalibrierprogramm der Zentrale
+
+Lokal auf `dev-login-save`, Abschlussprüfung 01.10.2026; noch nicht committet,
+gepusht oder veröffentlicht. Ersetzt den bisherigen Funk-/Speicherauftrag durch
+das vom Nutzer gewählte Kalibrierfinale. Codegerüst mit `for`, `if` und `elif`;
+die Lernenden ergänzen zwei Zuweisungen. Ein Hundertstel bedeutet `0.01`.
+
+Vier Werte schwanken vor dem Start leicht nahe ±1. Jeder echte Python-Aufruf
+entfernt positive und negative Werte um 0,01 von null, Nullwerte bleiben erhalten.
+600 Durchläufe führen sichtbar nach außen, bei nahezu konstanter Summe. Mehrere
+Probewerte verhindern eine feste Ergebnisliste; jeder spätere Durchlauf wird erneut
+geprüft. Falsche Änderungen, Fehler, Endlosschleifen, Abbruch und Codeänderungen
+geben keinen Abschluss. Skulpt-Unterbrechungen werden höchstens 8 ms gesammelt,
+danach bleibt kooperatives Yield möglich; der Ausführungszeitbegrenzer bleibt aktiv.
+Damit läuft auch WebKit in wenigen Sekunden statt rund 47 Sekunden.
+
+Die Kamera wird während des Ablaufs groß; in dieser ersten Fassung blenden drei
+Ausfallbilder erst nach beginnender Drift ein, mit rotem Warnlicht und Displayrauschen.
+Die spätere Trennung der Effekte ist als MAIN-15 beschrieben. Kein
+Erfolgstext im Kamerabild. Nach der Sequenz bestätigt der Leveltext die Zerstörung;
+vier Goldmünzen und Weiterweg zum Helikopter. Zentrale nur auf Anfrage nach einem
+Test, jede weitere Anfrage braucht einen weiteren Test. Alte Abschlüsse und
+eigener Code bleiben unter `pico_level4_memory` erhalten, keine Flugcode-Vererbung.
+
+Öffentlich portierbar: `pico_level4.html`, `assets/nullpunkt-level4.js/.css`,
+`assets/nullpunkt-calibration-core.js`, Ergänzung der Lehrerfunktion in
+`assets/teacher-solutions.js`, Erfolgslabel in `assets/runner.js` sowie
+`tests/nullpunkt-calibration-core.test.mjs`, `tests/e2e/nullpunkt-level4.spec.mjs`
+und die angepassten Runner-/Pfad-/Level-1-/Level-3-Prüfungen samt Testimport.
+Keine Änderung an Backend, Speicheradapter, IDs oder Prozentgewichten.
+
+Nachweis: 222/222 Logiktests sowie 15/15 Level-4-Browserchecks (Chromium und WebKit)
+einschließlich echter 600 Schritte, stabiler Summe, Ablauf unter 15 Sekunden,
+Fehlerfällen, Abbruch, Altstand, Helikopterweg und Handyansicht. Tablet-Editor
+und Ausfallfinale visuell geprüft.
+
+## MAIN-13: Brillantere Kommandozentrale mit Goldbarren
+
+01.10.2026, lokaler Bildaustausch auf Wunsch des Nutzers. Neue Vorlage
+`Zwei Goldbarrenreihen vor dem Quantencomputer.png`, mit eingebautem Imagegen
+detailreicher gerendert. Neues `assets/images/finales/pico-command-lab-v3.webp`:
+1672 × 941, verlustfreies WebP, 1.954.566 Bytes. Keine Skalierung oder Beschneidung.
+Flugziele und Bildaufbau visuell erhalten; kein behaupteter Auflösungsgewinn.
+
+Bildreferenzen in `pico_level1/2/3.html`, `index.html`, `index-b.html`,
+`projektwahl.html` und dem Raumlink in `prototypes/pico-drone-camera.html` ersetzt.
+Passende Bildnamen-Erwartungen in `tests/runner.test.mjs` und
+`tests/e2e/nullpunkt-level2.spec.mjs` aktualisiert. Herkunft und vollständiger Prompt
+in `PICO-CAMERA-PROMPTS.md`; aktueller Verweis in `PICO-ART-PROMPTS.md`.
+Frühere Grafiken und Originaldatei bleiben erhalten. Keine Änderungen am
+Pixelmuseum, an Terminal-/Ausfallbildern oder an Backend/Speicherung.
+
+## MAIN-14: Terminal-Nahaufnahme passend zur neuen Kommandozentrale
+
+01.10.2026, lokaler Grafiknachtrag. `pico-command-terminal-v2.webp` übernimmt
+blaues Licht, schwarzes Sofa und Finanzanzeigen aus der Raumübersicht V3.
+Drei Post-its am unteren Terminalrahmen nennen Bitcoin mit fiktivem Hash,
+US National Reserve mit erfundenen Kontonummern sowie Shanghai Digital Vault /
+上海数字金库. Die Spielfläche bleibt frei. Sämtliche Nummern dienen der Geschichte.
+
+Drei passend aus dieser Nahaufnahme erzeugte Ausfallstufen erhalten die Notizen,
+Raumanordnung und Bildausschnitt: `pico-command-failure-v2-1.webp`,
+`pico-command-failure-v2-2.webp`, `pico-command-failure-v2-3.webp`.
+Alle vier Dateien haben 1672 × 941 Pixel und sind verlustfreie WebP-Exporte ohne
+Skalierung/Beschnitt. Prompts, Herkunft und Dateigrößen stehen in
+`PICO-TERMINAL-V2-PROMPTS.md`; Originale und vorherige Bildversionen bleiben erhalten.
+
+Öffentlich portierbar: die vier Grafiken, Verweise in `pico_level3.html`,
+`pico_level4.html`, `prototypes/pico-drone-camera.html`,
+`prototypes/pico-terminal-fit.html`, sowie die Bilddokumentation.
+Der anschließende kleine Overlay-Nachtrag verkürzt die Registerfläche in
+`assets/nullpunkt-level3.css` von 34,9 auf 33,9 % Höhe; CSS-Cacheversion in
+`pico_level3.html` ist `20261001-1`. Damit verdeckt ihr Rahmen die Zettel nicht.
+
+Nachweis vor dem Overlay-Nachtrag: 4/4 gezielte Terminal-/Kalibrierprüfungen in
+Chromium und WebKit erfolgreich; neue Bilder und Bildschirmregistrierung visuell
+geprüft. Keine Änderung an Rätsel, Lernstand oder Backend. Noch kein Commit/Release.
+
+## MAIN-15: Durchgehende Bedrohung und getrennte Ausfallsequenz
+
+02.10.2026, **lokal umgesetzt und geprüft**. Level 1 erzählt den langen,
+gefährlichen Anflug der Drohne durch Lüftungs- UND Aufzugsschacht. Das
+Energieproblem bleibt eine Entdeckung beim Spielen. Level 2 beschreibt
+ausführlicher, wie der Lord geheime Schlüssel berechnen, Daten entschlüsseln,
+Überweisungen manipulieren und Kryptowährungen stehlen will. Level 3 greift die
+Bedrohung knapp auf, auch im Terminalteil; Level 4 nennt sie erneut im Auftrag.
+
+Für das Kalibrierfinale ersetzt eine getrennte Steuerung von Rauch, rotem
+Rechnerlicht und Displaystörung die bisherige gemeinsame Vollbildüberblendung.
+Verbindliche Reihenfolge: sichtbare Wertedrift, leichter Rauch, pulsierendes rotes
+Licht im Quantenrechner, Töne, genau drei Wechsel zwischen Zahlen und Störungsbild,
+Megarauch, stärkeres Displayflackern, schwarzes Display, zuletzt erlöschende
+Barlichter. Die rote Notbeleuchtung bleibt erhalten. Das Störungsbild unterbricht
+die Zahlenanzeige; es ist kein dauerhaft über die Zahlen gelegtes Rauschen.
+
+Betroffene öffentliche Dateien: `pico_level1/2/3/4.html`,
+`assets/nullpunkt-level4.js/.css`, die neuen Rauchgrafiken
+`assets/images/finales/pico-smoke-light-v1.webp` und `pico-smoke-heavy-v1.webp`,
+dazu `assets/pico-effects-core-mask.svg`, `assets/pico-effects-bar-mask.svg`,
+`assets/pico-effects-foreground-mask.svg`, passende Ablaufprüfungen und Dokumentation.
+Rauchgrafiken haben echte Transparenz: leicht 1672 × 941, stark 1671 × 941;
+die minimale Breitendifferenz gleicht das Browser-Overlay aus, kein Dateibeschnitt.
+Prompts und Alpha-Nachweis stehen in `PICO-SMOKE-LAYERS-PROMPTS.md`.
+Der getrennte Liveeffekt ist nur in Level 4 aktiv; die eigenständige
+`prototypes/pico-drone-camera.html` bleibt die ältere Vorschau mit vier Vollbildern
+(nun V2), kein Nachweis für den neuen Missionsablauf.
+Abbruch muss auch Ton und spätere Effekte beenden. Kein Abschluss vor Ende der
+Sequenz, keine neuen Speicherfelder und keine Backendänderung.
+
+Teststatus 02.10.: **21/21 Browserchecks erfolgreich** – 19 Prüfungen des neuen
+Level-4-Ablaufs plus 2 Level-3-Übergangs-/Layoutprüfungen in Chromium und WebKit.
+Exakt drei erste Störimpulse, weitere Schlussstörungen, Audio-/Effektabbruch,
+reduzierte Bewegung und Audioausfall, Altstände, Handyansicht sowie Helikopterweg
+geprüft. Der Kontrolltest zählt echte Displaywechsel statt des gleichnamigen
+Phasenbeginns. Masken korrigieren sichtbare harte Abdunklungsgrenzen; Endbild und
+Terminal visuell geprüft. Der vorherige Stand umfasst 222/222 Logiktests,
+32/32 übrige Missionschecks und vier Grafikchecks (alte Level-4-Suite ersetzt).
+Kein Commit, Push oder Release dieses Nachtrags.
+
+## MAIN-16: Lockscreen und fortlaufende Kalibrierung im Ausfallfinale
+
+02.10.2026, lokal. Level 3 erklärt knapp das Zugangsrätsel des Lords. Ein
+Schlosssymbol mit LOCKED sitzt rechts oben im Terminal, grüne Haken direkt nach
+den Gleichungen. Nach der bisherigen Dreisekundenpause folgt UNLOCKED.
+
+Level 4 führt die echte Schülerfunktion auch nach Durchlauf 600 während der
+Displaystörungen weiter aus. Jede sichtbare Zahlenphase zeigt fortgeschrittene
+Werte; die Kontrollsumme bleibt nahezu gleich. Auch diese späteren Aufrufe werden
+validiert. Dauerhaftes Schwarzbild beendet die Berechnung, das Sequenzende erst
+danach erlaubt den Abschluss. Die große Anzeige heißt ausdrücklich Kontrollsumme.
+
+Rauch blendet weich ein, seine eigene Deckkraft pulsiert langsam. Drei Warnbalken
+im Rechner erzeugen ab Durchlauf 480 gemeinsame helle Raumblitze (Periode 1,6 s).
+Die Balken liegen hinter dem Rauch, eine getrennte rote Raumtönung wächst mit
+Rauch und Ausfall. Zusätzlich zu den ersten leisen Tönen folgt erst nach der
+ersten Displaystörung ein stärkerer Alarm im 800-ms-Takt. Ende, Reset, Fehler und
+Navigation stoppen Audio und ausstehende Arbeit. Reduzierte Bewegung verzichtet
+auf Lichtblitze und Rauchpulsieren und behält langsame Displaywechsel bei.
+
+Öffentlich portierbar: `pico_level3.html`, `assets/nullpunkt-level3.css`,
+`pico_level4.html`, `assets/nullpunkt-level4.js/.css`, die beiden zugehörigen
+Browser-Testdateien und Dokumentationsnachträge. Keine neuen Grafikdateien,
+Level-IDs, Speicherfelder oder Backendänderungen. Weiterhin ausschließlich lokal.
+
+Nachweis: 30/30 Browserchecks in Chromium/WebKit (9 Level 3, 21 Level 4),
+inklusive Hakenposition, Lockscreen, tatsächlich fortgesetzter Python-Ausführung,
+spätem Fehlverhalten, Alarmabbruch, stabiler Summe, Altständen und Handyansicht.
+Nach dem letzten Schichtungsnachtrag weitere 2/2 Bild-/Ablaufchecks erfolgreich;
+Raumblitz, große Kontrollsumme und Endzustand visuell geprüft. Artefakte:
+`.cache/nullpunkt-dramaturgy-20261002` und
+`.cache/nullpunkt-dramaturgy-visual-20261002`. Kein Commit, Push oder Release.
+
+## MAIN-17: Sichtbare Fehlversuche, Terminalalarm und erneuter Zugang
+
+02.10.2026, lokal. Alle gewöhnlichen Warnimpulse verwenden denselben tiefen
+180-Hz-Ton. Der kurze helle Fehlerpiep (1000 Hz) und der lange Sperralarm
+(150 Hz, 1,4 Sekunden) unterscheiden die beiden neuen Sicherheitsstufen.
+
+Ausführbarer Code zeigt seine tatsächliche Wirkung vor der Auswertung, auch
+feste Zuweisungen wie 0.01 oder 100, kleine Dezimaländerungen oder große
+symmetrische Änderungen bei konstanter Summe. Keine vorzeitige Ablehnung
+unsichtbarer Ergebnisse. Fehlende/ungültige Rückgaben zeigen die noch lesbaren
+Kanäle; bei fehlender return-Zeile auch tatsächlich veränderte Listeneinträge.
+Weitere Vorzeichen-/Nullproben bleiben erhalten und zeigen Fehler ebenfalls.
+
+Nach ca. zwei Sekunden meldet das Terminal auffällige Änderungen als
+„Fehler erkannt“. Fünf Sekunden später ohne Stopp: „Manipulation erkannt“,
+langer Alarm, „Zugriff verweigert“. Nach zwei rechtzeitig gestoppten Warnungen
+sperrt bereits der dritte Fehler direkt. Das Stoppen erhält Code und Werte.
+Erst das erneut gelöste Level-3-Quantenrätsel öffnet den Zugang wieder; danach
+stehen derselbe Code und die Analyse des ersten abweichenden Durchlaufs bereit.
+Die Zentrale analysiert unveränderte Werte ausdrücklich als unverändert und
+setzt bei Änderungen konkrete Vorher-/Nachherwerte und Kontrollsummen ein.
+Syntax-/Laufzeitfehler lösen keinen Sicherheitszähler aus.
+
+Der eingebettete Rätselmodus verwendet dieselbe Level-3-Seite ohne Flug,
+Kontobootstrap, Codewiederherstellung oder Fortschrittsgutschrift. Die äußere
+Level-4-Seite behält ihren vorhandenen Adapter und den Code im Editor.
+Sperre/Zähler/Analyse bleiben seitenlokal; kein zusätzliches localStorage und
+kein Backendumbau. Wiederanmeldung wird nur aus dem eigenen Frame nach dessen
+tatsächlicher Lösung akzeptiert. Beim öffentlichen Port funktioniert der
+Modus auch ohne vorhandenes AgentAccountConfig-Objekt.
+
+Öffentlicher Umfang: `pico_level3/4.html`, `assets/nullpunkt-level3.js/.css`,
+`assets/nullpunkt-level4.js/.css`, `assets/nullpunkt-calibration-core.js`, neu
+`assets/nullpunkt-terminal-mode.js`, optionale Lauf-/Reset-Sperren und Codeerhalt
+in `assets/drone-mission.js`; zugehörige Logik- und Browsertests einschließlich
+`tests/e2e/nullpunkt-security.spec.mjs`. Sonstige Missionen behalten ihr bisheriges
+Stopp-/Resetverhalten. Ein kleiner mitgeprüfter Layoutnachtrag in
+`pico_level1.html` / `assets/nullpunkt-drone.css` kürzt den Abstand unter der
+Einleitung um 20 px, damit der Editor trotz längerem Storytext in die bisher
+geprüfte Laptopansicht passt. Keine neuen Grafiken, Level-IDs oder Fortschrittsgewichte.
+
+Nachweis: 223/223 Logiktests, 40/40 Browserchecks für Level 3/4 und die erste
+Fassung der Sicherheitsfolge grün. Nach visuellen Korrekturen und Kontomodus-
+Ergänzung zunächst 32/34 weitere Checks; Layoutfehler aus dem älteren Level-1-
+Storyzuwachs behoben und Wartezeit der erst nach 600 Durchläufen beginnenden
+Nullwert-Probe im WebKit-Test angepasst. Anschließend 7/7 gezielte Nachprüfungen
+grün, einschließlich normaler Erfolgswege. Zusammen 64 unterschiedliche Fälle.
+Kein API-Zugriff im eingebetteten Rätsel bei aktivierter Kontokonfiguration,
+keine zusätzliche Gutschrift, vollständiger Codeerhalt nach erneuter Anmeldung.
+Warnbanner, Analyse und Wiederanmeldung auf Desktop/Handy visuell kontrolliert.
+Artefakte unter `.cache/nullpunkt-security-20261002`,
+`.cache/nullpunkt-security-final-20261002` und
+`.cache/nullpunkt-security-recheck-20261002`. Kein Commit, Push oder Release.
+
+## MAIN-18: Vollständiger Terminalausschnitt, Sperre bei Neuladen, Finale ab ±18
+
+02.10.2026, lokal. Der eingebettete Terminalteil meldet seine tatsächliche Höhe
+auch beim Öffnen über file://. Nachrichten sind an die aktuelle Frame-Instanz,
+Origin und ein frisches Zufallstoken gebunden; kein direkter Zugriff auf den
+fremden Frame-Inhalt nötig. Der Präsentationsmodus endet vor der Wiederanmeldung,
+damit das Rätsel vollständig über die äußere Seite scrollbar bleibt.
+
+Sperre und Fehlerzähler überstehen Neuladen im selben Tab. Der gesperrte
+Codeversuch samt Messwerten und Analyse wird nach erneuter Rätsellösung wieder
+angezeigt. Temporärer sessionStorage-Schlüssel `nullpunkt-security-v1:` mit
+Lernprofil und Projektpfad; initialisiert erst nach Konto-/Editorbereitschaft.
+Keine neuen localStorage-Zugriffe, Kontolernfelder oder Backendänderungen.
+Erneutes Lösen oder erfolgreicher Abschluss löscht den Sicherheitscheckpoint.
+Dies ersetzt die Beschränkung auf den Arbeitsspeicher aus MAIN-17.
+
+Die letzte Stufe mit dichtem Rauch, starkem Flackern und endgültigem Ausfall
+beginnt erst, wenn der Betrag eines Kalibrierwerts 18 erreicht. Frühere Stufen
+bleiben bestehen; das echte Python-Programm läuft bis dahin weiter und wird
+auch auf diesem verlängerten Weg weiter geprüft. Keine reine Zeitschwelle.
+
+Öffentlich portierbar: `pico_level3/4.html`, `assets/nullpunkt-level3.js`,
+`assets/nullpunkt-level4.js`, `assets/nullpunkt-calibration-core.js`, optionaler
+Bereitschaftshook in `assets/drone-mission.js` und zugehörige Logik-/Browsertests.
+224/224 Logiktests grün. 36/37 erste Browserprüfungen grün; abweichende file://-
+Origin korrigiert und gezielter Dateinachtest 1/1 erfolgreich. Weitere 2/2
+Profiltrennungsprüfungen mit simulierten Lernkontexten grün, kein Kontoserverzugriff.
+Damit 39 Browserfälle erfolgreich geprüft, kompletter Dateiterminal und Finale
+auch visuell kontrolliert. Nachweise: `.cache/nullpunkt-main18-20261002`,
+`.cache/nullpunkt-main18-file-recheck`, `.cache/nullpunkt-main18-profile`.
+Kein Commit, Push oder Release.
+
+## MAIN-19: Handschriftliche Haftnotizen und Prozentkalibrierung
+
+02.10.2026, lokal. Neues Terminalbild zuerst mit eingebautem Imagegen erstellt
+und gezeigt, danach als verlustfreies WebP in Level 3/4 eingebaut. Drei hastig
+mit Kugelschreiber geschriebene Notizen, ₿ statt Bitcoin und keine Nullenkette.
+Maße 1672 × 941, Bildgeometrie und Lichtstimmung beibehalten. Getrennte Rauch-,
+Licht-, Schwarzbild- und Störungsebenen nutzen weiter dieselben Masken/Abläufe.
+
+Neuer Auftrag: Kalibrierprogramm des Quantenkerns, Sollwerte links +100 %, rechts
+−100 %, Schaden bei mehr als 10 % Abweichung, Überwachung der Kontrollsumme 0 %.
+Python arbeitet direkt in Prozentwerten. Erlaubter Schritt jetzt 1 Prozentpunkt,
+Musterlösung und Prüfwerte entsprechend ×100. Kontrollsummentoleranz jetzt 0,5
+statt 0,005; der unberührte Ausgangszustand summiert sich exakt zu null.
+Finale auf ausdrücklichen Nutzerentscheid bei **±1800 %**, nicht bei ±118 %.
+Keine Änderung an Dauer/Abfolge von Licht und Ton. Anzeige und Zentrale nennen
+Prozentwerte; gespeicherter eigener Code wird nicht automatisch umgeschrieben.
+
+Bestehende tablokale Sperrsnapshots werden einmalig auf Prozent umgerechnet,
+Sperre und Fehlerzähler bleiben erhalten. Neuer Einheitenmarker im vorhandenen
+sessionStorage-Checkpoint, keine neuen Fortschritts-/Kontofelder oder APIs.
+
+Öffentlicher Umfang: `pico_level3/4.html`,
+`assets/images/finales/pico-command-terminal-v3.webp`,
+`assets/nullpunkt-calibration-core.js`, `assets/nullpunkt-level4.js/.css`,
+`assets/teacher-solutions.js`, zugehörige Logik-/Browsertests und Bilddokumentation
+`PICO-TERMINAL-V3-PROMPT.md` / `PICO-CAMERA-PROMPTS.md`.
+224/224 Logiktests und 50/50 Browserprüfungen grün unter
+`.cache/nullpunkt-main19-20261002`. Weiter ausschließlich lokal.
+
+Nach Bildkontrolle: volle Breite und einheitliche Schrift für den längeren
+Auftragstext, kompaktere Abstände, wiederholten Auftrag über dem Editor entfernt.
+Ein zusätzlicher Laptopcheck verlangt den Editorbeginn oberhalb y=640 bei 1366×768.
+4/4 gezielte Nachprüfungen grün unter `.cache/nullpunkt-main19-layout`;
+Laptop-/Handyansicht, größere Prozentwerte und neues Bild visuell kontrolliert.
+Insgesamt 51 unterschiedliche Browserfälle geprüft, drei davon im Nachlauf erneut.
+Keine offenen Tests, kein Commit/Push/Release.

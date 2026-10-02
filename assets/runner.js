@@ -1045,7 +1045,7 @@ const LEVEL_OUTCOMES = {
     },
     pico_level4_memory: {
         unlocks: ["link-helicopter-escape", "link-helicopter-level1"],
-        successMessage: "PICO hat gesendet und danach sein Memory gelöscht."
+        successMessage: "PICOs Kalibrierung ist ausgefallen. Der Quantenangriff ist gestoppt."
     },
     pixelmuseum_briefing: {
         unlocks: ["link-museum-finale"],

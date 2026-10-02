@@ -82,6 +82,7 @@
     let hasRun = false;
     let lastRunCode = null;
     let lastErrorMessage = null;
+    let stoppedCode = null;
 
     function emitMissionEvent(name, detail) {
         const EventConstructor = window.CustomEvent;
@@ -385,7 +386,7 @@
     }
 
     async function runProgram() {
-        if (running) return;
+        if (running || config.canRun?.() === false) return;
         revealLiveCockpit();
         const generation = ++runGeneration;
         const code = editor.getValue();
@@ -432,14 +433,17 @@
                 setRunning(false);
                 if (restoreStarter) {
                     cancelRequested = false;
-                    resetMission();
+                    const code = stoppedCode;
+                    stoppedCode = null;
+                    resetMission(code === null ? {} : { code, reason: "stop" });
                 }
             }
         }
     }
 
-    function resetMission() {
+    function resetMission(options = {}) {
         if (running) {
+            stoppedCode = config.preserveCodeOnStop ? editor.getValue() : null;
             cancelRequested = true;
             config.onRunCancel?.();
             Sk.execStart = new Date(0);
@@ -447,17 +451,18 @@
             setStatus("Mission wird gestoppt", "warning");
             return;
         }
+        if (config.canReset?.() === false) return;
         runGeneration += 1;
         hasRun = false;
         lastRunCode = null;
         lastErrorMessage = null;
-        editor.setValue(resetCode);
+        editor.setValue(typeof options.code === "string" ? options.code : resetCode);
         editor.clearHistory?.();
         outputText = "";
         consoleOutput.textContent = config.resetOutput || "Bereit für deine Drohnenbefehle.";
         consoleOutput.classList.remove("is-error");
         document.body.classList.remove("mission-passed");
-        config.resetHud?.({ reason: "manual" });
+        config.resetHud?.({ reason: options.reason || "manual" });
         clearTurtle();
         renderChecks(initialResult());
         setStatus(config.readyLabel || "Bereit", "ready");
@@ -531,5 +536,7 @@
         }
     });
 
+    // Mission-local transient state may depend on the initialized profile/editor.
+    config.onReady?.();
     if (autoRunTest) window.setTimeout(runProgram, 60);
 })();

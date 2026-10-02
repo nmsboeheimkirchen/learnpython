@@ -6,16 +6,20 @@
 .nullpunkt-level3 .terminal-camera{position:relative;border-radius:16px;overflow:hidden;background:#061016;border:1px solid #496365}
 .nullpunkt-level3 .terminal-camera>img{display:block;width:100%;height:auto}
 .nullpunkt-level3 .terminal-camera-hud{position:absolute;top:14px;right:16px;color:#bcffdc;background:#04141cda;border:1px solid #a0ebcf66;border-radius:7px;padding:8px 12px;font:11px ui-monospace,Consolas,monospace;letter-spacing:.07em}
-.nullpunkt-level3 .register-screen{position:absolute;left:11.1%;top:39%;width:50.3%;height:34.9%;padding:clamp(8px,1.1vw,18px);display:flex;flex-direction:column;justify-content:space-between;color:#ceffe8;background:linear-gradient(125deg,#031014dd,#0618249c);border-radius:12px;font:clamp(10px,1.02vw,16px)/1.45 ui-monospace,Consolas,monospace}
-.nullpunkt-level3 .register-heading{display:flex;gap:8px;justify-content:space-between;align-items:center;border-bottom:1px solid #70c8b14d;padding-bottom:5px}
+.nullpunkt-level3 .register-screen{position:absolute;left:11.1%;top:39%;width:50.3%;height:33.9%;padding:clamp(8px,1.1vw,18px);display:flex;flex-direction:column;justify-content:space-between;color:#ceffe8;background:linear-gradient(125deg,#031014dd,#0618249c);border-radius:12px;font:clamp(10px,1.02vw,16px)/1.45 ui-monospace,Consolas,monospace}
+.nullpunkt-level3 .register-heading{position:relative;display:flex;gap:8px;justify-content:space-between;align-items:center;border-bottom:1px solid #70c8b14d;padding:0 78px 5px 0}
 .nullpunkt-level3 .register-heading h2{font:inherit;font-weight:850;letter-spacing:.035em;margin:0}
 .nullpunkt-level3 .register-heading span{font-size:.88em;white-space:nowrap}
+.nullpunkt-level3 .register-lock{position:absolute;right:0;top:0;display:flex;align-items:center;gap:5px;color:#f2cd83}
+.nullpunkt-level3 .register-lock svg{width:1.2em;height:1.2em;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linejoin:round}
+.nullpunkt-level3 .register-input h3{display:flex;justify-content:space-between;gap:5px;flex-wrap:wrap}
+.nullpunkt-level3 .register-legend{letter-spacing:0;white-space:nowrap;color:#b7dcd2}
 .nullpunkt-level3 .register-columns{display:grid;grid-template-columns:1.2fr 1fr;gap:14px;align-items:center}
 .nullpunkt-level3 .register-columns h3{font:inherit;letter-spacing:.12em;font-size:.78em;color:#80b9b4;margin:0 0 6px}
 .nullpunkt-level3 #register-rules{list-style:none;padding:0;margin:0;line-height:1.8;white-space:nowrap}
 .nullpunkt-level3 #register-rules li{display:flex;align-items:center;gap:7px}
 .nullpunkt-level3 #register-rules .register-row-number{color:#6d939b;font-size:.8em}
-.nullpunkt-level3 #register-rules .register-expression{flex:1}
+.nullpunkt-level3 #register-rules .register-expression{flex:0 1 auto}
 .nullpunkt-level3 #register-rules .register-tick{color:#8dffb3;font-weight:900;font-size:1.2em;line-height:1;text-shadow:0 0 8px #4cff8640}
 .nullpunkt-level3 .register-tick[hidden],.nullpunkt-level3 #register-puzzle[hidden],.nullpunkt-level3 #register-unlocked[hidden]{display:none}
 .nullpunkt-level3 #register-puzzle{display:flex;flex-direction:column;justify-content:space-between;height:100%;gap:6px}
@@ -42,5 +46,11 @@
 .nullpunkt-level3 .register-analysis code{font-size:1em;color:#e4fff2}
 .nullpunkt-level3 .register-analysis strong{color:#8dffb3;white-space:nowrap}
 .nullpunkt-level3.nullpunkt-terminal-active .presentation-controls{display:none!important}
+.nullpunkt-level3.nullpunkt-terminal-active .flight-intro-copy{display:none}
+.nullpunkt-reauth #navigation-root,.nullpunkt-reauth #learning-nav-dock,.nullpunkt-reauth #mySidebar,.nullpunkt-reauth .progress-container,.nullpunkt-reauth .mission-kicker,.nullpunkt-reauth #back-to-flight,.nullpunkt-reauth #next-level-btn,.nullpunkt-reauth .presentation-controls,.nullpunkt-reauth .skip-link{display:none!important}
+.nullpunkt-reauth #main-content.drone-mission-main{padding:12px;margin:0;max-width:none;width:100%;min-height:0}
+.nullpunkt-reauth .account-fullscreen{display:none!important}
+.nullpunkt-reauth .drone-mission-intro{margin-bottom:10px}
+.nullpunkt-reauth .drone-mission-intro h1{font-size:clamp(1.5rem,3vw,2.5rem)}
 @media(max-width:1000px){.nullpunkt-level3 .terminal-intro{flex-direction:column;align-items:flex-start;gap:10px}.nullpunkt-level3 .register-screen{position:relative;left:auto;top:auto;width:100%;height:auto;padding:16px;gap:14px;font-size:13px}.nullpunkt-level3 .register-columns{gap:18px}.nullpunkt-level3 #register-check{min-height:44px}.nullpunkt-level3 .terminal-camera-hud{top:8px;right:8px;font-size:9px}}
 @media(max-width:480px){.nullpunkt-level3 .register-heading{flex-direction:column;align-items:flex-start}.nullpunkt-level3 .register-columns{grid-template-columns:1fr}.nullpunkt-level3 .register-screen{font-size:14px}.nullpunkt-level3 .spin-switches button{min-height:48px}}

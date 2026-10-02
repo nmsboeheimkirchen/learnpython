@@ -122,67 +122,7 @@ test("optional level 2a reads an executed TRANSPONDER update and can be skipped"
     expect(pageErrors).toEqual([]);
 });
 
-test("legacy level 4 destroys the drone only after its signal", async ({ page }) => {
-    const pageErrors = capturePageErrors(page);
-    await openLevel(page, "/pico_level4.html");
-    await page.evaluate(code => localStorage.setItem("completedLevelCode_v1", JSON.stringify({pico_level3:code})),fullStatusCode);
-    await page.reload();
-    await expect.poll(() => page.evaluate(() => Boolean(window.DroneMissionRuntime))).toBe(true);
-    expect(await page.evaluate(() => window.DroneMissionRuntime.editor.getValue())).toContain(
-        "signal_erfolgreich = drohne.sende()"
-    );
-
-    const inheritedWithoutDeletion = await page.evaluate(() => window.DroneMissionRuntime.run());
-    expect(inheritedWithoutDeletion.passed).toBe(false);
-    await expect(page.locator("#success-overlay")).toBeHidden();
-
-    const wrongOrder = await runCode(page, deleteBeforeSendCode);
-    expect(wrongOrder.passed).toBe(false);
-    expect(wrongOrder.checks.filter(check => check.label.includes("danach") && !check.passed)).toHaveLength(2);
-    await expect(page.locator("#pico-result-message")).not.toHaveText("DELETING");
-    await expect(page.locator("body")).not.toHaveClass(/pico-deleting/);
-    await expect(page.locator("#success-overlay")).toBeHidden();
-    await expect(page.locator("#next-level-btn")).toBeHidden();
-
-    await page.setViewportSize({ width: 1024, height: 600 });
-    await armSuccessTiming(page);
-    const finale = await runTeacherSolution(page, "pico_level4");
-    expect(finale.passed).toBe(true);
-    expect(await page.evaluate(() => window.__lastTeacherRun)).toMatchObject({
-        message: "DELETING",
-        popupVisible: false
-    });
-    expect(await page.evaluate(() => window.DroneMissionRuntime.getState().memoryDeletedAfterSignal)).toBe(true);
-    await expect(page.locator("#pico-result-message")).toHaveText("DELETING");
-    await expect(page.locator("body")).toHaveClass(/pico-deleting/);
-    await expect(page.locator("#pico-result-message")).toHaveCSS("color", "rgb(255, 98, 92)");
-    await expect(page.locator("#pico-result-message")).toHaveCSS("animation-name", "pico-deleting-blink");
-    await expect(page.locator("#checks-list .is-passed")).toHaveCount(5);
-    await expectReward(page, 7, "helikopter_flucht.html");
-    expect(await page.evaluate(() => (
-        window.__successTriggeredAt - window.__lastTeacherRun.resolvedAt
-    ))).toBeGreaterThanOrEqual(3_900);
-    await expect(page.locator("#success-overlay h1")).toHaveText("DROHNE ZERSTÖRT");
-    const rewardPopup = await page.locator("#success-overlay .success-badge").evaluate(element => {
-        const rect = element.getBoundingClientRect();
-        return {
-            top: rect.top,
-            bottom: rect.bottom,
-            viewportHeight: window.innerHeight,
-            clientHeight: element.clientHeight,
-            scrollHeight: element.scrollHeight
-        };
-    });
-    expect(rewardPopup.top).toBeGreaterThanOrEqual(0);
-    expect(rewardPopup.bottom).toBeLessThanOrEqual(rewardPopup.viewportHeight);
-    expect(rewardPopup.clientHeight).toBeLessThanOrEqual(rewardPopup.viewportHeight - 40);
-    expect(rewardPopup.scrollHeight).toBeGreaterThan(0);
-
-    await page.locator("#success-overlay .success-btn").click();
-    await expect(page).toHaveURL(/\/helikopter_flucht\.html$/);
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Der Lord kommt zurück.");
-    expect(pageErrors).toEqual([]);
-});
+// Level 4 calibration and the helicopter transition are covered by nullpunkt-level4.spec.mjs.
 
 test("starting PICO code brings the live cockpit back into view", async ({ page }) => {
     await page.setViewportSize({ width: 1180, height: 720 });

@@ -27,7 +27,7 @@ test('@ipad Nullpunkt level 2 charges visibly from a real find, saves and contin
  await expect(page.locator('.nullpunkt-code-help li')).toHaveCount(2);
  await expect(page.locator('.nullpunkt-code-help')).not.toContainText('append');
  await page.locator('.nullpunkt-code-help summary').click();
- await expect(page.locator('.mission-scene')).toHaveAttribute('src',/pico-command-lab-v2\.webp$/);
+ await expect(page.locator('.mission-scene')).toHaveAttribute('src',/pico-command-lab-v3\.webp$/);
  expect(await run(page,starter)).toMatchObject({passed:false});
  await page.screenshot({path:testInfo.outputPath('nullpunkt-level2-start.png'),fullPage:true});
  const searchCode=starter+route+investigate;

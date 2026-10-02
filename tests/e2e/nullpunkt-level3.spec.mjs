@@ -24,6 +24,8 @@ test('@ipad Nullpunkt flies to PICO, changes camera, checks Q-04 and unlocks lev
  await expect(page.locator('#terminal-view')).toBeVisible();
  await expect(page.locator('#flight-workspace')).toBeHidden();
  await expect(page.locator('#register-title')).toHaveText('QUANTENREGISTER Q-04');
+ await expect(page.locator('.register-lock')).toBeVisible();await expect(page.locator('.register-lock')).toHaveText('LOCKED');
+ await expect(page.locator('#terminal-view')).toContainText('Der Lord hat den Rechner mit einem Zugangsrätsel gesichert.');
  await expect(page.locator('#register-rules li')).toHaveCount(4);
  await expect(page.locator('#register-help')).toBeVisible();
  await expect(page.locator('#register-help-btn')).toBeDisabled();
@@ -72,6 +74,7 @@ test('@ipad Nullpunkt flies to PICO, changes camera, checks Q-04 and unlocks lev
  await page.screenshot({path:testInfo.outputPath('nullpunkt-register.png'),fullPage:true});
  await solve(page);await page.locator('#register-check').click();
  await expect(page.locator('#register-unlocked')).toBeVisible();
+ await expect(page.locator('.register-lock')).toBeHidden();
  await expect(page.locator('#success-overlay')).toBeHidden();
  await page.screenshot({path:testInfo.outputPath('nullpunkt-unlocked.png'),fullPage:true});
  await page.locator('#register-continue').click();
@@ -80,7 +83,7 @@ test('@ipad Nullpunkt flies to PICO, changes camera, checks Q-04 and unlocks lev
  await page.getByRole('button',{name:'Zurück zum Terminal',exact:true}).click();
  await expect(page.locator('#unlocked-title')).toHaveText('UNLOCKED');
  await page.locator('#next-level-btn').click();await expect.poll(()=>page.evaluate(()=>Boolean(window.DroneMissionRuntime))).toBe(true);
- const next=await page.evaluate(()=>window.DroneMissionRuntime.editor.getValue());expect(next).toContain('drohne.sende()');expect(next).not.toContain('# Operation Nullpunkt');
+ const next=await page.evaluate(()=>window.DroneMissionRuntime.editor.getValue());expect(next).toContain('def kalibrieren(werte):');expect(next).not.toContain('drohne.sende()');
  expect(errors).toEqual([]);
 });
 test('@ipad Nullpunkt register resets with a new flight and cannot complete changed or cancelled code',async({page})=>{
@@ -121,6 +124,8 @@ test('@ipad Nullpunkt keeps four green ticks for exactly three seconds and cance
  await page.clock.install();await page.clock.pauseAt(new Date(await page.evaluate(()=>Date.now()+1000)));
  await page.locator('#register-check').click();
  await expect(page.locator('.register-tick:visible')).toHaveCount(4);
+ const gaps=await page.locator('#register-rules li').evaluateAll(rows=>rows.map(row=>row.querySelector('.register-tick').getBoundingClientRect().left-row.querySelector('.register-expression').getBoundingClientRect().right));
+ for(const gap of gaps){expect(gap).toBeGreaterThanOrEqual(0);expect(gap).toBeLessThanOrEqual(8);}
  await expect(page.locator('.register-tick').first()).toHaveCSS('color','rgb(141, 255, 179)');
  await expect(page.locator('#register-check')).toBeDisabled();await expect(page.locator('#back-to-flight')).toBeDisabled();
  await expect(page.locator('#next-level-btn')).toBeHidden();await expect(page.locator('#register-unlocked')).toBeHidden();

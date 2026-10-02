@@ -3,7 +3,20 @@
 Erzeugt am 26.09.2026 mit dem eingebauten Imagegen-Werkzeug.
 Bildphase: zwei Grundrenderings, nach Nutzerfeedback bis V4 überarbeitet.
 Dieser Verlauf dokumentiert die früheren Bergpanorama-Entwürfe bis V4.
-Aktuell seit 27.09.: vom Nutzer gelieferte Innenansicht der Kommandozentrale und drei Ausfallstufen, siehe [PICO-CAMERA-PROMPTS.md](PICO-CAMERA-PROMPTS.md). Seit 28.09. sind Raumübersicht und Terminal lokal in Level 1 bis 3 eingebunden; die Ausfallstufen bleiben bis zum Umbau von Level 4 in der Vorschau.
+Aktuell seit 01.10.: verfeinerte Nutzer-Innenansicht mit zwei Reihen Goldbarren
+als Raumübersicht V3 in Level 1 bis 3. Die Terminal-Nahaufnahme V2 in Level 3 und 4
+übernimmt das blaue Licht, schwarze Sofa und die Finanzanzeigen. Drei Post-its
+(Bitcoin, US National Reserve und Shanghai Digital Vault) erzählen die Ziele des
+Lords; Hash und Kontonummern sind erfundene Requisiten. Drei passende Ausfallbilder
+erhalten diese Ausstattung. Herkunft und Prompts: [PICO-CAMERA-PROMPTS.md](PICO-CAMERA-PROMPTS.md)
+und [PICO-TERMINAL-V2-PROMPTS.md](PICO-TERMINAL-V2-PROMPTS.md).
+
+Der aktuelle Effektumbau MAIN-15 trennt Rauch, rotes Rechnerlicht und Displaystörung:
+Wertedrift → leichter Rauch → Lichtpuls → Töne → drei Zahlen-/Störungswechsel →
+Megarauch → stärkeres Displayflackern → Display aus → zuletzt Barlichter aus.
+Die rote Notbeleuchtung bleibt erhalten. Dieser Ablauf ist seit 02.10. lokal geprüft;
+frühere Vorgaben zur gemeinsamen Vollbildüberblendung unten sind historisch.
+Transparente Rauchebenen: [PICO-SMOKE-LAYERS-PROMPTS.md](PICO-SMOKE-LAYERS-PROMPTS.md).
 
 ## 1. Raumübersicht
 
