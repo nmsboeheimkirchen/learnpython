@@ -72,7 +72,7 @@ unter `.cache/main21-all.log`, `.cache/main21-terminal` und
 
 ## MAIN-22: Kompakte Überschriften ohne abgeschnittene Unterlängen
 
-03.10.2026, lokal. Auf Nutzerwunsch sind die ursprünglichen Zeilenhöhen und
+03.10.2026, lokal als `31a3119` committed. Auf Nutzerwunsch sind die ursprünglichen Zeilenhöhen und
 Abstände vor MAIN-20 wiederhergestellt: Startseite, Missionseinstiege, Training,
 Projektauswahl, PICO, Pixelmuseum und Helikopterflucht. Dies ersetzt ausschließlich
 die vergrößerten Überschriftenabstände aus MAIN-20; Editor- und Hinweisfix bleiben.

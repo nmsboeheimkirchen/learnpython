@@ -1,6 +1,29 @@
 # Übergabe: dev-login-save
 
-## AKTUELL – MAIN-20/21 abgeschlossen: globale Darstellung und vollständige Terminalanalyse
+## AKTUELL – MAIN-22 abgeschlossen: altes enges Spacing, volle Unterlängen
+
+- Nutzerkorrektur 03.10.2026: globale Vergrößerung der Zeilenhöhen aus MAIN-20
+  zurücknehmen; Startseite, Missionseinstiege und Training wieder so kompakt wie
+  vorher. Pixelmuseum/PICO/Flucht sollen ihre Farbverläufe und volle Unterlängen
+  behalten, ohne zusätzlichen Abstand zum nachfolgenden Inhalt.
+- Umsetzung fertig: ursprüngliche Zeilenhöhen/Abstände wiederhergestellt;
+  nur die Farbverlauf-Titel erhalten unten eine größere Malfläche, deren
+  Platzverbrauch durch denselben negativen Außenabstand ausgeglichen wird.
+  Ursache der schwarzen Schnittkante ist background-clip:text am knappen
+  Titelrechteck. Editor- und Tooltip-Korrekturen aus MAIN-20 bleiben erhalten.
+- CSS-Cacheversion 20261003-2 in 35 HTML-Seiten nachgezogen. 224/224 Logiktests
+  und vier gezielte Browserprüfungen grün: zwölf Layouts in Chromium/Laptop und
+  WebKit/iPad, dazu PICO-Editorsichtbarkeit Level 1/4. Alte Textpositionen und
+  Abstände per Geometrievergleich bestätigt; Unterlängen zusätzlich visuell
+  kontrolliert. Ergebnisse `.cache/main22-headings-final` / `.cache/main22-headings`.
+- Frühe Testläufe mussten die Eingangsanimation abwarten, die ursprüngliche
+  Level-4-Zeilenhöhe korrekt referenzieren und nach Entfernen des Vergleichsstils
+  dessen Neuzeichnung abwarten. Finale Prüfungen sind grün; kein Produktfehler offen.
+- Öffentliche Übernahme als MAIN-22 markiert, lokaler Commit `31a3119`.
+  Keine offenen Umsetzungspunkte. Kein Push/Release; Backend/Login bleiben
+  auf dev-login-save. Handoff und technischer Nachtrag separat dokumentiert.
+
+## Vorheriger Stand – MAIN-20/21 abgeschlossen: globale Darstellung und vollständige Terminalanalyse
 
 - Öffentliche lokale Commits: `d2a7a7b` (PICO MAIN-11–19), `6dc9076`
   (globale Darstellung MAIN-20), `2ae355f` (vollständige Terminalanalyse MAIN-21).

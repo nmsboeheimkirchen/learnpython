@@ -354,6 +354,13 @@ Hilfe weiterhin nur auf Anforderung nach einer Prüfung. Bei Wiederanmeldung in
 Level 4 erhält der Rahmen zusätzlich eine explizite Höhenmeldung nach Änderungen
 der Analyse. Die vorhandene Herkunfts-/Tokenprüfung bleibt bestehen.
 
+**MAIN-22, lokaler Nachtrag 03.10.2026:** Die global erhöhten Überschriftenabstände
+aus MAIN-20 sind auf Nutzerwunsch zurückgenommen. Nur die Zeichenfläche der
+Farbverlauf-Titel wird unten erweitert und durch negativen Außenabstand ausgeglichen:
+altes kompaktes Layout, vollständige Unterlängen. Editor-, Hinweis- und
+Terminalanalysekorrekturen bleiben bestehen. Reine öffentliche Designänderung,
+keine Änderung an Konten, Datenhaltung oder APIs.
+
 | Abschnitt | Pflichtpunkte | Levelgewichte |
 | --- | --- | --- |
 | Missionen 1, 3, 4 | Je 15 | Je 5 / 5 / 5 |
