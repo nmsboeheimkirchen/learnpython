@@ -46,6 +46,7 @@
     let runGeneration = 0;
     let running = false;
     let cancelRequested = false;
+    let stoppedCode = null;
     let issuedFindTokens = new Set();
     let inventoryAppendEvents = [];
     let completionShown = false;
@@ -235,10 +236,11 @@
 
         prototype.addUpdate = function (...args) {
             if (cancelRequested) return Promise.reject(new Error("AGENT_TRAINING_CANCELLED"));
+            const generation = runGeneration;
             activeTurtle = this;
             const update = originalAddUpdate.apply(this, args);
             const notify = value => {
-                if (cancelRequested) throw new Error("AGENT_TRAINING_CANCELLED");
+                if (cancelRequested || generation !== runGeneration) throw new Error("AGENT_TRAINING_CANCELLED");
                 recordRawPosition(this);
                 Sk.execStart = new Date();
                 return value;
@@ -514,10 +516,11 @@
         setTopStatus("Simulation läuft …", "running");
 
         const code = editor.getValue();
-        await window.saveAttemptedLevelCode?.(levelId, code);
         try {
+            await window.saveAttemptedLevelCode?.(levelId, code);
+            if (cancelRequested) return;
             configureSkulpt();
-            await Sk.misceval.asyncToPromise(() => Sk.importMainWithBody("<stdin>", false, code, true));
+            await window.AgentPythonExecution.run(() => Sk.importMainWithBody("<stdin>", false, code, true));
             if (generation !== runGeneration) return;
 
             await validateRun(code);
@@ -540,15 +543,19 @@
                 setRunning(false);
                 if (restoreStarter) {
                     cancelRequested = false;
-                    resetLevel();
+                    const code = stoppedCode;
+                    stoppedCode = null;
+                    resetLevel({ code });
                 }
             }
         }
     }
 
-    function resetLevel() {
+    function resetLevel(options = {}) {
         if (running) {
+            stoppedCode = options.preserveCode ? editor.getValue() : null;
             cancelRequested = true;
+            window.AgentPythonExecution.cancel();
             Sk.execStart = new Date(0);
             setRunning(true);
             setStatus("Training wird gestoppt", "warning");
@@ -558,11 +565,11 @@
 
         runGeneration += 1;
         if (nextButton) nextButton.style.display = "none";
-        if (levelId === "agent_training_level3") {
+        if (levelId === "agent_training_level3" && typeof options.code !== "string") {
             level3Phase = "guarded";
             applyLevel3Phase();
         }
-        editor.setValue(defaultCode);
+        editor.setValue(typeof options.code === "string" ? options.code : defaultCode);
         editor.clearHistory?.();
         runState = core.createState(levelId);
         outputText = "";
@@ -574,7 +581,9 @@
             completionTimer = null;
         }
         window.cancelSuccessCelebration?.();
-        consoleOutput.textContent = "Bereit für deinen nächsten Drohnenbefehl.";
+        consoleOutput.textContent = typeof options.code === "string"
+            ? "Programm abgebrochen (Strg+C). Dein Code bleibt erhalten."
+            : "Bereit für deinen nächsten Drohnenbefehl.";
         consoleOutput.classList.remove("is-error");
         document.body.classList.remove(
             "training-complete",
@@ -595,6 +604,11 @@
     }
 
     runButtons.forEach(button => button.addEventListener("click", runProgram));
+    window.AgentPythonExecution.setStopHandler(() => {
+        if (!running) return false;
+        resetLevel({ preserveCode: true });
+        return true;
+    });
     resetButtons.forEach(button => button.addEventListener("click", resetLevel));
     editor.addKeyMap?.({
         "Ctrl-Enter": runProgram,

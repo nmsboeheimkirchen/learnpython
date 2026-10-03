@@ -174,11 +174,11 @@ var $builtinmodule = function () {
         setAccessState("locked", "CHECKING SIGNAL …");
         setRunning(true);
         resetRunState();
-        await window.saveAttemptedLevelCode?.("helikopter_flucht_level1", code);
-
         try {
+            await window.saveAttemptedLevelCode?.("helikopter_flucht_level1", code);
+            if (generation !== runGeneration || cancelRequested) return null;
             configureSkulpt();
-            await Sk.misceval.asyncToPromise(() => Sk.importMainWithBody("<stdin>", false, code, true));
+            await window.AgentPythonExecution.run(() => Sk.importMainWithBody("<stdin>", false, code, true));
             if (generation !== runGeneration) return null;
             if (!outputText.trim()) appendOutput("Programm beendet – kein Signal geprüft.\n");
             return await finishRun(code);
@@ -199,6 +199,7 @@ var $builtinmodule = function () {
         if (running) {
             cancelRequested = true;
             runGeneration += 1;
+            window.AgentPythonExecution.cancel();
             Sk.execStart = new Date(0);
             setRunning(false);
         }
@@ -214,6 +215,14 @@ var $builtinmodule = function () {
     }
 
     runButtons.forEach(button => button.addEventListener("click", runProgram));
+    window.AgentPythonExecution.setStopHandler(() => {
+        if (!running) return false;
+        cancelRequested = true;
+        window.AgentPythonExecution.cancel();
+        appendOutput("\nProgramm abgebrochen (Strg+C).\n");
+        setAccessState("locked", "PROGRAMM GESTOPPT");
+        return true;
+    });
     resetButton.addEventListener("click", resetMission);
 
     resetRunState();

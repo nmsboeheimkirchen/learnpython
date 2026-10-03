@@ -94,16 +94,48 @@ Kein Backend-/Kontoeingriff, kein Push/Release.
 
 ## MAIN-23: Angeheftete Blockhinweise beim Verlassen schließen
 
-03.10.2026, eigener öffentlicher Designcommit. Hover bleibt unverändert.
+03.10.2026, eigener öffentlicher Designcommit `90aa41e`. Hover bleibt unverändert.
 Nach dem Anheften bleibt ein Hinweis nur bei Klicks im Block oder im eigentlichen
 CodeMirror-Editor einschließlich Zeilennummern erhalten. Klicks daneben, auf
 Ausführen oder auf den Editortitel lösen die Anheftung und ggf. den Blockfokus.
 Die Kopiersperre für Hinweistext und das Kopieren des eigenen Codes bleiben erhalten.
 
 Öffentliche Dateien: `assets/runner.js`, Runner-Cacheversion `20261003-3` in den
-aufrufenden HTML-Dateien und bestehende Browser-/Assettests. 224/224 Logiktests;
-gezielte Klick-, Tastatur-, Touch- und Clipboard-Prüfung unter `.cache/main23-hints`.
+aufrufenden HTML-Dateien und bestehende Browser-/Assettests. 224/224 Logiktests und
+5/5 Klick-, Tastatur-, Touch- und Clipboard-Prüfungen unter `.cache/main23-hints`.
 Kein Backend-/Speichereingriff, kein Push/Release.
+
+## MAIN-24: Einzellauf, passende Begrüßungsprüfung und Strg+C
+
+03.10.2026, eigener öffentlicher Inhalts-/Fehlerkorrekturcommit. Der klassische
+Runner sperrt den Start vom ersten Befehl bis zum Ende einschließlich Eingaben,
+Pausen und anschließender Validierung. Enter in der Konsole gibt den Startknopf
+nicht mehr vorzeitig frei. Die viersekündige Ergebnisanzeige bleibt bestehen.
+Mission 1-3 akzeptiert „Wie heißt du?“ und „Wie heißt Du?“ sowie Leerzeichen
+danach. Bei „Wilkommen“ wird die Schreibweise der Begrüßung beanstandet.
+
+Neue gemeinsame `assets/python-execution.js` für die aktiven Python-Lernseiten:
+Strg+C bricht laufende Programme ab, bei ruhendem Programm bleibt Kopieren
+unverändert. Schleifen geben dem Browser regelmäßig Zeit. Abgebrochene Eingaben,
+Pausen und andere Skulpt-Unterbrechungen dürfen alte Programme nicht fortsetzen.
+Eigener Code bleibt erhalten; auch Fluganimationen können nach dem Abbruch keine
+Positionen in einen neu gestarteten Lauf übertragen. Training, Drohnenmissionen,
+Helikopter und wiederholte Kalibrieraufrufe nutzen die gemeinsame Ausführung.
+PICO verwendet beim Tastaturabbruch denselben Stopp-/Sicherheitszähler wie der
+Stoppknopf. Keine neue Speicherung oder Änderung von Backend/Kontoregeln.
+
+Öffentliche Dateien: gemeinsamer Ausführungscode, Runner, Training-/Drohnen-/
+Helikopterlaufzeit, Level-4-Kalibrieraufruf, HTML-Einbindungen und Cacheversionen
+`20261003-4`, zugehörige Logik-/Browsertests. 225/225 Logiktests sowie 29
+unterschiedliche Browserprüfungen bestanden: neue Ausführungstests, eigener
+Code/Clipboard und bestehende Erfolgs-/Fehler-/Sicherheitsabläufe. Chromium und
+WebKit geprüft, darunter neun repräsentative Lernseiten mit Endlosschleife und
+Neustart. Keine unbehandelten Browserfehler in den neuen Prüfungen.
+
+Ergebnisse: `.cache/main24-all.log`, `.cache/main24-final`,
+`.cache/main24-regression`, `.cache/main24-pico-recheck`. Der vollständige
+WebKit-PICO-Erfolg überschritt im parallelen Lauf 50 s; isoliert bestanden
+(48,4 s), einschließlich Abschluss, Belohnung und Rückkehr. Kein Push/Release.
 
 ## Trennung von Missionsinhalt und Kontosystem
 

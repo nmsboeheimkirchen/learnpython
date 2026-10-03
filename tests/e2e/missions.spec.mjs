@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 const sharedAssetVersion = "20260722-1";
 const editorAssetVersion = "20261002-2";
 const styleAssetVersion = "20261003-2";
-const runnerAssetVersion = "20261003-3";
+const runnerAssetVersion = "20261003-4";
 const logoAssetVersion = "20260720-2";
 
 const missionPages = [

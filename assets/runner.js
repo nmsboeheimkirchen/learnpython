@@ -790,7 +790,7 @@ const LEVEL_VALIDATORS = {
     mission1_level3({ statements, output }) {
         const nameInput = findStatement(statements, ["name", "=", "input", "("]);
         const asksForName = nameInput?.tokens.some(token =>
-            token.type === "string" && token.value.trim() === "Wie heißt du?"
+            token.type === "string" && /^Wie heißt [dD]u\?$/.test(token.value.trim())
         );
         const hasWelcomePrint = statements.some(statement =>
             statementStartsWith(statement, ["print", "("]) &&
@@ -800,7 +800,7 @@ const LEVEL_VALIDATORS = {
             { passed: Boolean(nameInput), message: "Speichere input(...) in der Variable name." },
             { passed: asksForName, message: "Stelle in input(...) die Frage ‚Wie heißt du?‘." },
             { passed: hasWelcomePrint, message: "Gib den festen Text und name gemeinsam mit einem Komma in print(...) aus." },
-            { passed: output.toLowerCase().includes("willkommen im system"), message: "Die Ausgabe muss ‚Willkommen im System‘ enthalten." }
+            { passed: output.toLowerCase().includes("willkommen im system"), message: "Gib ‚Willkommen im System,‘ und deinen gespeicherten Namen aus. Prüfe die Schreibweise von ‚Willkommen‘." }
         ]);
     },
     mission1_level4({ statements, output }) {
@@ -1243,6 +1243,7 @@ function showLevelFeedback(message) {
 
 function setupLevel(levelId) {
     window.AgentCurrentLevel = levelId;
+    window.AgentPythonExecution?.setStopHandler(stopClassicProgram);
     const runButton = document.getElementById("run-btn");
     const outcome = LEVEL_OUTCOMES[levelId];
     if (!runButton || !outcome) return;
@@ -1261,7 +1262,7 @@ function setupLevel(levelId) {
     }
 
     runButton.addEventListener("click", () => {
-        if (runButton.disabled || successPopupTimeout !== null) return;
+        if (classicRunActive || runButton.disabled || successPopupTimeout !== null) return;
         const attemptedCode = window.editor?.getValue?.();
         if (typeof attemptedCode === "string") {
             saveAttemptedLevelCode(levelId, attemptedCode);
@@ -1289,6 +1290,7 @@ function setupLevel(levelId) {
             }
             applyUnlocks();
             runButton.disabled = true;
+            runButton.setAttribute("data-success-pending", "true");
             const statusText = document.getElementById("status-text");
             if (statusText) {
                 statusText.textContent = "✓ Geschafft – lies kurz dein Ergebnis.";
@@ -1296,6 +1298,7 @@ function setupLevel(levelId) {
             }
             successPopupTimeout = setTimeout(() => {
                 successPopupTimeout = null;
+                runButton.removeAttribute("data-success-pending");
                 runButton.disabled = false;
                 triggerSuccess(Boolean(outcome.finale), outcome.successMessage);
             }, SUCCESS_POPUP_DELAY_MS);
@@ -1318,9 +1321,23 @@ function outf(text) {
     outDiv.scrollTop = outDiv.scrollHeight;
 }
 
-// Eine Custom-Input-Funktion, die auf Enter im Konsolen-Feld wartet
+// Keep the start lock across every input/sleep until execution and validation end.
+let classicRunActive = false;
+let classicPythonFinished = true;
+let classicInterruptRequested = false;
+let cancelConsoleInput = null;
+
+function stopClassicProgram() {
+    if (!classicRunActive || classicPythonFinished) return false;
+    classicInterruptRequested = true;
+    cancelConsoleInput?.();
+    window.AgentPythonExecution.cancel();
+    return true;
+}
+
+// Eine Custom-Input-Funktion, die auf Enter im Konsolen-Feld wartet.
 function customInput(promptMsg) {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
         const outDiv = document.getElementById("console-output");
         const runButton = document.getElementById("run-btn");
         
@@ -1359,18 +1376,29 @@ function customInput(promptMsg) {
 
         outDiv.scrollTop = outDiv.scrollHeight;
 
+        const cleanup = () => {
+            cancelConsoleInput = null;
+            inputWrapper.remove();
+            runButton?.removeAttribute("aria-describedby");
+        };
+        cancelConsoleInput = () => {
+            cleanup();
+            const error = new Error("Eingabe abgebrochen.");
+            error.name = "KeyboardInterrupt";
+            reject(error);
+        };
+
         // Warte auf Enter
         inputField.addEventListener("keydown", function(e) {
             if (e.key === "Enter") {
                 e.preventDefault();
                 const v = inputField.value;
-                inputWrapper.remove();
+                cleanup();
                 appendConsoleText(outDiv, v + "\n");
                 currentOutput += v + "\n";
                 currentInputValues.push(v);
                 if (runButton) {
-                    runButton.disabled = false;
-                    runButton.removeAttribute("aria-describedby");
+                    runButton.disabled = classicRunActive;
                 }
                 resolve(v);
             }
@@ -1378,37 +1406,59 @@ function customInput(promptMsg) {
     });
 }
 
-function runit(levelTestFunction) {
+async function runit(levelTestFunction) {
+    if (classicRunActive) return;
+    classicRunActive = true;
+    classicPythonFinished = false;
+    classicInterruptRequested = false;
+    const runButton = document.getElementById("run-btn");
+    if (runButton) {
+        runButton.disabled = true;
+        runButton.setAttribute("aria-busy", "true");
+    }
     const code = window.editor.getValue();
     const outDiv = document.getElementById("console-output");
     outDiv.textContent = "";
     currentOutput = "";
     currentInputValues = [];
 
-    // Skulpt konfigurieren
-    Sk.pre = "console-output";
-    Sk.configure({
-        output: outf,
-        read: builtinRead,
-        inputfunTakesPrompt: true,
-        inputfun: customInput
-    });
-
     try {
-        let myPromise = Sk.misceval.asyncToPromise(function() {
+        Sk.pre = "console-output";
+        Sk.configure({
+            output: outf,
+            read: builtinRead,
+            inputfunTakesPrompt: true,
+            inputfun: customInput,
+            yieldLimit: 50,
+            killableWhile: true,
+            killableFor: true
+        });
+        await window.AgentPythonExecution.run(function() {
             return Sk.importMainWithBody("<stdin>", false, code, true);
         });
-
-        myPromise.then(function(mod) {
-            // Erfolg: Prüfe Level
-            if(levelTestFunction) levelTestFunction(code, currentOutput, {
+        classicPythonFinished = true;
+        if (!classicInterruptRequested && levelTestFunction) {
+            await levelTestFunction(code, currentOutput, {
                 inputValues: currentInputValues.slice()
             });
-        }, function(err) {
-            appendConsoleError(outDiv, err);
-        });
+        }
     } catch(e) {
-        appendConsoleError(outDiv, e);
+        if (classicInterruptRequested) {
+            outf("\nProgramm abgebrochen (Strg+C).\n");
+            const status = document.getElementById("status-text");
+            if (status) {
+                status.textContent = "Programm abgebrochen – du kannst deinen Code ändern und neu starten.";
+                status.style.color = "";
+            }
+        } else appendConsoleError(outDiv, e);
+    } finally {
+        classicRunActive = false;
+        classicPythonFinished = true;
+        if (runButton) {
+            runButton.disabled = runButton.getAttribute("data-success-pending") === "true";
+            runButton.setAttribute("aria-busy", "false");
+            runButton.removeAttribute("aria-describedby");
+        }
     }
 }
 

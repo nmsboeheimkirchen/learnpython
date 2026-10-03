@@ -216,7 +216,7 @@
         window.Sk.execStart=new Date();
         window.Sk.lastYield=Date.now();
         const pythonInput=window.Sk.ffi.remapToPy(input);
-        const answer=await window.Sk.misceval.asyncToPromise(()=>{
+        const answer=await window.AgentPythonExecution.run(()=>{
             const started=performance.now();
             let output=window.Sk.misceval.callsimOrSuspendArray(fn,[pythonInput]);
             // Skulpt's killable loops suspend at every iteration. Resume short,

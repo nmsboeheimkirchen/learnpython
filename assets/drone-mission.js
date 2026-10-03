@@ -271,13 +271,14 @@
         if (typeof originalAddUpdate !== "function") return;
         prototype.addUpdate = function (...args) {
             if (cancelRequested) return Promise.reject(new Error("DRONE_MISSION_CANCELLED"));
+            const generation = runGeneration;
             activeTurtle = this;
             syncPythonState(this);
             if (this.__droneMissionMovementBlocked) return Promise.resolve();
 
             const update = originalAddUpdate.apply(this, args);
             const notify = value => {
-                if (cancelRequested) throw new Error("DRONE_MISSION_CANCELLED");
+                if (cancelRequested || generation !== runGeneration) throw new Error("DRONE_MISSION_CANCELLED");
                 const state = this.getState?.();
                 if (state && Number.isFinite(state.x) && Number.isFinite(state.y)) {
                     const frameResult = config.onTurtleFrame?.({ x: state.x, y: state.y });
@@ -402,13 +403,13 @@
         renderChecks(initialResult("Simulation läuft – die Missionszustände werden live geprüft."));
         setRunning(true);
         setStatus(config.runningLabel || "Drohne unterwegs", "running");
-        if (config.levelId) await window.saveAttemptedLevelCode?.(config.levelId, code);
-
         try {
+            if (config.levelId) await window.saveAttemptedLevelCode?.(config.levelId, code);
+            if (cancelRequested) return null;
             config.onRunStart?.(code);
             configureSkulpt();
             const executionCode = config.prepareCode?.(code) ?? code;
-            await Sk.misceval.asyncToPromise(() => Sk.importMainWithBody("<stdin>", false, executionCode, true));
+            await window.AgentPythonExecution.run(() => Sk.importMainWithBody("<stdin>", false, executionCode, true));
             if (generation !== runGeneration) return null;
             // Include final Python assignments before waiting for a mission animation.
             if (config.beforeFinish) syncPythonState();
@@ -443,9 +444,10 @@
 
     function resetMission(options = {}) {
         if (running) {
-            stoppedCode = config.preserveCodeOnStop ? editor.getValue() : null;
+            stoppedCode = config.preserveCodeOnStop || options.preserveCode ? editor.getValue() : null;
             cancelRequested = true;
             config.onRunCancel?.();
+            window.AgentPythonExecution.cancel();
             Sk.execStart = new Date(0);
             setRunning(true);
             setStatus("Mission wird gestoppt", "warning");
@@ -482,6 +484,11 @@
     }
 
     runButtons.forEach(button => button.addEventListener("click", runProgram));
+    window.AgentPythonExecution.setStopHandler(() => {
+        if (!running) return false;
+        resetMission({ preserveCode: true });
+        return true;
+    });
     resetButtons.forEach(button => button.addEventListener("click", resetMission));
     presentationButton?.addEventListener("click", () => {
         setPresentationMode(!document.body.classList.contains("presentation-mode"));
