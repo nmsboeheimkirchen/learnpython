@@ -24,22 +24,45 @@ test('@ipad Calibration starts with changing small decimals and an incomplete as
  expect(values.every(value=>Math.abs(value)>=92&&Math.abs(value)<=108)).toBe(true);
  for(const i of [0,2])await expect(page.locator('#calibration-value-'+i)).toHaveText(/^\+.+ %$/);
  for(const i of [1,3])await expect(page.locator('#calibration-value-'+i)).toHaveText(/^−.+ %$/);
- await expect(page.locator('#calibration-sum')).toHaveText('0 %');
+ const firstSum=await page.locator('#calibration-sum').innerText();
+ await expect.poll(()=>page.locator('#calibration-sum').innerText()).not.toBe(firstSum);
+ const measured=await page.evaluate(()=>{
+  const number=id=>Number(document.getElementById(id).textContent.replace(' %','').replace('−','-').replace(',','.'));
+  return {values:[0,1,2,3].map(i=>number('calibration-value-'+i)),sum:number('calibration-sum')};
+ });
+ expect(Math.abs(measured.sum)).toBeLessThanOrEqual(.99);
+ expect(Math.abs(measured.values.reduce((s,v)=>s+v,0)-measured.sum)).toBeLessThan(.000001);
  await expect(page.locator('#calibration-camera .calibration-frame')).toHaveAttribute('src',/terminal-v3\.webp$/);
- expect(await run(page,starter)).toMatchObject({passed:false});await expect(page.locator('#validation-message')).toContainText('unverändert');
+ await begin(page,starter);
+ await expect.poll(()=>page.evaluate(()=>window.DroneMissionRuntime.getState().cycle)).toBeGreaterThan(220);
+ expect(await page.evaluate(()=>window.DroneMissionRuntime.isRunning())).toBe(true);
+ await page.locator('.calibration-stop').click();await page.evaluate(()=>window.__calibrationRun);
+ await expect(page.locator('#validation-message')).toHaveText('Dein Code hat die vier Kalibrierwerte nicht verändert.');
  await expect(page.locator('#calibration-help')).toBeHidden();await page.locator('#calibration-help-btn').click();await expect(page.locator('#calibration-help')).toBeVisible();
  await expect(page.locator('#calibration-help')).toContainText('Dein Code hat die vier Kalibrierwerte nicht verändert.');
  await expect(page.locator('#calibration-help-btn')).toBeDisabled();
  await page.locator('#calibration-help-btn').dispatchEvent('click');expect(await page.evaluate(()=>window.DroneMissionRuntime.getState().helpCount)).toBe(1);
  await page.screenshot({path:info.outputPath('calibration-editor.png'),fullPage:true});
 });
-test('@ipad Calibration reports stabilizing code and a missing function without a security lock',async({page})=>{
+test('@ipad Supplied stabilizing code keeps running past 20 cycles and oscillates near zero without damage',async({page})=>{
  await open(page);
- for(const code of [solution.replace('+ 1','- 1').replace(' - 1\n    return',' + 1\n    return'),'print("fertig")']){
-  expect(await run(page,code)).toMatchObject({passed:false});
-  await expect(page.locator('#calibration-ending')).toBeHidden();await expect(page.locator('#next-level-btn')).toBeHidden();
-  expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('completedLevelCode_v1')||'{}').pico_level4_memory)).toBeUndefined();
- }
+ const code=solution.replace('werte[i] + 1','werte[i]-1').replace('werte[i] - 1','werte[i]+1');
+ await begin(page,code);
+ await expect.poll(()=>page.evaluate(()=>window.DroneMissionRuntime.getState().cycle),{timeout:10000}).toBeGreaterThan(220);
+ const state=await page.evaluate(()=>window.DroneMissionRuntime.getState());
+ expect(state.values.every(v=>Math.abs(v)<1)).toBe(true);
+ expect(state).toMatchObject({phase:'running',securityLocked:false,stoppedErrors:0,effectStage:'idle',complete:false});
+ expect(state.effects.lightSmoke).toBe(0);expect(state.warningToneCount).toBe(0);
+ await expect(page.locator('#calibration-alert')).toBeHidden();await expect(page.locator('#calibration-ending')).toBeHidden();
+ await page.keyboard.press('Control+c');await page.evaluate(()=>window.__calibrationRun);
+ expect(await page.evaluate(()=>window.DroneMissionRuntime.isRunning())).toBe(false);
+ expect(await page.evaluate(()=>window.DroneMissionRuntime.editor.getValue())).toBe(code);
+ await page.locator('#calibration-help-btn').click();
+ await expect(page.locator('#calibration-help')).toHaveText('Deine Werte pendeln nahe null und erreichen so keine ±1800 %.');
+ expect(await run(page,'print("fertig")')).toMatchObject({passed:false});
+ await expect(page.locator('#validation-message')).toHaveText('Die Funktion kalibrieren(werte) fehlt.');
+ await expect(page.locator('#next-level-btn')).toBeHidden();
+ expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('completedLevelCode_v1')||'{}').pico_level4_memory)).toBeUndefined();
 });
 test('@ipad Learner calibration keeps running through interference with a stable sum and earns four coins after the sequence',async({page},info)=>{
  test.setTimeout(50000);const errors=[];page.on('pageerror',e=>errors.push(String(e)));await open(page);

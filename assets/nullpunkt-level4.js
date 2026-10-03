@@ -4,6 +4,7 @@
     const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
     const noise=byId('calibration-noise'),noiseContext=noise.getContext('2d');
     let values=core.idleValues(performance.now()),initialValues=[...values],cycle=0,phase='idle',complete=false;
+    let measuredValues=[...values],measurementTime=performance.now();
     let generation=0,waitTimer=null,resolveWait=null,executedCode='',lastInspection=null,testVersion=0,helpVersion=0,helpCount=0;
     let probeChecks={positive:false,negative:false,zero:false},history=[],failure=0,lastIdleUpdate=0;
     let effectStage='idle',display='numbers',effectHistory=[],interferenceCount=0,warningToneCount=0,sequenceStarted=0;
@@ -47,6 +48,7 @@
         if(channels(saved.initialValues))initialValues=saved.initialValues;
         cycle=Number.isInteger(saved.cycle)?saved.cycle:0;
         observation=saved.observation||null;lastInspection=saved.lastInspection||null;testVersion=Math.max(1,saved.testVersion||0);
+        if(observation)lastInspection=analysis();
         phase=securityLocked?'locked':'review';terminalNotice=securityLocked?'Zugriff verweigert':'';
         effects=cleanEffects();if(securityLocked)effects.roomRed=.5;
         document.body.classList.remove('mission-passed');byId('next-level-btn').style.display='none';
@@ -68,16 +70,12 @@
     };
     function analysis(){
         if(!observation)return lastInspection||'Für diesen Code liegt noch kein ausführbarer Durchlauf vor.';
-        if(observation.unchanged)return 'Dein Code hat die vier Kalibrierwerte nicht verändert. Auch die Kontrollsumme ist unverändert.';
-        if(!observation.valid){
-            const describe=value=>typeof value==='number'?signed(value):String(value??'None');
-            const output=Array.isArray(observation.after)?'['+observation.after.map(describe).join(', ')+']':describe(observation.after);
-            return 'Dein Programm liefert keine Liste mit vier gültigen Zahlen zurück. Rückgabe: '+output+'. Die Anzeige zeigt die noch lesbaren Kanalwerte.';
-        }
-        return 'Im ersten abweichenden Durchlauf:\n'+observation.before.map((value,i)=>`K${i+1}: ${signed(value)} → ${signed(observation.after[i])} (Änderung ${signed(observation.deltas[i])})`).join('\n')+
-            `\nKontrollsumme: ${signed(observation.referenceSum)} → ${signed(observation.sum)}. `+
-            (observation.oversized?'Mindestens eine Änderung war größer als 1 Prozentpunkt. ':'')+
-            (observation.checksumChanged?'Die Kontrollsumme ist vom Ausgangswert abgewichen.':observation.message);
+        if(!observation.valid)return 'Dein Programm liefert keine Liste mit vier gültigen Zahlen zurück.';
+        if(observation.oversized)return 'Mindestens eine Änderung war größer als 1 Prozentpunkt.';
+        if(observation.checksumChanged)return 'Dein Code hat die Kontrollsumme verändert.';
+        if(observation.unchanged)return 'Dein Code hat die vier Kalibrierwerte nicht verändert.';
+        if(core.deviation(observation.after)<1)return 'Deine Werte pendeln nahe null und erreichen so keine ±1800 %.';
+        return observation.message||'Dein Code verändert die Werte behutsam und erhält die Kontrollsumme.';
     }
     function remember(event){effectHistory.push({event,stage:effectStage,cycle,deviation:core.deviation(values),elapsed:Math.round(performance.now()-sequenceStarted),display});}
     function setStage(stage,changes={}){effectStage=stage;Object.assign(effects,changes);remember(stage);render();}
@@ -155,8 +153,9 @@
         alarmTimer=setTimeout(pulse,250);
     }
     function render(){
-        values.forEach((value,i)=>{byId('calibration-value-'+i).textContent=signed(value);});
-        byId('calibration-sum').textContent=values.every(Number.isFinite)?signed(values.reduce((sum,value)=>sum+value,0)):'—';
+        measuredValues=core.measuredValues(values,measurementTime);
+        measuredValues.forEach((value,i)=>{byId('calibration-value-'+i).textContent=signed(value);});
+        byId('calibration-sum').textContent=measuredValues.every(Number.isFinite)?signed(measuredValues.reduce((sum,value)=>sum+value,0)):'—';
         byId('calibration-cycle').textContent=String(cycle);
         byId('calibration-state').textContent=['running','deviating','error'].includes(phase)?'WARTUNG AKTIV':'KALIBRIERUNG';
         byId('calibration-alert').hidden=!terminalNotice;byId('calibration-alert-text').textContent=terminalNotice;
@@ -165,7 +164,7 @@
         document.querySelector('.calibration-stop').hidden=securityLocked;
         const camera=byId('calibration-camera');
         camera.dataset.wideValues=String(values.some(value=>Math.abs(value)>=10000||Math.abs(value)>0&&Math.abs(value)<.001));
-        document.querySelector('.calibration-note').textContent=['stopped','review','rejected'].includes(phase)?'Zuletzt angezeigte Prozentwerte deines Programms. Die Zentrale kann den abweichenden Durchlauf analysieren.':'Sollwerte: links +100 %, rechts −100 %. Kontrollsumme: K1 + K2 + K3 + K4 = 0 %.';
+        document.querySelector('.calibration-note').textContent=['stopped','review','rejected'].includes(phase)?'Zuletzt angezeigte Messwerte. Bei Bedarf hilft dir die Zentrale.':'Sollwerte: links +100 %, rechts −100 %. Kontrollsumme: K1 + K2 + K3 + K4 ≈ 0 %.';
         camera.dataset.phase=String(failure);camera.dataset.effectStage=effectStage;camera.dataset.display=display;
         camera.dataset.alarmActive=String(effects.alarmActive);camera.dataset.coreFlicker=effects.coreFlicker?'on':'off';camera.dataset.reducedMotion=String(reduced);
         camera.dataset.smokeActive=String(effects.lightSmoke>0||effects.heavySmoke>0);camera.dataset.surgeActive=String(effects.surgeActive);
@@ -179,7 +178,7 @@
         byId('calibration-bar-blackout').style.opacity=String(effects.barBlackout);
         byId('calibration-room-tint').style.opacity=String(effects.roomRed);
         byId('calibration-room-flare').style.opacity=String(effects.flareOpacity);
-        camera.setAttribute('aria-label',complete?'Drohnenkamera: Dichter Rauch am dunklen Quantenrechner, das Terminal ist schwarz. Barbeleuchtung und Finanzmonitore sind ausgefallen.':(cycle>=60?'Drohnenkamera: Die Kalibrierwerte laufen auseinander. Rauch steigt am Quantenrechner auf.':'Drohnenkamera: PICO arbeitet. Links schwanken zwei Messwerte um plus 100 Prozent, rechts zwei um minus 100 Prozent.'));
+        camera.setAttribute('aria-label',complete?'Drohnenkamera: Dichter Rauch am dunklen Quantenrechner, das Terminal ist schwarz. Barbeleuchtung und Finanzmonitore sind ausgefallen.':(effects.lightSmoke>0?'Drohnenkamera: Die Kalibrierwerte laufen auseinander. Rauch steigt am Quantenrechner auf.':'Drohnenkamera: PICO arbeitet. Das Terminal zeigt die aktuellen Kalibrierwerte.'));
         byId('calibration-help-btn').disabled=window.DroneMissionRuntime?.isRunning()||securityLocked||complete||testVersion<=helpVersion;
         byId('calibration-help-btn').textContent=helpCount&&testVersion<=helpVersion?'Erst erneut Programm testen':'Hilfe von der Zentrale anfordern';
     }
@@ -194,6 +193,7 @@
         if(securityLocked){render();return;}
         if(reason==='stop'){
             cancelWait();if(stopWasWarning)stoppedErrors++;stopWasWarning=false;
+            if(observation)lastInspection=analysis();
             phase='stopped';complete=false;terminalNotice='';effects=cleanEffects();failure=0;display='numbers';effectStage='idle';saveSecurityState();
             document.body.classList.remove('calibration-running');byId('status-text').textContent='Programm gestoppt · Code erhalten';render();return;
         }
@@ -244,24 +244,20 @@
         phase='locked';terminalNotice='Zugriff verweigert';byId('status-text').textContent='Wartungszugang gesperrt';
         remember('access-denied');render();byId('calibration-relogin').focus({preventScroll:true});
     }
-    async function deviatingProgram(fn,first,active){
-        observation=first;lastInspection=first.message;phase='deviating';errorStarted=performance.now();
+    async function securityWarning(fn,first,active){
+        observation=first;lastInspection=analysis();phase='deviating';errorStarted=performance.now();
         clearTimeout(alarmTimer);effects=cleanEffects();effectStage='idle';failure=0;setDisplay('numbers');
-        let suspicious=first.suspicious;
         async function keepRunning(until){
             while(performance.now()<until){
                 await wait(Math.min(100,until-performance.now()));if(!active())return false;
                 if(values.every(Number.isFinite)){
                     const before=[...values],output=await callCalibration(fn,before);if(!active())return false;
-                    const next=core.observe(before,output,first.referenceSum);
-                    if(next.suspicious&&!suspicious){observation=next;lastInspection=next.message;suspicious=true;}
                     showOutput(output);
                 }
             }
             return true;
         }
         if(!await keepRunning(errorStarted+2000))return;
-        if(!suspicious){reject(analysis());return;}
         if(stoppedErrors>=2){await lockAccess(active);return;}
         phase='error';terminalNotice='Fehler erkannt';remember('error-detected');tone(1000,.12,.13);render();
         if(!await keepRunning(performance.now()+5000))return;
@@ -272,16 +268,20 @@
         const active=()=>{
             if(ownGeneration!==generation)return false;
             if(window.DroneMissionRuntime.editor.getValue()!==executedCode){
-                cancelWait();reject('Der Code wurde während des Laufs verändert. Teste den aktuellen Code erneut.');return false;
+                cancelWait();reject('Der Code wurde während des Laufs verändert; teste ihn erneut.');return false;
             }
             return true;
         };
-        if(!fn){reject('Die Zentrale erwartet die Funktion kalibrieren(werte). Lade bei Bedarf ihr Codegerüst erneut.');return;}
+        if(!fn){reject('Die Funktion kalibrieren(werte) fehlt.');return;}
         probeChecks={positive:true,negative:true,zero:true};
         phase='running';sequenceStarted=performance.now();document.body.classList.add('calibration-running');remember('calibration-start');
         byId('status-text').textContent='Kalibrierprogramm aktiv';
         byId('calibration-camera').scrollIntoView({behavior:'auto',block:'center'});
         render();
+        // Safe code may stabilize, pause, oscillate or use smaller increments.
+        // Damage follows actual outward movement, not elapsed loop count.
+        const initialDeviation=core.deviation(initialValues);
+        let damage=0;
         // Keep executing real learner code while the screen alternates between
         // telemetry and interference. Only the permanent blackout stops the values.
         async function advance(){
@@ -290,14 +290,17 @@
             const inspection=core.observe(before,output,core.checksum(initialValues));
             for(const key of Object.keys(probeChecks))probeChecks[key]&&=inspection.checks[key];
             showOutput(output);
-            if(!inspection.passed||inspection.suspicious){await deviatingProgram(fn,inspection,active);return false;}
-            failure=core.phase(cycle,values);
-            if(cycle===60)setStage('smoke');
-            if(cycle>=60&&cycle<=core.CYCLES){effects.lightSmoke=Math.min(.85,(cycle-55)/600);effects.roomRed=Math.min(.32,(cycle-55)/1700);}
-            if(cycle===160)setStage('alarm',{alarmActive:true,alarmOpacity:.65,coreDarkness:.12});
-            if(cycle===240){setStage('warning');warningTones();}
-            if(cycle===480){Object.assign(effects,{surgeActive:true,flareOpacity:.85,alarmOpacity:1});remember('room-surge');}
-            if(cycle%5===0)history.push({cycle,values:[...values],sum:core.checksum(values)});
+            observation=inspection;lastInspection=inspection.passed?null:analysis();
+            if(inspection.suspicious){await securityWarning(fn,inspection,active);return false;}
+            const previousDamage=damage;
+            damage=Math.max(damage,Math.round((core.deviation(values)-initialDeviation)*1e8)/1e8);
+            failure=core.phase(damage,values);
+            if(previousDamage<60&&damage>=60)setStage('smoke');
+            if(damage>=60&&damage<=core.CYCLES){effects.lightSmoke=Math.min(.85,(damage-55)/600);effects.roomRed=Math.min(.32,(damage-55)/1700);}
+            if(previousDamage<160&&damage>=160)setStage('alarm',{alarmActive:true,alarmOpacity:.65,coreDarkness:.12});
+            if(previousDamage<240&&damage>=240){setStage('warning');warningTones();}
+            if(previousDamage<480&&damage>=480){Object.assign(effects,{surgeActive:true,flareOpacity:.85,alarmOpacity:1});remember('room-surge');}
+            if(cycle%5===0){history.push({cycle,values:[...values],sum:core.checksum(values)});if(history.length>4000)history.shift();}
             return true;
         }
         async function liveWait(ms){
@@ -309,18 +312,18 @@
             }
             return true;
         }
-        while(cycle<core.CYCLES){
+        while(damage<core.CYCLES){
             if(!await advance())return;
             if(cycle%5===0){render();await wait(50);if(!active())return;}
         }
         // Check other signs and zero channels only after showing the actual run.
-        // A failing probe is shown too, instead of rejecting unseen output.
+        // A probe that triggers security is shown before the warning.
         for(const input of core.probes(initialValues).slice(1)){
             const output=await callCalibration(fn,input);if(!active())return;
             const inspection=core.observe(input,output);
             if(input.includes(0))zeroTested=true;
             for(const key of Object.keys(probeChecks))probeChecks[key]&&=inspection.checks[key];
-            if(!inspection.passed){showOutput(output);await deviatingProgram(fn,inspection,active);return;}
+            if(inspection.suspicious){showOutput(output);await securityWarning(fn,inspection,active);return;}
         }
         setStage('display-interference');
         for(let flash=0;flash<3;flash++){
@@ -361,7 +364,7 @@
         return {passed:complete,levelComplete:complete,title:securityLocked?'Zugriff verweigert':complete?'Quantenangriff gestoppt':(lastInspection?'Programm noch nicht bereit':'Ergänze das Codegerüst'),
             message:complete?'PICO ist zerstört. Der Angriff auf das internationale Zahlungssystem ist gestoppt. Deine Kollegin hat das Sternenfragment gesichert. Trefft euch am Helikopter.':(lastInspection||'Ergänze die zwei Zuweisungen. Verändere die Werte behutsam und erhalte die Kontrollsumme von 0 %.'),
             status:complete?'Mission geschafft':'Code prüfen',statusState:complete?'success':'warning',
-            checks:[{label:'Positive Werte: genau 1 Prozentpunkt weiter von null',passed:probeChecks.positive},{label:'Negative Werte: genau 1 Prozentpunkt weiter von null',passed:probeChecks.negative},{label:'Nullwerte bleiben unverändert',passed:zeroTested&&probeChecks.zero},{label:'Kalibrierprogramm vollständig durchgelaufen',passed:complete}]};
+            checks:[{label:'Positive Werte: behutsam weiter von null',passed:probeChecks.positive},{label:'Negative Werte: behutsam weiter von null',passed:probeChecks.negative},{label:'Nullwerte bleiben unverändert',passed:zeroTested&&probeChecks.zero},{label:'Kalibrierprogramm vollständig durchgelaufen',passed:complete}]};
     }
     byId('calibration-help-btn').addEventListener('click',()=>{
         if(testVersion<=helpVersion||window.DroneMissionRuntime.isRunning()||securityLocked||complete)return;
@@ -416,7 +419,8 @@
     function ambient(now){
         if(!document.hidden&&now-lastIdleUpdate>140){
             lastIdleUpdate=now;
-            if(phase==='idle'){values=core.idleValues(now);render();}
+            if(phase==='idle')values=core.idleValues(now);
+            if(['idle','running','deviating','error'].includes(phase)){measurementTime=now;render();}
         }
         ambientFrame=requestAnimationFrame(ambient);
     }
@@ -434,7 +438,7 @@
         emptyOutput:'Programmprüfung beendet. Die Ergebnisse stehen unter der Drohnenkamera.',
         resetHud:({reason}={})=>reset(reason),
         onRunStart(code){executedCode=code;initialValues=[...values];phase='checking';testVersion++;hideHelp();render();},
-        onRunCancel(){stopWasWarning=phase==='error';cancelWait();},onRunError(){cancelWait();terminalNotice='';reject('Das Programm wurde mit einem Python-Fehler gestoppt. Prüfe die Meldung im Protokoll.');},
+        onRunCancel(){stopWasWarning=phase==='error';cancelWait();},onRunError(){cancelWait();terminalNotice='';reject('Prüfe den Python-Fehler im Protokoll.');},
         beforeFinish:execute,validate:result,
         onResult(outcome){
             const done=Boolean(outcome.passed)&&!securityLocked;byId('next-level-btn').style.display=done?'inline-flex':'none';
@@ -442,6 +446,6 @@
             if(phase==='stopped'){byId('validation-title').textContent='Programm gestoppt';byId('validation-message').textContent=lastInspection||'Dein Code bleibt für den nächsten Versuch erhalten.';}
         },
         getRestoredResult:()=>({passed:true,levelComplete:true,restored:true,title:'Mission bereits geschafft',message:'Dein bisheriger Abschluss und Code bleiben erhalten. Du kannst zum Helikopter oder das neue Kalibrierprogramm ausprobieren.',status:'Bereits geschafft',statusState:'success',checks:[]}),
-        getState:()=>({phase,complete,cycle,failure,effectStage,display,interferenceCount,warningToneCount,alarmToneCount,stoppedErrors,securityLocked,terminalNotice,observation:observation?{...observation}:null,reducedMotion:reduced,effects:{...effects},effectHistory:effectHistory.map(entry=>({...entry})),values:[...values],initialValues:[...initialValues],sum:core.checksum(values),testVersion,helpCount,history:history.map(entry=>({...entry,values:[...entry.values]}))})
+        getState:()=>({phase,complete,cycle,failure,effectStage,display,interferenceCount,warningToneCount,alarmToneCount,stoppedErrors,securityLocked,terminalNotice,observation:observation?{...observation}:null,reducedMotion:reduced,effects:{...effects},effectHistory:effectHistory.map(entry=>({...entry})),values:[...values],measuredValues:[...measuredValues],measuredSum:core.checksum(measuredValues),initialValues:[...initialValues],sum:core.checksum(values),testVersion,helpCount,history:history.map(entry=>({...entry,values:[...entry.values]}))})
     };
 })();

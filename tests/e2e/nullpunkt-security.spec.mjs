@@ -26,12 +26,12 @@ test('@ipad Assignments 1 and 10000 appear before detection, and timely stopping
   await expect(page.locator('#calibration-value-0')).toHaveText(n==='10000'?'+10000 %':'+1 %');
   await warning(page);const observed=await state(page);
   expect(observed.effectHistory.find(e=>e.event==='error-detected').elapsed).toBeGreaterThanOrEqual(1950);
-  await page.screenshot({path:info.outputPath('detected-'+n+'.png'),fullPage:true});
   await stop(page);expect((await state(page)).securityLocked).toBe(false);
+  // Image capture must not consume the learner's five-second stop window.
+  await page.screenshot({path:info.outputPath('stopped-'+n+'.png'),fullPage:true});
   expect(await page.evaluate(()=>window.DroneMissionRuntime.editor.getValue())).toBe(code);
-  await page.locator('#calibration-help-btn').click();await expect(page.locator('#calibration-help')).toContainText('K1:');
-  await expect(page.locator('#calibration-help')).toContainText(n==='10000'?'→ +10000 %':'→ +1 %');
-  await expect(page.locator('#calibration-help')).toContainText('Kontrollsumme:');
+  await page.locator('#calibration-help-btn').click();
+  await expect(page.locator('#calibration-help')).toHaveText('Mindestens eine Änderung war größer als 1 Prozentpunkt.');
   expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('completedLevelCode_v1')||'{}').pico_level4_memory)).toBeUndefined();
  }
  expect((await state(page)).stoppedErrors).toBe(2);
@@ -74,11 +74,12 @@ test('@ipad Ignored warning locks access; the real level 3 puzzle restores the e
  expect(await page.evaluate(()=>window.DroneMissionRuntime.editor.getValue())).toBe(code);
  expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('completedLevelCode_v1')))).toEqual({pico_level3:'# Originaler Flug'});
  expect(accountRequests).toEqual([]);
- await page.locator('#calibration-help-btn').click();await expect(page.locator('#calibration-help')).toContainText('→ +10000 %');
+ await page.locator('#calibration-help-btn').click();await expect(page.locator('#calibration-help')).toHaveText('Mindestens eine Änderung war größer als 1 Prozentpunkt.');
  await expect(page.locator('#success-overlay')).toBeHidden();
  await page.screenshot({path:info.outputPath('returned-code-analysis.png'),fullPage:true});expect(errors).toEqual([]);
  // The restored editor really accepts another run.
- await begin(page,'def kalibrieren(werte):\n    return werte');await page.evaluate(()=>window.__run);
+ await begin(page,'def kalibrieren(werte):\n    return werte');
+ await expect.poll(async()=> (await state(page)).cycle).toBeGreaterThan(20);await stop(page);
  await page.locator('#calibration-help-btn').click();await expect(page.locator('#calibration-help')).toContainText('nicht verändert');
 });
 
@@ -88,7 +89,7 @@ test('@ipad Zero-channel mistakes are displayed and detected even after correct 
  await begin(page,code);await expect(page.locator('#calibration-alert-text')).toHaveText('Fehler erkannt',{timeout:20000});await stop(page);
  const observed=await state(page);expect(observed.cycle).toBeGreaterThan(600);expect(observed.observation.before).toEqual([0,2,-2,0]);
  expect(observed.observation.after).toEqual([1,3,-3,1]);expect(observed.complete).toBe(false);
- await page.locator('#calibration-help-btn').click();await expect(page.locator('#calibration-help')).toContainText('K1: 0 % → +1 %');
+ await page.locator('#calibration-help-btn').click();await expect(page.locator('#calibration-help')).toHaveText('Dein Code hat die Kontrollsumme verändert.');
 });
 
 test('Phone access denial and the embedded terminal fit without horizontal scrolling',async({page},info)=>{
@@ -122,9 +123,22 @@ test('@ipad The third detected error locks immediately after two timely stops; m
 test('@ipad Numeric edge cases show real small changes, large balanced jumps, and mutated values without return',async({page})=>{
  test.setTimeout(35000);await open(page);
  const small='def kalibrieren(werte):\n    for i in range(len(werte)):\n        if werte[i] > 0:\n            werte[i] += 0.1\n        else:\n            werte[i] -= 0.1\n    return werte';
- await begin(page,small);await page.evaluate(()=>window.__run);expect((await state(page)).securityLocked).toBe(false);
+ await begin(page,small);
+ await expect.poll(async()=> (await state(page)).cycle).toBeGreaterThan(220);
+ expect(await page.evaluate(()=>window.DroneMissionRuntime.isRunning())).toBe(true);
+ const firstSum=await page.locator('#calibration-sum').innerText();
+ await expect.poll(()=>page.locator('#calibration-sum').innerText()).not.toBe(firstSum);
+ const telemetry=await page.evaluate(()=>{
+  const number=id=>Number(document.getElementById(id).textContent.replace(' %','').replace('−','-').replace(',','.'));
+  return {values:[0,1,2,3].map(i=>number('calibration-value-'+i)),sum:number('calibration-sum')};
+ });
+ expect(Math.abs(telemetry.sum)).toBeLessThanOrEqual(.99);
+ expect(Math.abs(telemetry.values.reduce((sum,value)=>sum+value,0)-telemetry.sum)).toBeLessThan(.00001);
+ await expect(page.locator('#calibration-alert')).toBeHidden();await stop(page);
+ expect((await state(page)).securityLocked).toBe(false);expect((await state(page)).stoppedErrors).toBe(0);
  const observed=await state(page);expect(observed.values[0]).toBeGreaterThan(observed.initialValues[0]);
- await page.locator('#calibration-help-btn').click();await expect(page.locator('#calibration-help')).toContainText('Änderung +0,1 %');
+ expect(observed.values[0]-observed.initialValues[0]).toBeCloseTo(observed.cycle*.1,6);
+ await page.locator('#calibration-help-btn').click();await expect(page.locator('#calibration-help')).toHaveText('Dein Code verändert die Werte behutsam und erhält die Kontrollsumme.');
  await begin(page,'def kalibrieren(werte):\n    return [10000, -10000, 10000, -10000]');await warning(page);
  expect((await state(page)).values).toEqual([10000,-10000,10000,-10000]);expect((await state(page)).sum).toBe(0);await stop(page);
  await begin(page,assignment('10000').replace('    return werte',''));
@@ -161,7 +175,7 @@ test('@ipad Reload during the lock alarm and during reauthentication preserves t
  expect((await state(page)).securityLocked).toBe(true);
  await solveFrame(page);await expect(page.locator('#calibration-return-note')).toBeVisible();
  expect(await page.evaluate(()=>window.DroneMissionRuntime.editor.getValue())).toBe(code);
- await page.locator('#calibration-help-btn').click();await expect(page.locator('#calibration-help')).toContainText('→ +10000 %');
+ await page.locator('#calibration-help-btn').click();await expect(page.locator('#calibration-help')).toHaveText('Mindestens eine Änderung war größer als 1 Prozentpunkt.');
  await page.reload();await expect.poll(()=>page.evaluate(()=>window.DroneMissionRuntime?.getState().securityLocked)).toBe(false);
 });
 
@@ -223,7 +237,6 @@ test('@ipad Legacy lock measurements migrate once to percent while preserving th
   expect(await page.evaluate(()=>window.DroneMissionRuntime.editor.getValue())).toBe(code);
  }
  await page.locator('#calibration-relogin').click();await solveFrame(page);
- await page.locator('#calibration-help-btn').click();await expect(page.locator('#calibration-help')).toContainText('K1: +103 % → +1 %');
- await expect(page.locator('#calibration-help')).toContainText('1 Prozentpunkt');
+ await page.locator('#calibration-help-btn').click();await expect(page.locator('#calibration-help')).toHaveText('Mindestens eine Änderung war größer als 1 Prozentpunkt.');
  expect(await page.evaluate(()=>window.DroneMissionRuntime.editor.getValue())).toBe(code);
 });

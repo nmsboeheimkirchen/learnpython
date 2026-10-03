@@ -8,12 +8,47 @@ test('Idle percentages keep the left channels near +100, right channels near -10
  for(let time=0;time<20000;time+=137){const v=c.idleValues(time);snapshots.add(v.join(','));assert.ok(v[0]>0&&v[2]>0);assert.ok(v[1]<0&&v[3]<0);assert.ok(v.every(n=>Math.abs(n)>=92&&Math.abs(n)<=108));assert.ok(Math.abs(c.checksum(v))===0);}
  assert.ok(snapshots.size>20);
 });
-test('Each percent update checks direction, exactly one percentage point, zero preservation and numeric output',()=>{
+test('Each percent update accepts outward steps up to one point and checks zero preservation and numeric output',()=>{
  const c=load(),before=[100,-100,0,2];
  assert.equal(c.inspect(before,[101,-101,0,3]).passed,true);
+ assert.equal(c.inspect(before,[100.1,-100.1,0,2.1]).passed,true);
+ assert.equal(c.inspect(before,[100.01,-100.01,0,2.01]).passed,true);
  for(const output of [[100,-100,0,2],[110,-110,0,12],[99,-99,0,1],[101,-101,1,3],[-100,-100,-100,-100],null,[100],['101',-101,0,3],[NaN,-101,0,3],[Infinity,-101,0,3]])assert.equal(c.inspect(before,output).passed,false);
  assert.match(c.inspect(before,[110,-110,0,12]).message,/mehr als 1 Prozentpunkt/);
  assert.match(c.inspect(before,[99,-99,0,1]).message,/zur Null/);
+});
+test('Small balanced steps can reach the final threshold without an iteration limit',()=>{
+ const c=load();
+ for(const step of [.1,.01]){
+  let values=[100,-100,100,-100],cycles=0;
+  while(!c.finalStageReady(values)){
+   const next=values.map(v=>c.round(v+Math.sign(v)*step)),observed=c.observe(values,next,0);
+   assert.equal(observed.passed,true);assert.equal(observed.suspicious,false);
+   values=next;cycles++;assert.ok(cycles<=170001);
+  }
+  assert.equal(cycles,1700/step);
+ }
+});
+test('The supplied minus-positive plus-negative program approaches zero and then oscillates safely',()=>{
+ const c=load();let values=c.idleValues(1200);
+ for(let i=0;i<2000;i++){
+  const next=values.map(v=>v>0?v-1:v<0?v+1:v);
+  assert.equal(c.observe(values,next,0).suspicious,false);
+  assert.equal(c.finalStageReady(next),false);values=next;
+ }
+ assert.ok(values.every(v=>Math.abs(v)<1));
+});
+test('K4 measurement noise stays within 0.99 points without accumulating or masking interventions',()=>{
+ const c=load(),values=[100.01,-102.17,102.17,-100.01],sums=new Set();
+ for(let time=0;time<50000;time+=137){
+  const measured=c.measuredValues(values,time),sum=c.checksum(measured);sums.add(sum);
+  assert.deepEqual(Array.from(measured.slice(0,3)),values.slice(0,3));
+  assert.ok(Math.abs(measured[3]-values[3])<=.99000001);assert.ok(Math.abs(sum)<=.99);
+  assert.equal(c.checksum(values),0);
+ }
+ assert.ok(sums.size>100);
+ assert.equal(c.observe(values,[101.01,-102.17,102.17,-100.01]).checksumChanged,true);
+ assert.equal(c.checksum(c.measuredValues([104,-100,100,-100],0)),4);
 });
 test('Six hundred updates diverge by 600 percentage points while keeping the checksum and prefinal progress',()=>{
  const c=load();let values=c.idleValues(1200),start=Array.from(values),sum=c.checksum(values);

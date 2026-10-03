@@ -137,6 +137,43 @@ Ergebnisse: `.cache/main24-all.log`, `.cache/main24-final`,
 WebKit-PICO-Erfolg überschritt im parallelen Lauf 50 s; isoliert bestanden
 (48,4 s), einschließlich Abschluss, Belohnung und Rückkehr. Kein Push/Release.
 
+## MAIN-25: Kalibrierprogramme weiter ausführen und Kontrollsumme beleben
+
+03.10.2026, lokal. Der frühere Richtungs-/Exaktschrittcheck beendete sichere
+abweichende Programme nach zwei Sekunden (etwa 20 Durchläufen). Nun läuft
+ausführbarer Code auch mit kleinen Schritten, unveränderten oder stabilisierten
+Werten weiter, bis die Lernenden stoppen. Das nachgereichte Beispiel mit minus 1
+bei positiven und plus 1 bei negativen Werten pendelt schließlich nahe null;
+es erreicht keine ±1800 % und löst keinen fiktiven Erfolg aus.
+
+Rauch, Licht und Ton folgen der tatsächlichen Zunahme der Abweichung, statt
+stabilisierende Programme nach fester Schleifenzahl zu beschädigen. Reihenfolge
+und Schwellen beim bisherigen ±1-Erfolgsprogramm bleiben erhalten. Finale
+weiterhin bei ±1800 %. Größere Eingriffe, veränderte Kontrollsummen und ungültige
+Rückgaben behalten die vorhandene Warn-/Sperrfolge. Strg+C/Stoppen erhält Code.
+Rückmeldung und angeforderte Hilfe erklären den Befund jeweils in einem Satz.
+
+K4 erhält zeitlich veränderliches Messrauschen bis ±0,99 Prozentpunkte. Die
+angezeigte Kontrollsumme wird aus den vier angezeigten Werten berechnet und
+schwankt entsprechend. Keine Aufsummierung oder Rückkopplung in die Pythonwerte;
+der Sicherheitscheck bewertet weiterhin die tatsächliche Codeänderung und
+ignoriert das separate Messrauschen. Laufhistorie für lange Versuche begrenzt.
+
+Öffentlich portierbar: `assets/nullpunkt-calibration-core.js`,
+`assets/nullpunkt-level4.js`, `pico_level4.html` (Text/Cacheversion 20261003-5),
+zugehörige Logik- und Browsertests. Kein Backend-/Kontoeingriff, keine neue
+Speicherung. Handoff/technischer Nachtrag bleiben getrennt.
+
+228/228 Logiktests und 42 unterschiedliche Browserfälle in Chromium/WebKit
+bestanden. Erster Lauf 38/42, danach 13/13 gezielte Nachprüfungen einschließlich
+der vier anfangs fehlgeschlagenen Prüfungen (veraltete Text-Erwartung bzw.
+Screenshotaufnahme im Zeitfenster). Messrauschen im Ruhezustand und im laufenden
+Programm geprüft; Nutzerbeispiel bis zum Pendeln nahe null, kleine Schritte,
+vollständiger Erfolg, Strg+C, Warnung/Sperre, Neuladen und erneutes Rätsel.
+Layout und Kontrollsumme zusätzlich visuell kontrolliert. Artefakte unter
+`.cache/main25-all.log`, `.cache/main25-browser` und `.cache/main25-final`.
+Kein Push/Release.
+
 ## Trennung von Missionsinhalt und Kontosystem
 
 Missionsänderungen sollen später einzeln nach `main` übernommen werden.
