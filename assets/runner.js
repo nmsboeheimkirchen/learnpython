@@ -408,6 +408,13 @@ function initializeBlockHints() {
         }
     });
     if (!blocks.length) return;
+    document.addEventListener("click", event => {
+        if (!pinned || event.target.closest?.(".block-tooltip, .CodeMirror, #python-editor")) return;
+        // Non-focusable headings/backgrounds do not move focus themselves.
+        // Release focus too, otherwise :focus-within keeps the hint visible.
+        if (pinned.contains(document.activeElement)) document.activeElement.blur();
+        setPinned(null);
+    }, true);
     document.addEventListener("keydown", event => {
         if (event.key === "Escape" && pinned) setPinned(null);
     });

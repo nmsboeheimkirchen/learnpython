@@ -1914,7 +1914,7 @@ test("mission navigation is rendered from one central definition", () => {
         assert.match(html, /<div id="navigation-root"><\/div>/);
         assert.match(html, /<script src="assets\/navigation\.js\?v=20260722-1"><\/script>/);
         assert.match(html, /<link rel="stylesheet" href="assets\/style\.css\?v=20261003-2">/);
-        assert.match(html, /<script src="assets\/runner\.js\?v=20261002-2"><\/script>/);
+        assert.match(html, /<script src="assets\/runner\.js\?v=20261003-3"><\/script>/);
         assert.doesNotMatch(html, /id="mySidebar"/);
     }
 });
@@ -2231,7 +2231,7 @@ test("the first helicopter level uses a runtime signal and one replace-based acc
     assert.match(html, /id="next-level-btn"[^>]+href="helikopter_flucht_level2\.html"[^>]+hidden/);
     assert.match(html, /<span>Nächster Auftrag<\/span>\s*<strong>Startkonfiguration reparieren<\/strong>/);
     assert.match(runner, /helikopter_flucht_level1:\s*\{\s*unlocks:\s*\["link-helicopter-level2"\],\s*successMessage:\s*"Der Bordcomputer ist entsperrt\."/);
-    assert.match(html, /assets\/runner\.js\?v=20261002-2/);
+    assert.match(html, /assets\/runner\.js\?v=20261003-3/);
     assert.match(html, /assets\/teacher-solutions\.js\?v=20260902-1/);
     assert.match(html, /assets\/helicopter-access-core\.js/);
     assert.match(html, /assets\/helicopter-access\.js/);

@@ -92,6 +92,19 @@ Startseite, System Access, Drohnensteuerung, PICO, Museum und Flucht visuell gep
 Ergebnisse unter `.cache/main22-headings-final` und `.cache/main22-headings`.
 Kein Backend-/Kontoeingriff, kein Push/Release.
 
+## MAIN-23: Angeheftete Blockhinweise beim Verlassen schließen
+
+03.10.2026, eigener öffentlicher Designcommit. Hover bleibt unverändert.
+Nach dem Anheften bleibt ein Hinweis nur bei Klicks im Block oder im eigentlichen
+CodeMirror-Editor einschließlich Zeilennummern erhalten. Klicks daneben, auf
+Ausführen oder auf den Editortitel lösen die Anheftung und ggf. den Blockfokus.
+Die Kopiersperre für Hinweistext und das Kopieren des eigenen Codes bleiben erhalten.
+
+Öffentliche Dateien: `assets/runner.js`, Runner-Cacheversion `20261003-3` in den
+aufrufenden HTML-Dateien und bestehende Browser-/Assettests. 224/224 Logiktests;
+gezielte Klick-, Tastatur-, Touch- und Clipboard-Prüfung unter `.cache/main23-hints`.
+Kein Backend-/Speichereingriff, kein Push/Release.
+
 ## Trennung von Missionsinhalt und Kontosystem
 
 Missionsänderungen sollen später einzeln nach `main` übernommen werden.

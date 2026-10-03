@@ -79,6 +79,41 @@ test("touch pins and unpins a Python block hint @ipad", async ({ page }) => {
     await expect(block.locator(".tooltiptext")).toBeHidden();
 });
 
+test("pinned hints stay only for clicks inside the code editor @ipad", async ({ page }) => {
+    test.setTimeout(60_000);
+    for (const route of ["mission1_level3.html", "agent_training_level2.html"]) {
+        await page.goto(`/${route}`);
+        await page.waitForFunction(() => window.editor);
+        await page.evaluate(() => window.editor.setValue('# Kein Programmstart nötig'));
+        const block = page.locator('.block-tooltip').first();
+        const hint = block.locator('.tooltiptext');
+        await block.hover();
+        await expect(hint).toBeVisible();
+        await page.mouse.move(0, 0);
+        await expect(hint).toBeHidden();
+        await block.click();
+        for (const target of ['.CodeMirror-code', '.CodeMirror-linenumber:visible']) {
+            await page.locator(target).first().click();
+            await expect(block).toHaveAttribute('aria-pressed', 'true');
+            await expect(hint).toBeVisible();
+        }
+        for (const target of ['background', 'heading', 'run']) {
+            if (target !== 'background') await block.click();
+            if (target === 'background') {
+                await block.scrollIntoViewIfNeeded();
+                const bounds = await block.boundingBox();
+                await page.mouse.click(bounds.x - 8, bounds.y + bounds.height / 2);
+            } else if (target === 'heading') {
+                await (route.startsWith('agent_') ? page.locator('#training-code-title') : page.getByRole('heading', { name: 'Python-Code', exact: true })).click();
+            } else {
+                await page.locator('#run-btn').click();
+            }
+            await expect(block).toHaveAttribute('aria-pressed', 'false');
+            await expect(hint).toBeHidden();
+        }
+    }
+});
+
 // Run with TEST_INSTALLED_BROWSERS=1 on Windows to include the actual installed
 // Chrome and Edge. CSS zoom + DPR deliberately simulate fractional scaling;
 // they cannot reproduce every Windows/browser-zoom combination of a pupil's PC.
