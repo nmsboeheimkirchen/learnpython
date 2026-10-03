@@ -371,6 +371,62 @@ function preventLockedClick(e) {
     e.preventDefault();
 }
 
+function initializeBlockHints() {
+    const blocks = [...document.querySelectorAll(".block-tooltip")];
+    let pinned = null;
+    const setPinned = block => {
+        if (pinned) {
+            pinned.classList.remove("is-hint-pinned");
+            pinned.setAttribute("aria-pressed", "false");
+        }
+        pinned = block;
+        if (pinned) {
+            pinned.classList.add("is-hint-pinned");
+            pinned.setAttribute("aria-pressed", "true");
+        }
+    };
+    blocks.forEach((block, index) => {
+        const hint = block.querySelector(".tooltiptext");
+        if (!hint) return;
+        if (!hint.id) hint.id = `python-block-hint-${index}`;
+        hint.setAttribute("role", "tooltip");
+        block.setAttribute("aria-describedby", hint.id);
+        block.setAttribute("role", "button");
+        block.setAttribute("aria-pressed", "false");
+        block.addEventListener("click", event => {
+            // Reading/touching the pinned hint itself must not dismiss it.
+            if (!hint.contains(event.target)) setPinned(pinned === block ? null : block);
+        });
+        block.addEventListener("keydown", event => {
+            if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                setPinned(pinned === block ? null : block);
+            }
+        });
+        for (const type of ["copy", "cut", "dragstart", "contextmenu"]) {
+            hint.addEventListener(type, event => event.preventDefault());
+        }
+    });
+    if (!blocks.length) return;
+    document.addEventListener("keydown", event => {
+        if (event.key === "Escape" && pinned) setPinned(null);
+    });
+    // Selection can also be created with keyboard/select-all. Only protect hints;
+    // copying and pasting the learner's own code in the editor stays available.
+    document.addEventListener("copy", event => {
+        const selection = window.getSelection();
+        if (!selection?.rangeCount || selection.isCollapsed) return;
+        const hints = blocks.map(block => block.querySelector(".tooltiptext")).filter(Boolean);
+        for (let index = 0; index < selection.rangeCount; index++) {
+            const range = selection.getRangeAt(index);
+            if (hints.some(hint => range.intersectsNode(hint))) {
+                event.preventDefault();
+                return;
+            }
+        }
+    });
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     if (window.AgentAccountConfig?.enabled && !(await window.AgentLearningDataReady)) return;
     const sidebar = document.getElementById("mySidebar");
@@ -389,6 +445,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.querySelectorAll(".tooltip, .block-tooltip").forEach(element => {
         if (!element.hasAttribute("tabindex")) element.tabIndex = 0;
     });
+    initializeBlockHints();
 
     applyUnlocks();
     const nextLevelButton = document.getElementById("next-level-btn");

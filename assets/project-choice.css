@@ -126,7 +126,7 @@
     font-size: clamp(3rem, 7vw, 6.4rem);
     font-weight: 790;
     letter-spacing: -0.06em;
-    line-height: 0.93;
+    line-height: 1.2;
 }
 
 .project-choice-lead {
@@ -267,7 +267,7 @@
     font-size: clamp(2rem, 3.2vw, 3.2rem);
     font-weight: 790;
     letter-spacing: -0.05em;
-    line-height: 0.98;
+    line-height: 1.2;
 }
 
 .project-card h2 span {

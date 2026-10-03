@@ -10,6 +10,40 @@ grün. Keine Veröffentlichung; Level 4 bleibt bis zum nächsten Umbau alter Inh
 Systemvertrag und privater Handoff sind als separater Dokumentationsnachtrag
 geführt und gehören nicht zur öffentlichen Missionsübernahme.
 
+**Weitere lokale Sicherung:** `d2a7a7b` – MAIN-11 bis MAIN-19 einschließlich
+Kalibrierfinale, Prozentlogik und Terminalbild v3. Nicht veröffentlicht.
+
+## MAIN-20: Globale Editorabstände, Überschriften und feste Blockhinweise
+
+Stand 03.10.2026, lokal geprüft. Öffentlicher Design-/Missionsumfang;
+Kontosystem und Backend unverändert.
+
+- `assets/editor-layout.js`: gemeinsamer CodeMirror-Init-Hook, in allen 26
+  Editorseiten nach der Bibliothek eingebunden. Font-, Größen-, Sichtbarkeits-
+  und DPR-Wechsel lösen gebündelte Refreshs aus. Der frühere Einzelrefresh in
+  `editor.js` entfällt. Cacheversionen der betroffenen gemeinsamen Assets erhöht.
+- Reproduziert in installiertem Chrome und Edge: bei CSS-Zoom benutzt CM 5.65.2
+  skalierte Bildschirmabstände als CSS-Pixel für die feste Nummernspalte.
+  Diese lag dadurch über den ersten Codezeichen. Der gemeinsame Hook normiert
+  die Abstände bei Render-/Scrollereignissen; Bibliotheksdateien unverändert.
+- Große Überschriften erhalten line-height 1.2, Haupttitel zusätzlichen Platz
+  unten für Unterlängen. Auch die eigene Nullpunkt-Regel korrigiert. Level 1
+  behält den Editorbeginn vor y=640 bei 1366×768 durch kompaktere Außenabstände.
+- Klick/Enter/Leertaste heftet einen Python-Blockhinweis an. Er bleibt beim
+  Tippen im Editor stehen; derselbe Block, ein anderer Block oder Escape löst
+  die Anheftung. Hinweistext ist über gewöhnliche Auswahl, Kopieren und Ziehen
+  nicht übertragbar. Eigenen Editorcode weiterhin kopieren/einfügen möglich.
+- Tests: 224/224 Logiktests; 30 unterschiedliche Browserfälle bestanden, teils
+  nach Layoutkorrekturen gezielt wiederholt. Darin 96 Geometriekombinationen
+  (vier Editortypen × DPR 1/1,25/1,5 × CSS-Zoom 80/90/100/125 % × Chrome/Edge),
+  echte Zwischenablageprüfung, Tastatur, WebKit/Touch und Schriftmetriken.
+  Chrome 154.0.8037.93 / Edge 154.0.4258.48. Screenshots visuell kontrolliert.
+- Grenze der Prüfung: CSS-Zoom/DPR simulieren Skalierung. Die genaue Windows-
+  und Browserversion der betroffenen Schülergeräte bleibt für einen Nachtest
+  relevant; native Browserzoom-Kombinationen dort wurden nicht direkt geprüft.
+- Ergebnisse: `.cache/global-main20-final`, `.cache/global-main20-reviewed`,
+  `.cache/main20-all.log`. Kein Push/Release.
+
 ## Trennung von Missionsinhalt und Kontosystem
 
 Missionsänderungen sollen später einzeln nach `main` übernommen werden.

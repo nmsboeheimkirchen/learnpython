@@ -222,11 +222,12 @@
     font-size: clamp(3rem, 6vw, 5.7rem);
     font-weight: 780;
     letter-spacing: -0.058em;
-    line-height: 0.91;
+    line-height: 1.2;
 }
 
 .course-hero h1 span {
     display: block;
+    padding-block: 0.04em;
     background: linear-gradient(100deg, #ffffff 4%, #bdfaff 55%, #ffe0a8 100%);
     -webkit-background-clip: text;
     background-clip: text;
@@ -356,7 +357,7 @@
     font-size: clamp(2rem, 4.5vw, 4rem);
     font-weight: 760;
     letter-spacing: -0.052em;
-    line-height: 0.98;
+    line-height: 1.2;
 }
 
 .course-section-heading > p {

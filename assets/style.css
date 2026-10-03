@@ -222,11 +222,12 @@ p {
 
 h1 {
     margin: 0 0 8px;
+    padding-block: 0.04em 0.12em;
     color: var(--ink);
     font-size: clamp(1.55rem, 2.4vw, 2.15rem);
     font-weight: 760;
     letter-spacing: -0.035em;
-    line-height: 1.1;
+    line-height: 1.2;
 }
 
 h2 {
@@ -350,16 +351,41 @@ code {
 }
 
 .block-tooltip:hover,
-.block-tooltip:focus-within {
+.block-tooltip:focus-within,
+.block-tooltip.is-hint-pinned {
     z-index: 90;
 }
 
 .tooltip:hover .tooltiptext,
 .tooltip:focus-within .tooltiptext,
 .block-tooltip:hover .tooltiptext,
-.block-tooltip:focus-within .tooltiptext {
+.block-tooltip:focus-within .tooltiptext,
+.block-tooltip.is-hint-pinned .tooltiptext {
     visibility: visible;
     opacity: 1;
+}
+
+.block-tooltip {
+    cursor: pointer;
+}
+
+.block-tooltip.is-hint-pinned {
+    outline: 2px solid var(--mission-accent);
+    outline-offset: 3px;
+}
+
+.block-tooltip .tooltiptext,
+.block-tooltip .tooltiptext * {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-user-drag: none;
+    -webkit-touch-callout: none;
+}
+
+.block-tooltip:hover .tooltiptext,
+.block-tooltip:focus-within .tooltiptext,
+.block-tooltip.is-hint-pinned .tooltiptext {
+    pointer-events: auto;
 }
 
 .CodeMirror {
@@ -666,7 +692,7 @@ button:disabled {
     max-width: 12ch;
     margin-bottom: 15px;
     font-size: clamp(2.7rem, 6vw, 5.4rem);
-    line-height: 0.94;
+    line-height: 1.2;
 }
 
 .mission-lead {

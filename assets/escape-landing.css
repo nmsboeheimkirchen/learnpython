@@ -96,7 +96,7 @@
     font-size: clamp(3rem, 7vw, 6.7rem);
     font-weight: 830;
     letter-spacing: -0.065em;
-    line-height: 0.9;
+    line-height: 1.2;
 }
 
 .escape-variant-b .escape-briefing h1 {

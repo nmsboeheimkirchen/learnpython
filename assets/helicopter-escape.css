@@ -112,7 +112,7 @@
     font-size: clamp(2.8rem, 6vw, 6.7rem);
     font-weight: 840;
     letter-spacing: -0.065em;
-    line-height: 0.9;
+    line-height: 1.2;
 }
 
 .helicopter-config-page .helicopter-hero-title h1 {

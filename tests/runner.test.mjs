@@ -1913,8 +1913,8 @@ test("mission navigation is rendered from one central definition", () => {
         const html = readFileSync(new URL(`../${page}`, import.meta.url), "utf8");
         assert.match(html, /<div id="navigation-root"><\/div>/);
         assert.match(html, /<script src="assets\/navigation\.js\?v=20260722-1"><\/script>/);
-        assert.match(html, /<link rel="stylesheet" href="assets\/style\.css\?v=20260722-2">/);
-        assert.match(html, /<script src="assets\/runner\.js\?v=20260827-2"><\/script>/);
+        assert.match(html, /<link rel="stylesheet" href="assets\/style\.css\?v=20261002-2">/);
+        assert.match(html, /<script src="assets\/runner\.js\?v=20261002-2"><\/script>/);
         assert.doesNotMatch(html, /id="mySidebar"/);
     }
 });
@@ -2231,7 +2231,7 @@ test("the first helicopter level uses a runtime signal and one replace-based acc
     assert.match(html, /id="next-level-btn"[^>]+href="helikopter_flucht_level2\.html"[^>]+hidden/);
     assert.match(html, /<span>Nächster Auftrag<\/span>\s*<strong>Startkonfiguration reparieren<\/strong>/);
     assert.match(runner, /helikopter_flucht_level1:\s*\{\s*unlocks:\s*\["link-helicopter-level2"\],\s*successMessage:\s*"Der Bordcomputer ist entsperrt\."/);
-    assert.match(html, /assets\/runner\.js\?v=20260902-1/);
+    assert.match(html, /assets\/runner\.js\?v=20261002-2/);
     assert.match(html, /assets\/teacher-solutions\.js\?v=20260902-1/);
     assert.match(html, /assets\/helicopter-access-core\.js/);
     assert.match(html, /assets\/helicopter-access\.js/);
@@ -2390,8 +2390,8 @@ test("both homepage options keep distinct light moods and one shared logo while 
         assert.match(html, variant.concept);
         assert.match(html, variant.brand);
         assert.match(html, /src="assets\/brand\/agent-py-logo\.png\?v=20260720-2"/);
-        assert.match(html, /href="assets\/style\.css\?v=20260722-2"/);
-        assert.match(html, /href="assets\/home\.css\?v=20260912-1"/);
+        assert.match(html, /href="assets\/style\.css\?v=20261002-2"/);
+        assert.match(html, /href="assets\/home\.css\?v=20261002-2"/);
         assert.match(html, /href="index\.html" aria-label="Agent PY – Startseite"/);
         assert.deepEqual(missionTargets, expectedMissionTargets);
         assert.equal((html.match(/<main\b/gi) ?? []).length, 1);
@@ -2513,16 +2513,16 @@ test("CodeMirror is initialized from one central editor module", () => {
 
     for (const page of missionPages.filter(name => name.includes("_level"))) {
         const html = readFileSync(new URL(`../${page}`, import.meta.url), "utf8");
-        assert.match(html, /<script src="assets\/editor\.js\?v=20260722-1"><\/script>/);
+        assert.match(html, /<script src="assets\/editor\.js\?v=20261002-2"><\/script>/);
         assert.doesNotMatch(html, /CodeMirror\.fromTextArea/);
     }
 });
 
-test("the editor refreshes after layout events and real width changes", () => {
-    const textarea = { id: "python-editor" };
+test("all editors refresh after font, size, visibility and resolution changes", () => {
     let width = 640;
     const wrapper = {
-        getBoundingClientRect() { return { width }; }
+        isConnected: true,
+        getBoundingClientRect() { return { width, height: 300 }; }
     };
     const editor = {
         on() {},
@@ -2535,17 +2535,29 @@ test("the editor refreshes after layout events and real width changes", () => {
     let fontReadyCallback = null;
     let resizeCallback = null;
     let observedElement = null;
+    let initHook = null;
+    let fontLoadedCallback = null;
+    const resolutionQueries = [];
     const document = {
         fonts: {
+            addEventListener(type, callback) {
+                assert.equal(type, "loadingdone");
+                fontLoadedCallback = callback;
+            },
             ready: {
                 then(callback) { fontReadyCallback = callback; }
             }
-        },
-        getElementById(id) { return id === "python-editor" ? textarea : null; }
+        }
     };
     const window = {
         CodeMirror: {
-            fromTextArea() { return editor; }
+            defineInitHook(callback) { initHook = callback; }
+        },
+        devicePixelRatio: 1,
+        matchMedia(query) {
+            const entry = { query, addEventListener(type, callback) { this.callback = callback; }, removeEventListener() {} };
+            resolutionQueries.push(entry);
+            return entry;
         },
         ResizeObserver: class {
             constructor(callback) { resizeCallback = callback; }
@@ -2560,8 +2572,10 @@ test("the editor refreshes after layout events and real width changes", () => {
         }
     };
     const context = vm.createContext({ document, Error, Number, window });
-    const source = readFileSync(new URL("../assets/editor.js", import.meta.url), "utf8");
+    const source = readFileSync(new URL("../assets/editor-layout.js", import.meta.url), "utf8");
     vm.runInContext(source, context);
+    initHook(editor);
+    const flushFrames = () => { while (frameQueue.length) frameQueue.shift()(); };
 
     assert.equal(frameQueue.length, 1);
     frameQueue.shift()();
@@ -2573,14 +2587,33 @@ test("the editor refreshes after layout events and real width changes", () => {
     eventListeners.get("load").callback();
     eventListeners.get("pageshow").callback();
     fontReadyCallback();
-    assert.equal(editor.refreshCount, 4);
+    fontLoadedCallback();
+    flushFrames();
+    assert.equal(editor.refreshCount, 2, "Simultaneous layout events are coalesced");
 
     assert.equal(observedElement, wrapper);
-    resizeCallback([{ contentRect: { width } }]);
-    assert.equal(editor.refreshCount, 4, "Gleiche Breite darf keinen Refresh-Loop auslösen");
+    resizeCallback();
+    flushFrames();
+    resizeCallback();
+    flushFrames();
+    assert.equal(editor.refreshCount, 3, "Gleiche Größe darf keinen Refresh-Loop auslösen");
     width = 720;
-    resizeCallback([{ contentRect: { width } }]);
-    assert.equal(editor.refreshCount, 5);
+    resizeCallback();
+    flushFrames();
+    assert.equal(editor.refreshCount, 4);
+    width = 0;
+    resizeCallback();
+    flushFrames();
+    assert.equal(editor.refreshCount, 4, "Never measure a hidden editor");
+    width = 720;
+    resizeCallback();
+    flushFrames();
+    assert.equal(editor.refreshCount, 5, "Revealing the editor repairs its geometry");
+    window.devicePixelRatio = 1.25;
+    resolutionQueries[0].callback();
+    flushFrames();
+    assert.equal(editor.refreshCount, 6);
+    assert.equal(resolutionQueries[1].query, "(resolution: 1.25dppx)");
 });
 
 test("the animated Enter callout is positioned above the live input", () => {

@@ -1,8 +1,9 @@
 import { expect, test } from "@playwright/test";
 
 const sharedAssetVersion = "20260722-1";
-const styleAssetVersion = "20260722-2";
-const runnerAssetVersion = "20260827-2";
+const editorAssetVersion = "20261002-2";
+const styleAssetVersion = "20261002-2";
+const runnerAssetVersion = "20261002-2";
 const logoAssetVersion = "20260720-2";
 
 const missionPages = [
@@ -97,7 +98,7 @@ test("mission pages expose the shared Agent PY dock without horizontal overflow"
         await expect(page.locator(`script[src="assets/runner.js?v=${runnerAssetVersion}"]`)).toHaveCount(1);
         await expect(page.locator(`script[src="assets/navigation.js?v=${sharedAssetVersion}"]`)).toHaveCount(1);
         if (missionPage.includes("_level")) {
-            await expect(page.locator(`script[src="assets/editor.js?v=${sharedAssetVersion}"]`)).toHaveCount(1);
+            await expect(page.locator(`script[src="assets/editor.js?v=${editorAssetVersion}"]`)).toHaveCount(1);
         }
 
         const dockRect = await elementRect(dock);
