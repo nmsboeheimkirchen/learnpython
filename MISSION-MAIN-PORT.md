@@ -107,7 +107,7 @@ Kein Backend-/Speichereingriff, kein Push/Release.
 
 ## MAIN-24: Einzellauf, passende Begrüßungsprüfung und Strg+C
 
-03.10.2026, eigener öffentlicher Inhalts-/Fehlerkorrekturcommit. Der klassische
+03.10.2026, eigener öffentlicher Inhalts-/Fehlerkorrekturcommit `e06e3a4`. Der klassische
 Runner sperrt den Start vom ersten Befehl bis zum Ende einschließlich Eingaben,
 Pausen und anschließender Validierung. Enter in der Konsole gibt den Startknopf
 nicht mehr vorzeitig frei. Die viersekündige Ergebnisanzeige bleibt bestehen.

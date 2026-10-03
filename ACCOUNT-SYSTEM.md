@@ -361,6 +361,15 @@ altes kompaktes Layout, vollständige Unterlängen. Editor-, Hinweis- und
 Terminalanalysekorrekturen bleiben bestehen. Reine öffentliche Designänderung,
 keine Änderung an Konten, Datenhaltung oder APIs.
 
+**MAIN-23/24, lokaler Nachtrag 03.10.2026:** Blockhinweise bleiben beim Tippen und
+bei Klicks auf Codezeilennummern angeheftet, schließen bei Klicks außerhalb des
+Editors. Klassische Programme lassen sich während eines Laufs nicht erneut
+starten. Mission 1-3 akzeptiert du/Du mit nachfolgenden Leerzeichen und meldet
+die falsche Schreibweise von „Willkommen“ gezielt. Strg+C stoppt aktive Python-
+Programme und erhält den eigenen Code; alte Eingabe-/Pausenfortsetzungen werden
+verworfen. PICO behält seine vorhandenen Sicherheitszähler und Sperrregeln auch
+beim Tastaturabbruch. Kein neues Lernstandsfeld, Speicherziel oder Backendverhalten.
+
 | Abschnitt | Pflichtpunkte | Levelgewichte |
 | --- | --- | --- |
 | Missionen 1, 3, 4 | Je 15 | Je 5 / 5 / 5 |

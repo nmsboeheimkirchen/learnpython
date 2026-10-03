@@ -1,6 +1,33 @@
 # Übergabe: dev-login-save
 
-## AKTUELL – MAIN-22 abgeschlossen: altes enges Spacing, volle Unterlängen
+## AKTUELL – MAIN-23/24 abgeschlossen: Blockhinweise und Programmausführung
+
+- Auftrag 03.10.: eigener Commit für Blockhinweise. Klick in CodeMirror inklusive
+  Zeilennummern hält die Anheftung; Klick außerhalb (auch Titel/Ausführen) löst sie.
+- Zweiter Commit: Mission 1-3 gegen Mehrfachstart absichern; Frage mit du/Du und
+  abschließendem Leerzeichen akzeptieren, falsche Begrüßung passend melden.
+  Strg+C soll laufende Programme einschließlich Endlosschleifen in allen Levels
+  abbrechen können. Kopieren bei nicht laufendem Programm bleibt erhalten.
+- Ausgangspunkt sauber: 31a3119 und Dokumentationscommit 496819f. Nur lokal,
+  kein Push/Release. Öffentliche Änderungen getrennt von Backend/Login halten.
+- MAIN-23 fertig und separat committed: `90aa41e`. 224/224 Logiktests und
+  5/5 Hinweis-Browsertests grün (Chromium/WebKit, alle angeforderten Klickziele,
+  Kopieren des eigenen Codes und Kopierschutz für Hinweise).
+- MAIN-24 fertig: gemeinsame abbrechbare Skulpt-Ausführung in python-execution.js,
+  Start-/Eingabesicherung im klassischen Runner und Strg+C-Anbindung auch in
+  Training, Drohnenmissionen, Kalibrierung und Helikopter. Einbindungen fertig,
+  eigene Programme bleiben beim Tastaturabbruch erhalten. Ein abgebrochener Lauf
+  darf nach input/sleep/Turtle-Pause nicht wieder fortgesetzt werden.
+- MAIN-24: 225/225 Logiktests und 29 unterschiedliche Browserprüfungen grün.
+  13/13 mit Pageerror-Erfassung, Flugabbruch, Neustart, Clipboard und
+  PICO-Sicherheitszähler unter `.cache/main24-final`. 16 Regressionsfälle bestanden:
+  zunächst 15/16; WebKit-PICO-Erfolg überschritt im parallelen Test 50 s, isoliert
+  vollständig grün in 48,4 s. `.cache/main24-regression`, `.cache/main24-pico-recheck`.
+- MAIN-24 separat lokal committed: `e06e3a4`. Keine offenen Tests oder
+  Umsetzungspunkte aus diesem Auftrag. Kein Push/Release; öffentliche Diffs
+  getrennt portieren. Technischer Nachtrag und Handoff separat gesichert.
+
+## Vorheriger Stand – MAIN-22 abgeschlossen: altes enges Spacing, volle Unterlängen
 
 - Nutzerkorrektur 03.10.2026: globale Vergrößerung der Zeilenhöhen aus MAIN-20
   zurücknehmen; Startseite, Missionseinstiege und Training wieder so kompakt wie
