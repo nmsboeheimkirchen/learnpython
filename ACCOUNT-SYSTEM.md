@@ -282,6 +282,78 @@ Registerzustand. Hinweisstufen, Zwischenziele und zufällige Registeraufgaben si
 seitenlokal. Keine Änderung an API, Schema, Gewichten oder Bestand. Öffentliche
 Änderungen und Kompatibilitätsentscheidung: MAIN-08/09/10 in `MISSION-MAIN-PORT.md`.
 
+**Lokales Kalibrierfinale, ergänzt am 01.10.2026 (nicht veröffentlicht):** Level 4
+behält `pico_level4_memory`. Ein neuer Abschluss zählt erst nach den Prüfungen,
+mindestens 600 echten Python-Durchläufen mit genau 0,01 Änderung je positivem/
+negativem Wert (Nullwerte bleiben erhalten) und der vollständigen Ausfallsequenz.
+Seit MAIN-16 läuft die echte Funktion auch während der Displaystörungen weiter;
+erst beim dauerhaften Schwarzbild endet die Berechnung. Späte ungültige Ergebnisse
+werden ebenfalls abgelehnt. Die Gesamtzahl hängt von der Sequenzdauer ab.
+Gespeichert wird unverändert der eigene Python-Code über denselben Adapter.
+Abbruch, Python-Fehler oder Codeänderung während des Laufs erzeugen keinen Abschluss.
+Alte Abschlüsse behalten ihre Gutschrift und ihren Code, ohne eine neue Kalibrierung
+oder Zerstörungssequenz vorzutäuschen. Kein API-/Schema-/Speicherumbau (MAIN-12).
+Die getrennten Rauch-, Licht-, Ton- und Displayeffekte des Nachtrags MAIN-15 sind
+rein seitenlokal. Sie dürfen keinen eigenen Fortschritt speichern: Ein neuer
+Abschluss bleibt bis zum vollständigen Sequenzende gesperrt, ein Abbruch beendet
+auch die laufenden Effekte. MAIN-15 und die fortlaufende Berechnung, Rauch-/Licht-
+und Tonanpassungen aus MAIN-16 sind lokal in Chromium/WebKit geprüft; der
+veröffentlichte Kontovertrag bleibt unverändert.
+
+**MAIN-17, lokaler Nachtrag 02.10.2026:** Ausführbare Fehlversuche verändern
+zunächst die echten angezeigten Kalibrierwerte. Ein großer Eingriff, eine
+abweichende Kontrollsumme oder eine ungültige Rückgabe löst nach etwa zwei
+Sekunden die Fehlerwarnung aus. Danach bleiben fünf Sekunden zum Stoppen;
+ohne Stopp oder nach zwei bereits rechtzeitig gestoppten Warnungen wird der
+Wartungszugang gesperrt. Nicht verändernder oder nur stabilisierender Code
+erhält stattdessen sachliche Analyse, Syntax-/Laufzeitfehler bleiben im Protokoll.
+
+Stopp erhält eigenen Code und Messwerte. Sperre, Fehlerzähler und Analyse sind
+rein seitenlokal. Der erneute Zugang nutzt den Terminalteil von Level 3 in einem
+eingebetteten Rätselmodus (`nullpunkt-terminal-mode.js`): nur dort ist der
+Kontobootstrap deaktiviert; `levelId: null` verhindert Code-/Abschlussschreibungen.
+Der Modus öffnet keine zweite Login-Hülle und fordert keine Kontodaten an.
+Die ursprüngliche Level-4-Seite behält unverändert ihren aktiven Adapter und
+Codeversuch. Nur das tatsächlich gelöste Rätsel im zugehörigen Frame gibt den
+Zugang wieder frei; kein erneuter Flug, keine Zusatzmünzen/Prozente für Level 3.
+Keine neuen Speicherkeys, API-Endpunkte oder Backendänderungen. Öffentlicher
+Portumfang und Prüfnachweise stehen bei MAIN-17 in `MISSION-MAIN-PORT.md`.
+
+**MAIN-18, lokaler Nachtrag 02.10.2026:** Die Spiel-Sperre muss jetzt Neuladen
+überstehen. Level 4 hält deshalb einen temporären `sessionStorage`-Checkpoint
+mit Sperre, Fehlerzähler, letztem Codeversuch, Messwerten und Analyse vor.
+Der Schlüssel beginnt mit `nullpunkt-security-v1:` und ist nach Lernprofil
+(`kind`, `profileId`) und Projektpfad getrennt. Initialisierung erst nach
+bereitem Lernadapter/Editor; kein Gast-Ersatz für fehlgeschlagene Kontoanmeldung.
+Der Checkpoint wird bei gelöstem Zugangsrätsel bzw. erfolgreichem Finale entfernt.
+Er ist tablokal, kein Geräteabgleich und keine neue Backend-/Fortschrittsablage.
+Bei deaktiviertem Browserspeicher bleibt nur der laufende Seitenzustand erhalten.
+Damit ersetzt MAIN-18 die reine Arbeitsspeicher-Lebensdauer aus MAIN-17.
+Das Finale setzt zusätzlich einen Kalibrierwert mit Betrag mindestens 18 voraus.
+
+**MAIN-19, lokaler Nachtrag 02.10.2026:** Die Kalibrierung verwendet Prozentwerte
+um ±100 %; pro Durchlauf beträgt der erlaubte Schritt 1 Prozentpunkt. Die
+Prüfwerte und Kontrollsummentoleranz sind ebenfalls ×100 skaliert. Der Nutzer
+bestätigt ausdrücklich ±1800 % als neue finale Schwelle (entspricht den früheren
+±18). Der ruhende Ausgangszustand hat eine Kontrollsumme von genau 0 %.
+Der vorhandene tablokale Sicherheitscheckpoint bekommt `unit: 'percent'`.
+Alte Snapshots ohne Einheit werden einmalig ×100 umgerechnet, eigene Codeversuche
+bleiben unverändert und Sperren bestehen weiter. Kein neuer Speicherschlüssel,
+kein Kontofeld und keine API-/Backendänderung. Neue Grafik/Text/Prüfungen gehören
+zum öffentlichen MAIN-19-Port, Kontoverwaltung bleibt auf dev-login-save.
+
+**MAIN-20/21, lokaler Nachtrag 03.10.2026:** Globale Darstellung bleibt öffentlicher
+Missionsumfang: gemeinsamer CodeMirror-Layout-Hook einschließlich Korrektur
+skalierter Nummernspalten, vollständige Unterlängen der Überschriften und per Klick
+angeheftete Python-Blockhinweise. Hinweistext ist über die normale Browserbedienung
+nicht markier-/kopierbar; eigener Editorcode bleibt kopier-/einfügbar. Keine neue
+Speicherung, Berechtigung oder API. Die Terminalanalyse zeigt nun alle vier
+aktuellen Rechnungen mit richtigem Ergebnis und ggf. abweichendem Sollwert;
+erfüllte Einzelbedingungen beweisen nicht automatisch die einzelnen Pfeile.
+Hilfe weiterhin nur auf Anforderung nach einer Prüfung. Bei Wiederanmeldung in
+Level 4 erhält der Rahmen zusätzlich eine explizite Höhenmeldung nach Änderungen
+der Analyse. Die vorhandene Herkunfts-/Tokenprüfung bleibt bestehen.
+
 | Abschnitt | Pflichtpunkte | Levelgewichte |
 | --- | --- | --- |
 | Missionen 1, 3, 4 | Je 15 | Je 5 / 5 / 5 |

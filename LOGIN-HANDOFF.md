@@ -1,5 +1,263 @@
 # Übergabe: dev-login-save
 
+## AKTUELL – MAIN-20/21 abgeschlossen: globale Darstellung und vollständige Terminalanalyse
+
+- Öffentliche lokale Commits: `d2a7a7b` (PICO MAIN-11–19), `6dc9076`
+  (globale Darstellung MAIN-20), `2ae355f` (vollständige Terminalanalyse MAIN-21).
+  Für main nur die markierten öffentlichen Diffs übernehmen. Private technische
+  Dokumentation separat; kein Gesamtmerge des Login-/Speicherbranches.
+
+- 03.10.2026: MAIN-20 implementiert und geprüft; öffentlicher Commit `6dc9076`.
+  224/224 Logiktests, 30 unterschiedliche Browserfälle über mehrere gezielte
+  Läufe bestanden; darin 96 Chrome-/Edge-Skalierungskombinationen. Finale
+  Layoutnachprüfung 6/6 grün unter `.cache/global-main20-reviewed`.
+- Nutzerauftrag MAIN-21 erfüllt: Terminalanalyse zeigt auch nicht erfüllte
+  Prüfungen mit eingesetzten Zahlen und erwartetem Wert zeigen. Erläutern,
+  dass ein passendes Produkt einzelne Pfeile nicht beweist: −1·−1 und +1·+1
+  ergeben beide +1. Weiterhin keine Hilfe vor Prüfung/Anforderung.
+- MAIN-21 implementiert in `assets/nullpunkt-register-core.js`, `nullpunkt-level3.js`
+  und CSS; Cacheversionen in pico_level3.html erhöht. Alle vier Rechnungen samt
+  grünem ✓ Korrekt bzw. orangefarbenem ✗ Nicht erfüllt / erwartetem Wert sichtbar.
+  Annahmenhinweis ergänzt, ursprüngliche Test-/Hilfesperre bleibt bestehen.
+  224/224 Logiktests, 9/9 Level-3-Browsertests und 4/4 gezielte Wiederanmeldetests
+  grün. Ergebnisse `.cache/main21-all.log`, `.cache/main21-terminal` und
+  `.cache/main21-reauth-fixed`. Der WebKit-Rahmen meldet die Inhaltshöhe nun
+  zusätzlich nach dem Rendern; längere Analyse schneidet den unteren Bildteil
+  nicht mehr ab. Quellen-/Tokenprüfung und Kalibrierlogik unverändert.
+- Keine offenen Tests oder Umsetzungspunkte aus diesem Auftrag. Nachtest auf
+  den ursprünglich betroffenen Schülergeräten bleibt sinnvoll, weil deren genaue
+  native Zoom-/Windows-/Browserversion nicht vorlag. Kein Push/Release.
+
+### Verlauf MAIN-20 (erledigt)
+
+- Nutzerauftrag: fertigen PICO-Stand committen, danach verdeckte Codezeilennummern
+  bei unterschiedlichen Zoom-/Skalierungseinstellungen (Chrome/Edge), abgeschnittene
+  Unterlängen in Überschriften und dauerhafte, nicht direkt kopierbare Blockhinweise
+  korrigieren und lokal prüfen.
+- PICO öffentlich portierbar committed: **d2a7a7b** (MAIN-11 bis MAIN-19).
+  Private technische Dokumentation bleibt getrennt. Kein Push/Release.
+- Diagnose: Gradientüberschriften mit zu knapper Zeilenhöhe; Tooltips nur an
+  Hover/Fokus gebunden. CodeMirror hat mehrere Initialisierungspfade; bisheriger
+  zentraler Refresh erfasste die Drohnenmissionen nicht.
+- Präzisierung des Nutzers: Die Nummernspalte verdeckt die ersten Codezeichen,
+  nicht umgekehrt. Originalgeräte-/Versionskombination nicht verfügbar.
+- Ergebnis: editor-layout.js als CodeMirror-Init-Hook in allen 26 Editorseiten;
+  Refresh bei Font-, Größen-, Sichtbarkeits- und DPR-Wechseln. Großüberschriften
+  line-height 1.2 und zusätzlichen unteren Innenabstand. Blockhinweise lassen sich anheften, bleiben beim
+  Tippen stehen; normale Auswahl/Kopieren der Hinweise gesperrt, eigener Code frei.
+- Pinning, echte Clipboard-Prüfung und Touch bestanden. Chrome-/Edge-Überdeckung
+  bei CSS-Zoom reproduziert und korrigiert (skalierte Bildschirmabstände wurden
+  von CM als CSS-Pixel positioniert). 96 Skalierungsfälle jetzt grün.
+- MAIN-20 vollständig erledigt, genaue Schülergeräte noch nicht nachgetestet.
+  Keine Teilagenten, kein Push/Release.
+
+## Vorheriger Stand 02.10.2026 – MAIN-19 fertig: Handschrift und Prozentkalibrierung
+
+- Zuerst neues Terminalbild mit eingebautem Imagegen erzeugt und dem Nutzer
+  gezeigt: schnelle Kugelschreiber-Handschrift, ₿ statt Bitcoin, keine Nullenkette.
+  PNG `exec-57ece274-7661-41f7-9ecf-ef4e6481ca25.png` im generierten Bildordner.
+- Neues Bild für Level 3/4 eingebaut: `pico-command-terminal-v3.webp`, 1672 × 941,
+  verlustfreies WebP. Auftragstext ersetzt, Prozentwerte um ±100 %, Code/Prüfungen
+  ×100 (zulässiger Schritt 1 statt 0.01). Kontrollsumme im Ausgangszustand genau 0.
+- Nutzer hat ausdrücklich die finale Schwelle **±1800 %** bestätigt, NICHT ±118 %.
+  Bestehende Licht-/Tondramaturgie beibehalten. Linke Werte positiv, rechte negativ.
+- Alte Sperren bleiben erhalten; alte Messwert-Snapshots werden einmalig in
+  Prozent umgerechnet, gespeicherter eigener Code bleibt unverändert.
+- 224/224 Logiktests und **50/50 Browserchecks grün** (Level 3, Level 4, Sicherheit,
+  neue Prüfung der Einheitenmigration), `.cache/nullpunkt-main19-20261002`.
+- Nach Bildkontrolle längeren Auftrag kompakter gesetzt und Wiederholung über
+  dem Editor entfernt. **4/4 Layout-Nachprüfungen grün** (Chromium/WebKit),
+  `.cache/nullpunkt-main19-layout`; bei 1366×768 beginnt der Code oberhalb y=640.
+  Neuer Terminalrahmen, Prozentanzeige, Rauch-/Lichtfolge, Desktop und Handy
+  visuell geprüft. Insgesamt 51 unterschiedliche Browserfälle, davon drei im
+  Layoutnachlauf erneut geprüft. Keine offenen Tests/Teilagenten.
+- `git diff --check` grün. Bildprompt und Herkunft in `PICO-TERMINAL-V3-PROMPT.md`.
+- Weiter lokal, kein Push/Release. Öffentlicher Port MAIN-19 dokumentiert.
+
+## Vorheriger Stand 02.10.2026 – MAIN-18 fertig: Wiederanmeldung und Ausfallschwelle
+
+- Auftrag: abgeschnittenes Rätsel nach Sperre reparieren, Sperre bei Neuladen
+  erhalten, letzte Eskalation erst bei Abweichung 18.
+- Ursache des Ausschnitts: Screenshot zeigt file://. Datei-Frames haben opake
+  Origins: event.origin ist "null", location.origin muss nicht identisch sein.
+  Nachrichten jetzt an aktuelle Frame-Instanz und frisches Token gebunden;
+  file://-Origin ausdrücklich berücksichtigt, tatsächliche Inhaltshöhe übernommen.
+  Präsentationsmodus vor Öffnen des Rätsels verlassen. Keine innere Scrollbar.
+- Sperre, Fehlversuch und Zähler bleiben im selben Tab erhalten, getrennt nach
+  Lernprofil/Projektpfad (`nullpunkt-security-v1:` in sessionStorage). Keine neue
+  Backend-/Fortschrittsablage. Wiederherstellung erst nach initialisiertem Adapter
+  und Editor. Rätsellösung bzw. erfolgreicher Abschluss entfernt den Checkpoint.
+- Abweichung vorerst als Betrag eines Kalibrierwerts interpretiert: +18 / −18.
+  Optionale Rückfrage gestellt. Erste Rauch-/Warnstufen bleiben davor.
+- 224/224 Logiktests grün. Erster Browserlauf 36/37 erfolgreich; file://-Abweichung
+  zwischen location.origin und event.origin danach korrigiert. Gezielter Dateitest
+  jetzt 1/1 grün: Neuladen behält Sperre, gesamtes Bild sichtbar, erneutes Rätsel
+  lösbar und alter Code wieder da. Bild visuell geprüft. Alle 37 Fälle abgedeckt.
+- Zusätzlich 2/2 Profiltrennungsprüfungen grün (Chromium/WebKit, simulierte
+  Lernkontexte, keine Kontoserverabfragen): anderer Account und Gast übernehmen
+  weder Sperre noch Code aus dem Checkpoint. Rückkehr zum Ursprungsprofil stellt
+  beides wieder her. Insgesamt 39 Browserfälle erfolgreich geprüft.
+- Artefakte: `.cache/nullpunkt-main18-20261002`,
+  `.cache/nullpunkt-main18-file-recheck`, `.cache/nullpunkt-main18-profile`.
+- Keine laufenden Tests oder Teilagenten. JavaScript-Syntax und `git diff --check`
+  grün. Finale und kompletter Dateiterminal visuell geprüft. Öffentlicher Umfang
+  in `MISSION-MAIN-PORT.md`; technischer Nachtrag in `ACCOUNT-SYSTEM.md`.
+- Weiter ausschließlich lokal auf dev-login-save. Kein Commit/Push/Release.
+
+## Vorheriger Stand 02.10.2026 – MAIN-17: Fehlerreaktion und erneuter Terminalzugang fertig
+
+- Neu beauftragt: einheitlicher tiefer Alarm; Zentrale analysiert echte Änderungen.
+  Ausführbarer abweichender Code muss seine tatsächlichen Werte zeigen (auch
+  Zuweisung 0.01 oder 100), statt vor der Anzeige abgelehnt zu werden.
+- Umgesetzter Ablauf: nach ca. 2 s „Fehler erkannt“ + heller kurzer Ton; 5 s zum
+  Stoppen. Ohne Stopp bzw. beim dritten erkannten Fehler nach zwei rechtzeitigen
+  Stopps: „Manipulation erkannt“, langer tiefer Alarm, „Zugriff verweigert“.
+- Erneuter Zugang nutzt direkt den Terminalteil von Level 3 eingebettet in
+  Level 4; eigener Code und Analyse bleiben im Arbeitsspeicher. Kein erneuter
+  Flug, keine erneute Gutschrift für Level 3, keine neuen Backend-Speicherfelder.
+  Syntax-/Laufzeitfehler bleiben im Protokoll.
+- Implementiert: echte Wertausgabe vor Ablehnung, Sicherheitszustände und Stopp
+  mit Codeerhalt, eingebetteter Level-3-Terminalmodus mit eigener neuer Aufgabe
+  und ohne Fortschrittsgutschrift. Nachrichten nur aus dem aktiven Frame und nach
+  tatsächlich gelöstem Rätsel akzeptieren. Keine neuen Speicherschlüssel.
+- 223/223 Logiktests und 40/40 erste Browserchecks grün
+  (`.cache/nullpunkt-security-20261002`). Nach Bildkontrolle doppelte Navigation,
+  verbliebenes „Zugriff verweigert“ nach Rückkehr und wachsende iframe-Mindesthöhe
+  korrigiert. `nullpunkt-terminal-mode.js` verhindert im inneren reinen Rätsel
+  Kontobootstrap/zweite Login-Hülle; Host-Level 4 bleibt normal angebunden.
+- Weiterer Nachlauf: 32/34 grün (`.cache/nullpunkt-security-final-20261002`).
+  Zwei Ursachen identifiziert: älterer Level-1-Storyzuwachs schob den Editor
+  unter y=640 (jetzt 20 px weniger Einleitungsabstand); spätes Nullwert-Probe-
+  Szenario brauchte auf WebKit mehr als 10 s (Testwartezeit jetzt 20 s).
+  **Beide Korrekturen plus normale Erfolgswege erneut geprüft: 7/7 grün**,
+  `.cache/nullpunkt-security-recheck-20261002`. Der 10-s-Timeout war ein
+  Testproblem; die Nullprobe beginnt erst nach 600 echten Durchläufen.
+- Insgesamt 64 unterschiedliche Browserfälle abgedeckt (Level 1: 10, Level 2: 11,
+  Level 3: 9, Level 4: 21, Sicherheit: 13); Nachläufe oben getrennt dokumentiert.
+  Neuer Kontomodus-Check aktiviert die Konto-Konfiguration im inneren Frame:
+  kein API-Zugriff, keine zweite Shell, keine erneute Gutschrift. Handy und
+  Desktop-Terminal, Warnbanner und erhaltene Codeanalyse visuell kontrolliert.
+- Alle Tests abgeschlossen. `git diff --check` grün, lokale Level-4-Seite HTTP 200.
+  Beim nächsten Test eigenes Beispiel eingeben oder Lehrer-Musterlösung laden.
+  Sperrzähler und Analyse gelten für die offene Seite; kein persistenter Prüfungs-
+  oder Kontoschutz. Normaler Versuchsspeicher bleibt im vorhandenen Adapter.
+- Kein Teilagent aktiv. Als öffentlich portierbare Änderungen MAIN-17 markiert.
+- Weiter lokal auf dev-login-save, kein Push/Release. Vorheriger Nachweis unten.
+
+## Vorheriger Stand 02.10.2026 – MAIN-16 Lockscreen und lebendiges Finale
+
+- Neuer Auftrag: Level 3 erklärt kurz das Zugangsrätsel des Lords, zeigt oben
+  rechts LOCKED und rückt Prüfhaken an die Gleichungen. HTML/CSS dafür angepasst.
+- Level 4 umgesetzt: Nach den ersten 600 Durchläufen wird das echte
+  Schülerprogramm auch während der Störfolge weiter ausgeführt und geprüft.
+  Zwischen Störungen erscheinen die fortgeschrittenen Werte. Erst das endgültig
+  schwarze Display stoppt die Berechnung. Kein vorgetäuschtes Weiterzählen.
+- Rauch: getrennte Hüll-Ebene zum sanften Einblenden (1,8 s) und Bild-Ebene mit
+  langsamer Deckkraftänderung (5,8 / 4,6 s). Drei Warnbalken liegen hinter dem
+  Rauch; ab Durchlauf 480 überstrahlen ihre synchronen 1,6-s-Pulse den Raum.
+  Separate rote Grundtönung steigt mit Rauch und Ausfall langsam an. Display bleibt
+  lesbar; ausdrücklich beschriftete Kontrollsumme ist größer als die Messwerte.
+- Die drei bisherigen leisen Töne bleiben. Ab 250 ms nach der ersten Störung
+  folgen stärkere rhythmische Warntöne alle 800 ms. Ende, Reset, Fehler und
+  Navigation stoppen sie. Reduzierte Bewegung: ruhiges Rot, kein Lichtblitzen
+  oder Rauchpulsieren, langsamere Displaywechsel.
+- **30/30 Browserchecks erfolgreich** (21 Level 4 + 9 Level 3, Chromium/WebKit),
+  einschließlich echter Weiterberechnung, später Python-Fehler, Audio-Cleanup,
+  stabiler Summe, Lock/Haken, Altständen, Helikopterweg und Handyansicht.
+  Bilder: `.cache/nullpunkt-dramaturgy-20261002`.
+- Letzter visueller Nachtrag legt die Warnbalken hinter den Rauch. **2/2 erneute
+  Ablauf-/Bildprüfungen erfolgreich**, Bilder unter
+  `.cache/nullpunkt-dramaturgy-visual-20261002`. Raumblitz, Kontrollsumme und
+  Endzustand visuell kontrolliert. Keine offenen Tests/Teilagenten; JavaScript-
+  Syntaxcheck und `git diff --check` erfolgreich. Lokale Level-4-URL liefert HTTP 200.
+- Nur lokal auf `dev-login-save`; kein Commit, Push oder Release. MAIN-11 bis
+  MAIN-16 bleiben uncommittet. Keine Backend-/Speicheränderungen. Öffentlicher
+  Portumfang: `MISSION-MAIN-PORT.md`. Alten Einmalhelper nicht ausführen.
+
+## Vorheriger Stand 02.10.2026 – Getrennte Ausfallfolge und Story
+
+- Lokal auf `dev-login-save`, kein Push/Release. Letzte Commits bleiben
+  `a36189e` (MAIN-01 bis MAIN-10) und `4dea2f5` (Dokumentation). Nachträge
+  MAIN-11 bis MAIN-15 sind uncommittet. Backend, Speicheradapter, Schema,
+  Level-IDs und Prozentgewichte unverändert.
+- Neuester Nutzerauftrag vollständig umgesetzt: Level 1 nennt Lüftungs- UND
+  Aufzugsschacht und gratuliert zum langen gefährlichen Flug, ohne Energiespoiler.
+  Level 2 erzählt ausführlicher von geheimen Schlüsseln, Entschlüsselung,
+  manipulierten Überweisungen und gestohlenen Kryptowährungen. Level 3 greift
+  die Gefahr sehr knapp auf, Level 4 nochmals vor dem Finale.
+- Level 4 führt weiterhin 600 echte Python-Aufrufe von `kalibrieren(werte)` aus,
+  pro Wert genau 0,01 weiter von null, Summe nahezu unverändert. Eigenen Code,
+  Altabschlüsse und Gutschrift unter `pico_level4_memory` erhalten.
+- Neue unabhängige Ebenen: unveränderte Terminalbasis; transparente leichte/starke
+  Rauchgrafiken; SVG-Warnlicht nur am Rechner; eigene Zahlenanzeige, opakes
+  Canvas-Störbild und Schwarzbild; getrennte Kern- und Barabdunklung.
+  Die Vordergrundmaske erhält Monitor und drei Post-its. Keine gemeinsame
+  Vollbildüberblendung mehr in der aktiven Mission.
+- Ablauf: sichtbare Drift → leichter Rauch ab Durchlauf 60 → rotes Pulsieren ab
+  160 → drei kurze leise Warntöne ab 240 → nach 600 drei Störimpulse
+  (180 ms Rauschen, je 520 ms Zahlen) → 1,4 s Megarauch → drei stärkere
+  Wechsel (200/220 ms) → Display schwarz → 700 ms später Bar/Finanzmonitore aus
+  → nach weiteren 900 ms Abschluss. Rote Notbeleuchtung bleibt aktiv.
+  Reduzierte Bewegung nutzt statisches Rot und langsamere Displaywechsel.
+- Abbruch, Codeänderung und Navigation stoppen ausstehende Effekte und Töne.
+  Audiofehler verhindern die Mission nicht. Keine Gutschrift vor Ende der
+  gesamten Folge; erst außerhalb der Kamera Abschluss, vier Münzen und Helikopter.
+- Sichtbare harte Abdunklungsgrenzen wurden durch weich auslaufende SVG-Masken
+  ersetzt. Der Testfilter zählt nur tatsächliche Displaywechsel, nicht zusätzlich
+  den gleichnamigen Beginn der Störphase. Beide gefundenen Probleme sind behoben.
+- **Abschlussprüfung 02.10.: 21/21 Browserchecks grün** (19 Level 4 + 2 Level-3-
+  Übergangs-/Layoutchecks in Chromium und WebKit). Enthalten: Reihenfolge,
+  exakt drei erste Störungen, unabhängige sichtbare Ebenen, spätes Reset mit
+  Audio-Cleanup, Fehler/Endlosschleifen, Codeänderung, reduzierte Bewegung,
+  Audioausfall, Altstände, Handyansicht und vollständiger Helikopterweg.
+  Bilder unter `.cache/nullpunkt-final-20261002`; Terminal und Endbild visuell
+  kontrolliert. Keine sichtbaren Farblinien aus transparentem Asset-RGB.
+- Vor diesem letzten Nachtrag: 222/222 Logiktests, 32/32 übrige Missions-
+  Browserchecks sowie vier Grafikchecks grün. Die alte 15er-Level-4-Suite wurde
+  durch die neue 19er-Suite ersetzt. Keine Testläufe oder Teilagenten mehr aktiv.
+- Aktuelle Bilder: Raum `pico-command-lab-v3.webp`, Terminal
+  `pico-command-terminal-v2.webp` (beide 1672 × 941, verlustfrei).
+  Blaue Lichtstimmung, schwarzes Sofa, Finanzanzeigen. Drei Post-its mit
+  Bitcoin/Hash, US National Reserve/Kontonummern und Shanghai Digital Vault /
+  上海数字金库; sämtliche Nummern sind erfundene Requisiten.
+- Transparenter Rauch: `pico-smoke-light-v1.webp` (1672 × 941, 105384 Bytes),
+  `pico-smoke-heavy-v1.webp` (1671 × 941, 575010 Bytes). Die schwere Ebene
+  erhält im Browser dieselbe Kamerafläche, minimale 0,06 % Breitenanpassung;
+  Quelldatei nicht skaliert. Prompts/Alpha-Prüfung: `PICO-SMOKE-LAYERS-PROMPTS.md`.
+  Raum-/Terminalprompts: `PICO-CAMERA-PROMPTS.md`, `PICO-TERMINAL-V2-PROMPTS.md`.
+- `prototypes/pico-drone-camera.html` ist ausdrücklich nur die ältere
+  Vier-Vollbilder-Rendervorschau mit V2-Grafiken. Den neuen Liveeffekt in
+  **http://127.0.0.1:4173/pico_level4.html** testen. Statischer Server läuft
+  in Sitzung 66114. Eigener Code bleibt geladen; bei Altständen ggf.
+  „Code der Zentrale laden“ verwenden. Für einen fertigen Testlauf die vorhandene
+  Lehrer-Musterlösung nutzen.
+- Öffentlich portierbare Dateien/Änderungen sind in `MISSION-MAIN-PORT.md`
+  als MAIN-11 bis MAIN-15 markiert. Noch kein neuer Commit beauftragt.
+  Einmalhelper `.cache/build-nullpunkt-calibration.cjs` NICHT erneut ausführen;
+  er würde spätere HTML-Anpassungen überschreiben.
+
+## Historischer Verlauf
+
+Die folgenden Einträge beschreiben frühere Zwischenstände. Bei Widersprüchen gilt
+der aktuelle Status oben; ältere offene Ideen sind keine neuen Arbeitsaufträge.
+
+## LOKALER NACHTRAG 28.09.2026 – Terminaltext und Kalibrieridee
+
+- Level 3 blendet den Absatz „Die Drohne ist aufgeladen … um den Wartungszugang
+  zu öffnen“ im zweiten Teil (Terminalkamera) aus. Im Flugteil bleibt er erhalten.
+  HTML-Klasse + bestehender Ansichtsstatus in CSS, Cacheversion 20260928-3.
+- Level 4 ist jetzt in Diskussion: manipuliertes Kalibrierprogramm mit for/if
+  dreht positive Registerwerte ins Negative; aus einer Balance 0 wird −4.
+  Noch keine Umsetzung oder Änderung des Rätselgenerators freigegeben.
+- Offene Gestaltungsentscheidung: Level 3 erlaubt derzeit Summen −2, 0, +2.
+  Soll dasselbe Register stabil nur bei 0 sein, müsste Level 3 auf die sechs
+  ausgeglichenen Zielzustände beschränkt werden (bisher 14 Zielzustände).
+  Fiktive Wartungs-/Kühlsteuerung klar von echter Quantenphysik unterscheiden.
+  Sichere Notabschaltung allein bedeutet keine Zerstörung; Rauch/Core Failure
+  und dauerhafte Unterbrechung des Angriffs in der Geschichte begründen.
+- Öffentliche Textänderung als MAIN-11 markiert. Noch nicht committet/gepusht;
+  letzter gesicherter Stand bleibt a36189e plus Dokumentation 4dea2f5.
+
 ## LOKAL COMMITTET 28.09.2026 – Nullpunkt 1–3 und Analyse auf Anfrage
 
 - Missionsstand **`a36189e`** auf `dev-login-save`, Präfix `mission-public:`.
