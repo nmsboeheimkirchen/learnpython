@@ -57,6 +57,16 @@ test('@ipad Ignored warning locks access; the real level 3 puzzle restores the e
  const frame=page.frameLocator('#calibration-login-frame');await expect(frame.locator('.register-lock')).toBeVisible();
  await expect(frame.locator('#learning-nav-dock')).toBeHidden();await expect(frame.locator('.account-fullscreen')).toBeHidden();
  await expect(frame.locator('#back-to-flight')).toBeHidden();await expect(frame.locator('#flight-workspace')).toBeHidden();
+ await expect(frame.locator('#register-hint')).toBeHidden();
+ await frame.locator('#register-check').click();
+ await frame.locator('#register-help-btn').click();
+ await expect(frame.locator('.register-analysis li')).toHaveCount(4);
+ await expect(frame.locator('.register-analysis .is-failed').first()).toContainText('Nicht erfüllt · erwartet');
+ await expect(frame.locator('.register-analysis-caution')).toContainText('(−1) · (−1) = +1 und (+1) · (+1) = +1');
+ await expect.poll(()=>page.locator('#calibration-login-frame').evaluate(element=>{
+  const layout={height:element.clientHeight,documentHeight:element.contentDocument.documentElement.scrollHeight,mainHeight:element.contentDocument.getElementById('main-content').scrollHeight};
+  return layout.documentHeight-layout.height>2?layout:null;
+ })).toBeNull();
  await page.screenshot({path:info.outputPath('reauth-terminal.png'),fullPage:true});
  await solveFrame(page);await expect(page.locator('#calibration-return-note')).toBeVisible();
  await expect(page.locator('#validation-title')).toHaveText('Letzten Codeversuch untersuchen');

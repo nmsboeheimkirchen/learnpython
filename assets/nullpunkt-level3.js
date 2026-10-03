@@ -4,13 +4,15 @@
     const reauth=Boolean(window.NullpunktTerminalOnly);
     const reauthToken=new URLSearchParams(location.search).get('reauthToken');
     const notifyParent=data=>window.parent.postMessage({...data,token:reauthToken},location.protocol==='file:'?'*':location.origin);
+    function reportTerminalSize(){
+        if(reauth)notifyParent({type:'nullpunkt:terminal-size',height:byId('main-content').scrollHeight+32});
+    }
     if(reauth){
         document.body.classList.add('nullpunkt-reauth');
         byId('mission-title').textContent='Öffne den Zugang erneut';
         document.querySelector('.terminal-intro p').textContent='PICO hat den Wartungszugang gesperrt. Löse das neue Zugangsrätsel des Lords. Dein letzter Kalibrierversuch bleibt erhalten.';
         byId('register-continue').textContent='Zurück zu deinem Codeversuch';
-        const sendSize=()=>notifyParent({type:'nullpunkt:terminal-size',height:byId('main-content').scrollHeight+32});
-        new ResizeObserver(sendSize).observe(byId('main-content'));
+        new ResizeObserver(reportTerminalSize).observe(byId('main-content'));
     }
     const flight=window.NullpunktLevel1Core.createState({start:window.NullpunktLevel1Core.ENERGY_CELL,initialEnergy:100,initiallyCharged:true});
     const view=window.NullpunktDroneView.create(flight);
@@ -39,18 +41,22 @@
             const analysis=register.reasoning(task,values,Boolean(checked));
             const list=document.createElement('ol');list.className='register-analysis';
             for(const line of analysis.lines){
-                const row=document.createElement('li');row.value=line.row;
+                const row=document.createElement('li');row.value=line.row;row.className=line.passed?'is-passed':'is-failed';
                 const label=document.createElement('span');label.textContent=line.label+': ';
                 const equation=document.createElement('code');equation.textContent=line.equation;
-                const correct=document.createElement('strong');correct.textContent=' ✓ Korrekt';
-                row.append(label,equation,correct);list.append(row);
+                const result=document.createElement('strong');result.textContent=line.passed?' ✓ Korrekt':' ✗ Nicht erfüllt · erwartet '+line.expected;
+                row.append(label,equation,result);list.append(row);
             }
             const summary=document.createElement('p');summary.className='register-analysis-summary';summary.textContent=analysis.summary;
-            byId('register-hint').append(list,summary);
+            const caution=document.createElement('p');caution.className='register-analysis-caution';caution.textContent=analysis.caution;
+            byId('register-hint').append(list,summary,caution);
         }
         const canRequest=checkVersion>lastHelpVersion&&Boolean(checked)&&!unlockPending&&!solved;
         byId('register-help-btn').disabled=!canRequest;
         byId('register-help-btn').textContent=solved||unlockPending?'Alle Prüfbedingungen erfüllt':(helpLevel===0?'Hilfe von der Zentrale anfordern':(canRequest?'Analyse der Zentrale anfordern':'Erst erneut Zustand prüfen'));
+        // WebKit can defer ResizeObserver inside an embedded frame. Report after
+        // an actual content change as well, so the longer analysis never clips.
+        reportTerminalSize();
     }
     function renderRegister(){
         const [a,b]=task.pairA.map(i=>'Q'+(i+1)),[c,d]=task.pairB.map(i=>'Q'+(i+1));

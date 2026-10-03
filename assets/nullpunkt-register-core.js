@@ -22,7 +22,7 @@
         const matches=checked?evaluate(task,values):[false,false,false,false];
         const rows=matches.flatMap((passed,i)=>passed?[i]:[]);
         const candidates=combinations.filter(v=>evaluate(task,v).every((passed,i)=>!matches[i]||passed));
-        if(!checked)return {lines:[],summary:'',remaining:16,matchedRows:[]};
+        if(!checked)return {lines:[],summary:'',remaining:16,matchedRows:[],caution:''};
         const signed=value=>value>0?'+'+value:String(value).replace('-','−');
         const [a,b]=task.pairA,[c,d]=task.pairB;
         const calculations=[
@@ -31,10 +31,12 @@
             [`Produkt Q${c+1} · Q${d+1}`,`(${signed(values[c])}) · (${signed(values[d])}) = ${signed(values[c]*values[d])}`],
             [`${task.sign===1?'Summe':'Differenz'} Q${a+1} ${task.sign===1?'+':'−'} Q${b+1}`,`${signed(values[a])} ${task.sign===1?'+':'−'} (${signed(values[b])}) = ${signed(values[a]+task.sign*values[b])}`]
         ];
+        const expected=[task.total,task.productA,task.productB,task.anchor];
         // Count only deductions from the successful whole equations, not fixed arrows.
-        const lines=rows.map(i=>({row:i+1,label:calculations[i][0],equation:calculations[i][1]}));
+        const lines=calculations.map((calculation,i)=>({row:i+1,label:calculation[0],equation:calculation[1],passed:matches[i],expected:signed(expected[i])}));
         const summary=rows.length?`Mit diesen korrekten Prüfbedingungen ${candidates.length===1?'bleibt 1 von 16 Möglichkeiten':'bleiben '+candidates.length+' von 16 Möglichkeiten'}.`:'Noch keine Prüfbedingung ist korrekt. Es bleiben alle 16 Möglichkeiten.';
-        return {lines,summary,remaining:candidates.length,matchedRows:rows};
+        const caution='Ein passendes Ergebnis bestätigt noch nicht die einzelnen Pfeile. (−1) · (−1) = +1 und (+1) · (+1) = +1: Beide erfüllen dieselbe Produktbedingung, können aber zu verschiedenen Gesamtzuständen gehören. Erst wenn alle vier Prüfbedingungen stimmen, ist der Zustand eindeutig.';
+        return {lines,summary,remaining:candidates.length,matchedRows:rows,caution};
     }
     window.NullpunktRegisterCore=Object.freeze({generate,evaluate,reasoning});
 })();

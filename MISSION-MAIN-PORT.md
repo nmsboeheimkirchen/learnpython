@@ -15,7 +15,7 @@ Kalibrierfinale, Prozentlogik und Terminalbild v3. Nicht veröffentlicht.
 
 ## MAIN-20: Globale Editorabstände, Überschriften und feste Blockhinweise
 
-Stand 03.10.2026, lokal geprüft. Öffentlicher Design-/Missionsumfang;
+Stand 03.10.2026, lokal geprüft und als `6dc9076` committed. Öffentlicher Design-/Missionsumfang;
 Kontosystem und Backend unverändert.
 
 - `assets/editor-layout.js`: gemeinsamer CodeMirror-Init-Hook, in allen 26
@@ -43,6 +43,32 @@ Kontosystem und Backend unverändert.
   relevant; native Browserzoom-Kombinationen dort wurden nicht direkt geprüft.
 - Ergebnisse: `.cache/global-main20-final`, `.cache/global-main20-reviewed`,
   `.cache/main20-all.log`. Kein Push/Release.
+
+## MAIN-21: Auch nicht erfüllte Terminalbedingungen erklären
+
+Stand 03.10.2026, lokal umgesetzt. Die angeforderte Zentrale-Analyse zeigt alle
+vier Rechnungen mit den aktuellen Pfeilwerten. Erfüllte Bedingungen erhalten
+`✓ Korrekt`; bei nicht erfüllten Bedingungen stehen tatsächliches Ergebnis und
+`✗ Nicht erfüllt · erwartet …` nebeneinander. Die Rechnung selbst wird korrekt
+ausgewertet; eine Abweichung von der Vorgabe wird nicht als Rechenfehler bezeichnet.
+
+Der Hinweis erklärt, dass ein passendes Ergebnis die einzelnen Pfeile noch nicht
+beweist: Sowohl `(−1) · (−1)` als auch `(+1) · (+1)` ergeben `+1`. Erst alle vier
+Bedingungen zusammen bestimmen den Zustand. Die Anzahl verbleibender Möglichkeiten
+beruht weiterhin auf ganzen erfüllten Gleichungen. Keine automatisch eingeblendete
+Hilfe und keine weitere Analyse ohne erneute Prüfung.
+
+Öffentliche Dateien: `assets/nullpunkt-register-core.js`, `nullpunkt-level3.js/.css`,
+`pico_level3.html` (Cacheversionen) und die zugehörigen Logik-/Browsertests.
+Die gemeinsame Terminalansicht gilt auch bei Wiederanmeldung aus Level 4.
+Dort meldet der Inhalt seine Höhe zusätzlich direkt nach dem Rendern; WebKit
+lieferte mit der längeren Analyse über ResizeObserver allein keine rechtzeitige
+Rahmenanpassung. Herkunfts-/Tokenprüfung und Sperrlogik unverändert.
+
+224/224 Logiktests, 9/9 Level-3-Browserfälle und 4/4 Wiederanmeldungsprüfungen
+grün, einschließlich WebKit/iPad, Handy und lokalem file://-Aufruf. Prüfergebnisse
+unter `.cache/main21-all.log`, `.cache/main21-terminal` und
+`.cache/main21-reauth-fixed`; Terminalanalyse visuell kontrolliert. Kein Push/Release.
 
 ## Trennung von Missionsinhalt und Kontosystem
 

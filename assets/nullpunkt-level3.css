@@ -45,6 +45,8 @@
 .nullpunkt-level3 .register-analysis:empty{display:none}
 .nullpunkt-level3 .register-analysis code{font-size:1em;color:#e4fff2}
 .nullpunkt-level3 .register-analysis strong{color:#8dffb3;white-space:nowrap}
+.nullpunkt-level3 .register-analysis .is-failed strong{color:#ffc19f;white-space:normal}
+.nullpunkt-level3 .register-analysis-caution{margin:8px 0 0;color:#c0d4de;max-width:95ch;line-height:1.5}
 .nullpunkt-level3.nullpunkt-terminal-active .presentation-controls{display:none!important}
 .nullpunkt-level3.nullpunkt-terminal-active .flight-intro-copy{display:none}
 .nullpunkt-reauth #navigation-root,.nullpunkt-reauth #learning-nav-dock,.nullpunkt-reauth #mySidebar,.nullpunkt-reauth .progress-container,.nullpunkt-reauth .mission-kicker,.nullpunkt-reauth #back-to-flight,.nullpunkt-reauth #next-level-btn,.nullpunkt-reauth .presentation-controls,.nullpunkt-reauth .skip-link{display:none!important}

@@ -46,13 +46,18 @@ test('@ipad Nullpunkt flies to PICO, changes camera, checks Q-04 and unlocks lev
  await expect(page.locator('#register-hint')).toBeEmpty();
  await page.locator('#register-help-btn').click();await expect(page.locator('#register-hint-title')).toHaveText('Analyse der Zentrale');
  await expect(page.locator('#register-hint')).toContainText('Ersetze Q1, Q2, Q3 und Q4');
- await expect(page.locator('.register-analysis li')).toHaveCount(matching);
+ await expect(page.locator('.register-analysis li')).toHaveCount(4);
+ await expect(page.locator('.register-analysis .is-passed')).toHaveCount(matching);
+ await expect(page.locator('.register-analysis .is-failed')).toHaveCount(4-matching);
  const analysis=await page.evaluate(()=>{const state=window.DroneMissionRuntime.getState();return window.NullpunktRegisterCore.reasoning(state.register,state.values,true);});
  await expect(page.locator('.register-analysis-summary')).toHaveText(analysis.summary);
  for(let i=0;i<analysis.lines.length;i++){
-  await expect(page.locator('.register-analysis li').nth(i)).toHaveText(analysis.lines[i].label+': '+analysis.lines[i].equation+' ✓ Korrekt');
+  const line=analysis.lines[i],status=line.passed?' ✓ Korrekt':' ✗ Nicht erfüllt · erwartet '+line.expected;
+  await expect(page.locator('.register-analysis li').nth(i)).toHaveText(line.label+': '+line.equation+status);
   await expect(page.locator('.register-analysis li').nth(i)).toHaveAttribute('value',String(analysis.lines[i].row));
  }
+ await expect(page.locator('.register-analysis-caution')).toHaveText(analysis.caution);
+ await expect(page.locator('.register-analysis-caution')).toContainText('(−1) · (−1) = +1 und (+1) · (+1) = +1');
  await expect(page.locator('#register-help-btn')).toBeDisabled();
  await page.locator('#register-help-btn').dispatchEvent('click');
  expect(await page.evaluate(()=>window.DroneMissionRuntime.getState().helpLevel)).toBe(1);
