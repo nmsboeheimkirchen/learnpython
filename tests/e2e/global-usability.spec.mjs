@@ -135,9 +135,27 @@ for (const channel of channels) {
     });
 }
 
-test("large headings keep their descenders and leave space before the next paragraph", async ({ page }, testInfo) => {
-    for (const route of ["index.html", "projektwahl.html", "mission1_start.html", "pico_level3.html?e2e", "pixelmuseum_briefing.html", "helikopter_flucht.html"]) {
+test("compact headings retain their original flow and paint full descenders @ipad", async ({ page }, testInfo) => {
+    test.setTimeout(90_000);
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    // Original compact typography before MAIN-20. Compare actual text/following
+    // content positions, not the enlarged gradient paint rectangle itself.
+    const originals = [
+        ["index.html", .91, 22], ["projektwahl.html", .93, 20],
+        ["mission1_start.html", .94, 15], ["agent_training_start.html", .94, 15],
+        ["agent_training_level1.html", 1.1, 10], ["pico_level1.html", 1.05, 13],
+        ["pico_level3.html?e2e", 1.05, 13], ["pico_level4.html", .94, 8],
+        ["pixelmuseum_briefing.html", .94, 13], ["pixelmuseum_finale.html", .94, 13],
+        ["helikopter_flucht.html", .9, 17], ["helikopter_flucht_level1.html", .9, 20]
+    ];
+    for (const [route, leading, marginBottom] of originals) {
         await page.goto(`/${route}`);
+        await page.evaluate(() => document.fonts.ready);
+        // Reduced motion shortens the home entrance animation but retains its
+        // delay. Compare positions only after finite entrance animations finish.
+        await page.evaluate(() => Promise.all(document.getAnimations()
+            .filter(animation => Number.isFinite(animation.effect?.getComputedTiming().endTime))
+            .map(animation => animation.finished.catch(() => {}))));
         if (route.startsWith("pico_level3")) {
             await page.waitForFunction(() => window.DroneMissionRuntime);
             await page.evaluate(async () => {
@@ -149,6 +167,32 @@ test("large headings keep their descenders and leave space before the next parag
         const title = page.locator("h1:visible").first();
         await expect(title).toBeVisible();
         await page.evaluate(() => window.scrollTo(0, 0));
+        await title.evaluate(element => { element.dataset.headingUnderTest = ""; });
+        const flow = () => title.evaluate(element => {
+            const range = document.createRange();
+            range.selectNodeContents(element);
+            let current = element, next = null;
+            while (current && !next) {
+                for (let sibling = current.nextElementSibling; sibling; sibling = sibling.nextElementSibling) {
+                    if (sibling.getClientRects().length) { next = sibling; break; }
+                }
+                current = current.parentElement;
+            }
+            return { textTop: range.getBoundingClientRect().top + scrollY,
+                followingTop: next?.getBoundingClientRect().top + scrollY,
+                lineHeight: parseFloat(getComputedStyle(element).lineHeight) };
+        });
+        const restored = await flow();
+        const reference = await page.addStyleTag({ content: `[data-heading-under-test] {
+            padding: 0 !important; margin-top: 0 !important;
+            margin-bottom: ${marginBottom}px !important; line-height: ${leading} !important;
+        }` });
+        const original = await flow();
+        await reference.evaluate(element => element.remove());
+        await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+        for (const property of ["textTop", "followingTop", "lineHeight"]) {
+            expect(Math.abs(restored[property] - original[property]), `${route}: ${property}, restored ${JSON.stringify(restored)}, original ${JSON.stringify(original)}`).toBeLessThanOrEqual(1);
+        }
         const geometry = await title.evaluate(element => {
             const style = getComputedStyle(element);
             const canvas = document.createElement("canvas");
@@ -159,14 +203,11 @@ test("large headings keep their descenders and leave space before the next parag
             const range = document.createRange();
             range.selectNodeContents(element);
             const textRect = range.getBoundingClientRect();
-            const sibling = element.nextElementSibling;
-            const next = sibling?.getClientRects().length ? sibling.getBoundingClientRect() : null;
             return { inkBottom: textRect.bottom - glyphs.fontBoundingBoxDescent + glyphs.actualBoundingBoxDescent,
-                paintBottom: rect.bottom,
-                clearBelow: !next || next.top >= rect.bottom };
+                paintBottom: rect.bottom, paddingBottom: style.paddingBottom,
+                clipsToGradient: style.backgroundClip === "text" || style.webkitBackgroundClip === "text" };
         });
-        expect(geometry.inkBottom).toBeLessThanOrEqual(geometry.paintBottom + 1);
-        expect(geometry.clearBelow).toBe(true);
+        if (geometry.clipsToGradient) expect(geometry.inkBottom, `${route}: ${JSON.stringify(geometry)}`).toBeLessThanOrEqual(geometry.paintBottom + 1);
         await page.screenshot({ path: testInfo.outputPath(`${route.split('?')[0]}-heading.png`), fullPage: true });
         await title.screenshot({ path: testInfo.outputPath(`${route.split('?')[0]}-title.png`) });
     }

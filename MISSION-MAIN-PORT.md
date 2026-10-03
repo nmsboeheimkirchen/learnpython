@@ -70,6 +70,28 @@ grün, einschließlich WebKit/iPad, Handy und lokalem file://-Aufruf. Prüfergeb
 unter `.cache/main21-all.log`, `.cache/main21-terminal` und
 `.cache/main21-reauth-fixed`; Terminalanalyse visuell kontrolliert. Kein Push/Release.
 
+## MAIN-22: Kompakte Überschriften ohne abgeschnittene Unterlängen
+
+03.10.2026, lokal. Auf Nutzerwunsch sind die ursprünglichen Zeilenhöhen und
+Abstände vor MAIN-20 wiederhergestellt: Startseite, Missionseinstiege, Training,
+Projektauswahl, PICO, Pixelmuseum und Helikopterflucht. Dies ersetzt ausschließlich
+die vergrößerten Überschriftenabstände aus MAIN-20; Editor- und Hinweisfix bleiben.
+
+Die harte Schnittkante bei den Farbverlauf-Titeln entsteht durch die knappe
+Zeichenfläche von `background-clip: text`. Diese Titel erhalten unten 0,3 em
+zusätzliche Zeichenfläche mit gleich großem negativen Außenabstand. Textposition,
+Zeilenhöhe und Position des folgenden Inhalts bleiben dadurch wie im alten Layout.
+Die Level-4-Sonderregel berücksichtigt denselben Ausgleich. Keine Textänderungen.
+
+Öffentlicher Umfang: acht betroffene Design-CSS-Dateien, CSS-Cacheversion
+`20261003-2` in 35 HTML-Seiten, aktualisierte bestehende Layout-/Assettests.
+224/224 Logiktests und vier gezielte Browserprüfungen bestanden: zwölf Seiten
+jeweils in Chromium/Laptop und WebKit/iPad mit Vergleich zum alten Textfluss
+und Schriftmetriken, außerdem die beiden PICO-Prüfungen zur Editorsichtbarkeit.
+Startseite, System Access, Drohnensteuerung, PICO, Museum und Flucht visuell geprüft.
+Ergebnisse unter `.cache/main22-headings-final` und `.cache/main22-headings`.
+Kein Backend-/Kontoeingriff, kein Push/Release.
+
 ## Trennung von Missionsinhalt und Kontosystem
 
 Missionsänderungen sollen später einzeln nach `main` übernommen werden.

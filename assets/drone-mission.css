@@ -105,7 +105,10 @@
 }
 
 .drone-mission-intro h1 {
-    margin: 0 0 13px;
+    /* Extend the gradient's paint area below the line box, without moving the
+       following content. Tight leading alone must not clip the ink of g/p/y. */
+    padding-bottom: 0.3em;
+    margin: 0 0 calc(13px - 0.3em);
     background: linear-gradient(105deg, #fff 8%, #c7fbff 64%, #ffe2ac);
     -webkit-background-clip: text;
     background-clip: text;
@@ -113,7 +116,7 @@
     font-size: clamp(2.65rem, 5.4vw, 5.8rem);
     font-weight: 800;
     letter-spacing: -0.06em;
-    line-height: 1.2;
+    line-height: 0.94;
 }
 
 .drone-mission-intro p:last-child {

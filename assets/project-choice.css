@@ -118,7 +118,8 @@
 
 .project-choice-hero h1 {
     max-width: 12ch;
-    margin: 0 auto 20px;
+    padding-bottom: 0.3em;
+    margin: 0 auto calc(20px - 0.3em);
     background: linear-gradient(104deg, #fff 5%, #c8faff 54%, #ffe2aa 100%);
     -webkit-background-clip: text;
     background-clip: text;
@@ -126,7 +127,7 @@
     font-size: clamp(3rem, 7vw, 6.4rem);
     font-weight: 790;
     letter-spacing: -0.06em;
-    line-height: 1.2;
+    line-height: 0.93;
 }
 
 .project-choice-lead {
@@ -267,7 +268,7 @@
     font-size: clamp(2rem, 3.2vw, 3.2rem);
     font-weight: 790;
     letter-spacing: -0.05em;
-    line-height: 1.2;
+    line-height: 0.98;
 }
 
 .project-card h2 span {

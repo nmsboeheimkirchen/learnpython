@@ -5,7 +5,7 @@
 .nullpunkt-level4 .pico-progress{margin-bottom:20px}
 .nullpunkt-level4 .drone-mission-main{padding-top:26px}
 .nullpunkt-level4 .skip-link:not(:focus){clip-path:inset(50%);width:1px;height:1px;overflow:hidden}
-.nullpunkt-level4 .drone-mission-intro h1{font-size:clamp(2rem,3.8vw,3.5rem);margin-bottom:8px}
+.nullpunkt-level4 .drone-mission-intro h1{font-size:clamp(2rem,3.8vw,3.5rem);margin-bottom:calc(8px - .3em)}
 .nullpunkt-level4 .mission-stage-panel{padding:18px}
 .calibration-camera{position:relative;aspect-ratio:1672/941;isolation:isolate;overflow:hidden;border-radius:14px;border:1px solid #436d73;background:#020608;container-type:inline-size}
 .calibration-frame,.calibration-layer{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none}

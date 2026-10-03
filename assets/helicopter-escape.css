@@ -104,7 +104,8 @@
 
 .helicopter-hero-title h1 {
     max-width: 780px;
-    margin: 0 0 20px;
+    padding-bottom: 0.3em;
+    margin: 0 0 calc(20px - 0.3em);
     background: linear-gradient(105deg, #fff 4%, #a9faff 54%, #c9a7ff 100%);
     -webkit-background-clip: text;
     background-clip: text;
@@ -112,7 +113,7 @@
     font-size: clamp(2.8rem, 6vw, 6.7rem);
     font-weight: 840;
     letter-spacing: -0.065em;
-    line-height: 1.2;
+    line-height: 0.9;
 }
 
 .helicopter-config-page .helicopter-hero-title h1 {

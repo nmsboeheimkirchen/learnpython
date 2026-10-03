@@ -88,7 +88,8 @@
 
 .escape-briefing h1 {
     max-width: 620px;
-    margin: 0 0 17px;
+    padding-bottom: 0.3em;
+    margin: 0 0 calc(17px - 0.3em);
     background: linear-gradient(106deg, #fff 8%, #bffbff 55%, #c9a7ff 100%);
     -webkit-background-clip: text;
     background-clip: text;
@@ -96,7 +97,7 @@
     font-size: clamp(3rem, 7vw, 6.7rem);
     font-weight: 830;
     letter-spacing: -0.065em;
-    line-height: 1.2;
+    line-height: 0.9;
 }
 
 .escape-variant-b .escape-briefing h1 {

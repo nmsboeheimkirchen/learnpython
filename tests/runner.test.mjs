@@ -1913,7 +1913,7 @@ test("mission navigation is rendered from one central definition", () => {
         const html = readFileSync(new URL(`../${page}`, import.meta.url), "utf8");
         assert.match(html, /<div id="navigation-root"><\/div>/);
         assert.match(html, /<script src="assets\/navigation\.js\?v=20260722-1"><\/script>/);
-        assert.match(html, /<link rel="stylesheet" href="assets\/style\.css\?v=20261002-2">/);
+        assert.match(html, /<link rel="stylesheet" href="assets\/style\.css\?v=20261003-2">/);
         assert.match(html, /<script src="assets\/runner\.js\?v=20261002-2"><\/script>/);
         assert.doesNotMatch(html, /id="mySidebar"/);
     }
@@ -2390,8 +2390,8 @@ test("both homepage options keep distinct light moods and one shared logo while 
         assert.match(html, variant.concept);
         assert.match(html, variant.brand);
         assert.match(html, /src="assets\/brand\/agent-py-logo\.png\?v=20260720-2"/);
-        assert.match(html, /href="assets\/style\.css\?v=20261002-2"/);
-        assert.match(html, /href="assets\/home\.css\?v=20261002-2"/);
+        assert.match(html, /href="assets\/style\.css\?v=20261003-2"/);
+        assert.match(html, /href="assets\/home\.css\?v=20261003-2"/);
         assert.match(html, /href="index\.html" aria-label="Agent PY – Startseite"/);
         assert.deepEqual(missionTargets, expectedMissionTargets);
         assert.equal((html.match(/<main\b/gi) ?? []).length, 1);
