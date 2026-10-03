@@ -1,6 +1,36 @@
 # Übergabe: dev-login-save
 
-## AKTUELL – MAIN-23/24 abgeschlossen: Blockhinweise und Programmausführung
+## AKTUELL – MAIN-25 abgeschlossen: sichere Kalibrierprogramme und lebendige Kontrollsumme
+
+- Nutzer 03.10.: PICO stoppt einen vermeintlich gültigen Code nach etwa 20
+  Durchläufen ohne Warnung. Nachgereichter Code: positiv → minus 1, negativ →
+  plus 1. Er nähert sich null und pendelt dann; erreicht keine ±1800 %.
+  Nutzer darüber informiert. Trotzdem darf ausführbarer sicherer Code weiterlaufen.
+- Ursache: inspect verlangte exakt ±1 nach außen; sowohl stabilisierender Code
+  als auch kleinere Schritte landeten im 2-s-Abbruch (~20 Durchläufe).
+- Umsetzung fertig: sichere Programme ohne Schleifenlimit weiter ausführen,
+  Schäden an echte Zunahme der Abweichung koppeln, kleinere Schritte zulassen.
+  Messrauschen auf K4 ohne Rückkopplung/Aufsummierung; angezeigte Kontrollsumme
+  summiert die vier angezeigten Messwerte. Python-/Sicherheitswerte bleiben exakt.
+  Ein-Satz-Rückmeldungen auch für alte Sperrsnapshots umgesetzt.
+- 228/228 Logiktests grün. Erste Browsermatrix 38/42 bestanden, darunter der
+  Nutzer-Code, vollständige Erfolge, Stop/Strg+C, Wiederanmeldung und Sperren.
+  Vier Prüffehler: einmal Screenshot-Protokollfehler, zweimal alte Erwartung
+  langer Analyse, einmal verbrauchte Screenshotaufnahme das 5-s-Stoppfenster.
+  Erwartungen angepasst, Screenshot hinter den Stopp verschoben. Gezielter
+  Nachlauf 13/13 grün unter `.cache/main25-final`, damit 42 unterschiedliche
+  Browserfälle erfolgreich geprüft. Browsermatrix `.cache/main25-browser`.
+  Desktopbild samt nicht starrer Kontrollsumme visuell kontrolliert.
+- Rückmeldungen bei nicht bereitem Programm auf einen Satz kürzen. K4 soll um
+  höchstens ±0,99 schwanken, damit die reale angezeigte Kontrollsumme leicht lebt;
+  Systemschwankung darf nicht selbst als Manipulation erkannt werden.
+- Ausgangspunkt e06e3a4 + privater Handoff 2dffa17, Branch dev-login-save,
+  nur lokal, kein Push/Release; öffentliche Änderungen als MAIN-25 markieren.
+- Missionscommit: `a468866` – öffentlich portierbarer MAIN-25-Diff, ohne Konto/
+  Backendänderungen. Keine offenen Umsetzungs- oder Prüfaufgaben dieses Auftrags.
+  Handoff und ACCOUNT-SYSTEM.md werden separat gesichert.
+
+## Vorheriger Stand – MAIN-23/24 abgeschlossen: Blockhinweise und Programmausführung
 
 - Auftrag 03.10.: eigener Commit für Blockhinweise. Klick in CodeMirror inklusive
   Zeilennummern hält die Anheftung; Klick außerhalb (auch Titel/Ausführen) löst sie.

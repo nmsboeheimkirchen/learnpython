@@ -370,6 +370,17 @@ Programme und erhält den eigenen Code; alte Eingabe-/Pausenfortsetzungen werden
 verworfen. PICO behält seine vorhandenen Sicherheitszähler und Sperrregeln auch
 beim Tastaturabbruch. Kein neues Lernstandsfeld, Speicherziel oder Backendverhalten.
 
+**MAIN-25, lokaler Nachtrag 03.10.2026:** Sicherer ausführbarer Kalibriercode läuft
+auch bei kleineren Schritten, Stabilisierung oder unveränderten Werten bis zum
+manuellen Stopp weiter; kein stiller 2-s-Abbruch. Dramaturgie folgt tatsächlicher
+Zunahme der Abweichung, Finale weiterhin ab ±1800 %. Rückmeldungen sind auf einen
+Satz verkürzt. K4 erhält begrenztes Messrauschen bis ±0,99 Prozentpunkte; die
+angezeigte Kontrollsumme summiert diese vier Messwerte. Die Störung wird weder
+aufsummiert noch an Python zurückgegeben: Sicherheitsprüfung und Codewirkung
+verwenden unveränderte Programmwerte, damit das Messrauschen keine Sperre auslöst.
+Vorhandene Checkpoints speichern weiterhin Programmwerte; alte Analysen werden
+beim Laden kurz formuliert. Keine neue Datenablage, API oder Kontoregel.
+
 | Abschnitt | Pflichtpunkte | Levelgewichte |
 | --- | --- | --- |
 | Missionen 1, 3, 4 | Je 15 | Je 5 / 5 / 5 |
