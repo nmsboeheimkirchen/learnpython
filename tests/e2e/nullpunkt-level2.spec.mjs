@@ -40,16 +40,6 @@ test('@ipad Nullpunkt level 2 charges visibly from a real find, saves and contin
  await expect(page.locator('#success-overlay')).toBeHidden();
  expect(await page.evaluate(()=>window.DroneMissionRuntime.editor.getValue())).toBe(searchCode);
  expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('completedLevelCode_v1')||'{}').pico_level2)).toBeUndefined();
- const help=page.locator('#nullpunkt-help-btn'),hints=page.locator('#nullpunkt-help-panel');
- await help.click();await expect(hints).toContainText('Hinweis 1 von 3');await expect(hints).toContainText('print(fund)');await expect(hints).not.toContainText('append');
- await page.screenshot({path:testInfo.outputPath('nullpunkt-level2-step2.png'),fullPage:true});
- await help.click();await expect(hints).toContainText('ausruestung = []');await expect(hints).not.toContainText('ausruestung.append(fund)');
- await help.click();await expect(hints).not.toContainText('ausruestung.append(fund)');await expect(page.locator('#list-warning')).toContainText('Lege die Liste');
- expect(await run(page,prepare(searchCode))).toMatchObject({passed:false,levelComplete:false});
- await expect(page.locator('#equipment-hud')).toContainText('ausruestung:leer');
- await expect(page.locator('#list-warning')).toBeHidden();
- await help.click();await expect(hints).toContainText('ausruestung.append(fund)');
- await help.click();await expect(hints).toContainText('Hinweis 3 von 3');
  // A last asynchronous movement must not postpone charge detection until after validation.
  const solution=prepare(searchCode)+'drohne.goto(-455, -85)\nausruestung.append(fund)\n';
  await start(page,solution);
@@ -79,6 +69,23 @@ test('@ipad Nullpunkt level 2 charges visibly from a real find, saves and contin
  const nextStarter=await page.evaluate(()=>window.DroneMissionRuntime.editor.getValue());
  expect(nextStarter).toContain('# Operation Nullpunkt - Level 3');expect(nextStarter).toContain('drohne.goto(-455, -85)');
  expect(errors).toEqual([]);
+});
+
+test('@ipad Nullpunkt level 2 gates the final hint until the learner tests their list',async({page})=>{
+ // Hint progression has its own scenario: screenshots, charging and subsequent
+ // navigation must not consume the interaction budget of these real clicks.
+ const searchCode=(await open(page))+route+investigate;
+ expect(await run(page,searchCode)).toMatchObject({passed:true,levelComplete:false});
+ const help=page.locator('#nullpunkt-help-btn'),hints=page.locator('#nullpunkt-help-panel');
+ await expect(hints).toBeHidden();
+ await help.click();await expect(hints).toContainText('Hinweis 1 von 3');await expect(hints).toContainText('print(fund)');await expect(hints).not.toContainText('append');
+ await help.click();await expect(hints).toContainText('ausruestung = []');await expect(hints).not.toContainText('ausruestung.append(fund)');
+ await help.click();await expect(hints).not.toContainText('ausruestung.append(fund)');await expect(page.locator('#list-warning')).toContainText('Lege die Liste');
+ expect(await run(page,prepare(searchCode))).toMatchObject({passed:false,levelComplete:false});
+ await expect(page.locator('#equipment-hud')).toContainText('ausruestung:leer');
+ await expect(page.locator('#list-warning')).toBeHidden();
+ await help.click();await expect(hints).toContainText('ausruestung.append(fund)');
+ await help.click();await expect(hints).toContainText('Hinweis 3 von 3');
 });
 
 test('@ipad Nullpunkt level 2 rejects invented finds, missing output and search away from the bottle',async({page})=>{

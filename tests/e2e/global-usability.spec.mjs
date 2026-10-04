@@ -180,11 +180,16 @@ test("compact headings retain their original flow and paint full descenders @ipa
         ["mission1_start.html", .94, 15], ["agent_training_start.html", .94, 15],
         ["agent_training_level1.html", 1.1, 10], ["pico_level1.html", 1.05, 13],
         ["pico_level3.html?e2e", 1.05, 13], ["pico_level4.html", .94, 8],
-        ["pixelmuseum_briefing.html", .94, 13], ["pixelmuseum_finale.html", .94, 13],
+        ["pixelmuseum_briefing.html", .94, 13], ["pixelmuseum_finale.html", 1.08, 0],
         ["helikopter_flucht.html", .9, 17], ["helikopter_flucht_level1.html", .9, 20]
     ];
     for (const [route, leading, marginBottom] of originals) {
         await page.goto(`/${route}`);
+        if (route === "pixelmuseum_finale.html") {
+            // The finale has always used the compact prototype header, not the
+            // briefing's large gradient heading. Wait for its actual runtime.
+            await page.waitForFunction(() => window.PixelmuseumPath);
+        }
         await page.evaluate(() => document.fonts.ready);
         // Reduced motion shortens the home entrance animation but retains its
         // delay. Compare positions only after finite entrance animations finish.

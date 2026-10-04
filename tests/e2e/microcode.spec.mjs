@@ -8,9 +8,7 @@ const stackedBlockPages = [
     "mission4_level2.html",
     "mission4_level3.html",
     "agent_training_level2.html",
-    "agent_training_level3.html",
-    "pico_level2.html",
-    "pico_level3.html"
+    "agent_training_level3.html"
 ];
 
 const indentationPlans = [
@@ -27,9 +25,7 @@ const ipadStackedBlockPages = new Set([
     "mission3_level3.html",
     "mission4_level3.html",
     "agent_training_level2.html",
-    "agent_training_level3.html",
-    "pico_level2.html",
-    "pico_level3.html"
+    "agent_training_level3.html"
 ]);
 
 async function blockGeometry(hint) {
@@ -166,20 +162,22 @@ test("inline helpers use the same rounded glass language", async ({ page }) => {
     expect(design.backgroundImage).toContain("linear-gradient");
 });
 
-test("PICO level 2 presents three separate blocks instead of a copy-ready solution", async ({ page }) => {
+test("PICO level 2 reveals only the two search hints when requested @ipad", async ({ page }) => {
     await page.goto("/pico_level2.html?e2e");
     await expect.poll(() => page.evaluate(() => Boolean(window.DroneMissionRuntime))).toBe(true);
 
-    const hint = page.locator(".pico-code-blocks");
-    const blocks = hint.locator(":scope > .block-tooltip");
-    await expect(blocks).toHaveCount(3);
-
-    for (let index = 0; index < 3; index += 1) {
-        const block = blocks.nth(index);
-        await block.focus();
-        await expect(block).toBeFocused();
-        await expect(block.locator(":scope > .tooltiptext")).toBeVisible();
-    }
+    const hint = page.locator(".nullpunkt-code-help");
+    const summary = hint.locator("summary");
+    await expect(hint.locator("ol")).toBeHidden();
+    await summary.focus();await page.keyboard.press("Enter");
+    await expect(hint.locator("ol")).toBeVisible();
+    await expect(hint.locator("li")).toHaveCount(2);
+    await expect(hint).toContainText("fund = drohne.suche_hier()");
+    await expect(hint).toContainText("print(fund)");
+    await expect(hint).not.toContainText("append");
+    await expect(page.locator("#equipment-task")).toBeHidden();
+    await expect(page.locator("#nullpunkt-help")).toBeHidden();
+    await page.keyboard.press("Enter");await expect(hint.locator("ol")).toBeHidden();
 
     const starter = await page.evaluate(() => window.DroneMissionRuntime.editor.getValue());
     expect(starter).not.toContain("fund = drohne.suche_hier()");
@@ -187,29 +185,18 @@ test("PICO level 2 presents three separate blocks instead of a copy-ready soluti
     expect(starter).not.toContain("ausruestung.append(fund)");
 });
 
-test("PICO level 3 explains the route in three separate focusable blocks", async ({ page }) => {
+test("PICO level 3 gives the flight target and keeps terminal reasoning hidden initially @ipad", async ({ page }) => {
     await page.goto("/pico_level3.html?e2e");
     await expect.poll(() => page.evaluate(() => Boolean(window.DroneMissionRuntime))).toBe(true);
 
     const task = page.locator(".mission-task-card");
-    const blocks = task.locator(".pico-route-blocks > .block-tooltip");
-    await expect(blocks).toHaveCount(3);
-    await expect(task.locator(".mission-code-hint")).toHaveCount(0);
-
-    const helperIds = await blocks.evaluateAll(elements => elements.map(element => (
-        element.getAttribute("aria-describedby")
-    )));
-    expect(new Set(helperIds).size).toBe(3);
-
-    for (let index = 0; index < 3; index += 1) {
-        const block = blocks.nth(index);
-        const helperId = helperIds[index];
-        await block.focus();
-        await expect(block).toBeFocused();
-        await expect(block.locator(`:scope > #${helperId}`)).toBeVisible();
-    }
+    await expect(task).toContainText("(220, 15)");
+    await expect(task).toContainText("fliege_zu(x, y)");
+    await expect(page.locator("#terminal-view")).toBeHidden();
+    await expect(page.locator("#register-hint")).toBeHidden();
+    await expect(page.locator("#register-help-btn")).toBeDisabled();
 
     const starter = await page.evaluate(() => window.DroneMissionRuntime.editor.getValue());
-    expect(starter).not.toContain("fahre_zu(340, 15)");
+    expect(starter).not.toContain("fliege_zu(220, 15)");
     expect(starter).not.toContain("signal_erfolgreich = drohne.sende()");
 });

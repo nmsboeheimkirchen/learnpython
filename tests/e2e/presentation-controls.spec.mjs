@@ -37,7 +37,7 @@ async function openPresentation(page, path, code = demonstrationCode) {
 }
 
 async function expectUncoveredScene(page) {
-    const stage = page.locator(".mission-stage, .game-stage").first();
+    const stage = page.locator(".mission-stage, .game-stage, .calibration-camera").first();
     const controls = page.locator(".presentation-controls");
     const sceneBounds = await stage.boundingBox();
     const controlsBounds = await controls.boundingBox();

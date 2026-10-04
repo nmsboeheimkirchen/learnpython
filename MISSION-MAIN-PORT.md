@@ -1,5 +1,18 @@
 # Missionsänderungen für die öffentliche Version
 
+## MAIN-26: Releaseprüfungen an die aktuelle Mission anpassen
+
+04.10.2026. Ausschließlich Browsertests, keine Produktions-/Backendänderung.
+PICO 2 prüft die zwei aufklappbaren Suchhilfen und getrennt die spätere
+Listenhilfe. PICO 3 prüft Flugziel und zunächst verborgene Terminalhilfe.
+Die Präsentationsprüfung umfasst die neue Kalibrierkamera von Level 4.
+Der Überschriftentest verwendet für das Pixelmuseum-Finale seine unverändert
+kompakte ursprüngliche Typografie (1,08 / 0) statt der Briefing-Werte.
+PICO-2-Hilfe und Laden/Fortsetzung sind getrennte vollständige Szenarien,
+damit ihre echten Klicks nicht das gemeinsame Zeitbudget überziehen.
+15/15 gezielte Chromium-/WebKit-Fälle sowie 6/6 abschließende Nachprüfungen grün;
+vollständiger CI-Nachlauf folgt. Keine Konten, Speicherung oder API betroffen.
+
 Stand: 28.09.2026. Arbeitsbranch: `dev-login-save`.
 Ausgangspunkt vor diesen Änderungen: `4d8bcbe`.
 
