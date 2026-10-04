@@ -1,6 +1,34 @@
 # Hostinger: Testveröffentlichung und Rückfall
 
-## Vorbereitet 04.10.2026 – r16 privat bereitgestellt, noch nicht live
+## Aktuell 04.10.2026 – r16 veröffentlicht und bestätigt
+
+**https://agentpy.bildungdigital.at/** läuft mit **`pilot-20261004-r16`**, Quelle
+`bd051cbfde5fcfde02898ce13a8e428d136999ce`, Schema **9**, Deployment bestätigt.
+Operation Nullpunkt und globale Editor-/Hinweiskorrekturen sind live. Vollständige
+CI 37186064017 grün; zusätzlich exaktes Paket mit isolierter Testdatenbank in
+Chromium/WebKit durchgespielt, einschließlich serverseitiger Speicherung/Reload/Login.
+
+- Kurze API-Pause 8,56 Sekunden, keine Migration. Alle **27 Datenbanktabellen
+  hashgleich** vor/nach Umschaltung; 17 Konten, 17 Lernstände, 7 Klassen erhalten.
+  Private Einstellungen/Schlüssel unverändert, keine Produktionstestkonten/Testmails.
+- 193 Paketdateien manifestverifiziert, 28 private Backenddateien bytegleich r15.
+  Manifest SHA256 `61ea7a177cc050acaf4427af47cf6ae719030cf84dc6b89879cc706f2cabb0b1`.
+  HTTPS-/Session-/Cache-/Privatpfadprüfungen und anonyme Live-Browserchecks bestanden.
+  Mailworker folgt r16; erst anschließend bestätigt.
+- Frische SQL-Sicherung `backups/before-pilot-20261004-r16-schema9.sql`, 271.160 Bytes,
+  SHA256 `2d8b77fd870b27efe23f9f1ac664db8a8f0c1d556cf3ce828d7d8cce71536a95`.
+  Webbackup `backups/web-20261004080813-30f082acba` gegen r15-Manifest verifiziert.
+  Beide unter `agentpy-private`. SQL-Restore nicht getestet und bei einem Web-
+  Rückfall nicht über neuere Lernstände zurückspielen.
+- `.cache/deploy-hostinger-r16.mjs` / `.php` sind bereits ausgeführte Operatoren;
+  activate/confirm nicht wiederholen. inspect ist rein lesend. Der rollback-Zweig
+  dieses Operators gilt nur vor Bestätigung. Für einen später beauftragten Rückfall
+  aktuellen Zustand prüfen und den versionierten Webroot-Aktivierungshelfer nutzen.
+
+Nachweise und erledigte Schritte: [Releasecheckliste](HOSTINGER-RELEASE-CHECKLIST.md)
+und [Handoff](LOGIN-HANDOFF.md). Die folgenden Einträge beschreiben frühere Stände.
+
+## Historisch vorbereitet 04.10.2026 – r16 privat bereitgestellt, damals noch nicht live
 
 `pilot-20261004-r16` aus `bd051cbfde5fcfde02898ce13a8e428d136999ce` liegt geprüft
 unter `agentpy-private/releases/pilot-20261004-r16`. **Produktion bleibt r15**.

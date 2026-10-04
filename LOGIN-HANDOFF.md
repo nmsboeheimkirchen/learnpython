@@ -1,6 +1,46 @@
 # Übergabe: dev-login-save
 
-## AKTUELL 04.10.2026 – r16 geprüft und privat bereitgestellt, r15 bleibt live
+## AKTUELL 04.10.2026 – r16 veröffentlicht und bestätigt
+
+- Auf ausdrücklichen Nutzerauftrag erst kurzer isolierter Pakettest, danach
+  Veröffentlichung. **https://agentpy.bildungdigital.at/** läuft bestätigt mit
+  `pilot-20261004-r16`, Quelle `bd051cbfde5fcfde02898ce13a8e428d136999ce`, Schema 9.
+  Deploymentstatus `confirmed`; keine ausstehende Aktivierung. main/Pages unverändert.
+- Exaktes unverändertes Releasepaket mit eigener lokaler SQLite-Datenbank und
+  je einem synthetischen Konto in Chromium/WebKit erfolgreich geprüft: alle vier
+  PICO-Level, Terminalrätsel, Stop/Neustart, Finale/Helikopterübergang, Speicherung,
+  Neuladen und erneute Anmeldung. Keine externen Requests, Script-/Assetfehler.
+  Bericht `.cache/hostinger-r16-package-smoke-report.json`; Bilder in
+  `.cache/r16-package-smoke-mPsE3y`, Desktopfinale/Tabletterterminal angesehen.
+- Frische private SQL-Sicherung `agentpy-private/backups/before-pilot-20261004-r16-schema9.sql`,
+  271.160 Bytes, SHA256 `2d8b77fd870b27efe23f9f1ac664db8a8f0c1d556cf3ce828d7d8cce71536a95`.
+  SQL-Wiederherstellung nicht durchgeführt/getestet. Webbackup
+  `agentpy-private/backups/web-20261004080813-30f082acba` gegen r15-Manifest geprüft.
+- API-Pause 8,56 Sekunden; Mailworker während Sicherung/Vergleich gesperrt.
+  **Alle 27 Datenbanktabellen vor/nach Umschaltung hashgleich**, einschließlich
+  17 Konten, 17 Lernständen und 994 Schreibbelegen. 7 Klassen erhalten.
+  Private Konfiguration/Schlüssel unverändert. Keine Migration, kein Datenreset,
+  keine echten Konten für Funktionstests, keine Testkonten/Testmails auf Produktion.
+- HTTPS/Cache/Privatpfade/Sitzungsschutz erfolgreich; anonyme Live-Smokes in
+  Chromium und WebKit bestanden (Login-/Registrierungs-/Recovery-Einstieg,
+  Passwortanzeige, Gastmission, Fokus, Vollbild/Konto-Shell). Worker folgt r16,
+  danach Deployment bestätigt. Webroot entspricht vollständig dem Paketmanifest.
+- Alle fünf Jobs der CI 37186064017 grün, 193 Paketdateien lokal/serverseitig
+  verifiziert; 28 Backenddateien bytegleich r15. Manifest SHA256
+  `61ea7a177cc050acaf4427af47cf6ae719030cf84dc6b89879cc706f2cabb0b1`.
+- Neuer lokaler Operator `.cache/deploy-hostinger-r16.mjs` / `.php` wurde mit
+  activate/confirm bereits ausgeführt: **nicht wiederholen**. `inspect` liest nur.
+  Berichte `.cache/hostinger-r16-activate-report.json`, `-inspect-report.json`,
+  `-confirm-report.json`. Privater Aktivierungsnachweis unter
+  `agentpy-private/backups/before-pilot-20261004-r16-activation.json`.
+- Bei einem späteren Rückfallauftrag auf r15 ausschließlich Web-/App-Version
+  zurückwechseln; **keine alte SQL-Sicherung über neuere Lernstände spielen**.
+  Der r16-Operator erlaubt rollback nur während einer ausstehenden Aktivierung;
+  nach Bestätigung aktuellen Stand prüfen und den versionierten Aktivierungshelfer
+  verwenden. Beide Backendversionen sind identisch. Keine offenen Releaseaufgaben.
+- Abschließende Änderung nur Dokumentation; tested Paketcommit bleibt bd051cb.
+
+## Vorheriger Stand 04.10.2026 – r16 geprüft und privat bereitgestellt, r15 bleibt live
 
 - Nutzerauftrag: Commit/Push und Hostinger-Release vorbereiten, bestehende SuS-
   Konten erhalten; SuS laut Nutzer noch nicht bei PICO. Vorbereitung abgeschlossen,

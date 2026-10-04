@@ -6,6 +6,8 @@ Eine browserbasierte Lernplattform, in der Schüler:innen Python durch aufeinand
 
 **Statische Gastversion:** [GitHub Pages](https://nmsboeheimkirchen.github.io/learnpython/)
 
+Hostinger-Stand 04.10.2026: **r16 mit Operation Nullpunkt veröffentlicht**, bestehende Konten und Lernstände erhalten. Prüf- und Sicherungsnachweise: [Releasecheckliste](HOSTINGER-RELEASE-CHECKLIST.md).
+
 ## Lernangebot
 
 System Access, Bombe entschärfen, Safe-Knacker und Geheimdienst-Chat vermitteln Ausgaben, Variablen, Eingaben, Bedingungen und Schleifen. Im Agententraining folgen Koordinaten und eigene Funktionen. Danach stehen Operation Nullpunkt (mit dem Quantenrechner PICO) und Pixelmuseum als Projektwege zur Verfügung; beide führen zur gemeinsamen Helikopterflucht, deren letzte zwei Levels noch in Entwicklung sind.

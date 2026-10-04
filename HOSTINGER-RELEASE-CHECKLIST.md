@@ -5,7 +5,7 @@ Diese Checkliste ergänzt [HOSTINGER-DEPLOY.md](HOSTINGER-DEPLOY.md) und den
 und Bestätigung sind getrennte Schritte. Aktueller Arbeitsstand im
 [Handoff](LOGIN-HANDOFF.md).
 
-## Kandidat vom 04.10.2026 – Operation Nullpunkt und globale Korrekturen
+## Veröffentlicht am 04.10.2026 – Operation Nullpunkt und globale Korrekturen
 
 | Punkt | Stand |
 | --- | --- |
@@ -13,15 +13,16 @@ und Bestätigung sind getrennte Schritte. Aktueller Arbeitsstand im
 | Quellcommit | `bd051cbfde5fcfde02898ce13a8e428d136999ce` auf `dev-login-save` |
 | GitHub | Missionsänderungen und separater Testcommit MAIN-26 gepusht |
 | CI | [Application tests 37186064017](https://github.com/nmsboeheimkirchen/learnpython/actions/runs/37186064017), alle fünf Jobs erfolgreich; 151 Chromium-, 75 WebKit-, 68 Konto-/Gerätewechsel-Browserfälle |
-| Tatsächlicher Live-Stand, lesend geprüft | `pilot-20260926-r15`, Commit `d00c8da65369f9405afd6ee150fccc6262f630de`, Schema 9, keine ausstehende Aktivierung |
+| Tatsächlicher Live-Stand, geprüft und bestätigt | `pilot-20261004-r16`, Commit `bd051cbfde5fcfde02898ce13a8e428d136999ce`, Schema 9, keine ausstehende Aktivierung |
 | Bestehender Bestand | 17 Konten, 17 Lernstände, 7 Klassen; reine Zählabfrage, keine personenbezogenen Inhalte ausgegeben |
 | Paket | 193 Dateien, 21.722.769 Bytes (ohne Manifest); lokal per SHA256 und PHP verifiziert |
 | Manifest SHA256 | `61ea7a177cc050acaf4427af47cf6ae719030cf84dc6b89879cc706f2cabb0b1` |
 | Backend/API/Anmeldung | Alle 28 privaten Appdateien bytegleich zu r15 |
-| Private Bereitstellung | Auf Hostinger unter `agentpy-private/releases/pilot-20261004-r16`, serverseitig manifestverifiziert; Webroot/private Konfiguration vor und nach Upload hashgleich |
+| Bereitstellung | Paket unter `agentpy-private/releases/pilot-20261004-r16`, aktiver Webroot manifestidentisch; alle 27 DB-Tabellen während Umschaltung hashgleich, private Konfiguration unverändert |
 | Fortschritt | PICO-Level-IDs und Gewichte bleiben erhalten; Anzeigename wird „Operation Nullpunkt“ |
 | Datenbankmigration | Keine vorgesehen: Schema 9 bleibt bestehen |
-| Live-Aktivierung | Noch nicht ausgeführt; der Auftrag umfasst die Vorbereitung |
+| Live-Aktivierung | Nach ausdrücklich beauftragtem Pakettest ausgeführt und bestätigt |
+| Paket-Abnahme | Chromium/WebKit mit separater Testdatenbank: vier PICO-Level, Terminal/Finale, Stop/Neustart, Speicherung, Reload, erneuter Login bestanden |
 
 Laut Nutzer sind die Schülerinnen und Schüler noch nicht bei PICO. Daraus folgt
 keine Berechtigung, Code, Freischaltungen oder andere Lernstände zu löschen.
@@ -66,32 +67,40 @@ Dokumentationscommit verändert das getestete Paket nicht.
 
 ## 2. Unmittelbar vor der ausdrücklich beauftragten Live-Aktivierung
 
-- [ ] Frische Kontrolle: Live weiterhin r15, Schema 9, keine fremde ausstehende
+- [x] Frische Kontrolle: Live vor Aktivierung r15, Schema 9, keine fremde ausstehende
   Aktivierung; Kandidat und Quellcommit entsprechen den Prüfnachweisen.
-- [ ] Frische private SQL-Sicherung und Webroot-Sicherung mit Prüfsummen anlegen;
+- [x] Frische private SQL-Sicherung und Webroot-Sicherung mit Prüfsummen anlegen;
   Zugangsdaten, SQL-Inhalte und Schülercode bleiben außerhalb von Git/Chat.
-- [ ] Rückfallverfahren anhand des Backendvergleichs bestätigen: bei diesem
+- [x] Rückfallverfahren anhand des Backendvergleichs bestätigen: bei diesem
   Kandidaten nur Web-/App-Version zurückwechseln, **keine alte SQL-Sicherung
   über neuere Lernstände zurückspielen**.
-- [ ] Kurzes Wartungsfenster/Schreibpause für einen belastbaren Vorher-Nachher-
+- [x] Kurzes Wartungsfenster/Schreibpause für einen belastbaren Vorher-Nachher-
   Bestandsvergleich festlegen; laufende Schülerarbeit berücksichtigen.
-- [ ] Private DB-/Mail-/Schlüsselkonfiguration, Sitzungen, Lernstände, Klassen,
+- [x] Private DB-/Mail-/Schlüsselkonfiguration, Sitzungen, Lernstände, Klassen,
   Mitgliedschaften und Rechte erhalten. Keine Neuinitialisierung, Testkonten,
   Testmails, Bereinigung oder Migration ohne einen gesonderten Anlass.
-- [ ] Den neuen geprüften Kandidaten mit dem Aktivierungswerkzeug umschalten.
+- [x] Den neuen geprüften Kandidaten mit dem Aktivierungswerkzeug umschalten.
   Den bereits ausgeführten r15-Migrationsoperator nicht wiederholen.
 
 ## 3. Nach der Aktivierung
 
-- [ ] Live-Release/Quellcommit, HTTPS/Cache, Sitzungsschutz und private Pfade prüfen.
-- [ ] Bestandsvergleich und Konfigurationsvergleich bestätigen; keine Rücksetzung
+- [x] Live-Release/Quellcommit, HTTPS/Cache, Sitzungsschutz und private Pfade prüfen.
+- [x] Bestandsvergleich und Konfigurationsvergleich bestätigen; keine Rücksetzung
   oder unerwartete Schemaänderung. Echte Konten nur lesend prüfen.
-- [ ] Anonyme Chromium-/WebKit-Prüfung von Anmeldung, Gastansicht und Missionen;
+- [x] Anonyme Chromium-/WebKit-Prüfung von Anmeldung, Gastansicht und Missionen;
   keine echten Schülerkonten durch Testprogramme oder Schreibversuche verändern.
-- [ ] Mailworker folgt dem neuen Release; Registrierung/Recovery-Konfiguration
+- [x] Mailworker folgt dem neuen Release; Registrierung/Recovery-Konfiguration
   ist unverändert. Keine automatische Testmail versenden.
-- [ ] Erst nach erfolgreicher Abnahme Release bestätigen und den endgültigen
+- [x] Erst nach erfolgreicher Abnahme Release bestätigen und den endgültigen
   Live-Stand in HOSTINGER-DEPLOY.md, ACCOUNT-SYSTEM.md und Handoff aktualisieren.
+
+Abschluss: API-Pause 8,56 Sekunden, 27 von 27 Tabellen hashgleich. Frische private
+SQL-Sicherung `backups/before-pilot-20261004-r16-schema9.sql`, 271.160 Bytes,
+SHA256 `2d8b77fd870b27efe23f9f1ac664db8a8f0c1d556cf3ce828d7d8cce71536a95`.
+Webbackup `backups/web-20261004080813-30f082acba`, gegen r15-Manifest verifiziert.
+SQL-Restore nicht getestet; für einen Web-Rückfall nicht über neue Lernstände
+zurückspielen. `.cache/deploy-hostinger-r16.mjs` activate/confirm sind bereits
+ausgeführt und dürfen nicht wiederholt werden; inspect bleibt rein lesend.
 
 Ein GitHub-Push aktiviert kein Hostinger-Release. Das GitHub-Repository ist
 derzeit öffentlich; die technische Trennung der Release-Pakete macht einen

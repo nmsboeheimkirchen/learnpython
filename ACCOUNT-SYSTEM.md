@@ -7,13 +7,13 @@ Dieses Dokument beschreibt die beabsichtigten Regeln und ihre Umsetzung im aktue
 
 | Stand | Bedeutung |
 | --- | --- |
-| Zuletzt bestätigte Produktion | Hostinger **`pilot-20260926-r15`, Schema 9**, Deployment bestätigt, `pendingDeployment=false`; siehe jüngsten Eintrag in [LOGIN-HANDOFF.md](LOGIN-HANDOFF.md). |
-| Vorbereiteter Missionsrelease | `pilot-20261004-r16`, Quelle `bd051cbfde5fcfde02898ce13a8e428d136999ce`, privat manifestgeprüft auf Hostinger, **noch nicht aktiviert**. CI 37186064017 vollständig grün. Alle 28 Backenddateien bytegleich r15; keine Migration oder Änderung an Anmeldung/Speicherung. Bestehende IDs/Gewichte erhalten, nur PICO-Anzeigename geändert. Siehe [Releasecheckliste](HOSTINGER-RELEASE-CHECKLIST.md). |
+| Zuletzt bestätigte Produktion | Hostinger **`pilot-20261004-r16`, Schema 9**, Deployment bestätigt, `pendingDeployment=false`; siehe jüngsten Eintrag in [LOGIN-HANDOFF.md](LOGIN-HANDOFF.md). |
+| Veröffentlichter Missionsrelease | `pilot-20261004-r16`, Quelle `bd051cbfde5fcfde02898ce13a8e428d136999ce`. CI 37186064017, zusätzlicher isolierter Pakettest und Live-Prüfungen erfolgreich. Alle 28 Backenddateien bytegleich r15; keine Migration oder Änderung an Anmeldung/Speicherung. Alle 27 Tabellen bei Umschaltung hashgleich, 17 Konten/17 Lernstände erhalten. Bestehende IDs/Gewichte unverändert, nur PICO-Anzeigename geändert. Siehe [Releasecheckliste](HOSTINGER-RELEASE-CHECKLIST.md). |
 | Veröffentlichte Verwaltung | Klassenbesitz, Rollenentzug, Kontenverwaltung, feste Schul-Domain und Schülertransfer sind in r15 enthalten. Herkunft: `d00c8da65369f9405afd6ee150fccc6262f630de`, `dev-login-save`. |
 | Geprüfte Schülerübertragung | Schema 9, API, Oberfläche und Regressionstests auf `dev-login-save`, geprüfter Commit `d00c8da65369f9405afd6ee150fccc6262f630de`. **CI 36194686016 vollständig erfolgreich**: SQLite/MariaDB, Hosting, Logik, beide Missionsbrowser und 68/68 Konto-Browsertests. Lokaler Transfer-Nachlauf 2/2 erfolgreich, Dialogbilder geprüft. |
 | Releaseprüfung | Private Bestandskopie mit zweimaliger SQLite-Migrationsprobe, MariaDB-Pfad in CI, danach Live-Migration 7→8→9 mit frischer SQL-Sicherung und **24 unveränderten Datentabellen**. HTTPS, anonyme Chromium-/WebKit-Oberfläche, rein lesende Klassen-/Adminabfragen und Mailworker erfolgreich geprüft. Keine echten Konten für Funktionstests verändert. |
 
-Die folgenden Funktionsbeschreibungen entsprechen dem r15-Anwendungsstand; ausdrücklich als Ideen oder Grenzen bezeichnete Funktionen bleiben ausgenommen. Nach einer späteren Veröffentlichung diesen Statusblock und den Handoff aktualisieren. Historische Abschnitte in Handoff, TODO und `server/README.md` sind **keine neuen Aufträge**, insbesondere nicht zum Löschen echter Konten.
+Die folgenden Funktionsbeschreibungen entsprechen dem Konten-/Backendstand von r15, der in r16 unverändert enthalten ist; ausdrücklich als Ideen oder Grenzen bezeichnete Funktionen bleiben ausgenommen. Nach einer späteren Veröffentlichung diesen Statusblock und den Handoff aktualisieren. Historische Abschnitte in Handoff, TODO und `server/README.md` sind **keine neuen Aufträge**, insbesondere nicht zum Löschen echter Konten.
 
 ### Unveränderliche Grundregeln bei normalen Erweiterungen
 
