@@ -1,6 +1,48 @@
 # Übergabe: dev-login-save
 
-## AKTUELL – MAIN-25 abgeschlossen: sichere Kalibrierprogramme und lebendige Kontrollsumme
+## AKTUELL 04.10.2026 – r16 geprüft und privat bereitgestellt, r15 bleibt live
+
+- Nutzerauftrag: Commit/Push und Hostinger-Release vorbereiten, bestehende SuS-
+  Konten erhalten; SuS laut Nutzer noch nicht bei PICO. Vorbereitung abgeschlossen,
+  keine Live-Aktivierung beauftragt oder ausgeführt. Kein Reset/Migration/Testkonto.
+- Missionsstand samt MAIN-26-Testkorrektur auf `origin/dev-login-save`:
+  `bd051cbfde5fcfde02898ce13a8e428d136999ce`. Alle fünf Jobs der
+  [CI 37186064017](https://github.com/nmsboeheimkirchen/learnpython/actions/runs/37186064017)
+  erfolgreich: 228 Logikfälle, 151 Chromium-, 75 WebKit- und 68 Konto-/Gerätewechsel-
+  Browserfälle sowie SQLite/MariaDB/Hosting. Keine fehlgeschlagenen oder flaky
+  Browserfälle in diesem Lauf. Lokal zusätzlich 76 Backend-/Hostingprüfungen grün.
+- `pilot-20261004-r16`: 193 Dateien, 21.722.769 Bytes ohne Manifest. Manifest SHA256
+  `61ea7a177cc050acaf4427af47cf6ae719030cf84dc6b89879cc706f2cabb0b1`.
+  Lokaler Pfad `.cache/hostinger/pilot-20261004-r16`; privat auf Hostinger unter
+  `agentpy-private/releases/pilot-20261004-r16`. Manifest lokal und serverseitig
+  vollständig verifiziert. Alle 28 privaten Appdateien bytegleich zum aktiven r15.
+- Sauberer `git archive` des festen Quellcommits; nur exportierte Servertexte von
+  CRLF auf LF normalisiert, keine Arbeitsbaumänderung. Berichte:
+  `.cache/hostinger-r16-package-report.json`, `.cache/hostinger-r16-staging-report.json`.
+  Keine unversionierten Arbeitsdateien, Zugangsdaten oder Datenbankexporte im Paket.
+- Vor/nach privatem Upload Webroot und private Konfiguration hashgleich.
+  Live weiterhin `pilot-20260926-r15`, Schema 9, `pendingDeployment=false`.
+  Lesend bestätigt: 17 Konten, 17 Lernstände, 7 Klassen; Worker aktiv. HTTPS-,
+  Session-, Cache- und Privatpfadprüfungen grün. Keine Konten für Funktionstests
+  genutzt und keine Testmail versandt. Backend-/API-/Auth-Quellen unverändert;
+  course-progress.js ändert nur Anzeigenamen, PICO-IDs/Gewichte bleiben stabil.
+- Die vorbereitende lokale `.cache/stage-hostinger-r16.mjs` wurde mit `stage`
+  bereits ausgeführt: **nicht wiederholen**, bestehende ID nicht überschreiben.
+  `inspect` ist rein lesend. Sie enthält keine Aktivierung oder DB-Schreibfunktion.
+  Auch `.cache/prepare-hostinger-r16-final.mjs` nicht in vorhandene Ziele wiederholen.
+- Vor später ausdrücklich beauftragter Aktivierung: frische Sicherung und
+  Bestandsprüfung laut [Releasecheckliste](HOSTINGER-RELEASE-CHECKLIST.md), dann
+  Umschalten/Live-Abnahme/Bestätigung. Keine Migration; Rückfall nur der Web-/App-
+  Version, keine alte SQL-Sicherung über neuere Lernstände zurückspielen.
+- Frühere CI 37147548080 scheiterte an veralteten Missionstests. MAIN-26 korrigiert
+  PICO-Hilfe/Kamera und die ursprüngliche Finale-Typografie; PICO-2-Hilfekette ist
+  vom Lade-/Fortsetzungstest getrennt. 15/15 lokale Fälle und 6/6 Nachprüfungen grün.
+  Verworfenes Paket `.cache/hostinger/pilot-20261003-r16` niemals hochladen.
+- README, ACCOUNT-SYSTEM, HOSTINGER-DEPLOY und Releasecheckliste dokumentieren den
+  vorbereiteten Stand getrennt vom weiterhin aktiven r15. Dokumentationscommit
+  gehört nicht zum unveränderlichen Paket; main/GitHub Pages unverändert.
+
+## Vorheriger Stand – MAIN-25 abgeschlossen: sichere Kalibrierprogramme und lebendige Kontrollsumme
 
 - Nutzer 03.10.: PICO stoppt einen vermeintlich gültigen Code nach etwa 20
   Durchläufen ohne Warnung. Nachgereichter Code: positiv → minus 1, negativ →

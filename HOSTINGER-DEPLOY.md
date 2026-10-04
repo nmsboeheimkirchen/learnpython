@@ -1,5 +1,26 @@
 # Hostinger: Testveröffentlichung und Rückfall
 
+## Vorbereitet 04.10.2026 – r16 privat bereitgestellt, noch nicht live
+
+`pilot-20261004-r16` aus `bd051cbfde5fcfde02898ce13a8e428d136999ce` liegt geprüft
+unter `agentpy-private/releases/pilot-20261004-r16`. **Produktion bleibt r15**.
+Alle fünf Jobs der [CI 37186064017](https://github.com/nmsboeheimkirchen/learnpython/actions/runs/37186064017)
+sind erfolgreich, einschließlich 151 Chromium-, 75 WebKit- und 68 Konto-/
+Gerätewechseltests. 193 Paketdateien lokal und serverseitig manifestverifiziert.
+Manifest SHA256: `61ea7a177cc050acaf4427af47cf6ae719030cf84dc6b89879cc706f2cabb0b1`.
+
+Alle 28 privaten Backenddateien stimmen bytegleich mit r15 überein. Keine
+Datenbankmigration erforderlich; Schema 9 und bestehende PICO-Fortschritts-IDs
+bleiben erhalten. Beim privaten Upload wurden Webroot und private Einstellungen
+vor/nachher als hashgleich bestätigt. Keine Schülerkonten für Tests verwendet.
+Lesender Bestand: 17 Konten, 17 Lernstände, 7 Klassen; keine offene Aktivierung.
+
+Konkreter Ablauf: [Releasecheckliste](HOSTINGER-RELEASE-CHECKLIST.md).
+Vor einer später beauftragten Aktivierung frische Sicherung/Bestandsprüfung;
+Rückfall für diesen Kandidaten nur auf die vorherige Web-/App-Version, keine
+alte SQL-Sicherung über neuere Lernstände spielen. Der lokale r16-Operator
+kennt ausschließlich Vorbereitung/Inspektion; `stage` ist bereits ausgeführt.
+
 ## Aktuell 26.09.2026 – r15, Verwaltung und Schülertransfer veröffentlicht
 
 **https://agentpy.bildungdigital.at/** läuft bestätigt mit **`pilot-20260926-r15`**, Herkunft `d00c8da65369f9405afd6ee150fccc6262f630de`, Schema **9**, `pendingDeployment=false`. Klassenbesitz-/Schülertransfer, Rollenentzug, Kontenverwaltung und feste Schul-Domain sind live. Verbindliche Regeln: [ACCOUNT-SYSTEM.md](ACCOUNT-SYSTEM.md); detaillierter Abschluss: [LOGIN-HANDOFF.md](LOGIN-HANDOFF.md).

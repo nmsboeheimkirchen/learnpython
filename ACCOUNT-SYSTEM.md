@@ -1,6 +1,6 @@
 # AGENT PY: Datenhaltung, Konten, Klassen und Rechte
 
-Technischer Regelvertrag für Wartung und Weiterentwicklung. Stand: **26.09.2026**.
+Technischer Regelvertrag für Wartung und Weiterentwicklung. Stand: **04.10.2026**.
 Dieses Dokument beschreibt die beabsichtigten Regeln und ihre Umsetzung im aktuellen Entwicklungsstand; es ist **kein Nachweis einer Veröffentlichung**. Änderungen müssen Code, Tests und diesen Regelvertrag gemeinsam aktualisieren.
 
 ## 1. Zuerst lesen: Status und verbindliche Leitplanken
@@ -8,6 +8,7 @@ Dieses Dokument beschreibt die beabsichtigten Regeln und ihre Umsetzung im aktue
 | Stand | Bedeutung |
 | --- | --- |
 | Zuletzt bestätigte Produktion | Hostinger **`pilot-20260926-r15`, Schema 9**, Deployment bestätigt, `pendingDeployment=false`; siehe jüngsten Eintrag in [LOGIN-HANDOFF.md](LOGIN-HANDOFF.md). |
+| Vorbereiteter Missionsrelease | `pilot-20261004-r16`, Quelle `bd051cbfde5fcfde02898ce13a8e428d136999ce`, privat manifestgeprüft auf Hostinger, **noch nicht aktiviert**. CI 37186064017 vollständig grün. Alle 28 Backenddateien bytegleich r15; keine Migration oder Änderung an Anmeldung/Speicherung. Bestehende IDs/Gewichte erhalten, nur PICO-Anzeigename geändert. Siehe [Releasecheckliste](HOSTINGER-RELEASE-CHECKLIST.md). |
 | Veröffentlichte Verwaltung | Klassenbesitz, Rollenentzug, Kontenverwaltung, feste Schul-Domain und Schülertransfer sind in r15 enthalten. Herkunft: `d00c8da65369f9405afd6ee150fccc6262f630de`, `dev-login-save`. |
 | Geprüfte Schülerübertragung | Schema 9, API, Oberfläche und Regressionstests auf `dev-login-save`, geprüfter Commit `d00c8da65369f9405afd6ee150fccc6262f630de`. **CI 36194686016 vollständig erfolgreich**: SQLite/MariaDB, Hosting, Logik, beide Missionsbrowser und 68/68 Konto-Browsertests. Lokaler Transfer-Nachlauf 2/2 erfolgreich, Dialogbilder geprüft. |
 | Releaseprüfung | Private Bestandskopie mit zweimaliger SQLite-Migrationsprobe, MariaDB-Pfad in CI, danach Live-Migration 7→8→9 mit frischer SQL-Sicherung und **24 unveränderten Datentabellen**. HTTPS, anonyme Chromium-/WebKit-Oberfläche, rein lesende Klassen-/Adminabfragen und Mailworker erfolgreich geprüft. Keine echten Konten für Funktionstests verändert. |

@@ -35,7 +35,7 @@ Die statischen Lernseiten lassen sich mit einem lokalen Webserver öffnen. Für 
 
 Auf `dev-login-save` läuft [Application tests](.github/workflows/tests.yml) ohne Pages-Veröffentlichung. `main` veröffentlicht die geprüfte statische Version über [GitHub Pages](.github/workflows/pages.yml). Hostinger-Releases werden separat mit privaten Backenddateien, Datenbankmigration und Bestandsprüfung bereitgestellt.
 
-Weiterführend: [Roadmap](TODO.md) · [Hostinger-Betrieb](HOSTINGER-DEPLOY.md) · [Arbeitsübergabe](LOGIN-HANDOFF.md).
+Weiterführend: [Roadmap](TODO.md) · [Hostinger-Betrieb](HOSTINGER-DEPLOY.md) · [Releasecheckliste](HOSTINGER-RELEASE-CHECKLIST.md) · [Arbeitsübergabe](LOGIN-HANDOFF.md).
 
 ## Lizenz und Impressum
 
